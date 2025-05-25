@@ -103,55 +103,55 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
 
       {/* Navigation links */}
       <nav className="mt-4 flex flex-col h-[calc(100vh-180px)] overflow-y-auto">
-        <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
+        <div className="px-4 py-2 text-xs text-gray-400 uppercase">Principal</div>
         <Link href="/" className={linkClass("/")}>
           <span className="material-icons mr-3">dashboard</span>
-          <span>{t('dashboard')}</span>
+          <span>Painel</span>
         </Link>
 
         {isInstructor && (
           <Link href="/students" className={linkClass("/students")}>
             <span className="material-icons mr-3">people</span>
-            <span>{t('students')}</span>
+            <span>Alunos</span>
           </Link>
         )}
 
         <Link href="/attendance" className={linkClass("/attendance")}>
           <span className="material-icons mr-3">fact_check</span>
-          <span>{t('attendance')}</span>
+          <span>Presença</span>
         </Link>
 
         <Link href="/classes" className={linkClass("/classes")}>
           <span className="material-icons mr-3">event</span>
-          <span>{t('classes')}</span>
+          <span>Aulas</span>
         </Link>
 
         {isInstructor && (
           <>
             <Link href="/payments" className={linkClass("/payments")}>
               <span className="material-icons mr-3">payments</span>
-              <span>{t('payments')}</span>
+              <span>Pagamentos</span>
             </Link>
 
             <Link href="/reports" className={linkClass("/reports")}>
               <span className="material-icons mr-3">bar_chart</span>
-              <span>{t('reports')}</span>
+              <span>Relatórios</span>
             </Link>
           </>
         )}
 
         <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
-          {t('account')}
+          Conta
         </div>
         <Link href="/profile" className={linkClass("/profile")}>
           <span className="material-icons mr-3">person</span>
-          <span>{t('profile')}</span>
+          <span>Perfil</span>
         </Link>
 
         {isAdmin && (
           <Link href="/settings" className={linkClass("/settings")}>
             <span className="material-icons mr-3">settings</span>
-            <span>{t('settings')}</span>
+            <span>Config.</span>
           </Link>
         )}
 

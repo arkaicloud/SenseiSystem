@@ -184,10 +184,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         </Link>
 
         {isAdmin && (
-          <Link href="/settings" className={linkClass("/settings")}>
-            <span className="material-icons mr-3">settings</span>
-            <span>{t('settings')}</span>
-          </Link>
+          <>
+            <Link href="/school-config" className={linkClass("/school-config")}>
+              <span className="material-icons mr-3">school</span>
+              <span>Configurações da Escola</span>
+            </Link>
+            <Link href="/settings" className={linkClass("/settings")}>
+              <span className="material-icons mr-3">settings</span>
+              <span>{t('settings')}</span>
+            </Link>
+          </>
         )}
 
         <div className="mt-auto px-4 py-3 text-xs text-gray-400">

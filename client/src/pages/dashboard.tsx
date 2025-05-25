@@ -125,8 +125,8 @@ const Dashboard: React.FC = () => {
       {/* Cabeçalho do Dashboard */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('dashboard')}</h1>
-          <p className="text-gray-600">{t('bemVindo', { name: 'John' })}</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Painel</h1>
+          <p className="text-gray-600">Bem-vindo, John</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">

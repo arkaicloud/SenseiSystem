@@ -148,8 +148,7 @@ const Profile: React.FC = () => {
     updateUser(updateData);
   };
 
-  const user = userData?.user;
-  const isStudent = user?.role === 'student';
+  const isStudent = userData?.user?.role === 'student';
 
   return (
     <>
@@ -182,29 +181,30 @@ const Profile: React.FC = () => {
                   {isStudent ? (
                     <div className="mb-4">
                       <CustomAvatar 
-                        firstName={user.firstName}
-                        lastName={user.lastName}
-                        avatarStyle={userData?.student?.avatarStyle || "initials"}
-                        avatarColor={userData?.student?.avatarColor || "blue"}
-                        avatarImage={userData?.student?.avatarImage || ""}
+                        firstName={userData?.user?.firstName || ""}
+                        lastName={userData?.user?.lastName || ""}
+                        avatarStyle={studentData?.student?.avatarStyle || "initials"}
+                        avatarColor={studentData?.student?.avatarColor || "blue"}
+                        avatarImage={studentData?.student?.avatarImage || ""}
                         size="lg"
                         onSave={handleAvatarUpdate}
+                        editable={true}
                       />
                     </div>
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white mb-4">
                       <span className="font-bold text-2xl">
-                        {user.firstName.charAt(0)}
-                        {user.lastName.charAt(0)}
+                        {userData?.user?.firstName?.charAt(0) || ""}
+                        {userData?.user?.lastName?.charAt(0) || ""}
                       </span>
                     </div>
                   )}
                   <h2 className="text-xl font-bold">
-                    {user.firstName} {user.lastName}
+                    {userData?.user?.firstName} {userData?.user?.lastName}
                   </h2>
-                  <p className="text-gray-500">{user.email}</p>
+                  <p className="text-gray-500">{userData?.user?.email}</p>
                   <div className="mt-2 bg-primary-light text-white text-sm px-3 py-1 rounded-full">
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    {userData?.user?.role ? userData.user.role.charAt(0).toUpperCase() + userData.user.role.slice(1) : ""}
                   </div>
                   
                   {isStudent && (

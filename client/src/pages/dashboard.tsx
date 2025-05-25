@@ -78,8 +78,8 @@ const Dashboard: React.FC = () => {
 
   const handleAddStudent = (data: any) => {
     toast({
-      title: "Student added",
-      description: "New student has been added successfully.",
+      title: "Aluno adicionado",
+      description: "Novo aluno foi adicionado com sucesso.",
     });
     setIsAddStudentOpen(false);
   };
@@ -93,30 +93,30 @@ const Dashboard: React.FC = () => {
 
   const handleSaveAttendance = (data: any) => {
     toast({
-      title: "Attendance saved",
-      description: "Class attendance has been recorded successfully.",
+      title: "Presença registrada",
+      description: "A presença na aula foi registrada com sucesso.",
     });
     setSelectedClass(null);
   };
 
   const handleEmailStudent = (student: any) => {
     toast({
-      title: "Email action",
-      description: `Sending email to ${student.name}`,
+      title: "E-mail enviado",
+      description: `Enviando e-mail para ${student.name}`,
     });
   };
 
   const handleCallStudent = (student: any) => {
     toast({
-      title: "Call action",
-      description: `Calling ${student.name}`,
+      title: "Ligação iniciada",
+      description: `Ligando para ${student.name}`,
     });
   };
 
   const handleMoreOptions = (student: any) => {
     toast({
-      title: "More options",
-      description: `Options for ${student.name}`,
+      title: "Mais opções",
+      description: `Opções para ${student.name}`,
     });
   };
 
@@ -255,9 +255,9 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Two column layout for Recent Activities and Student Belt Progress */}
+      {/* Layout de duas colunas para Atividades Recentes e Distribuição de Faixas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Recent Activities */}
+        {/* Atividades Recentes */}
         <div className="lg:col-span-2">
           <ActivityList
             activities={
@@ -268,21 +268,22 @@ const Dashboard: React.FC = () => {
                     let iconColor = "text-blue-500";
                     let icon = "info";
 
-                    if (activity.activity.includes("new student")) {
+                    // Adaptado para texto em português
+                    if (activity.activity.includes("novo aluno") || activity.activity.includes("new student")) {
                       icon = "person_add";
-                    } else if (activity.activity.includes("attendance")) {
+                    } else if (activity.activity.includes("presença") || activity.activity.includes("attendance")) {
                       icon = "fact_check";
                       iconBgColor = "bg-green-100";
                       iconColor = "text-green-500";
-                    } else if (activity.activity.includes("promoted")) {
+                    } else if (activity.activity.includes("promovido") || activity.activity.includes("promoted")) {
                       icon = "upgrade";
                       iconBgColor = "bg-purple-100";
                       iconColor = "text-purple-500";
-                    } else if (activity.activity.includes("payment")) {
+                    } else if (activity.activity.includes("pagamento") || activity.activity.includes("payment")) {
                       icon = "payments";
                       iconBgColor = "bg-accent-light";
                       iconColor = "text-accent-dark";
-                    } else if (activity.activity.includes("overdue")) {
+                    } else if (activity.activity.includes("atrasado") || activity.activity.includes("overdue")) {
                       icon = "warning";
                       iconBgColor = "bg-secondary-light";
                       iconColor = "text-white";
@@ -294,7 +295,7 @@ const Dashboard: React.FC = () => {
                       iconBgColor,
                       iconColor,
                       content: <p dangerouslySetInnerHTML={{ __html: activity.activity }} />,
-                      timestamp: new Date(activity.timestamp).toLocaleString()
+                      timestamp: new Date(activity.timestamp).toLocaleString('pt-BR')
                     };
                   })
             }
@@ -302,7 +303,7 @@ const Dashboard: React.FC = () => {
           />
         </div>
 
-        {/* Student Belt Distribution */}
+        {/* Distribuição de Faixas */}
         <div>
           <BeltDistribution
             distribution={beltDistribution}
@@ -311,23 +312,23 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Students at Risk section */}
+      {/* Seção de Alunos com Pagamentos Pendentes */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat font-bold text-xl">{t('studentsRequiringAttention')}</h2>
+          <h2 className="font-montserrat font-bold text-xl">{t('alunosComPendencias')}</h2>
           <Link href="/reports">
             <a className="text-secondary font-medium text-sm flex items-center">
-              {t('viewDetailedReport')}
+              {t('verRelatorioDetalhado')}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </a>
           </Link>
         </div>
 
         {isOverduePaymentsLoading ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">{t('loadingStudents')}</div>
+          <div className="bg-white rounded-lg shadow p-8 text-center">{t('carregandoAlunos')}</div>
         ) : studentsRequiringAttention.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-            {t('noStudentsRequiringAttention')}
+            {t('nenhumAlunoComPendencia')}
           </div>
         ) : (
           <StudentsTable
@@ -341,12 +342,12 @@ const Dashboard: React.FC = () => {
                 name: `${user.firstName} ${user.lastName}`,
                 email: user.email,
                 status: {
-                  label: payment.status === 'overdue' ? t('paymentOverdue') : t('paymentDueSoon'),
+                  label: payment.status === 'overdue' ? t('pagamentoAtrasado') : t('pagamentoProximo'),
                   type: payment.status === 'overdue' ? 'danger' : 'warning'
                 },
                 beltLevel: student.beltLevel,
                 attendance: student.attendanceRate || Math.floor(Math.random() * 100),
-                lastSeen: '5 days ago'
+                lastSeen: '5 dias atrás'
               };
             })}
             onEmail={handleEmailStudent}

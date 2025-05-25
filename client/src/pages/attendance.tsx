@@ -146,11 +146,11 @@ const Attendance: React.FC = () => {
                         <p className="text-sm text-gray-600">
                           {classItem.instructor 
                             ? `${classItem.instructor.firstName} Sensei` 
-                            : 'No instructor assigned'}
+                            : t('noInstructorAssigned')}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {classItem.duration} minutes
-                          {classItem.maxCapacity ? ` • Max ${classItem.maxCapacity} students` : ''}
+                          {classItem.duration} {t('minutes')}
+                          {classItem.maxCapacity ? ` • ${t('max')} ${classItem.maxCapacity} ${t('students')}` : ''}
                         </p>
                         <Button 
                           className="mt-3 w-full bg-secondary hover:bg-secondary-dark text-white"
@@ -176,23 +176,23 @@ const Attendance: React.FC = () => {
             <CardHeader>
               <CardTitle>
                 {selectedDate 
-                  ? `Attendance Records - ${formatDate(selectedDate)}` 
-                  : 'Attendance Records'}
+                  ? `${t('attendance')} - ${formatDate(selectedDate)}` 
+                  : t('attendance')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="byClass">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="byClass">By Class</TabsTrigger>
-                  <TabsTrigger value="byStudent">By Student</TabsTrigger>
+                  <TabsTrigger value="byClass">{t('byClass')}</TabsTrigger>
+                  <TabsTrigger value="byStudent">{t('byStudent')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="byClass">
                   {attendanceLoading ? (
-                    <div className="text-center py-8">Loading attendance records...</div>
+                    <div className="text-center py-8">{t('loading')}</div>
                   ) : filteredAttendance.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      No attendance records found for this date
+                      {t('noAttendanceRecords')}
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -224,7 +224,7 @@ const Attendance: React.FC = () => {
                               </p>
                             </div>
                             <div className="text-sm text-gray-600">
-                              {data.students.length} student{data.students.length !== 1 ? 's' : ''} present
+                              {data.students.length} {data.students.length !== 1 ? t('studentsPresent') : t('studentPresent')}
                             </div>
                           </div>
 

@@ -16,7 +16,11 @@ import type { SchoolConfig } from "@shared/schema";
 // Schema para validação do formulário
 const schoolConfigSchema = z.object({
   schoolName: z.string().min(1, "Nome da escola é obrigatório"),
-  logoUrl: z.string().url("URL deve ser válida").optional().or(z.literal("")),
+  logoUrl: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    // Aceita URLs ou dados base64
+    return val.startsWith("http") || val.startsWith("data:image/");
+  }, "Logo deve ser uma URL válida ou uma imagem"),
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email deve ser válido").optional().or(z.literal("")),
@@ -140,22 +144,72 @@ export default function SchoolConfigPage() {
                     )}
                   />
 
-                  {/* URL do Logo */}
+                  {/* Logo da Escola */}
                   <FormField
                     control={form.control}
                     name="logoUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>URL do Logo</FormLabel>
+                        <FormLabel>Logo da Escola</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="https://exemplo.com/logo.png" 
-                            {...field} 
-                          />
+                          <div className="space-y-4">
+                            {/* Preview da imagem atual */}
+                            {field.value && (
+                              <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                <img 
+                                  src={field.value} 
+                                  alt="Logo preview" 
+                                  className="max-w-full max-h-full object-contain rounded-lg"
+                                />
+                              </div>
+                            )}
+                            
+                            {/* Input de arquivo */}
+                            <div className="flex flex-col gap-2">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    // Verificar tamanho (máximo 2MB)
+                                    if (file.size > 2 * 1024 * 1024) {
+                                      toast({
+                                        title: "Arquivo muito grande",
+                                        description: "Por favor, selecione uma imagem menor que 2MB",
+                                        variant: "destructive",
+                                      });
+                                      return;
+                                    }
+                                    
+                                    // Converter para base64
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      const base64 = event.target?.result as string;
+                                      field.onChange(base64);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                              />
+                              
+                              {/* URL manual como alternativa */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">ou</span>
+                                <Input 
+                                  placeholder="URL da imagem (https://...)"
+                                  value={field.value?.startsWith('http') ? field.value : ''}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  className="flex-1"
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </FormControl>
                         <FormMessage />
                         <p className="text-sm text-gray-500">
-                          URL da imagem do logo que aparecerá na tela de login
+                          Faça upload de uma imagem (máximo 2MB) ou cole uma URL
                         </p>
                       </FormItem>
                     )}

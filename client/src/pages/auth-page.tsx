@@ -421,9 +421,9 @@ export default function AuthPage() {
       <div className="flex-1 bg-primary p-6 flex flex-col justify-center text-white">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold mb-6">SenseiSystem</h1>
-          <h2 className="text-2xl font-semibold mb-4">Jiu-Jitsu School Management</h2>
+          <h2 className="text-2xl font-semibold mb-4">{t('appDescription')}</h2>
           <p className="mb-6 text-lg">
-            Track your progress, manage your attendance, and stay connected with your Jiu-Jitsu community.
+            {t('appSubDescription')}
           </p>
           
           <div className="space-y-4">
@@ -432,8 +432,8 @@ export default function AuthPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div>
-                <h3 className="font-semibold">Track Attendance</h3>
-                <p>Never miss a class and keep track of your training journey.</p>
+                <h3 className="font-semibold">{t('trackAttendanceFeature')}</h3>
+                <p>{t('trackAttendanceDescription')}</p>
               </div>
             </div>
             
@@ -442,8 +442,8 @@ export default function AuthPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-award"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
               </div>
               <div>
-                <h3 className="font-semibold">Belt Progression</h3>
-                <p>Monitor your belt level and stripes as you advance in your journey.</p>
+                <h3 className="font-semibold">{t('beltProgressionFeature')}</h3>
+                <p>{t('beltProgressionDescription')}</p>
               </div>
             </div>
             
@@ -452,8 +452,8 @@ export default function AuthPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
               </div>
               <div>
-                <h3 className="font-semibold">Class Schedule</h3>
-                <p>View upcoming classes and manage your training schedule.</p>
+                <h3 className="font-semibold">{t('classScheduleFeature')}</h3>
+                <p>{t('classScheduleDescription')}</p>
               </div>
             </div>
             
@@ -462,8 +462,8 @@ export default function AuthPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
               </div>
               <div>
-                <h3 className="font-semibold">Payment Management</h3>
-                <p>Handle your membership fees and payment schedules easily.</p>
+                <h3 className="font-semibold">{t('paymentManagementFeature')}</h3>
+                <p>{t('paymentManagementDescription')}</p>
               </div>
             </div>
           </div>

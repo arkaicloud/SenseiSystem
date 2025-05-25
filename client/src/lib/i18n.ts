@@ -6,6 +6,18 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   en: {
     translation: {
+      // Auth Hero Section
+      appDescription: "Jiu-Jitsu School Management",
+      appSubDescription: "Track your progress, manage your attendance, and stay connected with your Jiu-Jitsu community.",
+      trackAttendanceFeature: "Track Attendance",
+      trackAttendanceDescription: "Never miss a class and keep track of your training journey.",
+      beltProgressionFeature: "Belt Progression",
+      beltProgressionDescription: "Monitor your belt level and stripes as you advance in your journey.",
+      classScheduleFeature: "Class Schedule",
+      classScheduleDescription: "View upcoming classes and manage your training schedule.",
+      paymentManagementFeature: "Payment Management",
+      paymentManagementDescription: "Handle your membership fees and payment schedules easily.",
+
       // Navigation
       main: "Main",
       account: "Account",
@@ -111,6 +123,18 @@ const resources = {
   },
   pt: {
     translation: {
+      // Auth Hero Section
+      appDescription: "Sistema de Gestão para Escolas de Jiu-Jitsu",
+      appSubDescription: "Acompanhe seu progresso, gerencie sua presença e mantenha-se conectado com sua comunidade de Jiu-Jitsu.",
+      trackAttendanceFeature: "Controle de Presença",
+      trackAttendanceDescription: "Nunca perca uma aula e acompanhe sua jornada de treinamento.",
+      beltProgressionFeature: "Progressão de Faixa",
+      beltProgressionDescription: "Monitore seu nível de faixa e suas graus à medida que avança em sua jornada.",
+      classScheduleFeature: "Agenda de Aulas",
+      classScheduleDescription: "Visualize as próximas aulas e gerencie seu cronograma de treinamento.",
+      paymentManagementFeature: "Gestão de Pagamentos",
+      paymentManagementDescription: "Gerencie suas mensalidades e cronogramas de pagamento facilmente.",
+      
       // Navigation
       main: "Principal",
       account: "Conta",

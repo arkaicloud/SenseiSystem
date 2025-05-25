@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  
+  /* Custom colors based on design */
+  --primary: 210 19% 27%; /* #3a4750 */
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 210 17% 36%; /* #4e5d6a */
+  --primary-dark: 210 21% 21%; /* #2b353d */
+  
+  --secondary: 358 60% 52%; /* #d13639 */
+  --secondary-foreground: 0 0% 100%;
+  --secondary-light: 358 60% 59%; /* #e04a4d */
+  --secondary-dark: 358 60% 44%; /* #b02e30 */
+  
+  --accent: 43 84% 61%; /* #f0c14b */
+  --accent-foreground: 20 14.3% 4.1%;
+  --accent-light: 43 84% 70%; /* #f5d070 */
+  --accent-dark: 43 84% 55%; /* #e0b03b */
+  
+  --status-success: 122 39% 49%;
+  --status-danger: 4 90% 58%;
+  --status-warning: 36 100% 50%;
+  --status-info: 207 90% 54%;
+  
+  --sidebar-background: 210 19% 27%; /* #3a4750 */
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 358 60% 52%; /* #d13639 */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 43 84% 61%; /* #f0c14b */
+  --sidebar-accent-foreground: 20 14.3% 4.1%;
+  --sidebar-border: 210 17% 36%; /* #4e5d6a */
+  --sidebar-ring: 0 0% 100%;
+  
+  --chart-1: 207 90% 54%; /* #2196f3 */
+  --chart-2: 122 39% 49%; /* #4caf50 */
+  --chart-3: 291 64% 42%; /* #9c27b0 */
+  --chart-4: 27 42% 36%; /* #795548 */
+  --chart-5: 0 0% 0%; /* #000000 */
+  
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  
+  /* Custom colors based on design (dark mode) */
+  --primary: 210 19% 27%;
+  --primary-foreground: 0 0% 98%;
+  --primary-light: 210 17% 36%;
+  --primary-dark: 210 21% 21%;
+  
+  --secondary: 358 60% 52%;
+  --secondary-foreground: 0 0% 98%;
+  --secondary-light: 358 60% 59%;
+  --secondary-dark: 358 60% 44%;
+  
+  --accent: 43 84% 61%;
+  --accent-foreground: 240 10% 3.9%;
+  --accent-light: 43 84% 70%;
+  --accent-dark: 43 84% 55%;
+  
+  --status-success: 122 39% 49%;
+  --status-danger: 4 90% 58%;
+  --status-warning: 36 100% 50%;
+  --status-info: 207 90% 54%;
+  
+  --sidebar-background: 210 19% 20%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 358 60% 52%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 43 84% 61%;
+  --sidebar-accent-foreground: 240 10% 3.9%;
+  --sidebar-border: 210 17% 36%;
+  --sidebar-ring: 0 0% 98%;
+  
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-gray-100 text-foreground;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-montserrat;
+  }
+}
+
+@layer components {
+  .belt {
+    @apply inline-block mr-1;
+    width: 70px;
+    height: 10px;
+  }
+  
+  .white-belt { 
+    @apply bg-white border border-gray-300; 
+  }
+  
+  .blue-belt { 
+    @apply bg-[#2196f3]; 
+  }
+  
+  .purple-belt { 
+    @apply bg-[#9c27b0]; 
+  }
+  
+  .brown-belt { 
+    @apply bg-[#795548]; 
+  }
+  
+  .black-belt { 
+    @apply bg-black; 
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');

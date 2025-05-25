@@ -211,7 +211,13 @@ const resources = {
       byClass: "Por Aula",
       byStudent: "Por Aluno",
       noAttendanceRecords: "Nenhum registro de presença encontrado para esta data",
-      studentViewComingSoon: "Visualização por aluno em breve"
+      studentViewComingSoon: "Visualização por aluno em breve",
+      minutes: "minutos",
+      max: "Máximo",
+      studentsLabel: "alunos",
+      noInstructorAssigned: "Nenhum instrutor designado",
+      studentsPresent: "alunos presentes",
+      studentPresent: "aluno presente"
     }
   },
   es: {

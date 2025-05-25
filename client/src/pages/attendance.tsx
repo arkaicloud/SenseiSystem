@@ -150,7 +150,7 @@ const Attendance: React.FC = () => {
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           {classItem.duration} {t('minutes')}
-                          {classItem.maxCapacity ? ` • ${t('max')} ${classItem.maxCapacity} ${t('students')}` : ''}
+                          {classItem.maxCapacity ? ` • ${t('max')} ${classItem.maxCapacity} ${t('studentsLabel')}` : ''}
                         </p>
                         <Button 
                           className="mt-3 w-full bg-secondary hover:bg-secondary-dark text-white"
@@ -254,7 +254,7 @@ const Attendance: React.FC = () => {
 
                 <TabsContent value="byStudent">
                   <div className="text-center py-8 text-gray-500">
-                    Student view coming soon
+                    {t('studentViewComingSoon')}
                   </div>
                 </TabsContent>
               </Tabs>
@@ -267,7 +267,7 @@ const Attendance: React.FC = () => {
       {selectedClass && (
         <Dialog open={true} onOpenChange={() => setSelectedClass(null)}>
           <DialogContent className="sm:max-w-[700px]">
-            <DialogTitle>Take Attendance - {selectedClass.name}</DialogTitle>
+            <DialogTitle>{t('takeAttendance')} - {selectedClass.name}</DialogTitle>
             <AttendanceForm
               classInfo={{
                 id: selectedClass.id,

@@ -21,7 +21,7 @@ const schoolConfigSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("Email deve ser válido").optional().or(z.literal("")),
   website: z.string().url("Website deve ser uma URL válida").optional().or(z.literal("")),
-  description: z.string().optional(),
+  congratsMessage: z.string().optional(),
 });
 
 type SchoolConfigForm = z.infer<typeof schoolConfigSchema>;
@@ -46,7 +46,7 @@ export default function SchoolConfigPage() {
       phone: currentConfig?.phone || "",
       email: currentConfig?.email || "",
       website: currentConfig?.website || "",
-      description: currentConfig?.description || "",
+      congratsMessage: currentConfig?.congratsMessage || "",
     },
   });
 
@@ -60,7 +60,7 @@ export default function SchoolConfigPage() {
         phone: currentConfig.phone || "",
         email: currentConfig.email || "",
         website: currentConfig.website || "",
-        description: currentConfig.description || "",
+        congratsMessage: currentConfig.congratsMessage || "",
       });
     }
   }, [currentConfig, form]);
@@ -226,21 +226,24 @@ export default function SchoolConfigPage() {
                     )}
                   />
 
-                  {/* Descrição */}
+                  {/* Mensagem de Parabéns */}
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="congratsMessage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Descrição</FormLabel>
+                        <FormLabel>Mensagem de Parabéns</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Descrição da academia..."
+                            placeholder="Mensagem personalizada para graduações..."
                             rows={4}
                             {...field}
                           />
                         </FormControl>
                         <FormMessage />
+                        <p className="text-sm text-gray-500">
+                          Mensagem que aparecerá quando um aluno for graduado
+                        </p>
                       </FormItem>
                     )}
                   />
@@ -316,9 +319,9 @@ export default function SchoolConfigPage() {
                 )}
               </div>
 
-              {form.watch("description") && (
+              {form.watch("congratsMessage") && (
                 <div className="pt-2 border-t">
-                  <p className="text-sm text-gray-600">{form.watch("description")}</p>
+                  <p className="text-sm text-gray-600">{form.watch("congratsMessage")}</p>
                 </div>
               )}
             </CardContent>

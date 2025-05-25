@@ -15,6 +15,7 @@ import PaymentPlans from "@/pages/payment-plans";
 import Reports from "@/pages/reports";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
+import SchoolConfig from "@/pages/school-config";
 import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -65,6 +66,11 @@ function Router() {
       <ProtectedRoute 
         path="/settings" 
         component={Settings} 
+      />
+      <ProtectedRoute 
+        path="/school-config" 
+        component={SchoolConfig} 
+        allowedRoles={["admin"]} 
       />
 
       {/* Public routes */}

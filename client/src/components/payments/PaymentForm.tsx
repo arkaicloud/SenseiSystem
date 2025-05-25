@@ -24,8 +24,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrencyBRL } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Extend the payment schema for form validation
 const paymentFormSchema = z.object({
@@ -34,7 +35,7 @@ const paymentFormSchema = z.object({
   status: z.enum(["paid", "pending", "overdue"]).default("pending"),
   dueDate: z.date(),
   paidDate: z.date().optional().nullable(),
-  amount: z.number().min(1, { message: "Amount must be greater than 0" }),
+  amount: z.number().min(1, { message: "O valor deve ser maior que 0" }),
   notes: z.string().optional(),
 });
 
@@ -67,6 +68,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
+  
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
@@ -99,14 +102,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           name="studentId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Student</FormLabel>
+              <FormLabel>{t('student')}</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(parseInt(value))}
                 defaultValue={field.value?.toString()}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a student" />
+                    <SelectValue placeholder={t('select_student')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -130,14 +133,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           name="planId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payment Plan</FormLabel>
+              <FormLabel>{t('payment_plan')}</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(parseInt(value))}
                 defaultValue={field.value?.toString()}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a payment plan" />
+                    <SelectValue placeholder={t('select_payment_plan')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -146,7 +149,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                       key={plan.id}
                       value={plan.id.toString()}
                     >
-                      {plan.name} - ${(plan.amount / 100).toFixed(2)} ({plan.frequency})
+                      {plan.name} - {formatCurrencyBRL(plan.amount)} ({t(plan.frequency)})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -162,7 +165,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             name="dueDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Due Date</FormLabel>
+                <FormLabel>{t('due_date')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -174,9 +177,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                         )}
                       >
                         {field.value ? (
-                          format(field.value, "PPP")
+                          format(field.value, "dd/MM/yyyy")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>{t('pick_date')}</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>

@@ -7,6 +7,8 @@ const resources = {
   en: {
     translation: {
       // Navigation
+      main: "Main",
+      account: "Account",
       dashboard: "Dashboard",
       students: "Students",
       attendance: "Attendance", 
@@ -87,6 +89,8 @@ const resources = {
   pt: {
     translation: {
       // Navigation
+      main: "Principal",
+      account: "Conta",
       dashboard: "Painel",
       students: "Alunos",
       attendance: "Presença",
@@ -167,6 +171,8 @@ const resources = {
   es: {
     translation: {
       // Navigation
+      main: "Principal",
+      account: "Cuenta",
       dashboard: "Panel",
       students: "Estudiantes",
       attendance: "Asistencia",
@@ -247,6 +253,8 @@ const resources = {
   ja: {
     translation: {
       // Navigation
+      main: "メイン",
+      account: "アカウント",
       dashboard: "ダッシュボード",
       students: "生徒",
       attendance: "出席",

@@ -150,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         )}
 
         <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
-          {t('settings')}
+          {t('account')}
         </div>
         <Link href="/profile">
           <a className={linkClass("/profile")}>

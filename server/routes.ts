@@ -570,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/attendance", isAuthenticated, isInstructor, async (req, res) => {
+  app.post("/api/attendance", isAuthenticated, async (req, res) => {
     try {
       const attendanceData = insertAttendanceSchema.parse(req.body);
       
@@ -586,10 +586,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Class not found" });
       }
       
+      // Verificar permissões:
+      // 1. Instrutores e admins podem registrar presença para qualquer aluno
+      // 2. Alunos só podem registrar presença para si mesmos
+      const requestUser = (req as any).user;
+      
+      if (requestUser.role === 'student') {
+        // Verificar se o aluno está tentando registrar presença para si mesmo
+        const studentUser = await storage.getUser(student.userId);
+        if (!studentUser || studentUser.id !== requestUser.id) {
+          return res.status(403).json({ 
+            message: "Forbidden: Students can only register attendance for themselves" 
+          });
+        }
+      }
+      
       const attendance = await storage.createAttendance(attendanceData);
       
       // Log activity
-      const requestUser = (req as any).user;
       const user = await storage.getUser(student.userId);
       await storage.createActivityLog({
         userId: requestUser.id,

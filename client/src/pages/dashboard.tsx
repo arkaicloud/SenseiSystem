@@ -193,10 +193,27 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           
+          {/* Notificações no Topo */}
+          <div className="mb-6">
+            <StudentNotifications notifications={studentNotifications} />
+          </div>
+          
           {/* Conteúdo do Painel do Aluno */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Coluna da esquerda - Notificações e Progresso */}
+            {/* Coluna da esquerda - Brasão e Progresso */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Confirmação Rápida de Presença */}
+              {user && (
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="font-medium text-primary">{t('confirmar_presenca_hoje')}</h3>
+                  </div>
+                  <div className="p-4">
+                    <QuickAttendanceConfirm userId={user.id} compact={true} />
+                  </div>
+                </div>
+              )}
+              
               {/* Brasão da Faixa */}
               {student && user && (
                 <div className="bg-white rounded-lg shadow-sm p-6 flex flex-col items-center">
@@ -208,9 +225,6 @@ const Dashboard: React.FC = () => {
                 </div>
               )}
               
-              {/* Notificações do Sistema */}
-              <StudentNotifications notifications={studentNotifications} />
-              
               {/* Progresso da Faixa com Animação */}
               {student && (
                 <StudentBeltProgress 
@@ -218,18 +232,6 @@ const Dashboard: React.FC = () => {
                   stripes={student.stripes || 0}
                   attendanceRate={student.attendanceRate || 0}
                 />
-              )}
-              
-              {/* Confirmação Rápida de Presença */}
-              {user && (
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-gray-200">
-                    <h3 className="font-medium text-primary">{t('confirmar_presenca_hoje')}</h3>
-                  </div>
-                  <div className="p-4">
-                    <QuickAttendanceConfirm userId={user.id} compact={true} />
-                  </div>
-                </div>
               )}
               
               {/* Próximas Aulas */}

@@ -1093,7 +1093,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const configData = insertSchoolConfigSchema.parse(req.body);
+      console.log("School config update request:", JSON.stringify(req.body, null, 2));
+      
+      // Clean and validate the data
+      const cleanData = {
+        schoolName: req.body.schoolName || "",
+        logoUrl: req.body.logoUrl || "",
+        address: req.body.address || "",
+        phone: req.body.phone || "",
+        email: req.body.email || "",
+        website: req.body.website || "",
+        congratsMessage: req.body.congratsMessage || ""
+      };
+      
+      console.log("Cleaned data:", JSON.stringify(cleanData, null, 2));
+      
+      const configData = insertSchoolConfigSchema.parse(cleanData);
       const updatedConfig = await storage.updateSchoolConfig(configData);
       
       // Log activity
@@ -1107,10 +1122,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ config: updatedConfig });
     } catch (error) {
+      console.error("Error updating school config:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid config data", errors: error.errors });
+        console.error("Zod validation errors:", error.errors);
+        return res.status(400).json({ message: "Dados de configuração inválidos", errors: error.errors });
       }
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 

@@ -10,6 +10,7 @@ import {
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails
 } from "@shared/schema";
+import { eq, and, gte, lte, desc, or, alias } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -793,23 +794,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {
+    // Usando alias para evitar conflito no join com users
+    const studentUsers = alias(users, "student_users");
+    const instructorUsers = alias(users, "instructor_users");
+    
     const result = await db.select({
       attendance: attendance,
       student: students,
-      user: users,
+      user: studentUsers,
       class: classes,
       instructor: {
-        id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        role: users.role
+        id: instructorUsers.id,
+        firstName: instructorUsers.firstName,
+        lastName: instructorUsers.lastName,
+        role: instructorUsers.role
       }
     })
     .from(attendance)
     .leftJoin(students, eq(attendance.studentId, students.id))
-    .leftJoin(users, eq(students.userId, users.id))
+    .leftJoin(studentUsers, eq(students.userId, studentUsers.id))
     .leftJoin(classes, eq(attendance.classId, classes.id))
-    .leftJoin(users, eq(classes.instructorId, users.id), "instructor");
+    .leftJoin(instructorUsers, eq(classes.instructorId, instructorUsers.id));
 
     return result.map(item => ({
       ...item.attendance,

@@ -95,12 +95,35 @@ const Payments: React.FC = () => {
   });
 
   const handleAddPayment = (data: any) => {
-    addPayment(data);
+    // Certifique-se de que os valores estão nos formatos corretos antes de enviar
+    const formattedData = {
+      ...data,
+      // Garante que studentId e planId são números
+      studentId: Number(data.studentId),
+      planId: Number(data.planId),
+      // Garante que amount é um número (inteiro)
+      amount: Math.round(data.amount), 
+      // Garante que as datas são objetos Date
+      dueDate: new Date(data.dueDate),
+      paidDate: data.paidDate ? new Date(data.paidDate) : null
+    };
+    
+    addPayment(formattedData);
   };
 
   const handleUpdatePayment = (data: any) => {
     if (selectedPayment) {
-      updatePayment({ id: selectedPayment.id, data });
+      // Formata os dados da mesma forma que no método de adição
+      const formattedData = {
+        ...data,
+        studentId: Number(data.studentId),
+        planId: Number(data.planId),
+        amount: Math.round(data.amount),
+        dueDate: new Date(data.dueDate),
+        paidDate: data.paidDate ? new Date(data.paidDate) : null
+      };
+      
+      updatePayment({ id: selectedPayment.id, data: formattedData });
     }
   };
 

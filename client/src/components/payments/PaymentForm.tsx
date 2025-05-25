@@ -30,12 +30,15 @@ import { useTranslation } from "react-i18next";
 
 // Extend the payment schema for form validation
 const paymentFormSchema = z.object({
-  studentId: z.number(),
-  planId: z.number(),
-  status: z.enum(["paid", "pending", "overdue"]).default("pending"),
-  dueDate: z.date(),
+  studentId: z.number({ required_error: "Selecione um aluno" }).min(1, { message: "Selecione um aluno" }),
+  planId: z.number({ required_error: "Selecione um plano de pagamento" }).min(1, { message: "Selecione um plano de pagamento" }),
+  status: z.enum(["paid", "pending", "overdue"], {
+    required_error: "Selecione um status",
+    invalid_type_error: "Status inválido",
+  }).default("pending"),
+  dueDate: z.date({ required_error: "Selecione a data de vencimento" }),
   paidDate: z.date().optional().nullable(),
-  amount: z.number().min(1, { message: "O valor deve ser maior que 0" }),
+  amount: z.number({ required_error: "Informe o valor" }).min(1, { message: "O valor deve ser maior que 0" }),
   notes: z.string().optional(),
 });
 
@@ -73,14 +76,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      studentId: 0,
-      planId: 0,
-      status: "pending",
-      dueDate: new Date(),
-      paidDate: null,
-      amount: 0,
-      notes: "",
-      ...defaultValues,
+      studentId: defaultValues?.studentId || 0,
+      planId: defaultValues?.planId || 0,
+      status: defaultValues?.status || "pending",
+      dueDate: defaultValues?.dueDate || new Date(),
+      paidDate: defaultValues?.paidDate || null,
+      amount: defaultValues?.amount || 0,
+      notes: defaultValues?.notes || "",
     },
   });
 

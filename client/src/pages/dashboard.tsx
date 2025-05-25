@@ -11,12 +11,16 @@ import StudentsTable from "@/components/dashboard/StudentsTable";
 import StudentForm from "@/components/students/StudentForm";
 import AttendanceForm from "@/components/attendance/AttendanceForm";
 import SchoolEventList from "@/components/events/SchoolEventList";
-import { formatDate, formatTime } from "@/lib/utils";
+import StudentBeltProgress from "@/components/dashboard/StudentBeltProgress";
+import StudentNotifications from "@/components/dashboard/StudentNotifications";
+import { formatDate, formatTime, formatCurrencyBRL } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/use-auth";
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const { t } = useTranslation();

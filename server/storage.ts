@@ -7,6 +7,7 @@ import {
   studentPayments, type StudentPayment, type InsertStudentPayment,
   activityLogs, type ActivityLog, type InsertActivityLog,
   schoolEvents, type SchoolEvent, type InsertSchoolEvent,
+  schoolConfig, type SchoolConfig, type InsertSchoolConfig,
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails
 } from "@shared/schema";
@@ -577,6 +578,79 @@ export class MemStorage implements IStorage {
     const log: ActivityLog = { ...insertLog, id };
     this.activityLogs.set(id, log);
     return log;
+  }
+
+  // School Configuration
+  async getSchoolConfig(): Promise<SchoolConfig | undefined> {
+    return this.schoolConfig;
+  }
+
+  async updateSchoolConfig(config: Partial<SchoolConfig>): Promise<SchoolConfig> {
+    if (!this.schoolConfig) {
+      this.schoolConfig = {
+        id: 1,
+        schoolName: "Academia de Jiu-Jitsu",
+        congratsMessage: "🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!",
+        logoUrl: null,
+        address: null,
+        phone: null,
+        email: null,
+        website: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...config
+      };
+    } else {
+      this.schoolConfig = {
+        ...this.schoolConfig,
+        ...config,
+        updatedAt: new Date()
+      };
+    }
+    return this.schoolConfig;
+  }
+
+  // School Events
+  async getSchoolEvent(id: number): Promise<SchoolEvent | undefined> {
+    return this.schoolEvents.get(id);
+  }
+
+  async getSchoolEvents(activeOnly?: boolean): Promise<SchoolEvent[]> {
+    const events = Array.from(this.schoolEvents.values());
+    if (activeOnly) {
+      const now = new Date();
+      return events.filter(event => event.eventDate > now);
+    }
+    return events.sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime());
+  }
+
+  async createSchoolEvent(insertEvent: InsertSchoolEvent): Promise<SchoolEvent> {
+    const id = this.schoolEventCurrentId++;
+    const event: SchoolEvent = { 
+      ...insertEvent, 
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.schoolEvents.set(id, event);
+    return event;
+  }
+
+  async updateSchoolEvent(id: number, eventData: Partial<SchoolEvent>): Promise<SchoolEvent | undefined> {
+    const event = await this.getSchoolEvent(id);
+    if (!event) return undefined;
+
+    const updatedEvent = { 
+      ...event, 
+      ...eventData,
+      updatedAt: new Date()
+    };
+    this.schoolEvents.set(id, updatedEvent);
+    return updatedEvent;
+  }
+
+  async deleteSchoolEvent(id: number): Promise<boolean> {
+    return this.schoolEvents.delete(id);
   }
 }
 

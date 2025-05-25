@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Redirect } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { beltLevelEnum, userRoleEnum } from "@shared/schema";
+import { beltLevelEnum, userRoleEnum, type SchoolConfig } from "@shared/schema";
 import { useTranslation } from "react-i18next";
 
 // Login form schema
@@ -67,6 +68,14 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { t } = useTranslation();
+
+  // Carregar configurações da escola
+  const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
+    queryKey: ['/api/school-config'],
+    retry: false,
+  });
+
+  const schoolConfig = schoolConfigData?.config;
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({

@@ -1073,6 +1073,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== School Configuration Routes =====
+  app.get("/api/school-config", async (req, res) => {
+    try {
+      const config = await storage.getSchoolConfig();
+      res.json({ config: config || {
+        schoolName: "Academia de Jiu-Jitsu",
+        congratsMessage: "🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!",
+        logoUrl: null,
+        address: null,
+        phone: null,
+        email: null,
+        website: null
+      }});
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const configData = insertSchoolConfigSchema.parse(req.body);
+      const updatedConfig = await storage.updateSchoolConfig(configData);
+      
+      // Log activity
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} atualizou as configurações da escola`,
+        entityType: 'school-config',
+        entityId: updatedConfig.id
+      });
+      
+      res.json({ config: updatedConfig });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid config data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

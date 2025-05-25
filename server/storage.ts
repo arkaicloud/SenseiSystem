@@ -997,6 +997,52 @@ export class DatabaseStorage implements IStorage {
     }).returning();
     return log;
   }
+
+  // School Events
+  async getSchoolEvent(id: number): Promise<SchoolEvent | undefined> {
+    const [event] = await db.select().from(schoolEvents).where(eq(schoolEvents.id, id));
+    return event;
+  }
+
+  async getSchoolEvents(activeOnly: boolean = false): Promise<SchoolEvent[]> {
+    let query = db.select().from(schoolEvents);
+    
+    if (activeOnly) {
+      query = query.where(eq(schoolEvents.isActive, true));
+    }
+    
+    return await query.orderBy(asc(schoolEvents.eventDate));
+  }
+
+  async createSchoolEvent(eventData: InsertSchoolEvent): Promise<SchoolEvent> {
+    const [event] = await db.insert(schoolEvents).values({
+      ...eventData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: eventData.isActive ?? true,
+      imageUrl: eventData.imageUrl || null,
+      location: eventData.location || null,
+      createdBy: eventData.createdBy || null
+    }).returning();
+    return event;
+  }
+
+  async updateSchoolEvent(id: number, eventData: Partial<SchoolEvent>): Promise<SchoolEvent | undefined> {
+    const [updatedEvent] = await db
+      .update(schoolEvents)
+      .set({
+        ...eventData,
+        updatedAt: new Date()
+      })
+      .where(eq(schoolEvents.id, id))
+      .returning();
+    return updatedEvent;
+  }
+
+  async deleteSchoolEvent(id: number): Promise<boolean> {
+    await db.delete(schoolEvents).where(eq(schoolEvents.id, id));
+    return true;
+  }
 }
 
 // Export the database storage instance

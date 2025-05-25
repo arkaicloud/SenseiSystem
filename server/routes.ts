@@ -9,7 +9,8 @@ import {
   insertAttendanceSchema,
   insertPaymentPlanSchema,
   insertStudentPaymentSchema,
-  insertActivityLogSchema
+  insertActivityLogSchema,
+  insertSchoolEventSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 
@@ -359,6 +360,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+  
+  // Rota específica para atualizar o avatar do aluno
+  app.put("/api/students/:id/avatar", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const student = await storage.getStudent(Number(id));
+      
+      if (!student) {
+        return res.status(404).json({ message: "Aluno não encontrado" });
+      }
+      
+      // Apenas o próprio aluno ou um admin/instrutor pode atualizar o avatar
+      const requestUser = (req as any).user;
+      if (requestUser.id !== student.userId && 
+          requestUser.role !== 'admin' && 
+          requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Sem permissão para atualizar o avatar" });
+      }
+      
+      const { avatarStyle, avatarColor, avatarImage } = req.body;
+      
+      const updatedStudent = await storage.updateStudent(student.id, { 
+        avatarStyle, 
+        avatarColor, 
+        avatarImage 
+      });
+      
+      // Log de atividade
+      const user = await storage.getUser(student.userId);
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} atualizou o avatar de ${user?.firstName} ${user?.lastName}`,
+        entityType: 'student',
+        entityId: student.id
+      });
+      
+      res.json({ student: updatedStudent });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
 
   // ===== Class Routes =====
   app.get("/api/classes", isAuthenticated, async (req, res) => {
@@ -691,6 +733,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { limit } = req.query;
       const logs = await storage.getActivityLogs(limit ? Number(limit) : undefined);
       res.json({ logs });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // ===== School Events Routes =====
+  app.get("/api/school-events", isAuthenticated, async (req, res) => {
+    try {
+      const { activeOnly } = req.query;
+      const events = await storage.getSchoolEvents(activeOnly === "true");
+      res.json({ events });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.get("/api/school-events/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const event = await storage.getSchoolEvent(Number(id));
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.json({ event });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.post("/api/school-events", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const eventData = insertSchoolEventSchema.parse(req.body);
+      const requestUser = (req as any).user;
+      
+      const event = await storage.createSchoolEvent({
+        ...eventData,
+        createdBy: requestUser.id
+      });
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} created a new school event: ${event.title}`,
+        entityType: 'school-event',
+        entityId: event.id
+      });
+      
+      res.status(201).json({ event });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid event data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.put("/api/school-events/:id", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const event = await storage.getSchoolEvent(Number(id));
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      const eventData = req.body;
+      
+      const updatedEvent = await storage.updateSchoolEvent(event.id, eventData);
+      
+      // Log activity
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} updated school event: ${event.title}`,
+        entityType: 'school-event',
+        entityId: event.id
+      });
+      
+      res.json({ event: updatedEvent });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid event data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.delete("/api/school-events/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const event = await storage.getSchoolEvent(Number(id));
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      await storage.deleteSchoolEvent(Number(id));
+      
+      // Log activity
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} deleted school event: ${event.title}`,
+        entityType: 'school-event',
+        entityId: event.id
+      });
+      
+      res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

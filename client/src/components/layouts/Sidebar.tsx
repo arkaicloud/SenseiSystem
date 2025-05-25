@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const { t } = useTranslation();
 
   // Determine if a link is active
   const isActive = (path: string) => {
@@ -39,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
 
   // Get user initials for avatar
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
-  
+
   // Format role name for display
   const formatRole = (role: string) => {
     return role.charAt(0).toUpperCase() + role.slice(1);
@@ -98,74 +100,74 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
 
       {/* Navigation links */}
       <nav className="mt-4 flex flex-col h-[calc(100vh-180px)] overflow-y-auto">
-        <div className="px-4 py-2 text-xs text-gray-400 uppercase">Main</div>
+        <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
         <Link href="/">
           <a className={linkClass("/")}>
             <span className="material-icons mr-3">dashboard</span>
-            <span>Dashboard</span>
+            <span>{t('dashboard')}</span>
           </a>
         </Link>
-        
+
         {isInstructor && (
           <Link href="/students">
             <a className={linkClass("/students")}>
               <span className="material-icons mr-3">people</span>
-              <span>Students</span>
+              <span>{t('students')}</span>
             </a>
           </Link>
         )}
-        
+
         <Link href="/attendance">
           <a className={linkClass("/attendance")}>
             <span className="material-icons mr-3">fact_check</span>
-            <span>Attendance</span>
+            <span>{t('attendance')}</span>
           </a>
         </Link>
-        
+
         <Link href="/classes">
           <a className={linkClass("/classes")}>
             <span className="material-icons mr-3">event</span>
-            <span>Classes</span>
+            <span>{t('classes')}</span>
           </a>
         </Link>
-        
+
         {isInstructor && (
           <>
             <Link href="/payments">
               <a className={linkClass("/payments")}>
                 <span className="material-icons mr-3">payments</span>
-                <span>Payments</span>
+                <span>{t('payments')}</span>
               </a>
             </Link>
-            
+
             <Link href="/reports">
               <a className={linkClass("/reports")}>
                 <span className="material-icons mr-3">bar_chart</span>
-                <span>Reports</span>
+                <span>{t('reports')}</span>
               </a>
             </Link>
           </>
         )}
 
         <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
-          Settings
+          {t('settings')}
         </div>
         <Link href="/profile">
           <a className={linkClass("/profile")}>
             <span className="material-icons mr-3">person</span>
-            <span>Profile</span>
+            <span>{t('profile')}</span>
           </a>
         </Link>
-        
+
         {isAdmin && (
           <Link href="/settings">
             <a className={linkClass("/settings")}>
               <span className="material-icons mr-3">settings</span>
-              <span>Settings</span>
+              <span>{t('settings')}</span>
             </a>
           </Link>
         )}
-        
+
         <div className="mt-auto px-4 py-3 text-xs text-gray-400">
           <p>Version 1.0.0</p>
         </div>

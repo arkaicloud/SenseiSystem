@@ -17,18 +17,26 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/lib/theme";
+import { useTranslation } from "react-i18next";
 
 const Settings: React.FC = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { t, i18n } = useTranslation();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
-  const [language, setLanguage] = useState("english");
+  const [language, setLanguage] = useState(i18n.language);
   const [backupFrequency, setBackupFrequency] = useState("weekly");
   const [exportFormat, setExportFormat] = useState("csv");
   const [customWaiver, setCustomWaiver] = useState(
     "I, the undersigned, hereby acknowledge the inherent risks of participating in martial arts training and competitions. I assume full responsibility for my actions and any injuries that may occur during training."
   );
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    i18n.changeLanguage(newLanguage);
+    localStorage.setItem('language', newLanguage);
+  };
 
   // Mock user ID for demonstration (would come from auth context in a real app)
   const userId = 1;
@@ -41,14 +49,14 @@ const Settings: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Settings saved successfully",
+        title: t('success'),
+        description: t('settingsSaved'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to save settings: ${error}`,
+        title: t('error'),
+        description: `${t('failedToSave')}: ${error}`,
         variant: "destructive",
       });
     },
@@ -86,15 +94,15 @@ const Settings: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Settings</h1>
-          <p className="text-gray-600">Configure your application preferences</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('settingsTitle')}</h1>
+          <p className="text-gray-600">{t('configurePreferences')}</p>
         </div>
         <Button
           className="mt-4 md:mt-0 bg-secondary hover:bg-secondary-dark text-white"
           onClick={handleSaveSettings}
           disabled={isSaving}
         >
-          {isSaving ? "Saving..." : "Save Settings"}
+          {isSaving ? t('saving') : t('saveSettings')}
         </Button>
       </div>
 
@@ -102,11 +110,11 @@ const Settings: React.FC = () => {
         <div className="md:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Theme Settings</CardTitle>
+              <CardTitle>{t('themeSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="theme">Theme</Label>
+                <Label htmlFor="theme">{t('theme')}</Label>
                 <div className="flex items-center space-x-2">
                   <Select
                     value={theme}
@@ -116,28 +124,28 @@ const Settings: React.FC = () => {
                       <SelectValue placeholder="Select theme" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="light">{t('light')}</SelectItem>
+                      <SelectItem value="dark">{t('dark')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
+                <Label htmlFor="language">{t('language')}</Label>
                 <div className="flex items-center space-x-2">
                   <Select
                     value={language}
-                    onValueChange={setLanguage}
+                    onValueChange={handleLanguageChange}
                   >
                     <SelectTrigger id="language" className="w-full">
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="spanish">Spanish</SelectItem>
-                      <SelectItem value="portuguese">Portuguese</SelectItem>
-                      <SelectItem value="japanese">Japanese</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
+                      <SelectItem value="pt">Português (BR)</SelectItem>
+                      <SelectItem value="ja">日本語</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -147,11 +155,11 @@ const Settings: React.FC = () => {
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
+              <CardTitle>{t('notificationSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="email-notifications">Email Notifications</Label>
+                <Label htmlFor="email-notifications">{t('emailNotifications')}</Label>
                 <Switch
                   id="email-notifications"
                   checked={emailNotifications}
@@ -159,7 +167,7 @@ const Settings: React.FC = () => {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                <Label htmlFor="sms-notifications">{t('smsNotifications')}</Label>
                 <Switch
                   id="sms-notifications"
                   checked={smsNotifications}

@@ -12,11 +12,13 @@ import StudentForm from "@/components/students/StudentForm";
 import AttendanceForm from "@/components/attendance/AttendanceForm";
 import { formatDate, formatTime } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
+  const { t } = useTranslation();
 
   // Fetch dashboard stats
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
@@ -117,14 +119,14 @@ const Dashboard: React.FC = () => {
       {/* Dashboard header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, John</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('dashboard')}</h1>
+          <p className="text-gray-600">{t('welcomeMessage', { name: 'John' })}</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={t('search')}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <div className="absolute left-3 top-2.5 text-gray-400">
@@ -135,11 +137,11 @@ const Dashboard: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                New Student
+                {t('newStudent')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Add New Student</DialogTitle>
+              <DialogTitle>{t('addStudent')}</DialogTitle>
               <StudentForm onSubmit={handleAddStudent} />
             </DialogContent>
           </Dialog>
@@ -149,7 +151,7 @@ const Dashboard: React.FC = () => {
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
-          title="Total Students"
+          title={t('totalStudents')}
           value={stats.totalStudents}
           icon="people"
           trend={{ value: "12%", isPositive: true }}
@@ -157,7 +159,7 @@ const Dashboard: React.FC = () => {
           iconColor="text-blue-500"
         />
         <StatCard
-          title="Classes This Month"
+          title={t('classesThisMonth')}
           value={stats.classesThisMonth}
           icon="event"
           trend={{ value: "5%", isPositive: true }}
@@ -165,7 +167,7 @@ const Dashboard: React.FC = () => {
           iconColor="text-green-500"
         />
         <StatCard
-          title="Avg. Attendance"
+          title={t('avgAttendance')}
           value={stats.avgAttendance}
           icon="fact_check"
           trend={{ value: "3%", isPositive: false }}
@@ -173,7 +175,7 @@ const Dashboard: React.FC = () => {
           iconColor="text-purple-500"
         />
         <StatCard
-          title="Revenue"
+          title={t('revenue')}
           value={stats.revenue}
           icon="payments"
           trend={{ value: "8%", isPositive: true }}
@@ -185,10 +187,10 @@ const Dashboard: React.FC = () => {
       {/* Today's classes section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat font-bold text-xl">Today's Classes</h2>
+          <h2 className="font-montserrat font-bold text-xl">{t('todaysClasses')}</h2>
           <Link href="/classes">
             <a className="text-secondary font-medium text-sm flex items-center">
-              View All
+              {t('viewAll')}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </a>
           </Link>
@@ -196,22 +198,22 @@ const Dashboard: React.FC = () => {
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="font-medium">Upcoming Classes</h3>
+            <h3 className="font-medium">{t('upcomingClasses')}</h3>
             <span className="text-xs text-gray-500">{formatDate(new Date())}</span>
           </div>
 
           <div className="divide-y divide-gray-200">
             {isClassesLoading ? (
-              <div className="p-8 text-center">Loading classes...</div>
+              <div className="p-8 text-center">{t('loading')}</div>
             ) : todaysClasses.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">No classes scheduled for today</div>
+              <div className="p-8 text-center text-gray-500">{t('noClassesScheduled')}</div>
             ) : (
               todaysClasses.map((classItem: any) => {
                 const { time, period } = formatTime(classItem.startTime);
                 const instructorName = classItem.instructor 
                   ? `${classItem.instructor.firstName} Sensei` 
-                  : 'No instructor assigned';
-                
+                  : t('noInstructorAssigned');
+
                 // Mock attendees for demonstration
                 const attendees = [
                   { initials: 'MS', name: 'Michael S.' },
@@ -302,34 +304,34 @@ const Dashboard: React.FC = () => {
       {/* Students at Risk section */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat font-bold text-xl">Students Requiring Attention</h2>
+          <h2 className="font-montserrat font-bold text-xl">{t('studentsRequiringAttention')}</h2>
           <Link href="/reports">
             <a className="text-secondary font-medium text-sm flex items-center">
-              View Detailed Report
+              {t('viewDetailedReport')}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </a>
           </Link>
         </div>
 
         {isOverduePaymentsLoading ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">Loading students...</div>
+          <div className="bg-white rounded-lg shadow p-8 text-center">{t('loadingStudents')}</div>
         ) : studentsRequiringAttention.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-            No students requiring attention at this time
+            {t('noStudentsRequiringAttention')}
           </div>
         ) : (
           <StudentsTable
             students={studentsRequiringAttention.map((payment: any) => {
               const student = payment.student;
               const user = student.user;
-              
+
               return {
                 id: student.id,
                 initials: `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`,
                 name: `${user.firstName} ${user.lastName}`,
                 email: user.email,
                 status: {
-                  label: payment.status === 'overdue' ? 'Payment Overdue' : 'Payment Due Soon',
+                  label: payment.status === 'overdue' ? t('paymentOverdue') : t('paymentDueSoon'),
                   type: payment.status === 'overdue' ? 'danger' : 'warning'
                 },
                 beltLevel: student.beltLevel,
@@ -348,7 +350,7 @@ const Dashboard: React.FC = () => {
       {selectedClass && (
         <Dialog open={true} onOpenChange={() => setSelectedClass(null)}>
           <DialogContent className="sm:max-w-[700px]">
-            <DialogTitle>Take Attendance - {selectedClass.name}</DialogTitle>
+            <DialogTitle>{t('takeAttendance')} - {selectedClass.name}</DialogTitle>
             <AttendanceForm
               classInfo={{
                 id: selectedClass.id,

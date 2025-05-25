@@ -106,36 +106,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
         <Link href="/" className={linkClass("/")}>
           <span className="material-icons mr-3">dashboard</span>
-          <span>Painel</span>
+          <span>{t('dashboard')}</span>
         </Link>
 
         {isInstructor && (
           <Link href="/students" className={linkClass("/students")}>
             <span className="material-icons mr-3">people</span>
-            <span>Alunos</span>
+            <span>{t('students')}</span>
           </Link>
         )}
 
         <Link href="/attendance" className={linkClass("/attendance")}>
           <span className="material-icons mr-3">fact_check</span>
-          <span>Presença</span>
+          <span>{t('attendance')}</span>
         </Link>
 
         <Link href="/classes" className={linkClass("/classes")}>
           <span className="material-icons mr-3">event</span>
-          <span>Aulas</span>
+          <span>{t('classes')}</span>
         </Link>
 
         {isInstructor && (
           <>
             <Link href="/payments" className={linkClass("/payments")}>
               <span className="material-icons mr-3">payments</span>
-              <span>Pagamentos</span>
+              <span>{t('payments')}</span>
             </Link>
 
             <Link href="/reports" className={linkClass("/reports")}>
               <span className="material-icons mr-3">bar_chart</span>
-              <span>Relatórios</span>
+              <span>{t('reports')}</span>
             </Link>
           </>
         )}
@@ -145,13 +145,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         </div>
         <Link href="/profile" className={linkClass("/profile")}>
           <span className="material-icons mr-3">person</span>
-          <span>Perfil</span>
+          <span>{t('profile')}</span>
         </Link>
 
         {isAdmin && (
           <Link href="/settings" className={linkClass("/settings")}>
             <span className="material-icons mr-3">settings</span>
-            <span>Config.</span>
+            <span>{t('settings')}</span>
           </Link>
         )}
 

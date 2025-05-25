@@ -27,6 +27,18 @@ const resources = {
       recentActivity: "Recent Activity",
       beltDistribution: "Belt Distribution",
       upcomingClasses: "Upcoming Classes",
+      welcomeMessage: "Welcome back, {{name}}!",
+      newStudent: "New Student",
+      todaysClasses: "Today's Classes",
+      viewAll: "View All",
+      noClassesScheduled: "No classes scheduled for today",
+      studentsRequiringAttention: "Students Requiring Attention",
+      viewDetailedReport: "View Detailed Report",
+      loadingStudents: "Loading students...",
+      noStudentsRequiringAttention: "No students requiring attention",
+      takeAttendance: "Take Attendance",
+      paymentOverdue: "Payment Overdue",
+      paymentDueSoon: "Payment Due Soon",
       
       // Students
       addStudent: "Add Student",
@@ -83,7 +95,18 @@ const resources = {
       success: "Success",
       error: "Error",
       settingsSaved: "Settings saved successfully",
-      failedToSave: "Failed to save settings"
+      failedToSave: "Failed to save settings",
+      
+      // Additional translations
+      manageStudents: "Manage your students",
+      allStudents: "All Students",
+      noStudentsFound: "No students found matching your search",
+      trackAttendance: "Track and manage class attendance",
+      selectDate: "Select Date",
+      byClass: "By Class",
+      byStudent: "By Student",
+      noAttendanceRecords: "No attendance records found for this date",
+      studentViewComingSoon: "Student view coming soon"
     }
   },
   pt: {
@@ -109,6 +132,18 @@ const resources = {
       recentActivity: "Atividade Recente",
       beltDistribution: "Distribuição de Faixas",
       upcomingClasses: "Próximas Aulas",
+      welcomeMessage: "Bem-vindo de volta, {{name}}!",
+      newStudent: "Novo Aluno",
+      todaysClasses: "Aulas de Hoje",
+      viewAll: "Ver Todos",
+      noClassesScheduled: "Nenhuma aula agendada para hoje",
+      studentsRequiringAttention: "Alunos Requerendo Atenção",
+      viewDetailedReport: "Ver Relatório Detalhado",
+      loadingStudents: "Carregando alunos...",
+      noStudentsRequiringAttention: "Nenhum aluno requerendo atenção",
+      takeAttendance: "Registrar Presença",
+      paymentOverdue: "Pagamento Atrasado",
+      paymentDueSoon: "Pagamento Próximo do Vencimento",
       
       // Students
       addStudent: "Adicionar Aluno",
@@ -165,7 +200,18 @@ const resources = {
       success: "Sucesso",
       error: "Erro",
       settingsSaved: "Configurações salvas com sucesso",
-      failedToSave: "Falha ao salvar configurações"
+      failedToSave: "Falha ao salvar configurações",
+      
+      // Additional translations
+      manageStudents: "Gerencie seus alunos",
+      allStudents: "Todos os Alunos",
+      noStudentsFound: "Nenhum aluno encontrado",
+      trackAttendance: "Acompanhe e gerencie a presença nas aulas",
+      selectDate: "Selecionar Data",
+      byClass: "Por Aula",
+      byStudent: "Por Aluno",
+      noAttendanceRecords: "Nenhum registro de presença encontrado para esta data",
+      studentViewComingSoon: "Visualização por aluno em breve"
     }
   },
   es: {

@@ -89,7 +89,7 @@ const Students: React.FC = () => {
         stripes: data.stripes,
         notes: data.notes,
       };
-      
+
       const userData = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -97,10 +97,10 @@ const Students: React.FC = () => {
         phone: data.phone,
         emergencyContact: data.emergencyContact,
       };
-      
+
       // Update student data
       updateStudent({ id: selectedStudent.id, data: studentData });
-      
+
       // Update user data
       apiRequest('PUT', `/api/users/${selectedStudent.user.id}`, userData)
         .then(() => {
@@ -140,7 +140,7 @@ const Students: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                New Student
+                {t('addStudent')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
@@ -158,7 +158,7 @@ const Students: React.FC = () => {
             <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="inactive">Inactive</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="all">
             {isLoading ? (
               <div className="text-center py-8">Loading students...</div>
@@ -232,13 +232,13 @@ const Students: React.FC = () => {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="active">
             <div className="text-center py-8 text-gray-500">
               Filter feature coming soon
             </div>
           </TabsContent>
-          
+
           <TabsContent value="inactive">
             <div className="text-center py-8 text-gray-500">
               Filter feature coming soon

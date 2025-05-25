@@ -73,7 +73,7 @@ const Attendance: React.FC = () => {
   // Filter attendance records by date
   const filteredAttendance = attendanceRecords.filter((record: any) => {
     if (!selectedDate) return true;
-    
+
     const recordDate = new Date(record.date);
     return (
       recordDate.getDate() === selectedDate.getDate() &&
@@ -158,7 +158,7 @@ const Attendance: React.FC = () => {
                             handleTakeAttendance(classItem);
                           }}
                         >
-                          Take Attendance
+                          {t('takeAttendance')}
                         </Button>
                       </div>
                     );
@@ -184,7 +184,7 @@ const Attendance: React.FC = () => {
                   <TabsTrigger value="byClass">By Class</TabsTrigger>
                   <TabsTrigger value="byStudent">By Student</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="byClass">
                   {attendanceLoading ? (
                     <div className="text-center py-8">Loading attendance records...</div>
@@ -225,7 +225,7 @@ const Attendance: React.FC = () => {
                               {data.students.length} student{data.students.length !== 1 ? 's' : ''} present
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {data.students.map((student: any) => (
                               <div key={student.id} className="flex items-center p-2 border rounded">
@@ -249,7 +249,7 @@ const Attendance: React.FC = () => {
                     </div>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="byStudent">
                   <div className="text-center py-8 text-gray-500">
                     Student view coming soon

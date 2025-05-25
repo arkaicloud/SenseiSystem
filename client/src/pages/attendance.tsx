@@ -11,9 +11,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime, formatDate } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const Attendance: React.FC = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
 
@@ -97,8 +99,8 @@ const Attendance: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Attendance</h1>
-          <p className="text-gray-600">Track and manage class attendance</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('attendance')}</h1>
+          <p className="text-gray-600">{t('trackAttendance')}</p>
         </div>
       </div>
 
@@ -106,7 +108,7 @@ const Attendance: React.FC = () => {
         <div className="md:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Select Date</CardTitle>
+              <CardTitle>{t('selectDate')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Calendar
@@ -120,13 +122,13 @@ const Attendance: React.FC = () => {
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Today's Classes</CardTitle>
+              <CardTitle>{t('todaysClasses')}</CardTitle>
             </CardHeader>
             <CardContent>
               {classesLoading ? (
-                <div className="text-center py-4">Loading classes...</div>
+                <div className="text-center py-4">{t('loading')}</div>
               ) : todaysClasses.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">No classes today</div>
+                <div className="text-center py-4 text-gray-500">{t('noClassesScheduled')}</div>
               ) : (
                 <div className="space-y-4">
                   {todaysClasses.map((classItem: any) => {

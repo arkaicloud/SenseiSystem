@@ -66,6 +66,7 @@ export interface IStorage {
   // Student Payments
   getStudentPayment(id: number): Promise<StudentPayment | undefined>;
   getStudentPaymentsByStudent(studentId: number): Promise<StudentPayment[]>;
+  getStudentPaymentsByPlan(planId: number): Promise<StudentPayment[]>;
   getStudentPaymentsWithDetails(): Promise<StudentPaymentWithDetails[]>;
   getOverduePayments(): Promise<StudentPaymentWithDetails[]>;
   createStudentPayment(payment: InsertStudentPayment): Promise<StudentPayment>;
@@ -467,6 +468,12 @@ export class MemStorage implements IStorage {
   async getStudentPaymentsByStudent(studentId: number): Promise<StudentPayment[]> {
     return Array.from(this.studentPayments.values()).filter(
       (payment) => payment.studentId === studentId,
+    );
+  }
+
+  async getStudentPaymentsByPlan(planId: number): Promise<StudentPayment[]> {
+    return Array.from(this.studentPayments.values()).filter(
+      (payment) => payment.planId === planId,
     );
   }
 
@@ -885,6 +892,10 @@ export class DatabaseStorage implements IStorage {
 
   async getStudentPaymentsByStudent(studentId: number): Promise<StudentPayment[]> {
     return await db.select().from(studentPayments).where(eq(studentPayments.studentId, studentId));
+  }
+  
+  async getStudentPaymentsByPlan(planId: number): Promise<StudentPayment[]> {
+    return await db.select().from(studentPayments).where(eq(studentPayments.planId, planId));
   }
 
   async getStudentPaymentsWithDetails(): Promise<StudentPaymentWithDetails[]> {

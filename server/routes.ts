@@ -640,6 +640,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+  
+  app.put("/api/payment-plans/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = await storage.getPaymentPlan(Number(id));
+      
+      if (!plan) {
+        return res.status(404).json({ message: "Plano de pagamento não encontrado" });
+      }
+      
+      // Validar dados
+      const planData = req.body;
+      const updatedPlan = await storage.updatePaymentPlan(plan.id, planData);
+      
+      // Registrar atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} atualizou o plano de pagamento: ${plan.name}`,
+        entityType: 'payment-plan',
+        entityId: plan.id
+      });
+      
+      res.json({ plan: updatedPlan });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados de plano inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+  
+  app.delete("/api/payment-plans/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const plan = await storage.getPaymentPlan(Number(id));
+      
+      if (!plan) {
+        return res.status(404).json({ message: "Plano de pagamento não encontrado" });
+      }
+      
+      // Verificar se há alunos utilizando esse plano antes de excluí-lo
+      const payments = await storage.getStudentPaymentsByPlan(Number(id));
+      if (payments && payments.length > 0) {
+        return res.status(400).json({ 
+          message: "Não é possível excluir um plano que está sendo utilizado por estudantes",
+          studentsCount: payments.length
+        });
+      }
+      
+      const success = await storage.deletePaymentPlan(Number(id));
+      
+      if (!success) {
+        return res.status(500).json({ message: "Falha ao excluir o plano de pagamento" });
+      }
+      
+      // Registrar atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} excluiu o plano de pagamento: ${plan.name}`,
+        entityType: 'payment-plan',
+        entityId: Number(id)
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
 
   // ===== Student Payment Routes =====
   app.get("/api/student-payments", isAuthenticated, isAdmin, async (req, res) => {

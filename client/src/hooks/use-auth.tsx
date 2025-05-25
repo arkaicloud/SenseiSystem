@@ -50,13 +50,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Login failed");
+      try {
+        // Use direct fetch call with full error handling
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(credentials),
+          credentials: 'include'
+        });
+        
+        // If we get HTML instead of JSON (which happens due to Vite middleware)
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error("Login service unavailable. Please try again later.");
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Login failed");
+        }
+        
+        const data = await response.json();
+        return data.user;
+      } catch (err: any) {
+        if (err.message.includes('JSON')) {
+          throw new Error("Login service unavailable. Please try again later.");
+        }
+        throw err;
       }
-      const data = await res.json();
-      return data.user;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -79,14 +102,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Remove confirmPassword as it's not needed in the API
       const { confirmPassword, beltLevel, stripes, ...registrationData } = userData;
       
-      const res = await apiRequest("POST", "/api/register", registrationData);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Registration failed");
+      try {
+        // Use direct fetch call with full error handling
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(registrationData),
+          credentials: 'include'
+        });
+        
+        // If we get HTML instead of JSON (which happens due to Vite middleware)
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error("Registration service unavailable. Please try again later.");
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Registration failed");
+        }
+        
+        const data = await response.json();
+        return data.user;
+      } catch (err: any) {
+        if (err.message.includes('JSON')) {
+          throw new Error("Registration service unavailable. Please try again later.");
+        }
+        throw err;
       }
-      
-      const data = await res.json();
-      return data.user;
     },
     onSuccess: (_, variables) => {
       toast({
@@ -105,10 +150,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/logout");
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Logout failed");
+      try {
+        // Use direct fetch call with full error handling
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        // If we get HTML instead of JSON (which happens due to Vite middleware)
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error("Logout service unavailable. Please try again later.");
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Logout failed");
+        }
+      } catch (err: any) {
+        if (err.message.includes('JSON')) {
+          throw new Error("Logout service unavailable. Please try again later.");
+        }
+        throw err;
       }
     },
     onSuccess: () => {

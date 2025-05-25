@@ -144,15 +144,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           </div>
         )}
 
-        <Link href="/attendance" className={linkClass("/attendance")}>
-          <span className="material-icons mr-3">fact_check</span>
-          <span>{t('attendance')}</span>
-        </Link>
+        {isInstructor && (
+          <Link href="/attendance" className={linkClass("/attendance")}>
+            <span className="material-icons mr-3">fact_check</span>
+            <span>{t('attendance')}</span>
+          </Link>
+        )}
 
-        <Link href="/classes" className={linkClass("/classes")}>
-          <span className="material-icons mr-3">event</span>
-          <span>{t('classes')}</span>
-        </Link>
+        {!isStudent && (
+          <Link href="/classes" className={linkClass("/classes")}>
+            <span className="material-icons mr-3">event</span>
+            <span>{t('classes')}</span>
+          </Link>
+        )}
 
         {isInstructor && (
           <>

@@ -19,6 +19,7 @@ import { formatDate, formatTime, formatCurrencyBRL } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
+import type { SchoolConfig } from "@shared/schema";
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
@@ -26,6 +27,14 @@ const Dashboard: React.FC = () => {
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const { t } = useTranslation();
+
+  // Carregar configurações da escola
+  const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
+    queryKey: ['/api/school-config'],
+    retry: false,
+  });
+
+  const schoolConfig = schoolConfigData?.config;
 
   // Fetch dashboard stats
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
@@ -287,7 +296,9 @@ const Dashboard: React.FC = () => {
         {/* Cabeçalho do Dashboard */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="font-montserrat font-bold text-2xl text-primary">Painel</h1>
+            <h1 className="font-montserrat font-bold text-2xl text-primary">
+              {schoolConfig?.schoolName ? `${schoolConfig.schoolName} - Painel` : 'Painel'}
+            </h1>
             <p className="text-gray-600">Bem-vindo, {user?.firstName || 'Administrador'}</p>
           </div>
           <div className="mt-4 md:mt-0 flex">

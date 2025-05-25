@@ -546,7 +546,18 @@ export default function AuthPage() {
       {/* Right side - Hero section */}
       <div className="flex-1 bg-primary p-6 flex flex-col justify-center text-white">
         <div className="max-w-md mx-auto">
-          <h1 className="text-3xl font-bold mb-6">SenseiSystem</h1>
+          {/* Logo da escola quando disponível */}
+          {schoolConfig?.logoUrl && (
+            <div className="mb-6 text-center">
+              <img 
+                src={schoolConfig.logoUrl} 
+                alt={schoolConfig.schoolName || "Logo da Academia"} 
+                className="max-h-24 w-auto mx-auto mb-4 object-contain"
+              />
+            </div>
+          )}
+          
+          <h1 className="text-3xl font-bold mb-6">{schoolConfig?.schoolName || "SenseiSystem"}</h1>
           <h2 className="text-2xl font-semibold mb-4">{t('appDescription')}</h2>
           <p className="mb-6 text-lg">
             {t('appSubDescription')}

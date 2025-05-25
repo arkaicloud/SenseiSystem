@@ -138,474 +138,358 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Left side - Forms */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">{t('login')}</TabsTrigger>
-              <TabsTrigger value="register">{t('register')}</TabsTrigger>
-            </TabsList>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col md:flex-row">
+        {/* Left side - Forms */}
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-md">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">{t('login')}</TabsTrigger>
+                <TabsTrigger value="register">{t('register')}</TabsTrigger>
+              </TabsList>
 
-            {/* Login Tab */}
-            <TabsContent value="login">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('login')}</CardTitle>
-                  <CardDescription>
-                    {t('loginDescription')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                      <FormField
-                        control={loginForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('email')}</FormLabel>
-                            <FormControl>
-                              <Input placeholder="you@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={loginForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('password')}</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={loginMutation.isPending}
-                      >
-                        {loginMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('loggingIn')}
-                          </>
-                        ) : (
-                          t('login')
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Register Tab */}
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('createAccount')}</CardTitle>
-                  <CardDescription>
-                    {t('registerDescription')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {registrationSuccess ? (
-                    <Alert className="mb-4">
-                      <AlertTitle>{t('registrationSuccess')}</AlertTitle>
-                      <AlertDescription>
-                        {t('registrationSuccessMessage')}
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Form {...registerForm}>
-                      <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="firstName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('firstName')}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="lastName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('lastName')}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Doe" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('email')}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="you@example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="username"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('username')}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="johndoe" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('phone')}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="(555) 123-4567" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="emergencyContact"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('emergencyContact')}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Contact name and number" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                          
-                        {/* Campo de data de nascimento temporariamente removido */}
-                          
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">{t('address')}</h3>
-                            
-                          <div className="grid grid-cols-2 gap-4 mb-2">
-                            <FormField
-                              control={registerForm.control}
-                              name="zipCode"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('zipCode')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="12345-678" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                // Função para buscar endereço por CEP poderia ser implementada aqui
-                                alert('Funcionalidade de busca de endereço a ser implementada');
-                              }}
-                              className="mt-8"
-                            >
-                              {t('searchAddress')}
-                            </Button>
-                          </div>
-                            
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="street"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('street')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Street name" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="number"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('number')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="123" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                            
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="complement"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('complement')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Apt 4B" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="neighborhood"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('neighborhood')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Downtown" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                            
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="city"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('city')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="City" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="state"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('state')}</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="State" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Role field removed - all new users will be registered as "student" by default */}
-
-                        {selectedRole === "student" && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="beltLevel"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('beltLevel')}</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder={t('selectBeltLevel')} />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="white">{t('whiteBelt')}</SelectItem>
-                                      <SelectItem value="blue">{t('blueBelt')}</SelectItem>
-                                      <SelectItem value="purple">{t('purpleBelt')}</SelectItem>
-                                      <SelectItem value="brown">{t('brownBelt')}</SelectItem>
-                                      <SelectItem value="black">{t('blackBelt')}</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="stripes"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t('stripes')}</FormLabel>
-                                  <Select
-                                    onValueChange={(value) => field.onChange(parseInt(value))}
-                                    defaultValue={field.value?.toString() || "0"}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder={t('numberOfStripes')} />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="0">0</SelectItem>
-                                      <SelectItem value="1">1</SelectItem>
-                                      <SelectItem value="2">2</SelectItem>
-                                      <SelectItem value="3">3</SelectItem>
-                                      <SelectItem value="4">4</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="password"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('password')}</FormLabel>
-                                <FormControl>
-                                  <Input type="password" placeholder="••••••••" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="confirmPassword"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('confirmPassword')}</FormLabel>
-                                <FormControl>
-                                  <Input type="password" placeholder="••••••••" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
+              {/* Login Tab */}
+              <TabsContent value="login">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('login')}</CardTitle>
+                    <CardDescription>
+                      {t('loginDescription')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...loginForm}>
+                      <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                        <FormField
+                          control={loginForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('email')}</FormLabel>
+                              <FormControl>
+                                <Input placeholder="you@example.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={loginForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('password')}</FormLabel>
+                              <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <Button
                           type="submit"
                           className="w-full"
-                          disabled={registerMutation.isPending}
+                          disabled={loginMutation.isPending}
                         >
-                          {registerMutation.isPending ? (
+                          {loginMutation.isPending ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {t('creatingAccount')}
+                              {t('loggingIn')}
                             </>
                           ) : (
-                            t('createAccount')
+                            t('login')
                           )}
                         </Button>
                       </form>
                     </Form>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-      {/* Right side - Hero section */}
-      <div className="flex-1 bg-primary p-6 flex flex-col justify-center text-white">
-        <div className="max-w-md mx-auto">
-          {/* Logo da escola quando disponível */}
-          {schoolConfig?.logoUrl && (
-            <div className="mb-6 text-center">
-              <img 
-                src={schoolConfig.logoUrl} 
-                alt={schoolConfig.schoolName || "Logo da Academia"} 
-                className="max-h-24 w-auto mx-auto mb-4 object-contain"
-              />
-            </div>
-          )}
-          
-          <h1 className="text-3xl font-bold mb-6">{schoolConfig?.schoolName || "SenseiSystem"}</h1>
-          <h2 className="text-2xl font-semibold mb-4">{t('appDescription')}</h2>
-          <p className="mb-6 text-lg">
-            {t('appSubDescription')}
-          </p>
-          
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="mr-3 bg-white text-primary p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
+              {/* Register Tab */}
+              <TabsContent value="register">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('createAccount')}</CardTitle>
+                    <CardDescription>
+                      {t('registerDescription')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {registrationSuccess ? (
+                      <Alert className="mb-4">
+                        <AlertTitle>{t('registrationSuccess')}</AlertTitle>
+                        <AlertDescription>
+                          {t('registrationSuccessMessage')}
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Form {...registerForm}>
+                        <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={registerForm.control}
+                              name="firstName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('firstName')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="João" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="lastName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('lastName')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Silva" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={registerForm.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('email')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="joao@exemplo.com" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="username"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('username')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="joaosilva" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Belt Level Field - Only for students */}
+                          {selectedRole === "student" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={registerForm.control}
+                                name="beltLevel"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>{t('beltLevel')}</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder={t('selectBeltLevel')} />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="white">Branca</SelectItem>
+                                        <SelectItem value="blue">Azul</SelectItem>
+                                        <SelectItem value="purple">Roxa</SelectItem>
+                                        <SelectItem value="brown">Marrom</SelectItem>
+                                        <SelectItem value="black">Preta</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={registerForm.control}
+                                name="stripes"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>{t('stripes')}</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={String(field.value)}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Faixas" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="0">0 faixas</SelectItem>
+                                        <SelectItem value="1">1 faixa</SelectItem>
+                                        <SelectItem value="2">2 faixas</SelectItem>
+                                        <SelectItem value="3">3 faixas</SelectItem>
+                                        <SelectItem value="4">4 faixas</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={registerForm.control}
+                              name="password"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('password')}</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="••••••••" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="confirmPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('confirmPassword')}</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="••••••••" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={registerMutation.isPending}
+                          >
+                            {registerMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {t('creatingAccount')}
+                              </>
+                            ) : (
+                              t('createAccount')
+                            )}
+                          </Button>
+                        </form>
+                      </Form>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Right side - Hero section */}
+        <div className="flex-1 bg-primary p-6 flex flex-col justify-center text-white">
+          <div className="max-w-md mx-auto">
+            {/* Logo da escola quando disponível */}
+            {schoolConfig?.logoUrl && (
+              <div className="mb-6 text-center">
+                <img 
+                  src={schoolConfig.logoUrl} 
+                  alt={schoolConfig.schoolName || "Logo da Academia"} 
+                  className="max-h-24 w-auto mx-auto mb-4 object-contain"
+                />
               </div>
-              <div>
-                <h3 className="font-semibold">{t('trackAttendanceFeature')}</h3>
-                <p>{t('trackAttendanceDescription')}</p>
-              </div>
-            </div>
+            )}
             
-            <div className="flex items-start">
-              <div className="mr-3 bg-white text-primary p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-award"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">{t('beltProgressionFeature')}</h3>
-                <p>{t('beltProgressionDescription')}</p>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold mb-6">{schoolConfig?.schoolName || "SenseiSystem"}</h1>
             
-            <div className="flex items-start">
-              <div className="mr-3 bg-white text-primary p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <div className="mr-3 bg-white text-primary p-2 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold">{t('trackAttendanceFeature')}</h3>
+                  <p>{t('trackAttendanceDescription')}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">{t('classScheduleFeature')}</h3>
-                <p>{t('classScheduleDescription')}</p>
+              
+              <div className="flex items-start">
+                <div className="mr-3 bg-white text-primary p-2 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-award"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold">{t('beltProgressionFeature')}</h3>
+                  <p>{t('beltProgressionDescription')}</p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="mr-3 bg-white text-primary p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              
+              <div className="flex items-start">
+                <div className="mr-3 bg-white text-primary p-2 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold">{t('classScheduleFeature')}</h3>
+                  <p>{t('classScheduleDescription')}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">{t('paymentManagementFeature')}</h3>
-                <p>{t('paymentManagementDescription')}</p>
+              
+              <div className="flex items-start">
+                <div className="mr-3 bg-white text-primary p-2 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold">{t('paymentManagementFeature')}</h3>
+                  <p>{t('paymentManagementDescription')}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Footer with school contact information */}
+      <footer className="bg-muted border-t px-6 py-4">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
+          <div className="text-center md:text-left mb-2 md:mb-0">
+            <span className="font-medium">Sistema de Gestão para Escolas e Dojos</span>
+          </div>
+          
+          {/* Informações de contato da escola */}
+          {schoolConfig && (
+            <div className="flex flex-col md:flex-row gap-4 text-center md:text-right">
+              {schoolConfig.address && (
+                <div className="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span>{schoolConfig.address}</span>
+                </div>
+              )}
+              
+              {schoolConfig.phone && (
+                <div className="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <span>{schoolConfig.phone}</span>
+                </div>
+              )}
+              
+              {schoolConfig.website && (
+                <div className="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-globe"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  <a href={schoolConfig.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    {schoolConfig.website.replace(/^https?:\/\//, '')}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </footer>
     </div>
   );
 }

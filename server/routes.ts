@@ -11,108 +11,73 @@ import {
   insertStudentPaymentSchema,
   insertActivityLogSchema
 } from "@shared/schema";
-
-const authMiddleware = async (req: Request, res: Response, next: Function) => {
-  // Note: In a real app, this would check JWT or session
-  // For this prototype, we'll use a mock auth system
-  const userId = req.headers['user-id'];
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  
-  const user = await storage.getUser(Number(userId));
-  if (!user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  
-  // Attach user to request
-  (req as any).user = user;
-  next();
-};
-
-const adminMiddleware = async (req: Request, res: Response, next: Function) => {
-  // Check if user is admin
-  const user = (req as any).user;
-  if (!user || user.role !== 'admin') {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-  next();
-};
-
-const instructorMiddleware = async (req: Request, res: Response, next: Function) => {
-  // Check if user is admin or instructor
-  const user = (req as any).user;
-  if (!user || (user.role !== 'admin' && user.role !== 'instructor')) {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-  next();
-};
+import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // ===== Auth Routes =====
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
-      }
-      
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // In a real app, we would generate a JWT token here
-      // For this prototype, we'll just return the user
-      res.json({ user: { ...user, password: undefined } });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // Set up authentication
+  setupAuth(app);
 
-  app.post("/api/auth/register", async (req, res) => {
+  // =====Stats/Dashboard Routes=====
+  app.get("/api/stats", isAuthenticated, async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      // Calculate stats based on user role
+      const totalStudents = (await storage.getStudents()).length;
+      const totalClasses = (await storage.getClasses()).length;
+      const totalAttendances = (await storage.getAttendanceWithDetails()).length;
       
-      // Check if username or email already exists
-      const existingUsername = await storage.getUserByUsername(userData.username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already exists" });
+      // Admins and instructors get all stats
+      if (req.user.role === 'admin' || req.user.role === 'instructor') {
+        const stats = {
+          totalStudents,
+          totalClasses,
+          totalAttendances,
+          activeStudents: Math.floor(totalStudents * 0.8), // This would be calculated from actual data
+          averageAttendance: totalAttendances > 0 ? Math.floor((totalAttendances / totalClasses) * 100) / 100 : 0,
+          beltDistribution: [
+            { level: 'white', count: Math.floor(totalStudents * 0.4) },
+            { level: 'blue', count: Math.floor(totalStudents * 0.3) },
+            { level: 'purple', count: Math.floor(totalStudents * 0.15) },
+            { level: 'brown', count: Math.floor(totalStudents * 0.1) },
+            { level: 'black', count: Math.floor(totalStudents * 0.05) }
+          ],
+          revenueThisMonth: 0, // Would be calculated from payment data
+        };
+        
+        return res.json({ stats });
       }
       
-      const existingEmail = await storage.getUserByEmail(userData.email);
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email already exists" });
+      // Students get limited stats
+      if (req.user.role === 'student') {
+        // Get student record
+        const student = await storage.getStudentByUserId(req.user.id);
+        
+        if (!student) {
+          return res.status(404).json({ message: "Student record not found" });
+        }
+        
+        // Get student's attendance
+        const studentAttendances = await storage.getAttendanceByStudent(student.id);
+        
+        const stats = {
+          totalClasses,
+          studentAttendances: studentAttendances.length,
+          studentBelt: student.beltLevel,
+          studentStripes: student.stripes,
+          lastPromotion: student.lastPromotionDate,
+          attendanceRate: student.attendanceRate || 0
+        };
+        
+        return res.json({ stats });
       }
       
-      const user = await storage.createUser(userData);
-      
-      // If role is student, create student record
-      if (user.role === 'student') {
-        await storage.createStudent({ userId: user.id, beltLevel: 'white', stripes: 0 });
-      }
-      
-      // Log activity
-      await storage.createActivityLog({
-        userId: user.id,
-        activity: `${user.firstName} ${user.lastName} registered as a new user`,
-        entityType: 'user',
-        entityId: user.id
-      });
-      
-      res.status(201).json({ user: { ...user, password: undefined } });
+      res.status(403).json({ message: "Forbidden" });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
-      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // ===== User Routes =====
-  app.get("/api/users", authMiddleware, adminMiddleware, async (req, res) => {
+  app.get("/api/users", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const users = await storage.getUsers();
       res.json({ users: users.map(u => ({ ...u, password: undefined })) });
@@ -121,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/:id", authMiddleware, async (req, res) => {
+  app.get("/api/users/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const user = await storage.getUser(Number(id));
@@ -142,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:id", authMiddleware, async (req, res) => {
+  app.put("/api/users/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const user = await storage.getUser(Number(id));
@@ -185,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Student Routes =====
-  app.get("/api/students", authMiddleware, instructorMiddleware, async (req, res) => {
+  app.get("/api/students", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const students = await storage.getStudentsWithUsers();
       res.json({ students });
@@ -194,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/students/:id", authMiddleware, async (req, res) => {
+  app.get("/api/students/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const student = await storage.getStudent(Number(id));
@@ -221,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/students/:id", authMiddleware, instructorMiddleware, async (req, res) => {
+  app.put("/api/students/:id", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const { id } = req.params;
       const student = await storage.getStudent(Number(id));
@@ -255,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Class Routes =====
-  app.get("/api/classes", authMiddleware, async (req, res) => {
+  app.get("/api/classes", isAuthenticated, async (req, res) => {
     try {
       const classes = await storage.getClassesWithInstructors();
       res.json({ classes });
@@ -264,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/classes/today", authMiddleware, async (req, res) => {
+  app.get("/api/classes/today", isAuthenticated, async (req, res) => {
     try {
       const classes = await storage.getTodaysClasses();
       res.json({ classes });
@@ -273,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/classes/:id", authMiddleware, async (req, res) => {
+  app.get("/api/classes/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const classItem = await storage.getClass(Number(id));
@@ -293,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/classes", authMiddleware, adminMiddleware, async (req, res) => {
+  app.post("/api/classes", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const classData = insertClassSchema.parse(req.body);
       
@@ -317,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/classes/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  app.put("/api/classes/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const classItem = await storage.getClass(Number(id));
@@ -349,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Attendance Routes =====
-  app.get("/api/attendance", authMiddleware, instructorMiddleware, async (req, res) => {
+  app.get("/api/attendance", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const attendances = await storage.getAttendanceWithDetails();
       res.json({ attendances });
@@ -358,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/attendance/class/:classId", authMiddleware, instructorMiddleware, async (req, res) => {
+  app.get("/api/attendance/class/:classId", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const { classId } = req.params;
       const { date } = req.query;
@@ -375,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/attendance/student/:studentId", authMiddleware, async (req, res) => {
+  app.get("/api/attendance/student/:studentId", isAuthenticated, async (req, res) => {
     try {
       const { studentId } = req.params;
       const student = await storage.getStudent(Number(studentId));
@@ -397,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/attendance", authMiddleware, instructorMiddleware, async (req, res) => {
+  app.post("/api/attendance", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const attendanceData = insertAttendanceSchema.parse(req.body);
       
@@ -435,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Payment Plan Routes =====
-  app.get("/api/payment-plans", authMiddleware, async (req, res) => {
+  app.get("/api/payment-plans", isAuthenticated, async (req, res) => {
     try {
       const plans = await storage.getPaymentPlans();
       res.json({ plans });
@@ -444,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/payment-plans", authMiddleware, adminMiddleware, async (req, res) => {
+  app.post("/api/payment-plans", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const planData = insertPaymentPlanSchema.parse(req.body);
       
@@ -469,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Student Payment Routes =====
-  app.get("/api/student-payments", authMiddleware, adminMiddleware, async (req, res) => {
+  app.get("/api/student-payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const payments = await storage.getStudentPaymentsWithDetails();
       res.json({ payments });
@@ -478,7 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/student-payments/overdue", authMiddleware, adminMiddleware, async (req, res) => {
+  app.get("/api/student-payments/overdue", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const payments = await storage.getOverduePayments();
       res.json({ payments });
@@ -487,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/student-payments/student/:studentId", authMiddleware, async (req, res) => {
+  app.get("/api/student-payments/student/:studentId", isAuthenticated, async (req, res) => {
     try {
       const { studentId } = req.params;
       const student = await storage.getStudent(Number(studentId));
@@ -509,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/student-payments", authMiddleware, adminMiddleware, async (req, res) => {
+  app.post("/api/student-payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const paymentData = insertStudentPaymentSchema.parse(req.body);
       
@@ -546,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/student-payments/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  app.put("/api/student-payments/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const payment = await storage.getStudentPayment(Number(id));
@@ -580,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Activity Log Routes =====
-  app.get("/api/activity-logs", authMiddleware, adminMiddleware, async (req, res) => {
+  app.get("/api/activity-logs", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { limit } = req.query;
       const logs = await storage.getActivityLogs(limit ? Number(limit) : undefined);
@@ -591,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Stats Routes =====
-  app.get("/api/stats", authMiddleware, instructorMiddleware, async (req, res) => {
+  app.get("/api/stats", isAuthenticated, isInstructor, async (req, res) => {
     try {
       // Get counts
       const users = await storage.getUsers();

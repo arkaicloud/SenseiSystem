@@ -39,11 +39,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
     return null;
   }
 
-  // Get user initials for avatar
-  const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
+  // Get user initials for avatar safely
+  const userInitials = user && user.firstName && user.lastName 
+    ? getInitials(user.firstName, user.lastName) 
+    : "??";
 
   // Format role name for display
-  const formatRole = (role: string) => {
+  const formatRole = (role?: string) => {
+    if (!role) return '';
     return role.charAt(0).toUpperCase() + role.slice(1);
   };
 
@@ -101,50 +104,38 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       {/* Navigation links */}
       <nav className="mt-4 flex flex-col h-[calc(100vh-180px)] overflow-y-auto">
         <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
-        <Link href="/">
-          <a className={linkClass("/")}>
-            <span className="material-icons mr-3">dashboard</span>
-            <span>{t('dashboard')}</span>
-          </a>
+        <Link href="/" className={linkClass("/")}>
+          <span className="material-icons mr-3">dashboard</span>
+          <span>{t('dashboard')}</span>
         </Link>
 
         {isInstructor && (
-          <Link href="/students">
-            <a className={linkClass("/students")}>
-              <span className="material-icons mr-3">people</span>
-              <span>{t('students')}</span>
-            </a>
+          <Link href="/students" className={linkClass("/students")}>
+            <span className="material-icons mr-3">people</span>
+            <span>{t('students')}</span>
           </Link>
         )}
 
-        <Link href="/attendance">
-          <a className={linkClass("/attendance")}>
-            <span className="material-icons mr-3">fact_check</span>
-            <span>{t('attendance')}</span>
-          </a>
+        <Link href="/attendance" className={linkClass("/attendance")}>
+          <span className="material-icons mr-3">fact_check</span>
+          <span>{t('attendance')}</span>
         </Link>
 
-        <Link href="/classes">
-          <a className={linkClass("/classes")}>
-            <span className="material-icons mr-3">event</span>
-            <span>{t('classes')}</span>
-          </a>
+        <Link href="/classes" className={linkClass("/classes")}>
+          <span className="material-icons mr-3">event</span>
+          <span>{t('classes')}</span>
         </Link>
 
         {isInstructor && (
           <>
-            <Link href="/payments">
-              <a className={linkClass("/payments")}>
-                <span className="material-icons mr-3">payments</span>
-                <span>{t('payments')}</span>
-              </a>
+            <Link href="/payments" className={linkClass("/payments")}>
+              <span className="material-icons mr-3">payments</span>
+              <span>{t('payments')}</span>
             </Link>
 
-            <Link href="/reports">
-              <a className={linkClass("/reports")}>
-                <span className="material-icons mr-3">bar_chart</span>
-                <span>{t('reports')}</span>
-              </a>
+            <Link href="/reports" className={linkClass("/reports")}>
+              <span className="material-icons mr-3">bar_chart</span>
+              <span>{t('reports')}</span>
             </Link>
           </>
         )}
@@ -152,19 +143,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
           {t('account')}
         </div>
-        <Link href="/profile">
-          <a className={linkClass("/profile")}>
-            <span className="material-icons mr-3">person</span>
-            <span>{t('profile')}</span>
-          </a>
+        <Link href="/profile" className={linkClass("/profile")}>
+          <span className="material-icons mr-3">person</span>
+          <span>{t('profile')}</span>
         </Link>
 
         {isAdmin && (
-          <Link href="/settings">
-            <a className={linkClass("/settings")}>
-              <span className="material-icons mr-3">settings</span>
-              <span>{t('settings')}</span>
-            </a>
+          <Link href="/settings" className={linkClass("/settings")}>
+            <span className="material-icons mr-3">settings</span>
+            <span>{t('settings')}</span>
           </Link>
         )}
 

@@ -334,6 +334,7 @@ const resources = {
   }
 };
 
+// Initialize i18next with language detection and browser storage
 i18n
   .use(initReactI18next)
   .init({
@@ -343,6 +344,13 @@ i18n
     
     interpolation: {
       escapeValue: false,
+    },
+    react: {
+      useSuspense: false, // Prevents issues during SSR or when components load before translations
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
     },
   });
 

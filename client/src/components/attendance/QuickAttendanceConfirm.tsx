@@ -33,6 +33,10 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   // Buscar estudante pelo userId
   const { data: studentData } = useQuery({
     queryKey: ['/api/students/by-user', userId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/students/by-user/${userId}`);
+      return await res.json();
+    },
     enabled: !!userId,
   });
   
@@ -70,13 +74,14 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   // Mutation para confirmar presença
   const confirmAttendanceMutation = useMutation({
     mutationFn: async (classId: number) => {
-      // Usar o userId diretamente sem depender do estudante
-      // Uma implementação completa buscaria o studentId correto
-      // Mas para fins de demonstração, usamos o userId diretamente
+      // Buscar o studentId correto usando os dados do estudante
+      if (!studentData?.student?.id) {
+        throw new Error("Dados do estudante não encontrados");
+      }
       
       const attendanceData = {
         classId,
-        studentId: userId, // Usar userId como substituto temporário
+        studentId: studentData.student.id, // Usar o ID correto do estudante
         date: new Date().toISOString(),
         status: 'present',
         notes: "Presença confirmada pelo aluno via dashboard"
@@ -113,13 +118,14 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   // Mutation para cancelar presença
   const cancelAttendanceMutation = useMutation({
     mutationFn: async (classId: number) => {
-      // Usar o userId diretamente sem depender do estudante
-      // Uma implementação completa buscaria o studentId correto
-      // Mas para fins de demonstração, usamos o userId diretamente
+      // Buscar o studentId correto usando os dados do estudante
+      if (!studentData?.student?.id) {
+        throw new Error("Dados do estudante não encontrados");
+      }
       
       const cancellationData = {
         classId,
-        studentId: userId, // Usar userId como substituto temporário
+        studentId: studentData.student.id, // Usar o ID correto do estudante
         date: new Date().toISOString()
       };
       

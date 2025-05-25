@@ -154,49 +154,53 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats cards */}
+      {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
-          title={t('totalStudents')}
+          title={t('totalAlunos')}
           value={stats.totalStudents}
           icon="people"
           trend={{ value: "12%", isPositive: true }}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-500"
+          subtitle={t('vs_last_month')}
         />
         <StatCard
-          title={t('classesThisMonth')}
+          title={t('aulasMes')}
           value={stats.classesThisMonth}
           icon="event"
           trend={{ value: "5%", isPositive: true }}
           iconBgColor="bg-green-100"
           iconColor="text-green-500"
+          subtitle={t('vs_last_month')}
         />
         <StatCard
-          title={t('avgAttendance')}
+          title={t('avgPresenca')}
           value={stats.avgAttendance}
           icon="fact_check"
           trend={{ value: "3%", isPositive: false }}
           iconBgColor="bg-purple-100"
           iconColor="text-purple-500"
+          subtitle={t('vs_last_month')}
         />
         <StatCard
-          title={t('revenue')}
+          title={t('receita')}
           value={stats.revenue}
           icon="payments"
           trend={{ value: "8%", isPositive: true }}
           iconBgColor="bg-accent-light"
           iconColor="text-accent-dark"
+          subtitle={t('vs_last_month')}
         />
       </div>
 
-      {/* Today's classes section */}
+      {/* Seção de aulas do dia */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat font-bold text-xl">{t('todaysClasses')}</h2>
+          <h2 className="font-montserrat font-bold text-xl">{t('aulasHoje')}</h2>
           <Link href="/classes">
             <a className="text-secondary font-medium text-sm flex items-center">
-              {t('viewAll')}
+              {t('verTodas')}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </a>
           </Link>
@@ -204,7 +208,7 @@ const Dashboard: React.FC = () => {
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="font-medium">{t('upcomingClasses')}</h3>
+            <h3 className="font-medium">{t('proximasAulas')}</h3>
             <span className="text-xs text-gray-500">{formatDate(new Date())}</span>
           </div>
 
@@ -212,13 +216,13 @@ const Dashboard: React.FC = () => {
             {isClassesLoading ? (
               <div className="p-8 text-center">{t('loading')}</div>
             ) : todaysClasses.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">{t('noClassesScheduled')}</div>
+              <div className="p-8 text-center text-gray-500">{t('semAulasAgendadas')}</div>
             ) : (
               todaysClasses.map((classItem: any) => {
                 const { time, period } = formatTime(classItem.startTime);
                 const instructorName = classItem.instructor 
                   ? `${classItem.instructor.firstName} Sensei` 
-                  : t('noInstructorAssigned');
+                  : t('semInstrutorDesignado');
 
                 // Mock attendees for demonstration
                 const attendees = [

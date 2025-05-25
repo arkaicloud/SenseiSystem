@@ -10,6 +10,7 @@ interface StatCardProps {
   };
   iconBgColor?: string;
   iconColor?: string;
+  subtitle?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -19,6 +20,7 @@ const StatCard: React.FC<StatCardProps> = ({
   trend,
   iconBgColor = "bg-blue-100",
   iconColor = "text-blue-500",
+  subtitle,
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -43,7 +45,7 @@ const StatCard: React.FC<StatCardProps> = ({
           </span>
         )}
       </div>
-      <p className="text-gray-500 text-xs mt-1">vs last month</p>
+      <p className="text-gray-500 text-xs mt-1">{subtitle || "vs último mês"}</p>
     </div>
   );
 };

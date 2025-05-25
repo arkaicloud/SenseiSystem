@@ -1,5 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, varchar, uuid, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 // Enums
@@ -136,3 +137,65 @@ export type StudentPaymentWithDetails = StudentPayment & {
   student: StudentWithUser;
   plan: PaymentPlan;
 };
+
+// Define table relations
+export const usersRelations = relations(users, ({ many }) => ({
+  students: many(students),
+  instructedClasses: many(classes, { relationName: "instructor" }),
+  activityLogs: many(activityLogs),
+}));
+
+export const studentsRelations = relations(students, ({ one, many }) => ({
+  user: one(users, {
+    fields: [students.userId],
+    references: [users.id],
+  }),
+  attendances: many(attendance),
+  payments: many(studentPayments),
+}));
+
+export const classesRelations = relations(classes, ({ one, many }) => ({
+  instructor: one(users, {
+    fields: [classes.instructorId],
+    references: [users.id],
+    relationName: "instructor",
+  }),
+  attendances: many(attendance),
+}));
+
+export const attendanceRelations = relations(attendance, ({ one }) => ({
+  student: one(students, {
+    fields: [attendance.studentId],
+    references: [students.id],
+  }),
+  class: one(classes, {
+    fields: [attendance.classId],
+    references: [classes.id],
+  }),
+  checkedInByUser: one(users, {
+    fields: [attendance.checkedInBy],
+    references: [users.id],
+  }),
+}));
+
+export const paymentPlansRelations = relations(paymentPlans, ({ many }) => ({
+  studentPayments: many(studentPayments),
+}));
+
+export const studentPaymentsRelations = relations(studentPayments, ({ one }) => ({
+  student: one(students, {
+    fields: [studentPayments.studentId],
+    references: [students.id],
+  }),
+  plan: one(paymentPlans, {
+    fields: [studentPayments.planId],
+    references: [paymentPlans.id],
+  }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [activityLogs.userId],
+    references: [users.id],
+  }),
+}));

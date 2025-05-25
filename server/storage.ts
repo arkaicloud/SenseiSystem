@@ -555,4 +555,437 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import connectPgSimple from "connect-pg-simple";
+import session from "express-session";
+import { db, pool } from "./db";
+import { eq, and, desc, sql, asc, gte, lte } from "drizzle-orm";
+import { relations } from "drizzle-orm";
+
+// Database-backed storage implementation
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
+
+  constructor() {
+    const PostgresSessionStore = connectPgSimple(session);
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values({
+      ...userData,
+      role: userData.role || "student",
+      joinDate: userData.joinDate || new Date(),
+      active: userData.active ?? true
+    }).returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return true;
+  }
+
+  // Students
+  async getStudent(id: number): Promise<Student | undefined> {
+    const [student] = await db.select().from(students).where(eq(students.id, id));
+    return student;
+  }
+
+  async getStudentByUserId(userId: number): Promise<Student | undefined> {
+    const [student] = await db.select().from(students).where(eq(students.userId, userId));
+    return student;
+  }
+
+  async getStudents(): Promise<Student[]> {
+    return await db.select().from(students);
+  }
+
+  async getStudentsWithUsers(): Promise<StudentWithUser[]> {
+    const result = await db.select({
+      student: students,
+      user: users
+    })
+    .from(students)
+    .leftJoin(users, eq(students.userId, users.id));
+    
+    return result.map(item => ({
+      ...item.student,
+      user: item.user
+    }));
+  }
+
+  async createStudent(studentData: InsertStudent): Promise<Student> {
+    const [student] = await db.insert(students).values({
+      ...studentData,
+      beltLevel: studentData.beltLevel || "white",
+      stripes: studentData.stripes || 0,
+      lastPromotionDate: studentData.lastPromotionDate || new Date(),
+      attendanceRate: studentData.attendanceRate || 0
+    }).returning();
+    return student;
+  }
+
+  async updateStudent(id: number, studentData: Partial<Student>): Promise<Student | undefined> {
+    const [updatedStudent] = await db
+      .update(students)
+      .set(studentData)
+      .where(eq(students.id, id))
+      .returning();
+    return updatedStudent;
+  }
+
+  async deleteStudent(id: number): Promise<boolean> {
+    await db.delete(students).where(eq(students.id, id));
+    return true;
+  }
+
+  // Classes
+  async getClass(id: number): Promise<Class | undefined> {
+    const [classItem] = await db.select().from(classes).where(eq(classes.id, id));
+    return classItem;
+  }
+
+  async getClasses(): Promise<Class[]> {
+    return await db.select().from(classes);
+  }
+
+  async getClassesWithInstructors(): Promise<ClassWithInstructor[]> {
+    const result = await db.select({
+      class: classes,
+      instructor: users
+    })
+    .from(classes)
+    .leftJoin(users, eq(classes.instructorId, users.id));
+    
+    return result.map(item => ({
+      ...item.class,
+      instructor: item.instructor
+    }));
+  }
+
+  async getClassesByInstructor(instructorId: number): Promise<Class[]> {
+    return await db.select().from(classes).where(eq(classes.instructorId, instructorId));
+  }
+
+  async getTodaysClasses(): Promise<ClassWithInstructor[]> {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    
+    const result = await db.select({
+      class: classes,
+      instructor: users
+    })
+    .from(classes)
+    .leftJoin(users, eq(classes.instructorId, users.id))
+    .where(eq(classes.dayOfWeek, dayOfWeek));
+    
+    return result.map(item => ({
+      ...item.class,
+      instructor: item.instructor
+    }));
+  }
+
+  async createClass(classData: InsertClass): Promise<Class> {
+    const [classItem] = await db.insert(classes).values({
+      ...classData,
+      description: classData.description || null,
+      instructorId: classData.instructorId || null,
+      maxCapacity: classData.maxCapacity || null
+    }).returning();
+    return classItem;
+  }
+
+  async updateClass(id: number, classData: Partial<Class>): Promise<Class | undefined> {
+    const [updatedClass] = await db
+      .update(classes)
+      .set(classData)
+      .where(eq(classes.id, id))
+      .returning();
+    return updatedClass;
+  }
+
+  async deleteClass(id: number): Promise<boolean> {
+    await db.delete(classes).where(eq(classes.id, id));
+    return true;
+  }
+
+  // Attendance
+  async getAttendance(id: number): Promise<Attendance | undefined> {
+    const [attendanceItem] = await db.select().from(attendance).where(eq(attendance.id, id));
+    return attendanceItem;
+  }
+
+  async getAttendanceByClass(classId: number, date?: Date): Promise<Attendance[]> {
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      return await db.select()
+        .from(attendance)
+        .where(
+          and(
+            eq(attendance.classId, classId),
+            gte(attendance.date, startOfDay),
+            lte(attendance.date, endOfDay)
+          )
+        );
+    }
+    
+    return await db.select().from(attendance).where(eq(attendance.classId, classId));
+  }
+
+  async getAttendanceByStudent(studentId: number): Promise<Attendance[]> {
+    return await db.select().from(attendance).where(eq(attendance.studentId, studentId));
+  }
+
+  async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {
+    const result = await db.select({
+      attendance: attendance,
+      student: students,
+      user: users,
+      class: classes,
+      instructor: {
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role
+      }
+    })
+    .from(attendance)
+    .leftJoin(students, eq(attendance.studentId, students.id))
+    .leftJoin(users, eq(students.userId, users.id))
+    .leftJoin(classes, eq(attendance.classId, classes.id))
+    .leftJoin(users, eq(classes.instructorId, users.id), "instructor");
+    
+    return result.map(item => ({
+      ...item.attendance,
+      student: {
+        ...item.student,
+        user: item.user
+      },
+      class: {
+        ...item.class,
+        instructor: item.instructor ? {
+          id: item.instructor.id,
+          firstName: item.instructor.firstName,
+          lastName: item.instructor.lastName,
+          role: item.instructor.role
+        } : undefined
+      }
+    }));
+  }
+
+  async createAttendance(attendanceData: InsertAttendance): Promise<Attendance> {
+    const [attendanceItem] = await db.insert(attendance).values({
+      ...attendanceData,
+      date: attendanceData.date || new Date(),
+      status: attendanceData.status || "present"
+    }).returning();
+    return attendanceItem;
+  }
+
+  async updateAttendance(id: number, attendanceData: Partial<Attendance>): Promise<Attendance | undefined> {
+    const [updatedAttendance] = await db
+      .update(attendance)
+      .set(attendanceData)
+      .where(eq(attendance.id, id))
+      .returning();
+    return updatedAttendance;
+  }
+
+  async deleteAttendance(id: number): Promise<boolean> {
+    await db.delete(attendance).where(eq(attendance.id, id));
+    return true;
+  }
+
+  // Payment Plans
+  async getPaymentPlan(id: number): Promise<PaymentPlan | undefined> {
+    const [plan] = await db.select().from(paymentPlans).where(eq(paymentPlans.id, id));
+    return plan;
+  }
+
+  async getPaymentPlans(): Promise<PaymentPlan[]> {
+    return await db.select().from(paymentPlans);
+  }
+
+  async createPaymentPlan(planData: InsertPaymentPlan): Promise<PaymentPlan> {
+    const [plan] = await db.insert(paymentPlans).values({
+      ...planData,
+      description: planData.description || null
+    }).returning();
+    return plan;
+  }
+
+  async updatePaymentPlan(id: number, planData: Partial<PaymentPlan>): Promise<PaymentPlan | undefined> {
+    const [updatedPlan] = await db
+      .update(paymentPlans)
+      .set(planData)
+      .where(eq(paymentPlans.id, id))
+      .returning();
+    return updatedPlan;
+  }
+
+  async deletePaymentPlan(id: number): Promise<boolean> {
+    await db.delete(paymentPlans).where(eq(paymentPlans.id, id));
+    return true;
+  }
+
+  // Student Payments
+  async getStudentPayment(id: number): Promise<StudentPayment | undefined> {
+    const [payment] = await db.select().from(studentPayments).where(eq(studentPayments.id, id));
+    return payment;
+  }
+
+  async getStudentPaymentsByStudent(studentId: number): Promise<StudentPayment[]> {
+    return await db.select().from(studentPayments).where(eq(studentPayments.studentId, studentId));
+  }
+
+  async getStudentPaymentsWithDetails(): Promise<StudentPaymentWithDetails[]> {
+    const result = await db.select({
+      payment: studentPayments,
+      student: students,
+      user: users,
+      plan: paymentPlans
+    })
+    .from(studentPayments)
+    .leftJoin(students, eq(studentPayments.studentId, students.id))
+    .leftJoin(users, eq(students.userId, users.id))
+    .leftJoin(paymentPlans, eq(studentPayments.planId, paymentPlans.id));
+    
+    return result.map(item => ({
+      ...item.payment,
+      student: {
+        ...item.student,
+        user: item.user
+      },
+      plan: item.plan
+    }));
+  }
+
+  async getOverduePayments(): Promise<StudentPaymentWithDetails[]> {
+    const result = await db.select({
+      payment: studentPayments,
+      student: students,
+      user: users,
+      plan: paymentPlans
+    })
+    .from(studentPayments)
+    .leftJoin(students, eq(studentPayments.studentId, students.id))
+    .leftJoin(users, eq(students.userId, users.id))
+    .leftJoin(paymentPlans, eq(studentPayments.planId, paymentPlans.id))
+    .where(eq(studentPayments.status, "overdue"));
+    
+    return result.map(item => ({
+      ...item.payment,
+      student: {
+        ...item.student,
+        user: item.user
+      },
+      plan: item.plan
+    }));
+  }
+
+  async createStudentPayment(paymentData: InsertStudentPayment): Promise<StudentPayment> {
+    const [payment] = await db.insert(studentPayments).values({
+      ...paymentData,
+      status: paymentData.status || "pending",
+      notes: paymentData.notes || null,
+      paidDate: paymentData.paidDate || null
+    }).returning();
+    return payment;
+  }
+
+  async updateStudentPayment(id: number, paymentData: Partial<StudentPayment>): Promise<StudentPayment | undefined> {
+    const [updatedPayment] = await db
+      .update(studentPayments)
+      .set(paymentData)
+      .where(eq(studentPayments.id, id))
+      .returning();
+    return updatedPayment;
+  }
+
+  async deleteStudentPayment(id: number): Promise<boolean> {
+    await db.delete(studentPayments).where(eq(studentPayments.id, id));
+    return true;
+  }
+
+  // Activity Logs
+  async getActivityLog(id: number): Promise<ActivityLog | undefined> {
+    const [log] = await db.select().from(activityLogs).where(eq(activityLogs.id, id));
+    return log;
+  }
+
+  async getActivityLogs(limit?: number): Promise<ActivityLog[]> {
+    const query = db.select()
+      .from(activityLogs)
+      .orderBy(desc(activityLogs.timestamp));
+      
+    if (limit) {
+      query.limit(limit);
+    }
+    
+    return await query;
+  }
+
+  async getActivityLogsByUser(userId: number, limit?: number): Promise<ActivityLog[]> {
+    const query = db.select()
+      .from(activityLogs)
+      .where(eq(activityLogs.userId, userId))
+      .orderBy(desc(activityLogs.timestamp));
+      
+    if (limit) {
+      query.limit(limit);
+    }
+    
+    return await query;
+  }
+
+  async createActivityLog(logData: InsertActivityLog): Promise<ActivityLog> {
+    const [log] = await db.insert(activityLogs).values({
+      ...logData,
+      userId: logData.userId || null,
+      entityType: logData.entityType || null,
+      entityId: logData.entityId || null,
+      timestamp: logData.timestamp || new Date()
+    }).returning();
+    return log;
+  }
+}
+
+// Export the database storage instance
+export const storage = new DatabaseStorage();

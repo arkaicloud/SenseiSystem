@@ -31,6 +31,10 @@ export interface IStorage {
   updateStudent(id: number, student: Partial<Student>): Promise<Student | undefined>;
   deleteStudent(id: number): Promise<boolean>;
   
+  // School Configuration
+  getSchoolConfig(): Promise<SchoolConfig | undefined>;
+  updateSchoolConfig(config: Partial<SchoolConfig>): Promise<SchoolConfig>;
+
   // School Events
   getSchoolEvent(id: number): Promise<SchoolEvent | undefined>;
   getSchoolEvents(activeOnly?: boolean): Promise<SchoolEvent[]>;
@@ -90,6 +94,7 @@ export class MemStorage implements IStorage {
   private studentPayments: Map<number, StudentPayment>;
   private activityLogs: Map<number, ActivityLog>;
   private schoolEvents: Map<number, SchoolEvent>;
+  private schoolConfig: SchoolConfig | undefined;
 
   private userCurrentId: number;
   private studentCurrentId: number;

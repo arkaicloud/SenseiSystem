@@ -151,6 +151,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 
+export type SchoolConfig = typeof schoolConfig.$inferSelect;
+export type InsertSchoolConfig = z.infer<typeof insertSchoolConfigSchema>;
+
 export type SchoolEvent = typeof schoolEvents.$inferSelect;
 export type InsertSchoolEvent = z.infer<typeof insertSchoolEventSchema>;
 

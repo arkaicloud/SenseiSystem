@@ -15,6 +15,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
+  const { t } = useTranslation();
 
   // Don't show layout on auth page
   const isAuthPage = location === "/auth";
@@ -65,7 +66,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );

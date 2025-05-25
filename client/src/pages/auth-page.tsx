@@ -87,7 +87,7 @@ export default function AuthPage() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "student",
+      role: "student", // Default is always student, no selection needed
       phone: "",
       emergencyContact: "",
       birthDate: undefined,
@@ -443,27 +443,7 @@ export default function AuthPage() {
                           </div>
                         </div>
 
-                        <FormField
-                          control={registerForm.control}
-                          name="role"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('role')}</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder={t('selectRole')} />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="student">{t('student')}</SelectItem>
-                                  <SelectItem value="instructor">{t('instructor')}</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* Role field removed - all new users will be registered as "student" by default */}
 
                         {selectedRole === "student" && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

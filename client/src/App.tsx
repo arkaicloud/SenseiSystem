@@ -13,19 +13,51 @@ import Payments from "@/pages/payments";
 import Reports from "@/pages/reports";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
+import AuthPage from "@/pages/auth-page";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/students" component={Students} />
-      <Route path="/attendance" component={Attendance} />
-      <Route path="/classes" component={Classes} />
-      <Route path="/payments" component={Payments} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/settings" component={Settings} />
+      {/* Protected routes */}
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute 
+        path="/students" 
+        component={Students} 
+        allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/attendance" 
+        component={Attendance} 
+      />
+      <ProtectedRoute 
+        path="/classes" 
+        component={Classes} 
+      />
+      <ProtectedRoute 
+        path="/payments" 
+        component={Payments} 
+        allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/reports" 
+        component={Reports} 
+        allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/profile" 
+        component={Profile} 
+      />
+      <ProtectedRoute 
+        path="/settings" 
+        component={Settings} 
+      />
+      
+      {/* Public routes */}
+      <Route path="/auth" component={AuthPage} />
+      
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
@@ -35,12 +67,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <MainLayout>
-          <Router />
-        </MainLayout>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <MainLayout>
+            <Router />
+          </MainLayout>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

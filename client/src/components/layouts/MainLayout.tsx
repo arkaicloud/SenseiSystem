@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
+import { useAuth } from "@/hooks/use-auth";
+import { getInitials } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -8,6 +12,11 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  // Don't show layout on auth page
+  const isAuthPage = location === "/auth";
 
   useEffect(() => {
     const handleResize = () => {
@@ -44,15 +53,35 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // For the auth page, just render children with no layout
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Get user initials for avatar if authenticated
+  const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar navigation */}
       <Sidebar isOpen={sidebarOpen} isMobile={isMobile} />
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile ? "ml-64" : ""} transition-all duration-300 ease-in-out relative`}>
+      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative`}>
         {/* Mobile header */}
-        {isMobile && (
+        {isMobile && user && (
           <div className="bg-white shadow md:hidden flex items-center justify-between p-4">
             <button
               id="menu-toggle"
@@ -70,7 +99,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <h1 className="font-montserrat font-bold text-lg">SenseiSystem</h1>
             </div>
             <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-              <span className="font-bold text-white text-xs">JS</span>
+              <span className="font-bold text-white text-xs">{userInitials}</span>
             </div>
           </div>
         )}

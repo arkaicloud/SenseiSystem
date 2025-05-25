@@ -204,20 +204,20 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>{t('status')}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={t('select_status')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="paid">{t('paid')}</SelectItem>
+                    <SelectItem value="pending">{t('pending')}</SelectItem>
+                    <SelectItem value="overdue">{t('overdue')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -232,7 +232,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             name="paidDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Payment Date</FormLabel>
+                <FormLabel>{t('payment_date')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -244,9 +244,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                         )}
                       >
                         {field.value ? (
-                          format(field.value, "PPP")
+                          format(field.value, "dd/MM/yyyy")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>{t('pick_date')}</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -272,18 +272,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           name="amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Amount ($)</FormLabel>
+              <FormLabel>{t('amount')} (R$)</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="99.00"
+                  type="text"
+                  placeholder="99,00"
                   {...field}
-                  value={(field.value / 100).toFixed(2)}
+                  value={formatCurrencyBRLInput(field.value)}
                   onChange={(e) => {
-                    const value = parseFloat(e.target.value) * 100;
-                    field.onChange(isNaN(value) ? 0 : Math.round(value));
+                    const value = parseCurrencyBRL(e.target.value);
+                    field.onChange(isNaN(value) ? 0 : value);
                   }}
                 />
               </FormControl>
@@ -297,10 +295,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>{t('notes')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Any additional notes about this payment"
+                  placeholder={t('payment_notes_placeholder')}
                   {...field}
                 />
               </FormControl>
@@ -315,7 +313,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             className="bg-secondary hover:bg-secondary-dark"
             disabled={isLoading}
           >
-            {isLoading ? "Saving..." : "Save Payment"}
+            {isLoading ? t('saving') : t('save_payment')}
           </Button>
         </div>
       </form>

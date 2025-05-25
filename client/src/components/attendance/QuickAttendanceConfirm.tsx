@@ -284,10 +284,27 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
                   </div>
                   
                   {isConfirmed ? (
-                    <Badge className="bg-green-100 text-green-800 border-green-200">
-                      <CheckCircle className="mr-2 h-3 w-3" />
-                      {t('presenca_confirmada')}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        <CheckCircle className="mr-2 h-3 w-3" />
+                        {t('presenca_confirmada')}
+                      </Badge>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelAttendanceMutation.mutate(classItem.id);
+                        }}
+                        disabled={cancelAttendanceMutation.isPending}
+                      >
+                        {cancelAttendanceMutation.isPending ? 
+                          <Loader2 className="h-3 w-3 animate-spin" /> : 
+                          <XCircle className="h-3 w-3" />
+                        }
+                      </Button>
+                    </div>
                   ) : (
                     <Badge variant="outline">
                       {classItem.instructor 

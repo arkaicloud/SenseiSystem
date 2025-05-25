@@ -10,7 +10,7 @@ import {
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails
 } from "@shared/schema";
-import { eq, and, gte, lte, desc, or, alias } from "drizzle-orm";
+import { eq, and, gte, lte, desc, or } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -794,44 +794,44 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {
-    // Usando alias para evitar conflito no join com users
-    const studentUsers = alias(users, "student_users");
-    const instructorUsers = alias(users, "instructor_users");
+    // Vamos usar uma abordagem mais simples para evitar problemas com joins complexos
+    const attendanceRecords = await db.select().from(attendance);
+    const results: AttendanceWithDetails[] = [];
     
-    const result = await db.select({
-      attendance: attendance,
-      student: students,
-      user: studentUsers,
-      class: classes,
-      instructor: {
-        id: instructorUsers.id,
-        firstName: instructorUsers.firstName,
-        lastName: instructorUsers.lastName,
-        role: instructorUsers.role
+    for (const record of attendanceRecords) {
+      const student = await this.getStudent(record.studentId);
+      const classItem = await this.getClass(record.classId);
+      
+      let user;
+      let instructor;
+      
+      if (student) {
+        user = await this.getUser(student.userId);
       }
-    })
-    .from(attendance)
-    .leftJoin(students, eq(attendance.studentId, students.id))
-    .leftJoin(studentUsers, eq(students.userId, studentUsers.id))
-    .leftJoin(classes, eq(attendance.classId, classes.id))
-    .leftJoin(instructorUsers, eq(classes.instructorId, instructorUsers.id));
-
-    return result.map(item => ({
-      ...item.attendance,
-      student: {
-        ...item.student,
-        user: item.user
-      },
-      class: {
-        ...item.class,
-        instructor: item.instructor ? {
-          id: item.instructor.id,
-          firstName: item.instructor.firstName,
-          lastName: item.instructor.lastName,
-          role: item.instructor.role
+      
+      if (classItem && classItem.instructorId) {
+        instructor = await this.getUser(classItem.instructorId);
+      }
+      
+      results.push({
+        ...record,
+        student: student ? {
+          ...student,
+          user: user || undefined
+        } : undefined,
+        class: classItem ? {
+          ...classItem,
+          instructor: instructor ? {
+            id: instructor.id,
+            firstName: instructor.firstName,
+            lastName: instructor.lastName,
+            role: instructor.role
+          } : undefined
         } : undefined
-      }
-    }));
+      });
+    }
+    
+    return results;
   }
 
   async createAttendance(attendanceData: InsertAttendance): Promise<Attendance> {

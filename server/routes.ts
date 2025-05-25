@@ -601,13 +601,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Verificar se já existe uma presença para esta aula e aluno na mesma data
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const existingAttendances = await storage.getAttendanceByStudent(student.id);
+      const alreadyRegistered = existingAttendances.some(att => {
+        const attDate = new Date(att.date).toISOString().split('T')[0];
+        return attDate === today && att.classId === attendanceData.classId;
+      });
+      
+      if (alreadyRegistered) {
+        return res.status(400).json({ 
+          message: "Presença já registrada para esta aula hoje" 
+        });
+      }
+      
       const attendance = await storage.createAttendance(attendanceData);
       
       // Log activity
       const user = await storage.getUser(student.userId);
       await storage.createActivityLog({
         userId: requestUser.id,
-        activity: `${requestUser.firstName} ${requestUser.lastName} recorded attendance for ${user?.firstName} ${user?.lastName} in ${classItem.name}`,
+        activity: `${requestUser.firstName} ${requestUser.lastName} confirmou presença para ${user?.firstName} ${user?.lastName} na aula ${classItem.name}`,
         entityType: 'attendance',
         entityId: attendance.id
       });
@@ -617,6 +631,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid attendance data", errors: error.errors });
       }
+      console.error("Erro ao registrar presença:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Cancelar presença
+  app.delete("/api/attendance/cancel", isAuthenticated, async (req, res) => {
+    try {
+      const { studentId, classId, date } = req.body;
+      
+      if (!studentId || !classId) {
+        return res.status(400).json({ message: "studentId e classId são obrigatórios" });
+      }
+      
+      // Verificar permissões
+      const requestUser = (req as any).user;
+      const student = await storage.getStudent(studentId);
+      
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      
+      // Alunos só podem cancelar sua própria presença
+      if (requestUser.role === 'student') {
+        const studentUser = await storage.getUser(student.userId);
+        if (!studentUser || studentUser.id !== requestUser.id) {
+          return res.status(403).json({ 
+            message: "Forbidden: Students can only cancel their own attendance" 
+          });
+        }
+      }
+      
+      // Buscar presença existente
+      const today = date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      const attendances = await storage.getAttendanceByStudent(studentId);
+      
+      const attendance = attendances.find(att => {
+        const attDate = new Date(att.date).toISOString().split('T')[0];
+        return attDate === today && att.classId === classId;
+      });
+      
+      if (!attendance) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+      
+      // Cancelar presença
+      await storage.deleteAttendance(attendance.id);
+      
+      // Registrar atividade
+      const user = await storage.getUser(student.userId);
+      const classItem = await storage.getClass(classId);
+      
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} cancelou presença de ${user?.firstName} ${user?.lastName} na aula ${classItem?.name}`,
+        entityType: 'attendance',
+        entityId: attendance.id
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Erro ao cancelar presença:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

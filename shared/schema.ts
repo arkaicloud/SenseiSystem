@@ -97,7 +97,12 @@ export const activityLogs = pgTable("activity_logs", {
 });
 
 // Schemas
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ id: true })
+  .extend({
+    // Garantir que o birthDate possa ser recebido como string e convertido para Date no servidor
+    birthDate: z.string().optional().nullable(),
+  });
 export const insertStudentSchema = createInsertSchema(students).omit({ id: true });
 export const insertClassSchema = createInsertSchema(classes).omit({ id: true });
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });

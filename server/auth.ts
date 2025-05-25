@@ -149,12 +149,24 @@ export function setupAuth(app: Express) {
       // Hash password
       const hashedPassword = await hashPassword(req.body.password);
 
-      // Create user (default active = false for pending status)
-      const user = await storage.createUser({
+      // Preparar os dados do usuário
+      const userData = {
         ...req.body,
         password: hashedPassword,
         active: false, // Default to pending status
-      });
+      };
+      
+      // Tratar o campo birthDate: converter de string para data, se existir
+      if (userData.birthDate) {
+        try {
+          userData.birthDate = new Date(userData.birthDate);
+        } catch (e) {
+          userData.birthDate = null; // Se a conversão falhar, definir como null
+        }
+      }
+      
+      // Criar o usuário
+      const user = await storage.createUser(userData);
 
       // For student role, also create a student record
       if (user.role === "student") {

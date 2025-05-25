@@ -32,7 +32,7 @@ const registerSchema = z.object({
   role: z.enum(userRoleEnum.enumValues),
   phone: z.string().optional(),
   emergencyContact: z.string().optional(),
-  birthDate: z.date().optional(),
+  birthDate: z.string().optional(),
   street: z.string().optional(),
   number: z.string().optional(),
   complement: z.string().optional(),
@@ -113,14 +113,8 @@ export default function AuthPage() {
 
   // Registration form submission
   const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
-    // Prepara os dados, garantindo que birthDate seja enviado corretamente
-    const formattedValues = {
-      ...values,
-      // Se não houver data, enviar como null para o banco de dados
-      birthDate: values.birthDate || null,
-    };
-    
-    registerMutation.mutate(formattedValues, {
+    // Enviar os valores diretamente, como o birthDate já é uma string
+    registerMutation.mutate(values, {
       onSuccess: () => {
         setRegistrationSuccess(true);
         // Clear form
@@ -320,27 +314,9 @@ export default function AuthPage() {
                                 <Input 
                                   type="date" 
                                   {...field} 
-                                  value={field.value ? (field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value) : ''}
+                                  value={field.value || ''}
                                   onChange={(e) => {
-                                    // Se o valor for vazio, definir como null
-                                    if (!e.target.value) {
-                                      field.onChange(null);
-                                      return;
-                                    }
-                                    
-                                    // Caso contrário, criar um objeto Date válido
-                                    try {
-                                      const date = new Date(e.target.value);
-                                      // Verificar se a data é válida
-                                      if (!isNaN(date.getTime())) {
-                                        field.onChange(date);
-                                      } else {
-                                        field.onChange(null);
-                                      }
-                                    } catch (error) {
-                                      // Em caso de erro, definir como null
-                                      field.onChange(null);
-                                    }
+                                    field.onChange(e.target.value);
                                   }}
                                 />
                               </FormControl>

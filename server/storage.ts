@@ -920,7 +920,6 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  ```python
   async createStudentPayment(paymentData: InsertStudentPayment): Promise<StudentPayment> {
     const [payment] = await db.insert(studentPayments).values({
       ...paymentData,

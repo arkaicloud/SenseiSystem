@@ -131,33 +131,49 @@ const Dashboard: React.FC = () => {
     enabled: !!user && user.role === 'student',
   });
   
-  // Notificações do sistema para o painel do aluno (dados de exemplo)
-  const studentNotifications = [
-    {
-      id: 1,
-      type: "event",
-      title: "Seminário de Técnicas Avançadas",
-      message: "Novo seminário marcado para 28/05/2023. Participação recomendada para todos os alunos.",
-      date: "Hoje, 09:30",
-      isRead: false
-    },
-    {
-      id: 2,
-      type: "attendance",
-      title: "Presença registrada",
-      message: "Sua presença na aula de Fundamentos foi registrada pelo instrutor.",
-      date: "Ontem, 19:15",
-      isRead: true
-    },
-    {
-      id: 3,
-      type: "belt",
-      title: "Avaliação de faixa próxima",
-      message: "Você está elegível para a próxima avaliação de graduação. Fale com seu instrutor.",
-      date: "3 dias atrás",
-      isRead: false
+  // Buscar notificações do sistema a partir dos eventos cadastrados
+  const { data: eventsData } = useQuery({
+    queryKey: ['/api/school-events'],
+    enabled: !!user && user.role === 'student',
+  });
+  
+  // Construir notificações do sistema a partir dos eventos
+  const studentNotifications = React.useMemo(() => {
+    const notifications = [];
+    
+    // Adicionar notificações de eventos da escola
+    if (eventsData?.events && eventsData.events.length > 0) {
+      eventsData.events.forEach((event: any, index: number) => {
+        notifications.push({
+          id: index + 1,
+          type: "event",
+          title: event.title || "Evento da Academia",
+          message: event.description || "Novo evento da academia. Confira os detalhes.",
+          date: new Date(event.date).toLocaleDateString('pt-BR'),
+          isRead: false
+        });
+      });
     }
-  ];
+    
+    // Adicionar uma notificação para o estudante sobre sua faixa
+    if (studentData?.student) {
+      const student = studentData.student;
+      const stripes = student.stripes || 0;
+      
+      if (stripes >= 3) {
+        notifications.push({
+          id: notifications.length + 1,
+          type: "belt",
+          title: "Avaliação de faixa próxima",
+          message: "Você está próximo da avaliação para a próxima graduação. Continue treinando.",
+          date: "Hoje",
+          isRead: false
+        });
+      }
+    }
+    
+    return notifications;
+  }, [eventsData, studentData]);
 
   // Determinar o conteúdo do dashboard com base no papel do usuário
   const renderDashboard = () => {

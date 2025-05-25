@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 const Attendance: React.FC = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
 
@@ -98,173 +99,229 @@ const Attendance: React.FC = () => {
     submitAttendance(data);
   };
 
+  // Buscar dados do estudante pelo userId
+  const { data: studentData } = useQuery({
+    queryKey: ['/api/students/by-user', user?.id],
+    enabled: !!user && user.role === 'student',
+  });
+  
+  // Verificar se o usuário é um aluno
+  const isStudent = user?.role === 'student';
+  const isAdminOrInstructor = user?.role === 'admin' || user?.role === 'instructor';
+  
+  // Renderizar interface diferente para alunos vs. professores/administradores
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">{t('attendance')}</h1>
-          <p className="text-gray-600">{t('trackAttendance')}</p>
+          <p className="text-gray-600">{isStudent ? t('yourAttendance') : t('trackAttendance')}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('selectDate')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-              />
-            </CardContent>
-          </Card>
+      {/* Painel do Aluno */}
+      {isStudent && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            {/* Resumo de presença do aluno */}
+            {studentData?.student && (
+              <StudentAttendanceSummary studentId={studentData.student.id} />
+            )}
+          </div>
+          
+          <div>
+            {/* Confirmação rápida de presença */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>{t('confirmar_presenca')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user && (
+                  <QuickAttendanceConfirm userId={user.id} />
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Calendário */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('calendar')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>{t('todaysClasses')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {classesLoading ? (
-                <div className="text-center py-4">{t('loading')}</div>
-              ) : todaysClasses.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">{t('noClassesScheduled')}</div>
-              ) : (
-                <div className="space-y-4">
-                  {todaysClasses.map((classItem: any) => {
-                    const { time, period } = formatTime(classItem.startTime);
-                    return (
-                      <div 
-                        key={classItem.id}
-                        className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleTakeAttendance(classItem)}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium">{classItem.name}</h3>
-                          <span className="text-sm text-gray-500">{time} {period}</span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          {classItem.instructor 
-                            ? `${classItem.instructor.firstName} Sensei` 
-                            : t('noInstructorAssigned')}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {classItem.duration} {t('minutes')}
-                          {classItem.maxCapacity ? ` • ${t('max')} ${classItem.maxCapacity} ${t('studentsLabel')}` : ''}
-                        </p>
-                        <Button 
-                          className="mt-3 w-full bg-secondary hover:bg-secondary-dark text-white"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTakeAttendance(classItem);
-                          }}
+      {/* Painel do Professor/Admin */}
+      {isAdminOrInstructor && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('selectDate')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>{t('todaysClasses')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {classesLoading ? (
+                  <div className="text-center py-4">{t('loading')}</div>
+                ) : todaysClasses.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">{t('noClassesScheduled')}</div>
+                ) : (
+                  <div className="space-y-4">
+                    {todaysClasses.map((classItem: any) => {
+                      const { time, period } = formatTime(classItem.startTime);
+                      return (
+                        <div 
+                          key={classItem.id}
+                          className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleTakeAttendance(classItem)}
                         >
-                          {t('takeAttendance')}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedDate 
-                  ? `${t('attendance')} - ${formatDate(selectedDate)}` 
-                  : t('attendance')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="byClass">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="byClass">{t('byClass')}</TabsTrigger>
-                  <TabsTrigger value="byStudent">{t('byStudent')}</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="byClass">
-                  {attendanceLoading ? (
-                    <div className="text-center py-8">{t('loading')}</div>
-                  ) : filteredAttendance.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      {t('noAttendanceRecords')}
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* Group attendance by class */}
-                      {Object.entries(
-                        filteredAttendance.reduce((acc: any, record: any) => {
-                          const classId = record.class.id;
-                          if (!acc[classId]) {
-                            acc[classId] = {
-                              class: record.class,
-                              students: []
-                            };
-                          }
-                          acc[classId].students.push(record.student);
-                          return acc;
-                        }, {})
-                      ).map(([classId, data]: [string, any]) => (
-                        <div key={classId} className="border rounded-lg p-4">
-                          <div className="flex justify-between items-center mb-4">
-                            <div>
-                              <h3 className="font-medium text-lg">{data.class.name}</h3>
-                              <p className="text-sm text-gray-600">
-                                {data.class.instructor 
-                                  ? `${data.class.instructor.firstName} Sensei` 
-                                  : 'No instructor assigned'}
-                                {' • '}
-                                {formatTime(data.class.startTime).time} 
-                                {formatTime(data.class.startTime).period}
-                              </p>
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {data.students.length} {data.students.length !== 1 ? t('studentsPresent') : t('studentPresent')}
-                            </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium">{classItem.name}</h3>
+                            <span className="text-sm text-gray-500">{time} {period}</span>
                           </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {data.students.map((student: any) => (
-                              <div key={student.id} className="flex items-center p-2 border rounded">
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                  <span className="font-medium text-xs">
-                                    {student.user.firstName.charAt(0)}
-                                    {student.user.lastName.charAt(0)}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    {student.user.firstName} {student.user.lastName}
-                                  </p>
-                                  <BeltWithLabel level={student.beltLevel} size="sm" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-sm text-gray-600">
+                            {classItem.instructor 
+                              ? `${classItem.instructor.firstName} Sensei` 
+                              : t('noInstructorAssigned')}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {classItem.duration} {t('minutes')}
+                            {classItem.maxCapacity ? ` • ${t('max')} ${classItem.maxCapacity} ${t('studentsLabel')}` : ''}
+                          </p>
+                          <Button 
+                            className="mt-3 w-full bg-secondary hover:bg-secondary-dark text-white"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTakeAttendance(classItem);
+                            }}
+                          >
+                            {t('takeAttendance')}
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="byStudent">
-                  <div className="text-center py-8 text-gray-500">
-                    {t('studentViewComingSoon')}
+                      );
+                    })}
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {selectedDate 
+                    ? `${t('attendance')} - ${formatDate(selectedDate)}` 
+                    : t('attendance')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="byClass">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="byClass">{t('byClass')}</TabsTrigger>
+                    <TabsTrigger value="byStudent">{t('byStudent')}</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="byClass">
+                    {attendanceLoading ? (
+                      <div className="text-center py-8">{t('loading')}</div>
+                    ) : filteredAttendance.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        {t('noAttendanceRecords')}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Group attendance by class */}
+                        {Object.entries(
+                          filteredAttendance.reduce((acc: any, record: any) => {
+                            const classId = record.class.id;
+                            if (!acc[classId]) {
+                              acc[classId] = {
+                                class: record.class,
+                                students: []
+                              };
+                            }
+                            acc[classId].students.push(record.student);
+                            return acc;
+                          }, {})
+                        ).map(([classId, data]: [string, any]) => (
+                          <div key={classId} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-center mb-4">
+                              <div>
+                                <h3 className="font-medium text-lg">{data.class.name}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {data.class.instructor 
+                                    ? `${data.class.instructor.firstName} Sensei` 
+                                    : 'No instructor assigned'}
+                                  {' • '}
+                                  {formatTime(data.class.startTime).time} 
+                                  {formatTime(data.class.startTime).period}
+                                </p>
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {data.students.length} {data.students.length !== 1 ? t('studentsPresent') : t('studentPresent')}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {data.students.map((student: any) => (
+                                <div key={student.id} className="flex items-center p-2 border rounded">
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                    <span className="font-medium text-xs">
+                                      {student.user.firstName.charAt(0)}
+                                      {student.user.lastName.charAt(0)}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {student.user.firstName} {student.user.lastName}
+                                    </p>
+                                    <BeltWithLabel level={student.beltLevel} size="sm" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="byStudent">
+                    <div className="text-center py-8 text-gray-500">
+                      {t('studentViewComingSoon')}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
+      
 
       {/* Take Attendance Dialog */}
       {selectedClass && (

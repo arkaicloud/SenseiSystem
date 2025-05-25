@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
+import { formatCurrencyBRL } from "@/lib/utils";
 
 // Extend the payment plan schema for form validation
 const paymentPlanFormSchema = insertPaymentPlanSchema.extend({
@@ -78,7 +79,17 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
             <FormItem>
               <FormLabel>{t('plan_amount')}</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
+                  <Input 
+                    type="number" 
+                    className="pl-9" 
+                    {...field} 
+                    onChange={(e) => {
+                      field.onChange(e.target.valueAsNumber);
+                    }}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

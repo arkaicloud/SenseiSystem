@@ -18,6 +18,13 @@ export function formatCurrency(amount: number): string {
   }).format(amount / 100);
 }
 
+export function formatCurrencyBRL(amount: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(amount);
+}
+
 export function formatTime(time: string): { time: string; period: string } {
   const [hours, minutes] = time.split(':');
   const hour = parseInt(hours, 10);

@@ -300,7 +300,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
-
+  
+  // Rota para buscar o estudante pelo ID do usuário (precisa vir ANTES da rota genérica /:id)
+  app.get("/api/students/by-user/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const student = await storage.getStudentByUserId(Number(userId));
+      
+      if (!student) {
+        return res.status(404).json({ message: "Estudante não encontrado" });
+      }
+      
+      // Apenas o próprio aluno ou um admin/instrutor pode ver os dados do aluno
+      const requestUser = (req as any).user;
+      if (requestUser.id !== Number(userId) && 
+          requestUser.role !== 'admin' && 
+          requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Sem permissão para visualizar este aluno" });
+      }
+      
+      res.json({ student });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+  
+  // Rota genérica para buscar estudante por ID
   app.get("/api/students/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;

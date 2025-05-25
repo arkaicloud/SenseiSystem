@@ -9,9 +9,11 @@ import CustomAvatar, { AvatarData } from "@/components/students/CustomAvatar";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 const Profile: React.FC = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -24,14 +26,53 @@ const Profile: React.FC = () => {
     confirmPassword: "",
   });
 
-  // Mock user ID for demonstration (would come from auth context in a real app)
-  const userId = 1;
-
   // Fetch user data
   const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: [`/api/users/${userId}`],
+    queryKey: [`/api/users/${user?.id || 0}`],
+    enabled: !!user?.id,
     refetchInterval: false,
   });
+  
+  // Fetch student data if user is a student
+  const { data: studentData, isLoading: studentLoading } = useQuery({
+    queryKey: [`/api/students/by-user/${user?.id || 0}`],
+    enabled: !!user?.id && user?.role === 'student',
+    refetchInterval: false,
+  });
+
+  // Update avatar mutation
+  const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useMutation({
+    mutationFn: async (data: AvatarData) => {
+      const res = await apiRequest('PUT', `/api/students/avatar/${studentData?.student?.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Avatar atualizado com sucesso",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/by-user/${user?.id || 0}`] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao atualizar avatar: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleAvatarUpdate = (data: AvatarData) => {
+    if (studentData?.student?.id) {
+      updateAvatar(data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o avatar. Verifique se você está cadastrado como aluno.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Update user mutation
   const { mutate: updateUser, isPending: isUpdating } = useMutation({

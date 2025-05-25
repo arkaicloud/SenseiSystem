@@ -1138,6 +1138,47 @@ export class DatabaseStorage implements IStorage {
     await db.delete(schoolEvents).where(eq(schoolEvents.id, id));
     return true;
   }
+
+  // School Configuration
+  async getSchoolConfig(): Promise<SchoolConfig | undefined> {
+    const [config] = await db.select().from(schoolConfig).limit(1);
+    return config;
+  }
+
+  async updateSchoolConfig(configData: Partial<SchoolConfig>): Promise<SchoolConfig> {
+    // First, check if there's an existing config
+    const existing = await this.getSchoolConfig();
+    
+    if (existing) {
+      // Update the existing config
+      const [updatedConfig] = await db
+        .update(schoolConfig)
+        .set({
+          ...configData,
+          updatedAt: new Date()
+        })
+        .where(eq(schoolConfig.id, existing.id))
+        .returning();
+      return updatedConfig;
+    } else {
+      // Create a new config
+      const [newConfig] = await db
+        .insert(schoolConfig)
+        .values({
+          schoolName: configData.schoolName || "Academia de Jiu-Jitsu",
+          congratsMessage: configData.congratsMessage || "🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!",
+          logoUrl: configData.logoUrl || null,
+          address: configData.address || null,
+          phone: configData.phone || null,
+          email: configData.email || null,
+          website: configData.website || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return newConfig;
+    }
+  }
 }
 
 // Export the database storage instance

@@ -7,8 +7,9 @@ import NotFound from "@/pages/not-found";
 import MainLayout from "@/components/layouts/MainLayout";
 import Dashboard from "@/pages/dashboard";
 import Students from "@/pages/students";
-import Attendance from "@/pages/attendance";
+import PendingUsers from "@/pages/pending-users";
 import Classes from "@/pages/classes";
+import Attendance from "@/pages/attendance";
 import Payments from "@/pages/payments";
 import Reports from "@/pages/reports";
 import Profile from "@/pages/profile";
@@ -27,6 +28,11 @@ function Router() {
         path="/students" 
         component={Students} 
         allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/pending-users" 
+        component={PendingUsers} 
+        allowedRoles={["admin"]} 
       />
       <ProtectedRoute 
         path="/attendance" 
@@ -54,10 +60,10 @@ function Router() {
         path="/settings" 
         component={Settings} 
       />
-      
+
       {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
-      
+
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

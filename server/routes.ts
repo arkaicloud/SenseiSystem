@@ -147,8 +147,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const users = await storage.getUsers();
-      res.json({ users: users.map(u => ({ ...u, password: undefined })) });
+      // Only return active users
+      const activeUsers = users.filter(u => u.active);
+      res.json({ users: activeUsers.map(u => ({ ...u, password: undefined })) });
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get pending users (inactive users waiting for approval)
+  app.get("/api/users/pending", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Only return inactive users
+      const pendingUsers = users.filter(u => !u.active);
+      res.json({ users: pendingUsers.map(u => ({ ...u, password: undefined })) });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Approve user registration
+  app.post("/api/users/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { planId } = req.body;
+      const user = await storage.getUser(Number(id));
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.active) {
+        return res.status(400).json({ message: "User is already active" });
+      }
+      
+      // Activate the user
+      const updatedUser = await storage.updateUser(user.id, { active: true });
+      
+      // If it's a student and a plan was provided, create a student payment
+      if (user.role === 'student' && planId) {
+        const student = await storage.getStudentByUserId(user.id);
+        if (student) {
+          const plan = await storage.getPaymentPlan(planId);
+          if (plan) {
+            // Create initial payment record
+            const today = new Date();
+            const dueDate = new Date(today);
+            dueDate.setMonth(dueDate.getMonth() + (plan.billingCycle === 'monthly' ? 1 : 12));
+
+            await storage.createStudentPayment({
+              studentId: student.id,
+              planId: plan.id,
+              amount: plan.price,
+              dueDate: dueDate,
+              status: 'pending'
+            });
+          }
+        }
+      }
+      
+      // Create activity log for account activation
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        activity: `User account approved: ${user.firstName} ${user.lastName} (${user.role})`,
+        userId: requestUser.id,
+        entityType: "user",
+        entityId: user.id,
+        timestamp: new Date()
+      });
+      
+      res.json({ 
+        user: { ...updatedUser, password: undefined },
+        message: "User approved successfully"
+      });
+    } catch (err) {
+      console.error("Error approving user:", err);
       res.status(500).json({ message: "Internal server error" });
     }
   });

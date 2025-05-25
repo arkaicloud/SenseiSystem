@@ -79,7 +79,7 @@ export class MemStorage implements IStorage {
   private paymentPlans: Map<number, PaymentPlan>;
   private studentPayments: Map<number, StudentPayment>;
   private activityLogs: Map<number, ActivityLog>;
-  
+
   private userCurrentId: number;
   private studentCurrentId: number;
   private classCurrentId: number;
@@ -96,7 +96,7 @@ export class MemStorage implements IStorage {
     this.paymentPlans = new Map();
     this.studentPayments = new Map();
     this.activityLogs = new Map();
-    
+
     this.userCurrentId = 1;
     this.studentCurrentId = 1;
     this.classCurrentId = 1;
@@ -104,7 +104,7 @@ export class MemStorage implements IStorage {
     this.paymentPlanCurrentId = 1;
     this.studentPaymentCurrentId = 1;
     this.activityLogCurrentId = 1;
-    
+
     this.seedData();
   }
 
@@ -125,7 +125,7 @@ export class MemStorage implements IStorage {
       active: true
     };
     this.users.set(adminUser.id, adminUser);
-    
+
     // Create an instructor
     const instructorUser: User = {
       id: this.userCurrentId++,
@@ -141,7 +141,7 @@ export class MemStorage implements IStorage {
       active: true
     };
     this.users.set(instructorUser.id, instructorUser);
-    
+
     // Create payment plans
     const basicPlan: PaymentPlan = {
       id: this.paymentPlanCurrentId++,
@@ -151,7 +151,7 @@ export class MemStorage implements IStorage {
       description: "Access to 2 classes per week"
     };
     this.paymentPlans.set(basicPlan.id, basicPlan);
-    
+
     const standardPlan: PaymentPlan = {
       id: this.paymentPlanCurrentId++,
       name: "Standard Membership",
@@ -160,7 +160,7 @@ export class MemStorage implements IStorage {
       description: "Unlimited classes"
     };
     this.paymentPlans.set(standardPlan.id, standardPlan);
-    
+
     const premiumPlan: PaymentPlan = {
       id: this.paymentPlanCurrentId++,
       name: "Premium Membership",
@@ -169,7 +169,7 @@ export class MemStorage implements IStorage {
       description: "Unlimited classes + private lesson"
     };
     this.paymentPlans.set(premiumPlan.id, premiumPlan);
-    
+
     // Create classes
     const fundamentalsClass: Class = {
       id: this.classCurrentId++,
@@ -182,7 +182,7 @@ export class MemStorage implements IStorage {
       maxCapacity: 20
     };
     this.classes.set(fundamentalsClass.id, fundamentalsClass);
-    
+
     const advancedClass: Class = {
       id: this.classCurrentId++,
       name: "Advanced Class",
@@ -227,7 +227,7 @@ export class MemStorage implements IStorage {
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
     const user = await this.getUser(id);
     if (!user) return undefined;
-    
+
     const updatedUser = { ...user, ...userData };
     this.users.set(id, updatedUser);
     return updatedUser;
@@ -273,7 +273,7 @@ export class MemStorage implements IStorage {
   async updateStudent(id: number, studentData: Partial<Student>): Promise<Student | undefined> {
     const student = await this.getStudent(id);
     if (!student) return undefined;
-    
+
     const updatedStudent = { ...student, ...studentData };
     this.students.set(id, updatedStudent);
     return updatedStudent;
@@ -315,7 +315,7 @@ export class MemStorage implements IStorage {
     const classes = Array.from(this.classes.values()).filter(
       (classItem) => classItem.dayOfWeek === dayOfWeek,
     );
-    
+
     return Promise.all(
       classes.map(async (classItem) => {
         if (!classItem.instructorId) return { ...classItem, instructor: undefined };
@@ -335,7 +335,7 @@ export class MemStorage implements IStorage {
   async updateClass(id: number, classData: Partial<Class>): Promise<Class | undefined> {
     const classItem = await this.getClass(id);
     if (!classItem) return undefined;
-    
+
     const updatedClass = { ...classItem, ...classData };
     this.classes.set(id, updatedClass);
     return updatedClass;
@@ -354,14 +354,14 @@ export class MemStorage implements IStorage {
     let attendances = Array.from(this.attendance.values()).filter(
       (attendance) => attendance.classId === classId,
     );
-    
+
     if (date) {
       const dateStr = date.toDateString();
       attendances = attendances.filter(
         (attendance) => attendance.date.toDateString() === dateStr,
       );
     }
-    
+
     return attendances;
   }
 
@@ -377,18 +377,18 @@ export class MemStorage implements IStorage {
       attendances.map(async (attendance) => {
         const student = await this.getStudent(attendance.studentId);
         if (!student) throw new Error(`Student not found for attendance ${attendance.id}`);
-        
+
         const user = await this.getUser(student.userId);
         if (!user) throw new Error(`User not found for student ${student.id}`);
-        
+
         const classItem = await this.getClass(attendance.classId);
         if (!classItem) throw new Error(`Class not found for attendance ${attendance.id}`);
-        
+
         let instructor: User | undefined;
         if (classItem.instructorId) {
           instructor = await this.getUser(classItem.instructorId);
         }
-        
+
         return {
           ...attendance,
           student: { ...student, user },
@@ -408,7 +408,7 @@ export class MemStorage implements IStorage {
   async updateAttendance(id: number, attendanceData: Partial<Attendance>): Promise<Attendance | undefined> {
     const attendance = await this.getAttendance(id);
     if (!attendance) return undefined;
-    
+
     const updatedAttendance = { ...attendance, ...attendanceData };
     this.attendance.set(id, updatedAttendance);
     return updatedAttendance;
@@ -437,7 +437,7 @@ export class MemStorage implements IStorage {
   async updatePaymentPlan(id: number, planData: Partial<PaymentPlan>): Promise<PaymentPlan | undefined> {
     const plan = await this.getPaymentPlan(id);
     if (!plan) return undefined;
-    
+
     const updatedPlan = { ...plan, ...planData };
     this.paymentPlans.set(id, updatedPlan);
     return updatedPlan;
@@ -464,13 +464,13 @@ export class MemStorage implements IStorage {
       payments.map(async (payment) => {
         const student = await this.getStudent(payment.studentId);
         if (!student) throw new Error(`Student not found for payment ${payment.id}`);
-        
+
         const user = await this.getUser(student.userId);
         if (!user) throw new Error(`User not found for student ${student.id}`);
-        
+
         const plan = await this.getPaymentPlan(payment.planId);
         if (!plan) throw new Error(`Payment plan not found for payment ${payment.id}`);
-        
+
         return {
           ...payment,
           student: { ...student, user },
@@ -486,18 +486,18 @@ export class MemStorage implements IStorage {
       (payment) => payment.status === 'overdue' || 
                    (payment.status === 'pending' && payment.dueDate < now)
     );
-    
+
     return Promise.all(
       payments.map(async (payment) => {
         const student = await this.getStudent(payment.studentId);
         if (!student) throw new Error(`Student not found for payment ${payment.id}`);
-        
+
         const user = await this.getUser(student.userId);
         if (!user) throw new Error(`User not found for student ${student.id}`);
-        
+
         const plan = await this.getPaymentPlan(payment.planId);
         if (!plan) throw new Error(`Payment plan not found for payment ${payment.id}`);
-        
+
         return {
           ...payment,
           student: { ...student, user },
@@ -517,7 +517,7 @@ export class MemStorage implements IStorage {
   async updateStudentPayment(id: number, paymentData: Partial<StudentPayment>): Promise<StudentPayment | undefined> {
     const payment = await this.getStudentPayment(id);
     if (!payment) return undefined;
-    
+
     const updatedPayment = { ...payment, ...paymentData };
     this.studentPayments.set(id, updatedPayment);
     return updatedPayment;
@@ -535,7 +535,7 @@ export class MemStorage implements IStorage {
   async getActivityLogs(limit?: number): Promise<ActivityLog[]> {
     const logs = Array.from(this.activityLogs.values())
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    
+
     return limit ? logs.slice(0, limit) : logs;
   }
 
@@ -543,7 +543,7 @@ export class MemStorage implements IStorage {
     const logs = Array.from(this.activityLogs.values())
       .filter(log => log.userId === userId)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    
+
     return limit ? logs.slice(0, limit) : logs;
   }
 
@@ -639,7 +639,7 @@ export class DatabaseStorage implements IStorage {
     })
     .from(students)
     .leftJoin(users, eq(students.userId, users.id));
-    
+
     return result.map(item => ({
       ...item.student,
       user: item.user
@@ -688,7 +688,7 @@ export class DatabaseStorage implements IStorage {
     })
     .from(classes)
     .leftJoin(users, eq(classes.instructorId, users.id));
-    
+
     return result.map(item => ({
       ...item.class,
       instructor: item.instructor
@@ -702,7 +702,7 @@ export class DatabaseStorage implements IStorage {
   async getTodaysClasses(): Promise<ClassWithInstructor[]> {
     const today = new Date();
     const dayOfWeek = today.getDay();
-    
+
     const result = await db.select({
       class: classes,
       instructor: users
@@ -710,7 +710,7 @@ export class DatabaseStorage implements IStorage {
     .from(classes)
     .leftJoin(users, eq(classes.instructorId, users.id))
     .where(eq(classes.dayOfWeek, dayOfWeek));
-    
+
     return result.map(item => ({
       ...item.class,
       instructor: item.instructor
@@ -751,10 +751,10 @@ export class DatabaseStorage implements IStorage {
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
-      
+
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
-      
+
       return await db.select()
         .from(attendance)
         .where(
@@ -765,7 +765,7 @@ export class DatabaseStorage implements IStorage {
           )
         );
     }
-    
+
     return await db.select().from(attendance).where(eq(attendance.classId, classId));
   }
 
@@ -791,7 +791,7 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(users, eq(students.userId, users.id))
     .leftJoin(classes, eq(attendance.classId, classes.id))
     .leftJoin(users, eq(classes.instructorId, users.id), "instructor");
-    
+
     return result.map(item => ({
       ...item.attendance,
       student: {
@@ -886,7 +886,7 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(students, eq(studentPayments.studentId, students.id))
     .leftJoin(users, eq(students.userId, users.id))
     .leftJoin(paymentPlans, eq(studentPayments.planId, paymentPlans.id));
-    
+
     return result.map(item => ({
       ...item.payment,
       student: {
@@ -909,7 +909,7 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(users, eq(students.userId, users.id))
     .leftJoin(paymentPlans, eq(studentPayments.planId, paymentPlans.id))
     .where(eq(studentPayments.status, "overdue"));
-    
+
     return result.map(item => ({
       ...item.payment,
       student: {
@@ -920,6 +920,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  ```python
   async createStudentPayment(paymentData: InsertStudentPayment): Promise<StudentPayment> {
     const [payment] = await db.insert(studentPayments).values({
       ...paymentData,
@@ -954,11 +955,11 @@ export class DatabaseStorage implements IStorage {
     const query = db.select()
       .from(activityLogs)
       .orderBy(desc(activityLogs.timestamp));
-      
+
     if (limit) {
       query.limit(limit);
     }
-    
+
     return await query;
   }
 
@@ -967,11 +968,11 @@ export class DatabaseStorage implements IStorage {
       .from(activityLogs)
       .where(eq(activityLogs.userId, userId))
       .orderBy(desc(activityLogs.timestamp));
-      
+
     if (limit) {
       query.limit(limit);
     }
-    
+
     return await query;
   }
 

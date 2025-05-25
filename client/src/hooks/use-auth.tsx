@@ -60,18 +60,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(credentials),
           credentials: 'include'
         });
-        
+
         // If we get HTML instead of JSON (which happens due to Vite middleware)
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('text/html')) {
           throw new Error("Login service unavailable. Please try again later.");
         }
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Login failed");
         }
-        
+
         const data = await response.json();
         return data.user;
       } catch (err: any) {
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (userData: RegisterData) => {
       // Remove confirmPassword as it's not needed in the API
       const { confirmPassword, beltLevel, stripes, ...registrationData } = userData;
-      
+
       try {
         // Use direct fetch call with full error handling
         const response = await fetch('/api/register', {
@@ -112,18 +112,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(registrationData),
           credentials: 'include'
         });
-        
+
         // If we get HTML instead of JSON (which happens due to Vite middleware)
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('text/html')) {
           throw new Error("Registration service unavailable. Please try again later.");
         }
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Registration failed");
         }
-        
+
         const data = await response.json();
         return data.user;
       } catch (err: any) {
@@ -133,10 +133,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw err;
       }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
       toast({
-        title: "Registration successful!",
-        description: "Your account is pending activation. You'll be notified when it's approved.",
+        title: "Registration successful",
+        description: "Your account is pending approval by an administrator. You'll receive access once approved.",
       });
     },
     onError: (error: Error) => {
@@ -156,13 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: 'POST',
           credentials: 'include'
         });
-        
+
         // If we get HTML instead of JSON (which happens due to Vite middleware)
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('text/html')) {
           throw new Error("Logout service unavailable. Please try again later.");
         }
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Logout failed");

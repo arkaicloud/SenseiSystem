@@ -157,40 +157,40 @@ const Dashboard: React.FC = () => {
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
-          title={t('totalAlunos')}
+          title="Total de Alunos"
           value={stats.totalStudents}
           icon="people"
           trend={{ value: "12%", isPositive: true }}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-500"
-          subtitle={t('vs_last_month')}
+          subtitle="alunos ativos matriculados"
         />
         <StatCard
-          title={t('aulasMes')}
+          title="Aulas do Mês"
           value={stats.classesThisMonth}
           icon="event"
           trend={{ value: "5%", isPositive: true }}
           iconBgColor="bg-green-100"
           iconColor="text-green-500"
-          subtitle={t('vs_last_month')}
+          subtitle="aulas realizadas no mês"
         />
         <StatCard
-          title={t('avgPresenca')}
+          title="Taxa de Presença"
           value={stats.avgAttendance}
           icon="fact_check"
           trend={{ value: "3%", isPositive: false }}
           iconBgColor="bg-purple-100"
           iconColor="text-purple-500"
-          subtitle={t('vs_last_month')}
+          subtitle="presença média dos alunos"
         />
         <StatCard
-          title={t('receita')}
+          title="Receita Mensal"
           value={stats.revenue}
           icon="payments"
           trend={{ value: "8%", isPositive: true }}
           iconBgColor="bg-accent-light"
           iconColor="text-accent-dark"
-          subtitle={t('vs_last_month')}
+          subtitle="receita total do mês"
         />
       </div>
 

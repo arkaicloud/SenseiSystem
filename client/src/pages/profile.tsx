@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeltWithLabel } from "@/components/ui/belt";
+import CustomAvatar, { AvatarData } from "@/components/students/CustomAvatar";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -137,12 +138,26 @@ const Profile: React.FC = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white mb-4">
-                    <span className="font-bold text-2xl">
-                      {user.firstName.charAt(0)}
-                      {user.lastName.charAt(0)}
-                    </span>
-                  </div>
+                  {isStudent ? (
+                    <div className="mb-4">
+                      <CustomAvatar 
+                        firstName={user.firstName}
+                        lastName={user.lastName}
+                        avatarStyle={userData?.student?.avatarStyle || "initials"}
+                        avatarColor={userData?.student?.avatarColor || "blue"}
+                        avatarImage={userData?.student?.avatarImage || ""}
+                        size="lg"
+                        onSave={handleAvatarUpdate}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white mb-4">
+                      <span className="font-bold text-2xl">
+                        {user.firstName.charAt(0)}
+                        {user.lastName.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                   <h2 className="text-xl font-bold">
                     {user.firstName} {user.lastName}
                   </h2>

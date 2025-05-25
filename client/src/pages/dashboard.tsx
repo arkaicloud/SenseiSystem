@@ -10,6 +10,7 @@ import BeltDistribution from "@/components/dashboard/BeltDistribution";
 import StudentsTable from "@/components/dashboard/StudentsTable";
 import StudentForm from "@/components/students/StudentForm";
 import AttendanceForm from "@/components/attendance/AttendanceForm";
+import SchoolEventList from "@/components/events/SchoolEventList";
 import { formatDate, formatTime } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -312,15 +313,20 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Seção de Eventos da Escola */}
+      <div className="mt-8 mb-8">
+        <SchoolEventList limit={3} />
+      </div>
+
       {/* Seção de Alunos com Pagamentos Pendentes */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-montserrat font-bold text-xl">{t('alunosComPendencias')}</h2>
           <Link href="/reports">
-            <a className="text-secondary font-medium text-sm flex items-center">
+            <div className="text-secondary font-medium text-sm flex items-center">
               {t('verRelatorioDetalhado')}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
-            </a>
+            </div>
           </Link>
         </div>
 

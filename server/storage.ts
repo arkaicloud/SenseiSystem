@@ -87,6 +87,7 @@ export class MemStorage implements IStorage {
   private paymentPlans: Map<number, PaymentPlan>;
   private studentPayments: Map<number, StudentPayment>;
   private activityLogs: Map<number, ActivityLog>;
+  private schoolEvents: Map<number, SchoolEvent>;
 
   private userCurrentId: number;
   private studentCurrentId: number;
@@ -95,6 +96,7 @@ export class MemStorage implements IStorage {
   private paymentPlanCurrentId: number;
   private studentPaymentCurrentId: number;
   private activityLogCurrentId: number;
+  private schoolEventCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -104,6 +106,7 @@ export class MemStorage implements IStorage {
     this.paymentPlans = new Map();
     this.studentPayments = new Map();
     this.activityLogs = new Map();
+    this.schoolEvents = new Map();
 
     this.userCurrentId = 1;
     this.studentCurrentId = 1;
@@ -112,6 +115,7 @@ export class MemStorage implements IStorage {
     this.paymentPlanCurrentId = 1;
     this.studentPaymentCurrentId = 1;
     this.activityLogCurrentId = 1;
+    this.schoolEventCurrentId = 1;
 
     this.seedData();
   }

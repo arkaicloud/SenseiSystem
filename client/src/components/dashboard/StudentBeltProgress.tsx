@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
-import { Award, Star, Zap, Trophy, Target } from "lucide-react";
+import { Award, Star, Zap, Trophy, Target, PlusCircle, MinusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface BeltProgressProps {
   beltLevel: "white" | "blue" | "purple" | "brown" | "black";
   stripes: number;
   attendanceRate?: number;
+  onUpdateStripes?: (newStripes: number) => void;
 }
 
 const BELT_COLORS = {
@@ -64,20 +66,45 @@ const MAX_STRIPES = 4;
 
 const StudentBeltProgress: React.FC<BeltProgressProps> = ({
   beltLevel,
-  stripes,
-  attendanceRate = 0
+  stripes: initialStripes,
+  attendanceRate = 0,
+  onUpdateStripes
 }) => {
   const { t } = useTranslation();
-  const colors = BELT_COLORS[beltLevel];
+  const [stripes, setStripes] = useState(initialStripes);
   const [animateProgress, setAnimateProgress] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const colors = BELT_COLORS[beltLevel];
   
   // Próxima faixa no caminho
   const nextBeltIndex = BELT_ORDER.indexOf(beltLevel) + 1;
-  const nextBelt = nextBeltIndex < BELT_ORDER.length ? BELT_ORDER[nextBeltIndex] : null;
+  const nextBelt = nextBeltIndex < BELT_ORDER.length ? BELT_ORDER[nextBeltIndex] as keyof typeof BELT_COLORS : 'black';
   
   // Calcular a porcentagem de progresso baseada nas faixas
   const progressValue = (stripes / MAX_STRIPES) * 100;
+  
+  // Lidar com adição/remoção de listras
+  const handleAddStripe = () => {
+    if (stripes < MAX_STRIPES) {
+      const newStripes = stripes + 1;
+      setStripes(newStripes);
+      if (onUpdateStripes) onUpdateStripes(newStripes);
+    }
+  };
+  
+  const handleRemoveStripe = () => {
+    if (stripes > 0) {
+      const newStripes = stripes - 1;
+      setStripes(newStripes);
+      if (onUpdateStripes) onUpdateStripes(newStripes);
+      // Esconder celebração se estiver visível
+      if (showCelebration) setShowCelebration(false);
+    }
+  };
+  
+  const handleToggleCelebration = () => {
+    setShowCelebration(!showCelebration);
+  };
   
   // Animar o progresso
   useEffect(() => {
@@ -86,7 +113,7 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
     }, 500);
     
     // Mostrar celebração se tiver 4 stripes (pronto para próxima faixa)
-    if (stripes === MAX_STRIPES) {
+    if (stripes === MAX_STRIPES && !showCelebration) {
       const celebrationTimer = setTimeout(() => {
         setShowCelebration(true);
       }, 1000);
@@ -98,7 +125,7 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
     }
     
     return () => clearTimeout(timer);
-  }, [progressValue, stripes]);
+  }, [progressValue, stripes, showCelebration]);
   
   // Próxima faixa/grau
   const getNextBelt = () => {
@@ -229,6 +256,44 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
           <div className="font-semibold">
             {attendanceRate}%
           </div>
+        </div>
+      </div>
+      
+      {/* Botões para interagir com a animação */}
+      <div className="mt-6 border-t border-gray-200 border-opacity-40 pt-4">
+        <div className="text-sm mb-2 text-center font-medium">{t('demonstracao_interativa')}</div>
+        <div className="flex justify-center space-x-2">
+          <Button 
+            onClick={handleAddStripe} 
+            variant="outline"
+            size="sm"
+            className="flex items-center"
+            disabled={stripes >= MAX_STRIPES}
+          >
+            <PlusCircle className="w-4 h-4 mr-1" />
+            {t('adicionar_listra')}
+          </Button>
+          
+          <Button 
+            onClick={handleRemoveStripe} 
+            variant="outline"
+            size="sm"
+            className="flex items-center"
+            disabled={stripes <= 0}
+          >
+            <MinusCircle className="w-4 h-4 mr-1" />
+            {t('remover_listra')}
+          </Button>
+          
+          <Button 
+            onClick={handleToggleCelebration} 
+            variant="outline"
+            size="sm"
+            className="flex items-center"
+          >
+            <Award className="w-4 h-4 mr-1" />
+            {showCelebration ? t('esconder_celebracao') : t('mostrar_celebracao')}
+          </Button>
         </div>
       </div>
       

@@ -1093,7 +1093,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      console.log("School config update request:", JSON.stringify(req.body, null, 2));
+      console.log("=== SCHOOL CONFIG UPDATE START ===");
+      console.log("Raw request body keys:", Object.keys(req.body));
       
       // Clean and validate the data
       const cleanData = {
@@ -1106,10 +1107,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         congratsMessage: req.body.congratsMessage || ""
       };
       
-      console.log("Cleaned data:", JSON.stringify(cleanData, null, 2));
+      console.log("Cleaned data keys:", Object.keys(cleanData));
+      console.log("School name:", cleanData.schoolName);
+      console.log("Logo URL length:", cleanData.logoUrl?.length || 0);
       
       const configData = insertSchoolConfigSchema.parse(cleanData);
+      console.log("Schema validation passed");
+      
       const updatedConfig = await storage.updateSchoolConfig(configData);
+      console.log("Storage update completed");
       
       // Log activity
       const requestUser = (req as any).user;
@@ -1120,9 +1126,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: updatedConfig.id
       });
       
+      console.log("=== SCHOOL CONFIG UPDATE SUCCESS ===");
       res.json({ config: updatedConfig });
     } catch (error) {
-      console.error("Error updating school config:", error);
+      console.error("=== SCHOOL CONFIG UPDATE ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Full error:", error);
+      
       if (error instanceof z.ZodError) {
         console.error("Zod validation errors:", error.errors);
         return res.status(400).json({ message: "Dados de configuração inválidos", errors: error.errors });

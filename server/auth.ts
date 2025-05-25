@@ -298,16 +298,16 @@ export function setupAuth(app: Express) {
 // Function to create default admin user
 async function initializeDefaultAdmin() {
   try {
-    const existingAdmin = await storage.getUserByEmail("adm@senseisystem.com.br");
+    const existingAdmin = await storage.getUserByEmail("arkaihub@gmail.com");
     
     if (!existingAdmin) {
-      const hashedPassword = await hashPassword("senseisys123");
+      const hashedPassword = await hashPassword("12345678");
       
       await storage.createUser({
-        firstName: "Admin",
-        lastName: "User",
-        username: "admin",
-        email: "adm@senseisystem.com.br",
+        firstName: "Arkaia",
+        lastName: "Admin",
+        username: "arkaiadm",
+        email: "arkaihub@gmail.com",
         password: hashedPassword,
         role: "admin",
         active: true,
@@ -316,9 +316,9 @@ async function initializeDefaultAdmin() {
         joinDate: new Date(),
       });
       
-      console.log("Default admin user created");
+      console.log("Admin user created: arkaiadm");
     }
   } catch (err) {
-    console.error("Error creating default admin:", err);
+    console.error("Error creating admin user:", err);
   }
 }

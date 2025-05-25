@@ -1172,6 +1172,7 @@ export class DatabaseStorage implements IStorage {
           phone: configData.phone || null,
           email: configData.email || null,
           website: configData.website || null,
+          defaultTheme: configData.defaultTheme || "light",
           createdAt: new Date(),
           updatedAt: new Date()
         })

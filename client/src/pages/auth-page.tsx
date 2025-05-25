@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { beltLevelEnum, userRoleEnum } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
 // Login form schema
 const loginSchema = z.object({
@@ -57,6 +58,7 @@ export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const { t } = useTranslation();
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -116,17 +118,17 @@ export default function AuthPage() {
         <div className="w-full max-w-md">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="login">{t('login')}</TabsTrigger>
+              <TabsTrigger value="register">{t('register')}</TabsTrigger>
             </TabsList>
 
             {/* Login Tab */}
             <TabsContent value="login">
               <Card>
                 <CardHeader>
-                  <CardTitle>Login</CardTitle>
+                  <CardTitle>{t('login')}</CardTitle>
                   <CardDescription>
-                    Enter your credentials to access your account.
+                    {t('loginDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -137,7 +139,7 @@ export default function AuthPage() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('email')}</FormLabel>
                             <FormControl>
                               <Input placeholder="you@example.com" {...field} />
                             </FormControl>
@@ -150,7 +152,7 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>{t('password')}</FormLabel>
                             <FormControl>
                               <Input type="password" placeholder="••••••••" {...field} />
                             </FormControl>
@@ -166,10 +168,10 @@ export default function AuthPage() {
                         {loginMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Logging in...
+                            {t('loggingIn')}
                           </>
                         ) : (
-                          "Log in"
+                          t('login')
                         )}
                       </Button>
                     </form>
@@ -182,17 +184,17 @@ export default function AuthPage() {
             <TabsContent value="register">
               <Card>
                 <CardHeader>
-                  <CardTitle>Create an Account</CardTitle>
+                  <CardTitle>{t('createAccount')}</CardTitle>
                   <CardDescription>
-                    Enter your information to create a new account.
+                    {t('registerDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {registrationSuccess ? (
                     <Alert className="mb-4">
-                      <AlertTitle>Registration Successful!</AlertTitle>
+                      <AlertTitle>{t('registrationSuccess')}</AlertTitle>
                       <AlertDescription>
-                        Your account has been created and is pending approval. You will be notified when it is activated.
+                        {t('registrationSuccessMessage')}
                       </AlertDescription>
                     </Alert>
                   ) : (
@@ -204,7 +206,7 @@ export default function AuthPage() {
                             name="firstName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>First Name</FormLabel>
+                                <FormLabel>{t('firstName')}</FormLabel>
                                 <FormControl>
                                   <Input placeholder="John" {...field} />
                                 </FormControl>
@@ -217,7 +219,7 @@ export default function AuthPage() {
                             name="lastName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Last Name</FormLabel>
+                                <FormLabel>{t('lastName')}</FormLabel>
                                 <FormControl>
                                   <Input placeholder="Doe" {...field} />
                                 </FormControl>

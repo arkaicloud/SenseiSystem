@@ -36,6 +36,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
     logoutMutation.mutate();
   };
 
+  // Get pending users count for admin
+  const { data: pendingUsersData } = useQuery({
+    queryKey: ['/api/users/pending'],
+    enabled: user?.role === 'admin',
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
   // If not authenticated, don't show sidebar
   if (!user) {
     return null;
@@ -56,13 +63,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   const isAdmin = user?.role === "admin";
   const isInstructor = user?.role === "instructor" || isAdmin;
   const isStudent = user?.role === "student";
-
-    // Get pending users count for admin
-  const { data: pendingUsersData } = useQuery({
-    queryKey: ['/api/users/pending'],
-    enabled: user?.role === 'admin',
-    refetchInterval: 30000, // Check every 30 seconds
-  });
 
   const pendingCount = pendingUsersData?.users?.length || 0;
 

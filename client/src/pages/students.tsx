@@ -10,9 +10,11 @@ import StudentForm from "@/components/students/StudentForm";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const Students: React.FC = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
@@ -120,8 +122,8 @@ const Students: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Students</h1>
-          <p className="text-gray-600">Manage your students</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('students')}</h1>
+          <p className="text-gray-600">{t('manage_students')}</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">

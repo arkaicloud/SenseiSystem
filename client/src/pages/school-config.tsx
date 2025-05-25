@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loader2, School, Upload, Save } from "lucide-react";
@@ -26,6 +27,7 @@ const schoolConfigSchema = z.object({
   email: z.string().email("Email deve ser válido").optional().or(z.literal("")),
   website: z.string().url("Website deve ser uma URL válida").optional().or(z.literal("")),
   congratsMessage: z.string().optional(),
+  defaultTheme: z.enum(["light", "dark"]).default("light"),
 });
 
 type SchoolConfigForm = z.infer<typeof schoolConfigSchema>;
@@ -65,6 +67,7 @@ export default function SchoolConfigPage() {
         email: currentConfig.email || "",
         website: currentConfig.website || "",
         congratsMessage: currentConfig.congratsMessage || "",
+        defaultTheme: (currentConfig.defaultTheme as "light" | "dark") || "light",
       });
     }
   }, [currentConfig, form]);
@@ -297,6 +300,32 @@ export default function SchoolConfigPage() {
                         <FormMessage />
                         <p className="text-sm text-gray-500">
                           Mensagem que aparecerá quando um aluno for graduado
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Tema Padrão */}
+                  <FormField
+                    control={form.control}
+                    name="defaultTheme"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tema Padrão do Sistema</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tema padrão" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="light">🌞 Tema Claro</SelectItem>
+                            <SelectItem value="dark">🌙 Tema Escuro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        <p className="text-sm text-gray-500">
+                          Tema que será aplicado por padrão para todos os usuários
                         </p>
                       </FormItem>
                     )}

@@ -57,6 +57,7 @@ export const schoolConfig = pgTable("school_config", {
   phone: text("phone"),
   email: text("email"),
   website: text("website"),
+  defaultTheme: text("default_theme").notNull().default("light"), // "light" or "dark"
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

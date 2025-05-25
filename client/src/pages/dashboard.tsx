@@ -23,32 +23,38 @@ const Dashboard: React.FC = () => {
   // Fetch dashboard stats
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
     queryKey: ['/api/stats'],
-    refetchInterval: false,
+    refetchInterval: 60000, // Atualiza a cada minuto
   });
 
   // Fetch today's classes
   const { data: classesData, isLoading: isClassesLoading } = useQuery({
     queryKey: ['/api/classes/today'],
-    refetchInterval: false,
+    refetchInterval: 300000, // Atualiza a cada 5 minutos
   });
 
   // Fetch activity logs
   const { data: activityLogsData, isLoading: isActivityLogsLoading } = useQuery({
     queryKey: ['/api/activity-logs'],
-    refetchInterval: false,
+    refetchInterval: 60000, // Atualiza a cada minuto
   });
 
   // Fetch students requiring attention
   const { data: overduePaymentsData, isLoading: isOverduePaymentsLoading } = useQuery({
     queryKey: ['/api/student-payments/overdue'],
-    refetchInterval: false,
+    refetchInterval: 300000, // Atualiza a cada 5 minutos
   });
 
-  const stats = statsData?.stats || {
-    totalStudents: 87,
-    classesThisMonth: 42,
-    avgAttendance: "76%",
-    revenue: "$8,245"
+  // Processar dados estatísticos do servidor ou usar fallback se não disponíveis
+  const stats = statsData?.stats ? {
+    totalStudents: statsData.stats.totalStudents || 0,
+    classesThisMonth: statsData.stats.totalClasses || 0,
+    avgAttendance: statsData.stats.averageAttendance ? `${Math.round(statsData.stats.averageAttendance * 100)}%` : "0%",
+    revenue: statsData.stats.revenueThisMonth ? `R$ ${statsData.stats.revenueThisMonth.toLocaleString('pt-BR')}` : "R$ 0"
+  } : {
+    totalStudents: 0,
+    classesThisMonth: 0,
+    avgAttendance: "0%",
+    revenue: "R$ 0"
   };
 
   const todaysClasses = classesData?.classes || [];

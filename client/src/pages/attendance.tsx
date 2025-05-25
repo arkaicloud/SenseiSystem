@@ -7,11 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { BeltWithLabel } from "@/components/ui/belt";
 import AttendanceForm from "@/components/attendance/AttendanceForm";
+import StudentAttendanceSummary from "@/components/attendance/StudentAttendanceSummary";
+import QuickAttendanceConfirm from "@/components/attendance/QuickAttendanceConfirm";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime, formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/use-auth";
 
 const Attendance: React.FC = () => {
   const { toast } = useToast();

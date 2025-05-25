@@ -13,6 +13,7 @@ import AttendanceForm from "@/components/attendance/AttendanceForm";
 import SchoolEventList from "@/components/events/SchoolEventList";
 import StudentBeltProgress from "@/components/dashboard/StudentBeltProgress";
 import StudentNotifications from "@/components/dashboard/StudentNotifications";
+import QuickAttendanceConfirm from "@/components/attendance/QuickAttendanceConfirm";
 import { formatDate, formatTime, formatCurrencyBRL } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -216,6 +217,18 @@ const Dashboard: React.FC = () => {
                   stripes={student.stripes || 0}
                   attendanceRate={student.attendanceRate || 0}
                 />
+              )}
+              
+              {/* Confirmação Rápida de Presença */}
+              {user && (
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="font-medium text-primary">{t('confirmar_presenca_hoje')}</h3>
+                  </div>
+                  <div className="p-4">
+                    <QuickAttendanceConfirm userId={user.id} compact={true} />
+                  </div>
+                </div>
               )}
               
               {/* Próximas Aulas */}

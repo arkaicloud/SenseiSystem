@@ -304,26 +304,7 @@ export default function AuthPage() {
                           />
                         </div>
                           
-                        <FormField
-                          control={registerForm.control}
-                          name="birthDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('birthDate')}</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="date" 
-                                  {...field} 
-                                  value={field.value || ''}
-                                  onChange={(e) => {
-                                    field.onChange(e.target.value);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* Campo de data de nascimento temporariamente removido */}
                           
                         <div>
                           <h3 className="text-lg font-medium mb-2">{t('address')}</h3>

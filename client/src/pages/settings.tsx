@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme } from "@/lib/theme";
 
 const Settings: React.FC = () => {
   const { toast } = useToast();

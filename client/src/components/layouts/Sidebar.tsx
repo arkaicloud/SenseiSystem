@@ -160,6 +160,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
               <span className="material-icons mr-3">payments</span>
               <span>{t('payments')}</span>
             </Link>
+            
+            <Link href="/payment-plans" className={linkClass("/payment-plans")}>
+              <span className="material-icons mr-3">list_alt</span>
+              <span>{t('payment_plans')}</span>
+            </Link>
 
             <Link href="/reports" className={linkClass("/reports")}>
               <span className="material-icons mr-3">bar_chart</span>

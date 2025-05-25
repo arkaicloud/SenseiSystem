@@ -11,6 +11,7 @@ import PendingUsers from "@/pages/pending-users";
 import Classes from "@/pages/classes";
 import Attendance from "@/pages/attendance";
 import Payments from "@/pages/payments";
+import PaymentPlans from "@/pages/payment-plans";
 import Reports from "@/pages/reports";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
@@ -45,6 +46,11 @@ function Router() {
       <ProtectedRoute 
         path="/payments" 
         component={Payments} 
+        allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/payment-plans" 
+        component={PaymentPlans} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 

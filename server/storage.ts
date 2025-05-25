@@ -802,7 +802,7 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(students, eq(attendance.studentId, students.id))
     .leftJoin(users, eq(students.userId, users.id))
     .leftJoin(classes, eq(attendance.classId, classes.id))
-    .leftJoin(users as "instructorUsers", eq(classes.instructorId, instructorUsers.id), "instructor");
+    .leftJoin(users, eq(classes.instructorId, users.id), "instructor");
 
     return result.map(item => ({
       ...item.attendance,

@@ -9,7 +9,7 @@ import PaymentForm from "@/components/payments/PaymentForm";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatDateShort } from "@/lib/utils";
+import { formatCurrencyBRL, formatDateShort } from "@/lib/utils";
 
 const Payments: React.FC = () => {
   const { toast } = useToast();
@@ -229,7 +229,7 @@ const Payments: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {formatCurrency(payment.amount)}
+                              {formatCurrencyBRL(payment.amount)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">

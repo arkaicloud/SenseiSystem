@@ -25,6 +25,24 @@ export function formatCurrencyBRL(amount: number): string {
   }).format(amount);
 }
 
+export function formatCurrencyBRLInput(amount: number): string {
+  // Formata para o padrão brasileiro sem o símbolo R$
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function parseCurrencyBRL(value: string): number {
+  // Remove quaisquer caracteres não numéricos exceto vírgula e ponto
+  const sanitized = value.replace(/[^\d,\.]/g, '');
+  
+  // Converte de formato BR (1.234,56) para formato numérico (1234.56)
+  const numericValue = sanitized.replace(/\./g, '').replace(',', '.');
+  
+  return parseFloat(numericValue);
+}
+
 export function formatTime(time: string): { time: string; period: string } {
   const [hours, minutes] = time.split(':');
   const hour = parseInt(hours, 10);

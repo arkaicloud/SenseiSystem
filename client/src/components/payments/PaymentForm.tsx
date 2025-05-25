@@ -24,7 +24,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { cn, formatCurrencyBRL } from "@/lib/utils";
+import { cn, formatCurrencyBRL, formatCurrencyBRLInput, parseCurrencyBRL } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

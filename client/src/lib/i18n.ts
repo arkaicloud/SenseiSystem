@@ -137,7 +137,26 @@ const resources = {
       byClass: "By Class",
       byStudent: "By Student",
       noAttendanceRecords: "No attendance records found for this date",
-      studentViewComingSoon: "Student view coming soon"
+      studentViewComingSoon: "Student view coming soon",
+      
+      // Payment Form
+      student: "Student",
+      select_student: "Select a student",
+      payment_plan: "Payment Plan",
+      select_payment_plan: "Select a payment plan",
+      due_date: "Due Date",
+      payment_date: "Payment Date",
+      pick_date: "Pick a date",
+      status: "Status",
+      select_status: "Select status",
+      paid: "Paid",
+      pending: "Pending",
+      overdue: "Overdue",
+      notes: "Notes",
+      payment_notes_placeholder: "Any additional notes about this payment",
+      save_payment: "Save Payment",
+      create_payment: "Create Payment",
+      update_payment: "Update Payment"
     }
   },
   pt: {
@@ -330,7 +349,26 @@ const resources = {
       failed_to_add_plan: "Falha ao adicionar plano",
       failed_to_update_plan: "Falha ao atualizar plano",
       failed_to_delete_plan: "Falha ao excluir plano",
-      confirm_delete_plan: "Tem certeza que deseja excluir este plano?"
+      confirm_delete_plan: "Tem certeza que deseja excluir este plano?",
+      
+      // Payment Form
+      student: "Aluno",
+      select_student: "Selecione um aluno",
+      payment_plan: "Plano de Pagamento",
+      select_payment_plan: "Selecione um plano de pagamento",
+      due_date: "Data de Vencimento",
+      payment_date: "Data de Pagamento",
+      pick_date: "Selecione uma data",
+      status: "Status",
+      select_status: "Selecione o status",
+      paid: "Pago",
+      pending: "Pendente",
+      overdue: "Atrasado",
+      notes: "Observações",
+      payment_notes_placeholder: "Observações adicionais sobre este pagamento",
+      save_payment: "Salvar Pagamento",
+      create_payment: "Criar Pagamento",
+      update_payment: "Atualizar Pagamento"
     }
   },
   es: {

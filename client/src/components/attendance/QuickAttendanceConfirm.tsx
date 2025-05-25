@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,6 +22,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  const [confirmedClasses, setConfirmedClasses] = useState<number[]>([]);
   
   // Buscar aulas do dia
   const { data: classesData, isLoading } = useQuery({
@@ -35,6 +36,37 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
     enabled: !!userId,
   });
   
+  // Buscar presenças do aluno
+  const { data: attendanceData } = useQuery({
+    queryKey: ['/api/attendance/by-student', userId],
+    enabled: !!userId,
+  });
+
+  // Processar dados das aulas do dia
+  const todaysClasses = classesData?.classes || [];
+  // Simplificar filtro para mostrar todas as aulas do dia para fins de demonstração
+  const availableClasses = todaysClasses;
+  
+  // Verificar se há aulas disponíveis
+  const hasAvailableClasses = availableClasses.length > 0;
+  
+  // Verificar presenças já confirmadas e atualizar estado ao carregar
+  useEffect(() => {
+    if (!attendanceData?.attendances) return;
+    
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // Extrair IDs de aulas que o aluno já confirmou presença hoje
+    const confirmedClassIds = attendanceData.attendances
+      .filter((att: any) => {
+        const attDate = new Date(att.date).toISOString().split('T')[0];
+        return attDate === today;
+      })
+      .map((att: any) => att.classId);
+    
+    setConfirmedClasses(confirmedClassIds);
+  }, [attendanceData]);
+
   // Mutation para confirmar presença
   const confirmAttendanceMutation = useMutation({
     mutationFn: async (classId: number) => {
@@ -46,19 +78,22 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         classId,
         studentId: userId, // Usar userId como substituto temporário
         date: new Date().toISOString(),
-        isPresent: true,
+        status: 'present',
         notes: "Presença confirmada pelo aluno via dashboard"
       };
       
       const res = await apiRequest("POST", "/api/attendance", attendanceData);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, classId) => {
       toast({
         title: t('presenca_confirmada'),
         description: t('sua_presenca_foi_registrada'),
-        variant: "success",
+        variant: "default",
       });
+      
+      // Atualizar lista de aulas confirmadas
+      setConfirmedClasses(prev => [...prev, classId]);
       
       queryClient.invalidateQueries({
         queryKey: ['/api/attendance/by-student']
@@ -74,14 +109,6 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       });
     }
   });
-  
-  // Processar dados das aulas do dia
-  const todaysClasses = classesData?.classes || [];
-  // Simplificar filtro para mostrar todas as aulas do dia para fins de demonstração
-  const availableClasses = todaysClasses;
-  
-  // Verificar se há aulas disponíveis
-  const hasAvailableClasses = availableClasses.length > 0;
   
   // Se não houver aulas disponíveis e estiver no modo compacto, mostrar apenas um botão desabilitado
   if (compact && !hasAvailableClasses) {
@@ -106,6 +133,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   if (compact) {
     const classItem = availableClasses[0];
     const { time, period } = formatTime(classItem.startTime);
+    const isConfirmed = confirmedClasses.includes(classItem.id);
     
     return (
       <div className="space-y-4">
@@ -117,18 +145,25 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
             </div>
           </div>
           
-          <Button
-            size="sm"
-            disabled={confirmAttendanceMutation.isPending}
-            onClick={() => confirmAttendanceMutation.mutate(classItem.id)}
-          >
-            {confirmAttendanceMutation.isPending ? (
-              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-            ) : (
+          {isConfirmed ? (
+            <Badge className="bg-green-100 text-green-800 border-green-200">
               <CheckCircle className="mr-2 h-3 w-3" />
-            )}
-            {t('confirmar')}
-          </Button>
+              {t('presenca_confirmada')}
+            </Badge>
+          ) : (
+            <Button
+              size="sm"
+              disabled={confirmAttendanceMutation.isPending}
+              onClick={() => confirmAttendanceMutation.mutate(classItem.id)}
+            >
+              {confirmAttendanceMutation.isPending ? (
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              ) : (
+                <CheckCircle className="mr-2 h-3 w-3" />
+              )}
+              {t('confirmar')}
+            </Button>
+          )}
         </div>
         
         {availableClasses.length > 1 && (
@@ -169,16 +204,19 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
             
             {availableClasses.map((classItem: any) => {
               const { time, period } = formatTime(classItem.startTime);
+              const isConfirmed = confirmedClasses.includes(classItem.id);
               
               return (
                 <div 
                   key={classItem.id}
-                  className={`p-4 border rounded-lg flex justify-between items-center cursor-pointer transition-colors ${
-                    selectedClassId === classItem.id 
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:border-primary/50'
+                  className={`p-4 border rounded-lg flex justify-between items-center ${
+                    isConfirmed
+                      ? 'border-green-200 bg-green-50'
+                      : selectedClassId === classItem.id 
+                        ? 'border-primary bg-primary/5 cursor-pointer'
+                        : 'hover:border-primary/50 cursor-pointer'
                   }`}
-                  onClick={() => setSelectedClassId(classItem.id)}
+                  onClick={() => !isConfirmed && setSelectedClassId(classItem.id)}
                 >
                   <div className="flex items-center">
                     <div className="flex-shrink-0 p-2 bg-primary/10 rounded-full mr-3">
@@ -192,27 +230,36 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
                     </div>
                   </div>
                   
-                  <Badge variant="outline">
-                    {classItem.instructor 
-                      ? `${classItem.instructor.firstName} Sensei`
-                      : t('sem_instrutor')}
-                  </Badge>
+                  {isConfirmed ? (
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      <CheckCircle className="mr-2 h-3 w-3" />
+                      {t('presenca_confirmada')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">
+                      {classItem.instructor 
+                        ? `${classItem.instructor.firstName} Sensei`
+                        : t('sem_instrutor')}
+                    </Badge>
+                  )}
                 </div>
               );
             })}
             
-            <Button
-              className="w-full mt-4"
-              disabled={!selectedClassId || confirmAttendanceMutation.isPending}
-              onClick={() => selectedClassId && confirmAttendanceMutation.mutate(selectedClassId)}
-            >
-              {confirmAttendanceMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle className="mr-2 h-4 w-4" />
-              )}
-              {t('confirmar_presenca')}
-            </Button>
+            {!availableClasses.every(c => confirmedClasses.includes(c.id)) && (
+              <Button
+                className="w-full mt-4"
+                disabled={!selectedClassId || confirmAttendanceMutation.isPending}
+                onClick={() => selectedClassId && confirmAttendanceMutation.mutate(selectedClassId)}
+              >
+                {confirmAttendanceMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                )}
+                {t('confirmar_presenca')}
+              </Button>
+            )}
           </div>
         )}
       </CardContent>

@@ -6,6 +6,7 @@ import {
   paymentPlans, type PaymentPlan, type InsertPaymentPlan,
   studentPayments, type StudentPayment, type InsertStudentPayment,
   activityLogs, type ActivityLog, type InsertActivityLog,
+  schoolEvents, type SchoolEvent, type InsertSchoolEvent,
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails
 } from "@shared/schema";
@@ -28,6 +29,13 @@ export interface IStorage {
   createStudent(student: InsertStudent): Promise<Student>;
   updateStudent(id: number, student: Partial<Student>): Promise<Student | undefined>;
   deleteStudent(id: number): Promise<boolean>;
+  
+  // School Events
+  getSchoolEvent(id: number): Promise<SchoolEvent | undefined>;
+  getSchoolEvents(activeOnly?: boolean): Promise<SchoolEvent[]>;
+  createSchoolEvent(event: InsertSchoolEvent): Promise<SchoolEvent>;
+  updateSchoolEvent(id: number, event: Partial<SchoolEvent>): Promise<SchoolEvent | undefined>;
+  deleteSchoolEvent(id: number): Promise<boolean>;
 
   // Classes
   getClass(id: number): Promise<Class | undefined>;

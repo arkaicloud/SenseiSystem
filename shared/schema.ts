@@ -41,6 +41,24 @@ export const students = pgTable("students", {
   lastPromotionDate: timestamp("last_promotion_date"),
   attendanceRate: integer("attendance_rate").default(0),
   notes: text("notes"),
+  // Avatar personalization
+  avatarColor: text("avatar_color").default('#3b82f6'),
+  avatarStyle: text("avatar_style").default('initials'),
+  avatarImage: text("avatar_image"),
+});
+
+// School Events table
+export const schoolEvents = pgTable("school_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  eventDate: timestamp("event_date").notNull(),
+  location: text("location"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: integer("created_by").references(() => users.id),
+  isActive: boolean("is_active").default(true),
 });
 
 // Classes table
@@ -109,6 +127,7 @@ export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: 
 export const insertPaymentPlanSchema = createInsertSchema(paymentPlans).omit({ id: true });
 export const insertStudentPaymentSchema = createInsertSchema(studentPayments).omit({ id: true });
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true });
+export const insertSchoolEventSchema = createInsertSchema(schoolEvents).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -116,6 +135,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
+
+export type SchoolEvent = typeof schoolEvents.$inferSelect;
+export type InsertSchoolEvent = z.infer<typeof insertSchoolEventSchema>;
 
 export type Class = typeof classes.$inferSelect;
 export type InsertClass = z.infer<typeof insertClassSchema>;

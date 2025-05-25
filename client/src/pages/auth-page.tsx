@@ -113,7 +113,14 @@ export default function AuthPage() {
 
   // Registration form submission
   const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
-    registerMutation.mutate(values, {
+    // Prepara os dados, garantindo que birthDate seja enviado corretamente
+    const formattedValues = {
+      ...values,
+      // Se não houver data, enviar como null para o banco de dados
+      birthDate: values.birthDate || null,
+    };
+    
+    registerMutation.mutate(formattedValues, {
       onSuccess: () => {
         setRegistrationSuccess(true);
         // Clear form
@@ -315,8 +322,25 @@ export default function AuthPage() {
                                   {...field} 
                                   value={field.value ? (field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value) : ''}
                                   onChange={(e) => {
-                                    const date = e.target.value ? new Date(e.target.value) : undefined;
-                                    field.onChange(date);
+                                    // Se o valor for vazio, definir como null
+                                    if (!e.target.value) {
+                                      field.onChange(null);
+                                      return;
+                                    }
+                                    
+                                    // Caso contrário, criar um objeto Date válido
+                                    try {
+                                      const date = new Date(e.target.value);
+                                      // Verificar se a data é válida
+                                      if (!isNaN(date.getTime())) {
+                                        field.onChange(date);
+                                      } else {
+                                        field.onChange(null);
+                                      }
+                                    } catch (error) {
+                                      // Em caso de erro, definir como null
+                                      field.onChange(null);
+                                    }
                                   }}
                                 />
                               </FormControl>

@@ -6,6 +6,25 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   en: {
     translation: {
+      // User Address and Birth Date
+      birthDate: "Birth Date",
+      address: "Address",
+      street: "Street",
+      number: "Number",
+      complement: "Complement",
+      neighborhood: "Neighborhood",
+      city: "City",
+      state: "State",
+      zipCode: "ZIP Code",
+      searchAddress: "Search Address",
+      
+      // Belt Names
+      whiteBelt: "White Belt",
+      blueBelt: "Blue Belt",
+      purpleBelt: "Purple Belt",
+      brownBelt: "Brown Belt",
+      blackBelt: "Black Belt",
+      
       // Auth Hero Section
       appDescription: "Jiu-Jitsu School Management",
       appSubDescription: "Track your progress, manage your attendance, and stay connected with your Jiu-Jitsu community.",
@@ -123,6 +142,25 @@ const resources = {
   },
   pt: {
     translation: {
+      // User Address and Birth Date
+      birthDate: "Data de Nascimento",
+      address: "Endereço",
+      street: "Rua",
+      number: "Número",
+      complement: "Complemento",
+      neighborhood: "Bairro",
+      city: "Cidade",
+      state: "Estado",
+      zipCode: "CEP",
+      searchAddress: "Buscar Endereço",
+      
+      // Belt Names
+      whiteBelt: "Faixa Branca",
+      blueBelt: "Faixa Azul",
+      purpleBelt: "Faixa Roxa",
+      brownBelt: "Faixa Marrom",
+      blackBelt: "Faixa Preta",
+      
       // Auth Hero Section
       appDescription: "Sistema de Gestão para Escolas de Jiu-Jitsu",
       appSubDescription: "Acompanhe seu progresso, gerencie sua presença e mantenha-se conectado com sua comunidade de Jiu-Jitsu.",

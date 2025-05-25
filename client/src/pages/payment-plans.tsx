@@ -9,6 +9,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import PaymentPlanForm from "@/components/payments/PaymentPlanForm";
 import { useTranslation } from "react-i18next";
+import { formatCurrencyBRL } from "@/lib/utils";
 
 const PaymentPlans: React.FC = () => {
   const { toast } = useToast();
@@ -118,13 +119,7 @@ const PaymentPlans: React.FC = () => {
     }
   };
 
-  // Format amount to currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
-    }).format(amount);
-  };
+  // Usando a função de formatação de moeda brasileira
 
   return (
     <>
@@ -204,7 +199,7 @@ const PaymentPlans: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">{plan.name}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatCurrency(plan.amount)}</div>
+                        <div className="text-sm text-gray-900">{formatCurrencyBRL(plan.amount)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{t(plan.frequency)}</div>

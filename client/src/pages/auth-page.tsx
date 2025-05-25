@@ -302,6 +302,146 @@ export default function AuthPage() {
                             )}
                           />
                         </div>
+                          
+                        <FormField
+                          control={registerForm.control}
+                          name="birthDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('birthDate')}</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="date" 
+                                  {...field} 
+                                  value={field.value ? (field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value) : ''}
+                                  onChange={(e) => {
+                                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                                    field.onChange(date);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                          
+                        <div>
+                          <h3 className="text-lg font-medium mb-2">{t('address')}</h3>
+                            
+                          <div className="grid grid-cols-2 gap-4 mb-2">
+                            <FormField
+                              control={registerForm.control}
+                              name="zipCode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('zipCode')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="12345-678" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                // Função para buscar endereço por CEP poderia ser implementada aqui
+                                alert('Funcionalidade de busca de endereço a ser implementada');
+                              }}
+                              className="mt-8"
+                            >
+                              {t('searchAddress')}
+                            </Button>
+                          </div>
+                            
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={registerForm.control}
+                              name="street"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('street')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Street name" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="number"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('number')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="123" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                            
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={registerForm.control}
+                              name="complement"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('complement')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Apt 4B" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="neighborhood"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('neighborhood')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Downtown" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                            
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={registerForm.control}
+                              name="city"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('city')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="City" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={registerForm.control}
+                              name="state"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('state')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="State" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
 
                         <FormField
                           control={registerForm.control}

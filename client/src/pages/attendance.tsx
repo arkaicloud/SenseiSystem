@@ -124,8 +124,9 @@ const Attendance: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             {/* Resumo de presença do aluno */}
-            {studentData?.student && (
-              <StudentAttendanceSummary studentId={studentData.student.id} />
+            {/* Usar userId diretamente em vez de studentId */}
+            {user && (
+              <StudentAttendanceSummary studentId={user.id} />
             )}
           </div>
           

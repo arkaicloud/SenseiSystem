@@ -47,6 +47,20 @@ export const students = pgTable("students", {
   avatarImage: text("avatar_image"),
 });
 
+// School Configuration table
+export const schoolConfig = pgTable("school_config", {
+  id: serial("id").primaryKey(),
+  schoolName: text("school_name").notNull().default("Academia de Jiu-Jitsu"),
+  congratsMessage: text("congrats_message").notNull().default("🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!"),
+  logoUrl: text("logo_url"),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  website: text("website"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // School Events table
 export const schoolEvents = pgTable("school_events", {
   id: serial("id").primaryKey(),
@@ -122,6 +136,7 @@ export const insertUserSchema = createInsertSchema(users)
     birthDate: z.string().optional().nullable(),
   });
 export const insertStudentSchema = createInsertSchema(students).omit({ id: true });
+export const insertSchoolConfigSchema = createInsertSchema(schoolConfig).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertClassSchema = createInsertSchema(classes).omit({ id: true });
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });
 export const insertPaymentPlanSchema = createInsertSchema(paymentPlans).omit({ id: true });

@@ -235,7 +235,7 @@ export default function AuthPage() {
                             name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>{t('email')}</FormLabel>
                                 <FormControl>
                                   <Input placeholder="you@example.com" {...field} />
                                 </FormControl>
@@ -248,7 +248,7 @@ export default function AuthPage() {
                             name="username"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Username</FormLabel>
+                                <FormLabel>{t('username')}</FormLabel>
                                 <FormControl>
                                   <Input placeholder="johndoe" {...field} />
                                 </FormControl>
@@ -264,7 +264,7 @@ export default function AuthPage() {
                             name="phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Phone</FormLabel>
+                                <FormLabel>{t('phone')}</FormLabel>
                                 <FormControl>
                                   <Input placeholder="(555) 123-4567" {...field} />
                                 </FormControl>
@@ -277,7 +277,7 @@ export default function AuthPage() {
                             name="emergencyContact"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Emergency Contact</FormLabel>
+                                <FormLabel>{t('emergencyContact')}</FormLabel>
                                 <FormControl>
                                   <Input placeholder="Contact name and number" {...field} />
                                 </FormControl>
@@ -292,16 +292,16 @@ export default function AuthPage() {
                           name="role"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Role</FormLabel>
+                              <FormLabel>{t('role')}</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select a role" />
+                                    <SelectValue placeholder={t('selectRole')} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="student">Student</SelectItem>
-                                  <SelectItem value="instructor">Instructor</SelectItem>
+                                  <SelectItem value="student">{t('student')}</SelectItem>
+                                  <SelectItem value="instructor">{t('instructor')}</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -316,19 +316,19 @@ export default function AuthPage() {
                               name="beltLevel"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Belt Level</FormLabel>
+                                  <FormLabel>{t('beltLevel')}</FormLabel>
                                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                       <SelectTrigger>
-                                        <SelectValue placeholder="Select belt level" />
+                                        <SelectValue placeholder={t('selectBeltLevel')} />
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      <SelectItem value="white">White</SelectItem>
-                                      <SelectItem value="blue">Blue</SelectItem>
-                                      <SelectItem value="purple">Purple</SelectItem>
-                                      <SelectItem value="brown">Brown</SelectItem>
-                                      <SelectItem value="black">Black</SelectItem>
+                                      <SelectItem value="white">{t('whiteBelt')}</SelectItem>
+                                      <SelectItem value="blue">{t('blueBelt')}</SelectItem>
+                                      <SelectItem value="purple">{t('purpleBelt')}</SelectItem>
+                                      <SelectItem value="brown">{t('brownBelt')}</SelectItem>
+                                      <SelectItem value="black">{t('blackBelt')}</SelectItem>
                                     </SelectContent>
                                   </Select>
                                   <FormMessage />
@@ -340,13 +340,13 @@ export default function AuthPage() {
                               name="stripes"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Stripes</FormLabel>
+                                  <FormLabel>{t('stripes')}</FormLabel>
                                   <Select
                                     onValueChange={(value) => field.onChange(parseInt(value))}
                                     defaultValue={field.value?.toString() || "0"}>
                                     <FormControl>
                                       <SelectTrigger>
-                                        <SelectValue placeholder="Number of stripes" />
+                                        <SelectValue placeholder={t('numberOfStripes')} />
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -370,7 +370,7 @@ export default function AuthPage() {
                             name="password"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <FormLabel>{t('password')}</FormLabel>
                                 <FormControl>
                                   <Input type="password" placeholder="••••••••" {...field} />
                                 </FormControl>
@@ -383,7 +383,7 @@ export default function AuthPage() {
                             name="confirmPassword"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Confirm Password</FormLabel>
+                                <FormLabel>{t('confirmPassword')}</FormLabel>
                                 <FormControl>
                                   <Input type="password" placeholder="••••••••" {...field} />
                                 </FormControl>
@@ -401,10 +401,10 @@ export default function AuthPage() {
                           {registerMutation.isPending ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Creating account...
+                              {t('creatingAccount')}
                             </>
                           ) : (
-                            "Create account"
+                            t('createAccount')
                           )}
                         </Button>
                       </form>

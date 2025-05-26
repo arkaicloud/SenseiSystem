@@ -29,9 +29,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   };
 
   const linkClass = (path: string) => {
-    return `flex items-center px-4 py-3 ${
+    return `flex items-center px-4 py-3 w-full text-sm font-medium transition-colors duration-200 ${
       isActive(path)
-        ? "text-white bg-primary-light"
+        ? "text-white bg-primary-light border-r-4 border-white"
         : "text-gray-300 hover:bg-primary-light hover:text-white"
     }`;
   };
@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   return (
     <aside
       id="sidebar"
-      className={`sidebar bg-primary text-white w-64 h-screen ${
+      className={`sidebar bg-primary text-white w-64 min-w-64 h-screen ${
         isMobile 
           ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out` 
           : "relative z-40"

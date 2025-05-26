@@ -147,7 +147,7 @@ export class MemStorage implements IStorage {
       lastName: "Sensei",
       username: "admin",
       email: "admin@senseisystem.com",
-      password: "admin123", // In a real app, this would be hashed
+      password: "$2b$10$1HOmR7MXx5inyCqQg2UwgOgW7fSoP0V5TSbdx1ZQS/akkpfvp3j/6", // "password"
       role: "admin",
       phone: "555-123-4567",
       emergencyContact: "",
@@ -163,7 +163,7 @@ export class MemStorage implements IStorage {
       lastName: "Sensei",
       username: "instructor",
       email: "instructor@senseisystem.com",
-      password: "instructor123",
+      password: "$2b$10$O9hGnkb7dxHSHo5.jtffc.mUTQsQtMkj/K4GrP/NQFyukf8eZuU5G", // "password"
       role: "instructor",
       phone: "555-234-5678",
       emergencyContact: "",

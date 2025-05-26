@@ -28,7 +28,7 @@ const Students: React.FC = () => {
   // Add student mutation
   const { mutate: addStudent, isPending: isAddingStudent } = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest('POST', '/api/auth/register', data);
+      const res = await apiRequest('POST', '/api/students', data);
       return res.json();
     },
     onSuccess: () => {

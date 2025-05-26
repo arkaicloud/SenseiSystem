@@ -124,7 +124,7 @@ const Classes: React.FC = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Add New Class</DialogTitle>
+              <DialogTitle>Adicionar Nova Aula</DialogTitle>
               <ClassForm 
                 instructors={instructors} 
                 onSubmit={handleAddClass} 
@@ -309,7 +309,7 @@ const Classes: React.FC = () => {
       {selectedClass && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedClass(null)}>
           <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Edit Class</DialogTitle>
+            <DialogTitle>Editar Aula</DialogTitle>
             <ClassForm 
               instructors={instructors}
               defaultValues={{

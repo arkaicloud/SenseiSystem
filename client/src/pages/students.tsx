@@ -146,7 +146,7 @@ const Students: React.FC = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Add New Student</DialogTitle>
+              <DialogTitle>Adicionar Novo Aluno</DialogTitle>
               <StudentForm onSubmit={handleAddStudent} isLoading={isAddingStudent} />
             </DialogContent>
           </Dialog>
@@ -251,7 +251,7 @@ const Students: React.FC = () => {
       {selectedStudent && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedStudent(null)}>
           <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Edit Student</DialogTitle>
+            <DialogTitle>Editar Aluno</DialogTitle>
             <StudentForm 
               defaultValues={{
                 firstName: selectedStudent.user.firstName,

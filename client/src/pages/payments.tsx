@@ -164,7 +164,7 @@ const Payments: React.FC = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Add New Payment</DialogTitle>
+              <DialogTitle>Adicionar Novo Pagamento</DialogTitle>
               <PaymentForm 
                 students={students.map((student: any) => ({
                   id: student.id,
@@ -309,7 +309,7 @@ const Payments: React.FC = () => {
       {selectedPayment && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedPayment(null)}>
           <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Edit Payment</DialogTitle>
+            <DialogTitle>Editar Pagamento</DialogTitle>
             <PaymentForm 
               students={students.map((student: any) => ({
                 id: student.id,

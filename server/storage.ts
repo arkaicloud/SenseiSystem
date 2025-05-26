@@ -102,6 +102,7 @@ export class MemStorage implements IStorage {
   private activityLogs: Map<number, ActivityLog>;
   private schoolEvents: Map<number, SchoolEvent>;
   private schoolConfig: SchoolConfig | undefined;
+  private dashboardCustomizations: Map<number, DashboardCustomization>;
 
   private userCurrentId: number;
   private studentCurrentId: number;
@@ -111,6 +112,7 @@ export class MemStorage implements IStorage {
   private studentPaymentCurrentId: number;
   private activityLogCurrentId: number;
   private schoolEventCurrentId: number;
+  private dashboardCustomizationCurrentId: number;
 
   constructor() {
     this.users = new Map();

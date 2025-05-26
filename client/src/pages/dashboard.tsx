@@ -302,8 +302,8 @@ const Dashboard: React.FC = () => {
             </h1>
             <p className="text-gray-600">Bem-vindo, {user?.firstName || 'Administrador'}</p>
           </div>
-          <div className="mt-4 md:mt-0 flex">
-            <div className="relative mr-2">
+          <div className="mt-4 md:mt-0 flex gap-2">
+            <div className="relative">
               <input
                 type="text"
                 placeholder={t('pesquisar')}
@@ -313,6 +313,9 @@ const Dashboard: React.FC = () => {
                 <span className="material-icons text-sm">search</span>
               </div>
             </div>
+            
+            <DashboardCustomizationWizard />
+            
             <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">

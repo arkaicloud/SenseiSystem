@@ -10,7 +10,8 @@ import {
   insertPaymentPlanSchema,
   insertStudentPaymentSchema,
   insertActivityLogSchema,
-  insertSchoolEventSchema
+  insertSchoolEventSchema,
+  insertDashboardCustomizationSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 
@@ -1124,6 +1125,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating school config:", error);
       res.status(500).json({ message: "Erro ao salvar configurações" });
+    }
+  });
+
+  // ===== Dashboard Customization Routes =====
+  app.get("/api/dashboard-customization", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const customization = await storage.getDashboardCustomization(requestUser.id);
+      
+      if (!customization) {
+        // Return default customization if none exists
+        return res.json({
+          layout: 'default',
+          theme: 'light',
+          widgetOrder: ['stats', 'notifications', 'attendance', 'events'],
+          hiddenWidgets: [],
+          showWelcomeMessage: true,
+          compactMode: false,
+          showQuickActions: true,
+          backgroundColor: '#ffffff',
+          accentColor: '#3b82f6',
+        });
+      }
+      
+      res.json(customization);
+    } catch (error) {
+      console.error("Error fetching dashboard customization:", error);
+      res.status(500).json({ message: "Erro ao buscar personalização do dashboard" });
+    }
+  });
+
+  app.post("/api/dashboard-customization", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const customizationData = insertDashboardCustomizationSchema.parse({
+        ...req.body,
+        userId: requestUser.id
+      });
+      
+      const customization = await storage.createDashboardCustomization(customizationData);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} criou personalização do dashboard`,
+        entityType: 'dashboard-customization',
+        entityId: customization.id
+      });
+      
+      res.status(201).json(customization);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados de personalização inválidos", errors: error.errors });
+      }
+      console.error("Error creating dashboard customization:", error);
+      res.status(500).json({ message: "Erro ao criar personalização do dashboard" });
+    }
+  });
+
+  app.patch("/api/dashboard-customization", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const existingCustomization = await storage.getDashboardCustomization(requestUser.id);
+      
+      if (!existingCustomization) {
+        return res.status(404).json({ message: "Personalização não encontrada" });
+      }
+      
+      const updateData = {
+        ...req.body,
+        userId: requestUser.id
+      };
+      
+      const updatedCustomization = await storage.updateDashboardCustomization(requestUser.id, updateData);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} atualizou personalização do dashboard`,
+        entityType: 'dashboard-customization',
+        entityId: updatedCustomization.id
+      });
+      
+      res.json(updatedCustomization);
+    } catch (error) {
+      console.error("Error updating dashboard customization:", error);
+      res.status(500).json({ message: "Erro ao atualizar personalização do dashboard" });
     }
   });
 

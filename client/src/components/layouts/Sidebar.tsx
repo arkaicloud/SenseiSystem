@@ -74,11 +74,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   return (
     <aside
       id="sidebar"
-      className={`sidebar bg-primary text-white w-64 fixed h-full z-40 top-0 left-0 ${
-        isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
-      } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:z-auto`}
+      className={`sidebar bg-primary text-white w-64 h-screen z-40 ${
+        isMobile 
+          ? `fixed top-0 left-0 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out` 
+          : "relative"
+      } flex flex-col`}
     >
-      <div className="p-4 flex items-center border-b border-primary-light">
+      {/* Header */}
+      <div className="p-4 flex items-center border-b border-primary-light flex-shrink-0">
         <div className="bg-white p-1 rounded mr-3">
           <div className="belt black-belt w-8 h-8 rounded-full flex items-center justify-center">
             <span className="text-white text-xs font-bold">S</span>
@@ -88,8 +91,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           {schoolConfig?.config?.schoolName || 'SenseiSystem'}
         </h1>
       </div>
-      {/* Navigation links */}
-      <nav className="mt-4 flex flex-col h-[calc(100vh-180px)] overflow-y-auto">
+      
+      {/* Navigation links - scrollable middle section */}
+      <nav className="flex-1 flex flex-col overflow-y-auto">
+        <div className="flex-1 py-4">
         <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
         <Link href="/" className={linkClass("/")}>
           <span className="material-icons mr-3">dashboard</span>
@@ -172,8 +177,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           </>
         )}
 
-        {/* User info */}
-        <div className="mt-auto border-t border-primary-light">
+        </div>
+        
+        {/* User info and footer - fixed at bottom */}
+        <div className="border-t border-primary-light flex-shrink-0">
           <div className="p-4 flex items-center">
             <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mr-3">
               <span className="font-bold text-white">{userInitials}</span>
@@ -196,10 +203,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
               )}
             </Button>
           </div>
-        </div>
-
-        <div className="px-4 py-3 text-xs text-gray-400">
-          <p className="text-[14px]">SenseiSystem - Version 1.0.0</p>
+          <div className="px-4 pb-3 text-xs text-gray-400">
+            <p className="text-[14px]">SenseiSystem - Version 1.0.0</p>
+          </div>
         </div>
       </nav>
     </aside>

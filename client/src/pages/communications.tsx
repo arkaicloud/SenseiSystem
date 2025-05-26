@@ -42,6 +42,7 @@ interface Communication {
 const Communications: React.FC = () => {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedComm, setSelectedComm] = useState<Communication | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -127,11 +128,47 @@ const Communications: React.FC = () => {
     // Here you would normally call the API
     toast({
       title: "Sucesso",
-      description: `${formData.type === 'event' ? 'Evento' : 'Comunicado'} criado com sucesso!`,
+      description: isEditMode 
+        ? `${formData.type === 'event' ? 'Evento' : 'Comunicado'} atualizado com sucesso!`
+        : `${formData.type === 'event' ? 'Evento' : 'Comunicado'} criado com sucesso!`,
     });
     
     setIsCreateOpen(false);
+    setIsEditMode(false);
     resetForm();
+  };
+
+  const handleEdit = (comm: Communication) => {
+    setSelectedComm(comm);
+    setIsEditMode(true);
+    setFormData({
+      title: comm.title,
+      content: '',
+      type: comm.type,
+      priority: comm.priority,
+      targetAudience: comm.targetAudience,
+      eventDate: comm.eventDate ? new Date(comm.eventDate).toISOString().slice(0, 16) : '',
+      imageUrl: comm.imageUrl || ''
+    });
+    
+    // Set content in the editor
+    setTimeout(() => {
+      if (contentRef.current) {
+        contentRef.current.innerHTML = comm.content;
+      }
+    }, 100);
+    
+    setIsCreateOpen(true);
+  };
+
+  const handleDelete = (id: number, title: string) => {
+    if (confirm(`Tem certeza que deseja excluir "${title}"?`)) {
+      // Here you would normally call the API to delete
+      toast({
+        title: "Sucesso",
+        description: "Comunicado excluído com sucesso!",
+      });
+    }
   };
 
   const resetForm = () => {
@@ -147,6 +184,8 @@ const Communications: React.FC = () => {
     if (contentRef.current) {
       contentRef.current.innerHTML = '';
     }
+    setSelectedComm(null);
+    setIsEditMode(false);
   };
 
   const formatDate = (date: Date) => {
@@ -189,7 +228,9 @@ const Communications: React.FC = () => {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogTitle>Criar Novo Comunicado/Evento</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? 'Editar Comunicado/Evento' : 'Criar Novo Comunicado/Evento'}
+            </DialogTitle>
             
             <div className="space-y-4">
               {/* Informações Básicas */}
@@ -364,7 +405,7 @@ const Communications: React.FC = () => {
                 </Button>
                 <Button onClick={handleSubmit} className="bg-secondary hover:bg-secondary-dark">
                   <Send className="w-4 h-4 mr-2" />
-                  Publicar
+                  {isEditMode ? 'Atualizar' : 'Publicar'}
                 </Button>
               </div>
             </div>
@@ -386,10 +427,19 @@ const Communications: React.FC = () => {
                   </Badge>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleEdit(comm)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(comm.id, comm.title)}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>

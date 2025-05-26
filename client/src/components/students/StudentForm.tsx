@@ -62,10 +62,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
   // Helper function to format currency
   const formatCurrency = (amountInCents: number) => {
+    const amount = amountInCents / 100;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
-    }).format(amountInCents / 100);
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
   };
 
   const form = useForm<StudentFormValues>({

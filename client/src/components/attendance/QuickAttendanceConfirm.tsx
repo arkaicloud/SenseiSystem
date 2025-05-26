@@ -79,15 +79,9 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         throw new Error("Dados do estudante não encontrados");
       }
       
-      const attendanceData = {
-        classId,
-        studentId: studentData.student.id,
-        date: new Date(),
-        status: 'present',
-        notes: "Presença confirmada pelo aluno via dashboard"
-      };
-      
-      const res = await apiRequest("POST", "/api/attendance", attendanceData);
+      const res = await apiRequest("POST", "/api/attendance/confirm", {
+        classId
+      });
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Erro ao confirmar presença");

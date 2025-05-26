@@ -833,71 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/attendance", isAuthenticated, async (req, res) => {
-    try {
-      const attendanceData = insertAttendanceSchema.parse(req.body);
-      
-      // Verify student exists
-      const student = await storage.getStudent(attendanceData.studentId);
-      if (!student) {
-        return res.status(404).json({ message: "Student not found" });
-      }
-      
-      // Verify class exists
-      const classItem = await storage.getClass(attendanceData.classId);
-      if (!classItem) {
-        return res.status(404).json({ message: "Class not found" });
-      }
-      
-      // Verificar permissões:
-      // 1. Instrutores e admins podem registrar presença para qualquer aluno
-      // 2. Alunos só podem registrar presença para si mesmos
-      const requestUser = (req as any).user;
-      
-      if (requestUser.role === 'student') {
-        // Verificar se o aluno está tentando registrar presença para si mesmo
-        const studentUser = await storage.getUser(student.userId);
-        if (!studentUser || studentUser.id !== requestUser.id) {
-          return res.status(403).json({ 
-            message: "Forbidden: Students can only register attendance for themselves" 
-          });
-        }
-      }
-      
-      // Verificar se já existe uma presença para esta aula e aluno na mesma data
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const existingAttendances = await storage.getAttendanceByStudent(student.id);
-      const alreadyRegistered = existingAttendances.some(att => {
-        const attDate = new Date(att.date).toISOString().split('T')[0];
-        return attDate === today && att.classId === attendanceData.classId;
-      });
-      
-      if (alreadyRegistered) {
-        return res.status(400).json({ 
-          message: "Presença já registrada para esta aula hoje" 
-        });
-      }
-      
-      const attendance = await storage.createAttendance(attendanceData);
-      
-      // Log activity
-      const user = await storage.getUser(student.userId);
-      await storage.createActivityLog({
-        userId: requestUser.id,
-        activity: `${requestUser.firstName} ${requestUser.lastName} confirmou presença para ${user?.firstName} ${user?.lastName} na aula ${classItem.name}`,
-        entityType: 'attendance',
-        entityId: attendance.id
-      });
-      
-      res.status(201).json({ attendance });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid attendance data", errors: error.errors });
-      }
-      console.error("Erro ao registrar presença:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
   
   // Cancelar presença
   app.delete("/api/attendance/cancel", isAuthenticated, async (req, res) => {

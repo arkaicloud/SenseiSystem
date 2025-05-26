@@ -34,7 +34,7 @@ const AttendanceConfirmation: React.FC = () => {
 
   // Buscar confirmações do usuário atual
   const { data: userAttendanceData } = useQuery({
-    queryKey: ['/api/attendance/user', user?.id],
+    queryKey: ['/api/attendance/by-student', user?.id],
     enabled: !!user?.id,
   });
 
@@ -56,9 +56,7 @@ const AttendanceConfirmation: React.FC = () => {
   const confirmAttendanceMutation = useMutation({
     mutationFn: async (classId: number) => {
       const response = await apiRequest('POST', '/api/attendance/confirm', {
-        classId,
-        date: new Date().toISOString(),
-        status: 'present'
+        classId
       });
       return response.json();
     },
@@ -71,7 +69,7 @@ const AttendanceConfirmation: React.FC = () => {
       
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/attendance/user', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
     },
     onError: (error: any) => {
@@ -83,6 +81,35 @@ const AttendanceConfirmation: React.FC = () => {
     },
     onSettled: () => {
       setConfirmingClassId(null);
+    }
+  });
+
+  // Mutation para cancelar presença
+  const cancelAttendanceMutation = useMutation({
+    mutationFn: async (classId: number) => {
+      const response = await apiRequest('DELETE', '/api/attendance/cancel', {
+        classId
+      });
+      return response.json();
+    },
+    onSuccess: (data, classId) => {
+      const className = classes.find(c => c.id === classId)?.name;
+      toast({
+        title: "Presença cancelada!",
+        description: `Sua presença na aula "${className}" foi cancelada.`,
+      });
+      
+      // Invalidar queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao cancelar presença",
+        description: error.message || "Ocorreu um erro ao cancelar sua presença.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -177,18 +204,35 @@ const AttendanceConfirmation: React.FC = () => {
                 )}
               </div>
 
-              {user?.role === 'student' && classItem.canConfirm && (
-                <Button
-                  onClick={() => handleConfirmAttendance(classItem.id)}
-                  disabled={confirmingClassId === classItem.id || confirmAttendanceMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {confirmingClassId === classItem.id ? (
-                    "Confirmando..."
-                  ) : (
-                    "Confirmar Presença"
-                  )}
-                </Button>
+              {user?.role === 'student' && (
+                <>
+                  {classItem.canConfirm ? (
+                    <Button
+                      onClick={() => handleConfirmAttendance(classItem.id)}
+                      disabled={confirmingClassId === classItem.id || confirmAttendanceMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {confirmingClassId === classItem.id ? (
+                        "Confirmando..."
+                      ) : (
+                        "Confirmar Presença"
+                      )}
+                    </Button>
+                  ) : classItem.isConfirmed ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600 font-medium">✓ Confirmado</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => cancelAttendanceMutation.mutate(classItem.id)}
+                        disabled={cancelAttendanceMutation.isPending}
+                        className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                      >
+                        {cancelAttendanceMutation.isPending ? "Cancelando..." : "Cancelar"}
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
               )}
 
               {user?.role !== 'student' && (

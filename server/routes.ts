@@ -715,6 +715,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota específica para alunos confirmarem presença
+  app.post("/api/attendance/confirm", isAuthenticated, async (req, res) => {
+    try {
+      const { classId } = req.body;
+      const requestUser = (req as any).user;
+      
+      if (!classId) {
+        return res.status(400).json({ message: "Class ID is required" });
+      }
+      
+      // Verificar se a aula existe
+      const classItem = await storage.getClass(classId);
+      if (!classItem) {
+        return res.status(404).json({ message: "Class not found" });
+      }
+      
+      // Buscar o estudante pelo userId do usuário logado
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+      
+      // Verificar se já existe presença para hoje
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      const existingAttendances = await storage.getAttendanceByClass(classId, today);
+      const existingAttendance = existingAttendances.find(att => 
+        att.studentId === student.id && 
+        new Date(att.date).toISOString().split('T')[0] === todayStr
+      );
+      
+      if (existingAttendance) {
+        return res.status(400).json({ message: "Attendance already recorded for today" });
+      }
+      
+      // Criar registro de presença
+      const attendanceData = {
+        studentId: student.id,
+        classId: classId,
+        date: today,
+        status: 'present' as const,
+        checkedInBy: requestUser.id
+      };
+      
+      const attendance = await storage.createAttendance(attendanceData);
+      
+      // Log da atividade
+      await storage.createActivityLog({
+        activity: `Aluno confirmou presença na aula: ${classItem.name}`,
+        userId: requestUser.id,
+        entityType: 'attendance',
+        entityId: attendance.id,
+        timestamp: new Date()
+      });
+      
+      res.status(201).json({ attendance });
+    } catch (error) {
+      console.error("Erro ao confirmar presença:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Rota para cancelar presença
+  app.delete("/api/attendance/cancel", isAuthenticated, async (req, res) => {
+    try {
+      const { classId } = req.body;
+      const requestUser = (req as any).user;
+      
+      if (!classId) {
+        return res.status(400).json({ message: "Class ID is required" });
+      }
+      
+      // Buscar o estudante pelo userId do usuário logado
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+      
+      // Buscar presença existente para hoje
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      const existingAttendances = await storage.getAttendanceByClass(classId, today);
+      const existingAttendance = existingAttendances.find(att => 
+        att.studentId === student.id && 
+        new Date(att.date).toISOString().split('T')[0] === todayStr
+      );
+      
+      if (!existingAttendance) {
+        return res.status(404).json({ message: "No attendance record found for today" });
+      }
+      
+      // Cancelar presença
+      const success = await storage.deleteAttendance(existingAttendance.id);
+      
+      if (!success) {
+        return res.status(400).json({ message: "Failed to cancel attendance" });
+      }
+      
+      // Log da atividade
+      await storage.createActivityLog({
+        activity: `Aluno cancelou presença na aula ID: ${classId}`,
+        userId: requestUser.id,
+        entityType: 'attendance',
+        entityId: existingAttendance.id,
+        timestamp: new Date()
+      });
+      
+      res.json({ message: "Attendance cancelled successfully" });
+    } catch (error) {
+      console.error("Erro ao cancelar presença:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/attendance", isAuthenticated, async (req, res) => {
     try {
       const attendanceData = insertAttendanceSchema.parse(req.body);

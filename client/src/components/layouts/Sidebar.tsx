@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, CheckSquare, Home, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -94,28 +94,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       {/* Navigation links - scrollable middle section */}
       <nav className="flex-1 flex flex-col overflow-y-auto">
         <div className="flex-1 py-4">
-          <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
+          <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">{t('main')}</div>
           <Link href="/" className={linkClass("/")}>
-            <span className="material-icons mr-3">dashboard</span>
-            <span>{t('dashboard')}</span>
+            <Home className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">Painel</span>
           </Link>
 
           {isInstructor && (
             <Link href="/students" className={linkClass("/students")}>
-              <span className="material-icons mr-3">people</span>
-              <span>{t('students')}</span>
+              <Users className="w-5 h-5 mr-3 flex-shrink-0" />
+              <span className="truncate">Alunos</span>
             </Link>
           )}
 
           {isAdmin && (
             <div className="relative">
               <Link href="/pending-users" className={linkClass("/pending-users")}>
-                <span className="material-icons mr-3">pending_actions</span>
-                <span>Aprovação Pendente</span>
+                <Clock className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Aprovações</span>
                 {pendingCount > 0 && (
                   <Badge 
                     variant="destructive" 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs"
+                    className="ml-auto h-5 w-5 flex items-center justify-center text-xs p-0"
                   >
                     {pendingCount}
                   </Badge>
@@ -125,53 +125,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           )}
 
           <Link href="/attendance" className={linkClass("/attendance")}>
-            <span className="material-icons mr-3">fact_check</span>
-            <span>{t('attendance')}</span>
+            <CheckSquare className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">Presença</span>
           </Link>
 
           {!isStudent && (
             <Link href="/classes" className={linkClass("/classes")}>
-              <span className="material-icons mr-3">event</span>
-              <span>{t('classes')}</span>
+              <Calendar className="w-5 h-5 mr-3 flex-shrink-0" />
+              <span className="truncate">Aulas</span>
             </Link>
           )}
 
           {isInstructor && (
             <>
               <Link href="/payments" className={linkClass("/payments")}>
-                <span className="material-icons mr-3">payments</span>
-                <span>{t('payments')}</span>
+                <CreditCard className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Pagamentos</span>
               </Link>
               
               <Link href="/payment-plans" className={linkClass("/payment-plans")}>
-                <span className="material-icons mr-3">list_alt</span>
-                <span>{t('payment_plans')}</span>
+                <FileText className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Planos</span>
               </Link>
 
-              <Link href="/reports" className={linkClass("/reports")}>
-                <span className="material-icons mr-3">bar_chart</span>
-                <span>{t('reports')}</span>
-              </Link>
             </>
           )}
 
-          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
-            {t('account')}
+          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide">
+            CONTA
           </div>
           <Link href="/profile" className={linkClass("/profile")}>
-            <span className="material-icons mr-3">person</span>
-            <span>{t('profile')}</span>
+            <User className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">Perfil</span>
           </Link>
 
           {isAdmin && (
             <>
               <Link href="/school-config" className={linkClass("/school-config")}>
-                <span className="material-icons mr-3">school</span>
-                <span>Configurações da Escola</span>
-              </Link>
-              <Link href="/settings" className={linkClass("/settings")}>
-                <span className="material-icons mr-3">settings</span>
-                <span>{t('settings')}</span>
+                <Settings className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Configurações da Escola</span>
               </Link>
             </>
           )}

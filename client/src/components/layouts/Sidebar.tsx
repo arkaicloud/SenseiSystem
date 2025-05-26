@@ -84,34 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             <span className="text-white text-xs font-bold">S</span>
           </div>
         </div>
-        <h1 className="font-montserrat font-bold text-xl">
+        <h1 className="font-montserrat font-bold text-[16px]">
           {schoolConfig?.config?.schoolName || 'SenseiSystem'}
         </h1>
-      </div>
-      {/* User info */}
-      <div className="p-4 border-b border-primary-light">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mr-3">
-            <span className="font-bold text-white">{userInitials}</span>
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">{user.firstName} {user.lastName}</p>
-            <p className="text-xs text-gray-300">{formatRole(user.role)}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-            className="h-8 w-8 text-gray-300 hover:text-white hover:bg-primary-light"
-          >
-            {logoutMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <LogOut className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
       </div>
       {/* Navigation links */}
       <nav className="mt-4 flex flex-col h-[calc(100vh-180px)] overflow-y-auto">
@@ -197,7 +172,33 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           </>
         )}
 
-        <div className="mt-auto px-4 py-3 text-xs text-gray-400">
+        {/* User info */}
+        <div className="mt-auto border-t border-primary-light">
+          <div className="p-4 flex items-center">
+            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mr-3">
+              <span className="font-bold text-white">{userInitials}</span>
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-white">{user.firstName} {user.lastName}</p>
+              <p className="text-xs text-gray-300">{formatRole(user.role)}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              className="h-8 w-8 text-gray-300 hover:text-white hover:bg-primary-light"
+            >
+              {logoutMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LogOut className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="px-4 py-3 text-xs text-gray-400">
           <p className="text-[14px]">SenseiSystem - Version 1.0.0</p>
         </div>
       </nav>

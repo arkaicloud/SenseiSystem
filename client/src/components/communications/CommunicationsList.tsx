@@ -108,12 +108,16 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
 
   // Filtrar comunicados relevantes para o usuário
   const filteredCommunications = mockCommunications
-    .filter(comm => 
-      comm.isPublished && 
-      (comm.targetAudience === 'all' || 
-       comm.targetAudience === userRole || 
-       comm.targetAudience === 'students')
-    )
+    .filter(comm => {
+      if (!comm.isPublished) return false;
+      
+      if (comm.targetAudience === 'all') return true;
+      if (userRole === 'student' && comm.targetAudience === 'students') return true;
+      if (userRole === 'instructor' && comm.targetAudience === 'instructors') return true;
+      if (userRole === 'admin') return true;
+      
+      return false;
+    })
     .slice(0, limit);
 
   const stripHtml = (html: string) => {

@@ -11,6 +11,7 @@ import StudentsTable from "@/components/dashboard/StudentsTable";
 import StudentForm from "@/components/students/StudentForm";
 import AttendanceForm from "@/components/attendance/AttendanceForm";
 import SchoolEventList from "@/components/events/SchoolEventList";
+import CommunicationsList from "@/components/communications/CommunicationsList";
 import StudentBeltProgress from "@/components/dashboard/StudentBeltProgress";
 import StudentNotifications from "@/components/dashboard/StudentNotifications";
 import QuickAttendanceConfirm from "@/components/attendance/QuickAttendanceConfirm";

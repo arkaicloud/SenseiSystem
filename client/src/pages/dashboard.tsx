@@ -14,6 +14,7 @@ import SchoolEventList from "@/components/events/SchoolEventList";
 import StudentBeltProgress from "@/components/dashboard/StudentBeltProgress";
 import StudentNotifications from "@/components/dashboard/StudentNotifications";
 import QuickAttendanceConfirm from "@/components/attendance/QuickAttendanceConfirm";
+import AttendanceConfirmation from "@/components/attendance/AttendanceConfirmation";
 import BeltBadge from "@/components/students/BeltBadge";
 import DashboardCustomizationWizard from "@/components/dashboard/DashboardCustomizationWizard";
 import TodaysClassesWidget from "@/components/dashboard/TodaysClassesWidget";

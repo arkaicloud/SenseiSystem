@@ -376,7 +376,7 @@ const Dashboard: React.FC = () => {
         {/* Seção de aulas do dia */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-montserrat font-bold text-xl">{t('aulasHoje')}</h2>
+            <h2 className="font-montserrat font-bold text-xl">Aulas Hoje</h2>
             <Link href="/classes">
               <div className="text-secondary font-medium text-sm flex items-center">
                 {t('verTodas')}

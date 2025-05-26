@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
 import { Award, Star, Zap, Trophy, Target, PlusCircle, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 
 interface BeltProgressProps {
   beltLevel: "white" | "blue" | "purple" | "brown" | "black";
@@ -75,6 +76,11 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
   const [animateProgress, setAnimateProgress] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const colors = BELT_COLORS[beltLevel];
+  
+  // Buscar configuração da escola para mensagem personalizada
+  const { data: schoolConfigData } = useQuery({
+    queryKey: ['/api/school-config'],
+  });
   
   // Próxima faixa no caminho
   const nextBeltIndex = BELT_ORDER.indexOf(beltLevel) + 1;
@@ -303,7 +309,9 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
           <div className="bg-white rounded-xl p-6 shadow-lg transform animate-bounce-small text-center">
             <Award className="w-12 h-12 mx-auto mb-2 text-yellow-500" />
             <h3 className="text-xl font-bold text-gray-800 mb-1">{t('parabens')}</h3>
-            <p className="text-gray-600 mb-3">{t('ready_for_next_belt')}</p>
+            <p className="text-gray-600 mb-3 whitespace-pre-line text-center">
+              {schoolConfigData?.config?.congratsMessage?.replace('{beltName}', t(nextBelt + '_belt')) || t('ready_for_next_belt')}
+            </p>
             <div className="flex justify-center">
               <div className={`w-20 h-5 rounded ${BELT_COLORS[nextBelt || 'black'].actualBelt}`}></div>
             </div>

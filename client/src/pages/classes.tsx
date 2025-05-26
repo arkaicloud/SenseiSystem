@@ -112,15 +112,15 @@ const Classes: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Classes</h1>
-          <p className="text-gray-600">Manage your class schedule</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Aulas</h1>
+          <p className="text-gray-600">Gerencie a programação das aulas</p>
         </div>
         <div className="mt-4 md:mt-0">
           <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                New Class
+                Nova Aula
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
@@ -137,13 +137,13 @@ const Classes: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Class Schedule</CardTitle>
+          <CardTitle>Programação de Aulas</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="schedule">
             <TabsList className="mb-4">
-              <TabsTrigger value="schedule">Weekly Schedule</TabsTrigger>
-              <TabsTrigger value="list">List View</TabsTrigger>
+              <TabsTrigger value="schedule">Programação Semanal</TabsTrigger>
+              <TabsTrigger value="list">Visualização em Lista</TabsTrigger>
             </TabsList>
             
             <TabsContent value="schedule">
@@ -162,7 +162,7 @@ const Classes: React.FC = () => {
                       
                       {!classesByDay[day] || classesByDay[day].length === 0 ? (
                         <div className="p-4 text-center text-gray-500">
-                          No classes scheduled
+                          Nenhuma aula agendada
                         </div>
                       ) : (
                         <div className="divide-y divide-gray-100">
@@ -185,7 +185,7 @@ const Classes: React.FC = () => {
                                       <p className="text-sm text-gray-600">
                                         {classItem.instructor 
                                           ? `${classItem.instructor.firstName} Sensei` 
-                                          : 'No instructor assigned'}
+                                          : 'Nenhum instrutor atribuído'}
                                         {' • '}
                                         {classItem.duration} min
                                       </p>
@@ -199,7 +199,7 @@ const Classes: React.FC = () => {
                                   <div className="mt-3 md:mt-0 flex items-center">
                                     {classItem.maxCapacity && (
                                       <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 mr-3">
-                                        Max: {classItem.maxCapacity}
+                                        Máx: {classItem.maxCapacity}
                                       </span>
                                     )}
                                     <Button
@@ -211,7 +211,7 @@ const Classes: React.FC = () => {
                                         setSelectedClass(classItem);
                                       }}
                                     >
-                                      Edit
+                                      Editar
                                     </Button>
                                   </div>
                                 </div>
@@ -228,25 +228,25 @@ const Classes: React.FC = () => {
             
             <TabsContent value="list">
               {classesLoading ? (
-                <div className="text-center py-8">Loading classes...</div>
+                <div className="text-center py-8">Carregando aulas...</div>
               ) : classes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No classes found</div>
+                <div className="text-center py-8 text-gray-500">Nenhuma aula encontrada</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Class Name
+                          Nome da Aula
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Day
+                          Dia
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Time
+                          Horário
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Duration
+                          Duração
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Instructor

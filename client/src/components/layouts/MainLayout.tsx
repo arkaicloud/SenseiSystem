@@ -76,21 +76,31 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 relative">
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar navigation */}
       <Sidebar isOpen={sidebarOpen} isMobile={isMobile} />
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative`}>
+      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen`}>
         {/* Mobile header */}
         {isMobile && user && (
-          <div className="bg-white shadow md:hidden flex items-center justify-between p-4">
+          <div className="bg-white shadow-sm border-b md:hidden flex items-center justify-between px-4 py-3">
             <button
               id="menu-toggle"
-              className="text-gray-500 focus:outline-none"
+              className="text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary rounded p-1"
               onClick={toggleSidebar}
             >
-              <span className="material-icons">menu</span>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
             <div className="flex items-center">
               <div className="bg-primary p-1 rounded mr-2">
@@ -98,7 +108,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <span className="text-white text-xs font-bold">S</span>
                 </div>
               </div>
-              <h1 className="font-montserrat font-bold text-lg">SenseiSystem</h1>
+              <h1 className="font-montserrat font-bold text-base sm:text-lg">SenseiSystem</h1>
             </div>
             <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
               <span className="font-bold text-white text-xs">{userInitials}</span>
@@ -107,7 +117,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           {children}
         </div>
       </main>

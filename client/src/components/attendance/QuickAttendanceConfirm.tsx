@@ -81,13 +81,17 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       
       const attendanceData = {
         classId,
-        studentId: studentData.student.id, // Usar o ID correto do estudante
-        date: new Date().toISOString(),
+        studentId: studentData.student.id,
+        date: new Date(),
         status: 'present',
         notes: "Presença confirmada pelo aluno via dashboard"
       };
       
       const res = await apiRequest("POST", "/api/attendance", attendanceData);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Erro ao confirmar presença");
+      }
       return await res.json();
     },
     onSuccess: (_, classId) => {

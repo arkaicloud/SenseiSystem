@@ -18,6 +18,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   const [location] = useLocation();
   const { t } = useTranslation();
 
+  // Buscar configuração da escola para obter o nome
+  const { data: schoolConfig } = useQuery({
+    queryKey: ['/api/school-config'],
+  });
+
   // Determine if a link is active
   const isActive = (path: string) => {
     return location === path || (path !== '/' && location.startsWith(path));
@@ -79,7 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             <span className="text-white text-xs font-bold">S</span>
           </div>
         </div>
-        <h1 className="font-montserrat font-bold text-xl">SenseiSystem</h1>
+        <h1 className="font-montserrat font-bold text-xl">
+          {schoolConfig?.config?.schoolName || 'SenseiSystem'}
+        </h1>
       </div>
       {/* User info */}
       <div className="p-4 border-b border-primary-light">
@@ -191,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         )}
 
         <div className="mt-auto px-4 py-3 text-xs text-gray-400">
-          <p>SenseiSystem - Version 1.0.0</p>
+          <p className="text-[14px]">SenseiSystem - Version 1.0.0</p>
         </div>
       </nav>
     </aside>

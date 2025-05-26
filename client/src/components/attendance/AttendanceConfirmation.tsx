@@ -58,6 +58,12 @@ const AttendanceConfirmation: React.FC = () => {
       const response = await apiRequest('POST', '/api/attendance/confirm', {
         classId
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao confirmar presença');
+      }
+      
       return response.json();
     },
     onSuccess: (data, classId) => {

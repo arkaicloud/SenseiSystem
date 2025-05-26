@@ -483,10 +483,7 @@ const Dashboard: React.FC = () => {
 
           {/* Distribuição de Faixas */}
           <div>
-            <BeltDistribution
-              distribution={beltDistribution}
-              upcomingTests={upcomingTests}
-            />
+            <BeltDistribution />
           </div>
         </div>
 

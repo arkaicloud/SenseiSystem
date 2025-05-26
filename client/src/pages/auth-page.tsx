@@ -145,20 +145,20 @@ export default function AuthPage() {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-md">
             {/* Logo e nome da escola acima do login */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 sm:mb-8">
               {schoolConfig?.logoUrl && (
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <img 
                     src={schoolConfig.logoUrl} 
                     alt={schoolConfig.schoolName || "Logo da Academia"} 
-                    className="max-h-16 w-auto mx-auto object-contain"
+                    className="h-12 sm:h-16 w-auto mx-auto object-contain"
                   />
                 </div>
               )}
-              <h1 className="text-2xl font-bold text-foreground mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
                 {schoolConfig?.schoolName || "SenseiSystem"}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Sistema de Gestão para Escolas e Dojos
               </p>
             </div>

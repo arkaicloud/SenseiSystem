@@ -74,11 +74,8 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         throw new Error("Informações do aluno não disponíveis");
       }
       
-      const response = await apiRequest('POST', '/api/attendance', {
-        studentId: studentData.student.id,
-        classId: classId,
-        date: new Date(),
-        status: 'present'
+      const response = await apiRequest('POST', '/api/attendance/confirm', {
+        classId: classId
       });
       
       if (!response.ok) {

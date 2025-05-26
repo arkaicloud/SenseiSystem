@@ -155,12 +155,9 @@ export default function AuthPage() {
                   />
                 </div>
               )}
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
                 {schoolConfig?.schoolName || "SenseiSystem"}
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Sistema de Gestão para Escolas e Dojos
-              </p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

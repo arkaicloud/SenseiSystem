@@ -33,16 +33,16 @@ const Students: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Student added successfully",
+        title: "Sucesso",
+        description: "Aluno cadastrado com sucesso",
       });
       setIsAddStudentOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to add student: ${error}`,
+        title: "Erro",
+        description: `Falha ao cadastrar aluno: ${error}`,
         variant: "destructive",
       });
     },
@@ -56,16 +56,16 @@ const Students: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Student updated successfully",
+        title: "Sucesso",
+        description: "Aluno atualizado com sucesso",
       });
       setSelectedStudent(null);
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to update student: ${error}`,
+        title: "Erro",
+        description: `Falha ao atualizar aluno: ${error}`,
         variant: "destructive",
       });
     },

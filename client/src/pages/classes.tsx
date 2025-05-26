@@ -35,16 +35,16 @@ const Classes: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Class added successfully",
+        title: "Sucesso",
+        description: "Aula cadastrada com sucesso",
       });
       setIsAddClassOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/classes'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to add class: ${error}`,
+        title: "Erro",
+        description: `Falha ao cadastrar aula: ${error}`,
         variant: "destructive",
       });
     },
@@ -58,16 +58,16 @@ const Classes: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Class updated successfully",
+        title: "Sucesso",
+        description: "Aula atualizada com sucesso",
       });
       setSelectedClass(null);
       queryClient.invalidateQueries({ queryKey: ['/api/classes'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to update class: ${error}`,
+        title: "Erro",
+        description: `Falha ao atualizar aula: ${error}`,
         variant: "destructive",
       });
     },

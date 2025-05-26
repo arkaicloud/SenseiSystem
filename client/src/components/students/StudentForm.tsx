@@ -356,6 +356,58 @@ const StudentForm: React.FC<StudentFormProps> = ({
               )}
             />
           </TabsContent>
+
+          <TabsContent value="plan" className="space-y-4 mt-6">
+            <div className="grid grid-cols-1 gap-4">
+              <FormField
+                control={form.control}
+                name="paymentPlanId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Plano de Pagamento</FormLabel>
+                    <FormControl>
+                      <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um plano" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Mensal - R$ 120,00</SelectItem>
+                          <SelectItem value="2">Trimestral - R$ 320,00</SelectItem>
+                          <SelectItem value="3">Semestral - R$ 600,00</SelectItem>
+                          <SelectItem value="4">Anual - R$ 1.100,00</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-sm text-gray-800 mb-2">Informações do Plano</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>• Plano Mensal: Renovação automática todo mês</p>
+                  <p>• Plano Trimestral: 10% de desconto, renovação a cada 3 meses</p>
+                  <p>• Plano Semestral: 15% de desconto, renovação a cada 6 meses</p>
+                  <p>• Plano Anual: 20% de desconto, renovação anual</p>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <span className="material-icons text-blue-600 text-sm">info</span>
+                  </div>
+                  <div className="ml-2">
+                    <h4 className="font-medium text-sm text-blue-800">Nota Importante</h4>
+                    <p className="text-sm text-blue-600 mt-1">
+                      O plano pode ser alterado a qualquer momento. Mudanças entram em vigor no próximo ciclo de cobrança.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
 
         <div className="flex justify-end pt-6 border-t">

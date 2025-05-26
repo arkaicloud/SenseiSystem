@@ -123,7 +123,7 @@ const Students: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">{t('students')}</h1>
-          <p className="text-gray-600">{t('manage_students')}</p>
+          <p className="text-gray-600">Gerenciar Alunos</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">

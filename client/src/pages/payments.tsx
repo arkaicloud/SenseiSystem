@@ -43,16 +43,16 @@ const Payments: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Payment added successfully",
+        title: "Sucesso",
+        description: "Pagamento cadastrado com sucesso",
       });
       setIsAddPaymentOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/student-payments'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to add payment: ${error}`,
+        title: "Erro",
+        description: `Falha ao cadastrar pagamento: ${error}`,
         variant: "destructive",
       });
     },
@@ -66,16 +66,16 @@ const Payments: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Payment updated successfully",
+        title: "Sucesso",
+        description: "Pagamento atualizado com sucesso",
       });
       setSelectedPayment(null);
       queryClient.invalidateQueries({ queryKey: ['/api/student-payments'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to update payment: ${error}`,
+        title: "Erro",
+        description: `Falha ao atualizar pagamento: ${error}`,
         variant: "destructive",
       });
     },

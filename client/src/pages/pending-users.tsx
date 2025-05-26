@@ -52,8 +52,8 @@ const PendingUsers: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "User approved successfully",
+        title: "Sucesso",
+        description: "Usuário aprovado com sucesso",
       });
       setIsApprovalDialogOpen(false);
       setSelectedUser(null);
@@ -62,8 +62,8 @@ const PendingUsers: React.FC = () => {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to approve user: ${error}`,
+        title: "Erro",
+        description: `Falha ao aprovar usuário: ${error}`,
         variant: "destructive",
       });
     },
@@ -77,15 +77,15 @@ const PendingUsers: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "User registration rejected",
+        title: "Sucesso",
+        description: "Registro de usuário rejeitado",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to reject user: ${error}`,
+        title: "Erro",
+        description: `Falha ao rejeitar usuário: ${error}`,
         variant: "destructive",
       });
     },

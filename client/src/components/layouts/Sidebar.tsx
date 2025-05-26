@@ -84,7 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       <div className="p-4 flex items-center border-b border-primary-light flex-shrink-0">
         <div className="bg-white p-1 rounded mr-3">
           <div className="belt black-belt w-8 h-8 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">S</span>
+            <span className="text-white text-xs font-bold">
+              {schoolConfig?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
+            </span>
           </div>
         </div>
         <h1 className="font-montserrat font-bold text-[16px]">

@@ -401,6 +401,22 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getAttendanceByClass(classId: number, date?: Date): Promise<Attendance[]> {
+    let attendances = Array.from(this.attendance.values()).filter(
+      (attendance) => attendance.classId === classId,
+    );
+    
+    if (date) {
+      const targetDate = date.toISOString().split('T')[0];
+      attendances = attendances.filter(attendance => {
+        const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+        return attendanceDate === targetDate;
+      });
+    }
+    
+    return attendances;
+  }
+
   async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {
     const attendances = Array.from(this.attendance.values());
     return Promise.all(

@@ -532,6 +532,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Count attendance for a specific class on a specific date
+  app.get("/api/attendance/count/:classId", isAuthenticated, async (req, res) => {
+    try {
+      const { classId } = req.params;
+      const { date } = req.query;
+      
+      const targetDate = date ? new Date(date as string) : new Date();
+      const dateStr = targetDate.toISOString().split('T')[0];
+      
+      const attendances = await storage.getAttendanceByClass(Number(classId));
+      
+      // Count attendances for the specific date and status 'present'
+      const count = attendances.filter(attendance => {
+        const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+        return attendanceDate === dateStr && attendance.status === 'present';
+      }).length;
+      
+      res.json({ count, date: dateStr, classId: Number(classId) });
+    } catch (error) {
+      console.error("Error counting attendance:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/attendance/class/:classId", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const { classId } = req.params;

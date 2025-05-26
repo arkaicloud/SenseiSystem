@@ -121,8 +121,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
             <FormItem>
               <FormLabel>Instrutor</FormLabel>
               <Select
-                onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
-                value={field.value?.toString() || ""}
+                onValueChange={(value) => field.onChange(value === "0" ? null : parseInt(value))}
+                value={field.value?.toString() || "0"}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -130,7 +130,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Nenhum instrutor</SelectItem>
+                  <SelectItem value="0">Nenhum instrutor</SelectItem>
                   {instructors.map((instructor) => (
                     <SelectItem
                       key={instructor.id}

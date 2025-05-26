@@ -28,6 +28,12 @@ const studentFormSchema = insertUserSchema.extend({
   stripes: z.number().min(0).max(4).default(0),
   emergencyContact: z.string().optional(),
   notes: z.string().optional(),
+  mobile: z.string().optional(),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  complement: z.string().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -56,6 +62,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
       stripes: 0,
       emergencyContact: "",
       notes: "",
+      phone: "",
+      mobile: "",
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      complement: "",
       ...defaultValues,
     },
   });
@@ -69,9 +82,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>Nome</FormLabel>
                 <FormControl>
-                  <Input placeholder="John" {...field} />
+                  <Input placeholder="João" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -82,9 +95,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel>Sobrenome</FormLabel>
                 <FormControl>
-                  <Input placeholder="Doe" {...field} />
+                  <Input placeholder="Silva" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -100,7 +113,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="john.doe@example.com" {...field} />
+                  <Input placeholder="joao.silva@exemplo.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -111,9 +124,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>Nome de Usuário</FormLabel>
                 <FormControl>
-                  <Input placeholder="johndoe" {...field} />
+                  <Input placeholder="joaosilva" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,7 +139,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Senha</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
@@ -179,7 +192,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
             name="stripes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Listras</FormLabel>
+                <FormLabel>Grau</FormLabel>
                 <Select 
                   onValueChange={(value) => field.onChange(parseInt(value))} 
                   defaultValue={field.value.toString()}

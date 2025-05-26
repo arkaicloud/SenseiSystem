@@ -216,28 +216,133 @@ const StudentForm: React.FC<StudentFormProps> = ({
           />
         </div>
 
+        {/* Contatos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Telefone</FormLabel>
+                <FormControl>
+                  <Input placeholder="(11) 9999-9999" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="mobile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Celular</FormLabel>
+                <FormControl>
+                  <Input placeholder="(11) 99999-9999" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="emergencyContact"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Emergency Contact</FormLabel>
+              <FormLabel>Contato de Emergência</FormLabel>
               <FormControl>
-                <Input placeholder="Name: XXX-XXX-XXXX" {...field} />
+                <Input placeholder="Nome: (11) 99999-9999" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Endereço */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900">Endereço</h3>
+          
+          <FormField
+            control={form.control}
+            name="street"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Rua/Avenida</FormLabel>
+                <FormControl>
+                  <Input placeholder="Rua das Flores, 123" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cidade</FormLabel>
+                  <FormControl>
+                    <Input placeholder="São Paulo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado</FormLabel>
+                  <FormControl>
+                    <Input placeholder="SP" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="zipCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CEP</FormLabel>
+                  <FormControl>
+                    <Input placeholder="01234-567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="complement"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Complemento</FormLabel>
+                <FormControl>
+                  <Input placeholder="Apto 45, Bloco B" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>Observações</FormLabel>
               <FormControl>
-                <Input placeholder="Any additional information" {...field} />
+                <Input placeholder="Informações adicionais" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -246,7 +351,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
         <div className="flex justify-end">
           <Button type="submit" className="bg-secondary hover:bg-secondary-dark" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Student"}
+            {isLoading ? "Salvando..." : "Salvar Aluno"}
           </Button>
         </div>
       </form>

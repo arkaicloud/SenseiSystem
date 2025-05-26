@@ -38,6 +38,14 @@ export const Belt: React.FC<BeltProps> = ({
   );
 };
 
+const beltNamesPortuguese = {
+  white: 'Faixa Branca',
+  blue: 'Faixa Azul',
+  purple: 'Faixa Roxa',
+  brown: 'Faixa Marrom',
+  black: 'Faixa Preta'
+};
+
 export const BeltWithLabel: React.FC<BeltProps & { showLabel?: boolean }> = ({
   level,
   className,
@@ -47,7 +55,7 @@ export const BeltWithLabel: React.FC<BeltProps & { showLabel?: boolean }> = ({
   return (
     <div className="flex items-center">
       <Belt level={level} size={size} className={className} />
-      {showLabel && <span className="text-sm capitalize">{level}</span>}
+      {showLabel && <span className="text-sm">{beltNamesPortuguese[level]}</span>}
     </div>
   );
 };

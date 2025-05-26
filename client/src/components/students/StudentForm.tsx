@@ -141,7 +141,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
             name="beltLevel"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Belt Level</FormLabel>
+                <FormLabel>Nível da Faixa</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -179,22 +179,22 @@ const StudentForm: React.FC<StudentFormProps> = ({
             name="stripes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Stripes</FormLabel>
+                <FormLabel>Listras</FormLabel>
                 <Select 
                   onValueChange={(value) => field.onChange(parseInt(value))} 
                   defaultValue={field.value.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Number of stripes" />
+                      <SelectValue placeholder="Número de listras" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="0">0 Stripes</SelectItem>
-                    <SelectItem value="1">1 Stripe</SelectItem>
-                    <SelectItem value="2">2 Stripes</SelectItem>
-                    <SelectItem value="3">3 Stripes</SelectItem>
-                    <SelectItem value="4">4 Stripes</SelectItem>
+                    <SelectItem value="0">0 Listras</SelectItem>
+                    <SelectItem value="1">1 Listra</SelectItem>
+                    <SelectItem value="2">2 Listras</SelectItem>
+                    <SelectItem value="3">3 Listras</SelectItem>
+                    <SelectItem value="4">4 Listras</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -297,7 +297,7 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="font-montserrat font-bold text-2xl text-primary">
-              {schoolConfig?.schoolName ? `${schoolConfig.schoolName} - Painel` : 'Painel'}
+              Painel
             </h1>
             <p className="text-gray-600">Bem-vindo, {user?.firstName || 'Administrador'}</p>
           </div>

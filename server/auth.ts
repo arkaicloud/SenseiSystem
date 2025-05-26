@@ -3,8 +3,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { User, userRoleEnum } from "@shared/schema";
 
@@ -15,7 +14,7 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
+
 
 // Helper function to hash passwords
 export async function hashPassword(password: string): Promise<string> {

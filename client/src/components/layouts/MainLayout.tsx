@@ -5,6 +5,8 @@ import { getInitials } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import type { SchoolConfig } from "@shared/schema";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -16,6 +18,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
+
+  // Buscar configuração da escola
+  const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
+    queryKey: ["/api/school-config"],
+    enabled: !!user,
+  });
+
+  const schoolConfig = schoolConfigData?.config;
 
   // Don't show layout on auth page
   const isAuthPage = location === "/auth";
@@ -108,7 +118,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <span className="text-white text-xs font-bold">S</span>
                 </div>
               </div>
-              <h1 className="font-montserrat font-bold text-base sm:text-lg">SenseiSystem</h1>
+              <h1 className="font-montserrat font-bold text-base sm:text-lg">
+                {schoolConfig?.schoolName || 'SenseiSystem'}
+              </h1>
             </div>
             <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
               <span className="font-bold text-white text-xs">{userInitials}</span>

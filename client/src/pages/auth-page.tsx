@@ -411,8 +411,8 @@ export default function AuthPage() {
 
         {/* Right side - Hero section */}
         <div className="flex-1 bg-primary p-6 flex flex-col justify-center text-white">
-          <div className="max-w-md mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Bem-vindo ao Senseisystem</h1>
+          <div className="max-w-md mx-auto text-center">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6">Bem-vindo ao Senseisystem</h1>
             
             <div className="space-y-4">
               <div className="flex items-start">

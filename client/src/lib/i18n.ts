@@ -309,6 +309,10 @@ const resources = {
       youAreNowLoggedInAs: "Você está logado como {{name}}",
       loginSuccessful: "Login realizado com sucesso",
       
+      // Logout messages
+      loggedOut: "Saiu do sistema",
+      loggedOutSuccessfully: "Você saiu do sistema com sucesso",
+      
       // Additional translations
       manageStudents: "Gerencie seus alunos",
       allStudents: "Todos os Alunos",

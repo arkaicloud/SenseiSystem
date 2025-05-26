@@ -179,13 +179,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
+        title: t("loggedOut"),
+        description: t("loggedOutSuccessfully"),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Logout failed",
+        title: t("error"),
         description: error.message,
         variant: "destructive",
       });

@@ -24,15 +24,15 @@ import {
 
 // Extend the class schema for form validation
 const classFormSchema = z.object({
-  name: z.string().min(3, { message: "Class name is required" }),
-  description: z.string().optional(),
-  instructorId: z.number().optional(),
+  name: z.string().min(3, { message: "Nome da aula é obrigatório" }),
+  description: z.string().optional().nullable(),
+  instructorId: z.number().optional().nullable(),
   dayOfWeek: z.number().min(0).max(6),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-    message: "Please enter a valid time in 24-hour format (HH:MM)",
+    message: "Digite um horário válido no formato 24h (HH:MM)",
   }),
-  duration: z.number().min(15, { message: "Duration must be at least 15 minutes" }),
-  maxCapacity: z.number().optional(),
+  duration: z.number().min(15, { message: "Duração deve ser de pelo menos 15 minutos" }),
+  maxCapacity: z.number().optional().nullable(),
 });
 
 type ClassFormValues = z.infer<typeof classFormSchema>;
@@ -70,13 +70,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
   });
 
   const daysOfWeek = [
-    { value: 0, label: "Sunday" },
-    { value: 1, label: "Monday" },
-    { value: 2, label: "Tuesday" },
-    { value: 3, label: "Wednesday" },
-    { value: 4, label: "Thursday" },
-    { value: 5, label: "Friday" },
-    { value: 6, label: "Saturday" },
+    { value: 0, label: "Domingo" },
+    { value: 1, label: "Segunda-feira" },
+    { value: 2, label: "Terça-feira" },
+    { value: 3, label: "Quarta-feira" },
+    { value: 4, label: "Quinta-feira" },
+    { value: 5, label: "Sexta-feira" },
+    { value: 6, label: "Sábado" },
   ];
 
   return (
@@ -87,9 +87,9 @@ const ClassForm: React.FC<ClassFormProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Class Name</FormLabel>
+              <FormLabel>Nome da Aula</FormLabel>
               <FormControl>
-                <Input placeholder="Fundamentals Class" {...field} />
+                <Input placeholder="Aula Fundamentals" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -101,11 +101,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Descrição</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Class description and details"
+                  placeholder="Descrição e detalhes da aula"
                   {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />
@@ -118,17 +119,18 @@ const ClassForm: React.FC<ClassFormProps> = ({
           name="instructorId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Instructor</FormLabel>
+              <FormLabel>Instrutor</FormLabel>
               <Select
-                onValueChange={(value) => field.onChange(parseInt(value))}
-                defaultValue={field.value?.toString()}
+                onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                value={field.value?.toString() || ""}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select an instructor" />
+                    <SelectValue placeholder="Selecione um instrutor" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="">Nenhum instrutor</SelectItem>
                   {instructors.map((instructor) => (
                     <SelectItem
                       key={instructor.id}
@@ -150,14 +152,14 @@ const ClassForm: React.FC<ClassFormProps> = ({
             name="dayOfWeek"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Day of Week</FormLabel>
+                <FormLabel>Dia da Semana</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(parseInt(value))}
-                  defaultValue={field.value.toString()}
+                  value={field.value.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a day" />
+                      <SelectValue placeholder="Selecione um dia" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -178,7 +180,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             name="startTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Start Time (24h format)</FormLabel>
+                <FormLabel>Horário de Início (24h)</FormLabel>
                 <FormControl>
                   <Input
                     type="time"
@@ -198,7 +200,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             name="duration"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Duration (minutes)</FormLabel>
+                <FormLabel>Duração (minutos)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -218,15 +220,16 @@ const ClassForm: React.FC<ClassFormProps> = ({
             name="maxCapacity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Max Capacity (optional)</FormLabel>
+                <FormLabel>Capacidade Máxima (opcional)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     min={1}
                     placeholder="20"
                     {...field}
+                    value={field.value || ""}
                     onChange={(e) => 
-                      field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
+                      field.onChange(e.target.value ? parseInt(e.target.value) : null)
                     }
                   />
                 </FormControl>
@@ -242,7 +245,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             className="bg-secondary hover:bg-secondary-dark"
             disabled={isLoading}
           >
-            {isLoading ? "Saving..." : "Save Class"}
+            {isLoading ? "Salvando..." : "Salvar Aula"}
           </Button>
         </div>
       </form>

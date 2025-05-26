@@ -95,87 +95,87 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       {/* Navigation links - scrollable middle section */}
       <nav className="flex-1 flex flex-col overflow-y-auto">
         <div className="flex-1 py-4">
-        <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
-        <Link href="/" className={linkClass("/")}>
-          <span className="material-icons mr-3">dashboard</span>
-          <span>{t('dashboard')}</span>
-        </Link>
-
-        {isInstructor && (
-          <Link href="/students" className={linkClass("/students")}>
-            <span className="material-icons mr-3">people</span>
-            <span>{t('students')}</span>
+          <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
+          <Link href="/" className={linkClass("/")}>
+            <span className="material-icons mr-3">dashboard</span>
+            <span>{t('dashboard')}</span>
           </Link>
-        )}
 
-        {isAdmin && (
-          <div className="relative">
-            <Link href="/pending-users" className={linkClass("/pending-users")}>
-              <span className="material-icons mr-3">pending_actions</span>
-              <span>Pending Approvals</span>
-              {pendingCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs"
-                >
-                  {pendingCount}
-                </Badge>
-              )}
+          {isInstructor && (
+            <Link href="/students" className={linkClass("/students")}>
+              <span className="material-icons mr-3">people</span>
+              <span>{t('students')}</span>
             </Link>
+          )}
+
+          {isAdmin && (
+            <div className="relative">
+              <Link href="/pending-users" className={linkClass("/pending-users")}>
+                <span className="material-icons mr-3">pending_actions</span>
+                <span>Pending Approvals</span>
+                {pendingCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs"
+                  >
+                    {pendingCount}
+                  </Badge>
+                )}
+              </Link>
+            </div>
+          )}
+
+          <Link href="/attendance" className={linkClass("/attendance")}>
+            <span className="material-icons mr-3">fact_check</span>
+            <span>{t('attendance')}</span>
+          </Link>
+
+          {!isStudent && (
+            <Link href="/classes" className={linkClass("/classes")}>
+              <span className="material-icons mr-3">event</span>
+              <span>{t('classes')}</span>
+            </Link>
+          )}
+
+          {isInstructor && (
+            <>
+              <Link href="/payments" className={linkClass("/payments")}>
+                <span className="material-icons mr-3">payments</span>
+                <span>{t('payments')}</span>
+              </Link>
+              
+              <Link href="/payment-plans" className={linkClass("/payment-plans")}>
+                <span className="material-icons mr-3">list_alt</span>
+                <span>{t('payment_plans')}</span>
+              </Link>
+
+              <Link href="/reports" className={linkClass("/reports")}>
+                <span className="material-icons mr-3">bar_chart</span>
+                <span>{t('reports')}</span>
+              </Link>
+            </>
+          )}
+
+          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
+            {t('account')}
           </div>
-        )}
-
-        <Link href="/attendance" className={linkClass("/attendance")}>
-          <span className="material-icons mr-3">fact_check</span>
-          <span>{t('attendance')}</span>
-        </Link>
-
-        {!isStudent && (
-          <Link href="/classes" className={linkClass("/classes")}>
-            <span className="material-icons mr-3">event</span>
-            <span>{t('classes')}</span>
+          <Link href="/profile" className={linkClass("/profile")}>
+            <span className="material-icons mr-3">person</span>
+            <span>{t('profile')}</span>
           </Link>
-        )}
 
-        {isInstructor && (
-          <>
-            <Link href="/payments" className={linkClass("/payments")}>
-              <span className="material-icons mr-3">payments</span>
-              <span>{t('payments')}</span>
-            </Link>
-            
-            <Link href="/payment-plans" className={linkClass("/payment-plans")}>
-              <span className="material-icons mr-3">list_alt</span>
-              <span>{t('payment_plans')}</span>
-            </Link>
-
-            <Link href="/reports" className={linkClass("/reports")}>
-              <span className="material-icons mr-3">bar_chart</span>
-              <span>{t('reports')}</span>
-            </Link>
-          </>
-        )}
-
-        <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase">
-          {t('account')}
-        </div>
-        <Link href="/profile" className={linkClass("/profile")}>
-          <span className="material-icons mr-3">person</span>
-          <span>{t('profile')}</span>
-        </Link>
-
-        {isAdmin && (
-          <>
-            <Link href="/school-config" className={linkClass("/school-config")}>
-              <span className="material-icons mr-3">school</span>
-              <span>Configurações da Escola</span>
-            </Link>
-            <Link href="/settings" className={linkClass("/settings")}>
-              <span className="material-icons mr-3">settings</span>
-              <span>{t('settings')}</span>
-            </Link>
-          </>
-        )}
+          {isAdmin && (
+            <>
+              <Link href="/school-config" className={linkClass("/school-config")}>
+                <span className="material-icons mr-3">school</span>
+                <span>Configurações da Escola</span>
+              </Link>
+              <Link href="/settings" className={linkClass("/settings")}>
+                <span className="material-icons mr-3">settings</span>
+                <span>{t('settings')}</span>
+              </Link>
+            </>
+          )}
 
         </div>
         

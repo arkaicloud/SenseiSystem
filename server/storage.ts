@@ -8,6 +8,7 @@ import {
   activityLogs, type ActivityLog, type InsertActivityLog,
   schoolEvents, type SchoolEvent, type InsertSchoolEvent,
   schoolConfig, type SchoolConfig, type InsertSchoolConfig,
+  dashboardCustomizations, type DashboardCustomization, type InsertDashboardCustomization,
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails
 } from "@shared/schema";
@@ -84,6 +85,11 @@ export interface IStorage {
   getActivityLogs(limit?: number): Promise<ActivityLog[]>;
   getActivityLogsByUser(userId: number, limit?: number): Promise<ActivityLog[]>;
   createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
+
+  // Dashboard Customizations
+  getDashboardCustomization(userId: number): Promise<DashboardCustomization | undefined>;
+  createDashboardCustomization(customization: InsertDashboardCustomization): Promise<DashboardCustomization>;
+  updateDashboardCustomization(userId: number, customization: Partial<DashboardCustomization>): Promise<DashboardCustomization | undefined>;
 }
 
 export class MemStorage implements IStorage {

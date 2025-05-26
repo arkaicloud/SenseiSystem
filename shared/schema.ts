@@ -129,6 +129,23 @@ export const activityLogs = pgTable("activity_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
+// Dashboard customization table
+export const dashboardCustomizations = pgTable("dashboard_customizations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull().unique(),
+  layout: text("layout").notNull().default('default'), // 'default', 'compact', 'minimal'
+  theme: text("theme").notNull().default('light'), // 'light', 'dark', 'auto'
+  widgetOrder: text("widget_order").array().notNull().default(['stats', 'notifications', 'attendance', 'events']),
+  hiddenWidgets: text("hidden_widgets").array().notNull().default([]),
+  showWelcomeMessage: boolean("show_welcome_message").notNull().default(true),
+  compactMode: boolean("compact_mode").notNull().default(false),
+  showQuickActions: boolean("show_quick_actions").notNull().default(true),
+  backgroundColor: text("background_color").default('#ffffff'),
+  accentColor: text("accent_color").default('#3b82f6'),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users)
   .omit({ id: true })
@@ -144,6 +161,7 @@ export const insertPaymentPlanSchema = createInsertSchema(paymentPlans).omit({ i
 export const insertStudentPaymentSchema = createInsertSchema(studentPayments).omit({ id: true });
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true });
 export const insertSchoolEventSchema = createInsertSchema(schoolEvents).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCustomizations).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -172,6 +190,9 @@ export type InsertStudentPayment = z.infer<typeof insertStudentPaymentSchema>;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+export type DashboardCustomization = typeof dashboardCustomizations.$inferSelect;
+export type InsertDashboardCustomization = z.infer<typeof insertDashboardCustomizationSchema>;
 
 // Custom extended types for frontend use
 export type StudentWithUser = Student & {

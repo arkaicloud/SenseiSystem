@@ -15,6 +15,7 @@ import StudentBeltProgress from "@/components/dashboard/StudentBeltProgress";
 import StudentNotifications from "@/components/dashboard/StudentNotifications";
 import QuickAttendanceConfirm from "@/components/attendance/QuickAttendanceConfirm";
 import BeltBadge from "@/components/students/BeltBadge";
+import DashboardCustomizationWizard from "@/components/dashboard/DashboardCustomizationWizard";
 import { formatDate, formatTime, formatCurrencyBRL } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";

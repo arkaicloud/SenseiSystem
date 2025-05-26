@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeltWithLabel } from "@/components/ui/belt";
+import { useQuery } from "@tanstack/react-query";
 
 // Extend the user schema for student creation
 const studentFormSchema = insertUserSchema.extend({
@@ -52,6 +53,21 @@ const StudentForm: React.FC<StudentFormProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  // Fetch payment plans
+  const { data: plansData } = useQuery({
+    queryKey: ['/api/payment-plans'],
+  });
+
+  const paymentPlans = plansData?.plans || [];
+
+  // Helper function to format currency
+  const formatCurrency = (amountInCents: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amountInCents / 100);
+  };
+
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
@@ -371,10 +387,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                           <SelectValue placeholder="Selecione um plano" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">Mensal - R$ 120,00</SelectItem>
-                          <SelectItem value="2">Trimestral - R$ 320,00</SelectItem>
-                          <SelectItem value="3">Semestral - R$ 600,00</SelectItem>
-                          <SelectItem value="4">Anual - R$ 1.100,00</SelectItem>
+                          {paymentPlans.map((plan: any) => (
+                            <SelectItem key={plan.id} value={plan.id.toString()}>
+                              {plan.name} - {formatCurrency(plan.amount)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -383,15 +400,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 )}
               />
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-sm text-gray-800 mb-2">Informações do Plano</h4>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>• Plano Mensal: Renovação automática todo mês</p>
-                  <p>• Plano Trimestral: 10% de desconto, renovação a cada 3 meses</p>
-                  <p>• Plano Semestral: 15% de desconto, renovação a cada 6 meses</p>
-                  <p>• Plano Anual: 20% de desconto, renovação anual</p>
-                </div>
-              </div>
+
 
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-start">

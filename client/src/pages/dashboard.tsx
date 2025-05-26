@@ -434,56 +434,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Layout de duas colunas para Atividades Recentes e Distribuição de Faixas */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Atividades Recentes */}
-          <div className="lg:col-span-2">
-            <ActivityList
-              activities={
-                isActivityLogsLoading
-                  ? []
-                  : recentActivities.slice(0, 5).map((activity: any) => {
-                      let iconBgColor = "bg-blue-100";
-                      let iconColor = "text-blue-500";
-                      let icon = "info";
-
-                      // Adaptado para texto em português
-                      if (activity.activity.includes("novo aluno") || activity.activity.includes("new student")) {
-                        icon = "person_add";
-                      } else if (activity.activity.includes("presença") || activity.activity.includes("attendance")) {
-                        icon = "fact_check";
-                        iconBgColor = "bg-green-100";
-                        iconColor = "text-green-500";
-                      } else if (activity.activity.includes("promovido") || activity.activity.includes("promoted")) {
-                        icon = "upgrade";
-                        iconBgColor = "bg-purple-100";
-                        iconColor = "text-purple-500";
-                      } else if (activity.activity.includes("pagamento") || activity.activity.includes("payment")) {
-                        icon = "payments";
-                        iconBgColor = "bg-accent-light";
-                        iconColor = "text-accent-dark";
-                      } else if (activity.activity.includes("atrasado") || activity.activity.includes("overdue")) {
-                        icon = "warning";
-                        iconBgColor = "bg-secondary-light";
-                        iconColor = "text-white";
-                      }
-
-                      return {
-                        id: activity.id,
-                        icon,
-                        iconBgColor,
-                        iconColor,
-                        content: <p dangerouslySetInnerHTML={{ __html: activity.activity }} />,
-                        timestamp: new Date(activity.timestamp).toLocaleString('pt-BR')
-                      };
-                    })
-              }
-              onViewAll={() => window.location.href = "/reports"}
-            />
-          </div>
-
-          {/* Distribuição de Faixas */}
-          <div>
+        {/* Layout reorganizado - Distribuição de Faixas centralizada */}
+        <div className="flex justify-center mb-8">
+          <div className="w-full max-w-md">
             <BeltDistribution />
           </div>
         </div>

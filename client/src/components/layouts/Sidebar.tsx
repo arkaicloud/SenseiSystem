@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, CheckSquare, Home, Clock } from "lucide-react";
+import { Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, CheckSquare, Home, Clock, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +150,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
                 <span className="truncate">Planos</span>
               </Link>
 
+              <Link href="/communications" className={linkClass("/communications")}>
+                <MessageSquare className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Comunicados</span>
+              </Link>
             </>
           )}
 

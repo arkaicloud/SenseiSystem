@@ -16,6 +16,7 @@ import Reports from "@/pages/reports";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
+import Communications from "@/pages/communications";
 import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -53,6 +54,11 @@ function Router() {
       <ProtectedRoute 
         path="/payment-plans" 
         component={PaymentPlans} 
+        allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/communications" 
+        component={Communications} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 

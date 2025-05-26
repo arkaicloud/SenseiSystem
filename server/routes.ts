@@ -384,6 +384,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  app.post("/api/students", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const studentData = req.body;
+      
+      // Validar dados do usuário primeiro
+      const userData = insertUserSchema.parse({
+        ...studentData,
+        role: "student",
+        active: true,
+        joinDate: new Date()
+      });
+
+      // Criar o usuário primeiro
+      const user = await storage.createUser(userData);
+
+      // Dados específicos do aluno
+      const studentInfo = insertStudentSchema.parse({
+        userId: user.id,
+        beltLevel: studentData.beltLevel || "white",
+        stripes: studentData.stripes || 0,
+        lastPromotionDate: null,
+        attendanceRate: null,
+        notes: studentData.notes || null,
+        avatarColor: null,
+        avatarStyle: null,
+        avatarImage: null
+      });
+
+      // Criar o registro do aluno
+      const student = await storage.createStudent(studentInfo);
+
+      // Log da atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} criou um novo aluno: ${user.firstName} ${user.lastName}`,
+        entityType: 'student',
+        entityId: student.id,
+        timestamp: new Date()
+      });
+
+      res.status(201).json({ 
+        message: "Aluno criado com sucesso",
+        student: student,
+        user: { ...user, password: undefined }
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      console.error("Erro ao criar aluno:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
   
   // Rota para buscar o estudante pelo ID do usuário (precisa vir ANTES da rota genérica /:id)
   app.get("/api/students/by-user/:userId", isAuthenticated, async (req, res) => {

@@ -144,6 +144,25 @@ export default function AuthPage() {
         {/* Left side - Forms */}
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-md">
+            {/* Logo e nome da escola acima do login */}
+            <div className="text-center mb-8">
+              {schoolConfig?.logoUrl && (
+                <div className="mb-4">
+                  <img 
+                    src={schoolConfig.logoUrl} 
+                    alt={schoolConfig.schoolName || "Logo da Academia"} 
+                    className="max-h-16 w-auto mx-auto object-contain"
+                  />
+                </div>
+              )}
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                {schoolConfig?.schoolName || "SenseiSystem"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Sistema de Gestão para Escolas e Dojos
+              </p>
+            </div>
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">{t('login')}</TabsTrigger>
@@ -396,18 +415,7 @@ export default function AuthPage() {
         {/* Right side - Hero section */}
         <div className="flex-1 bg-primary p-6 flex flex-col justify-center text-white">
           <div className="max-w-md mx-auto">
-            {/* Logo da escola quando disponível */}
-            {schoolConfig?.logoUrl && (
-              <div className="mb-6 text-center">
-                <img 
-                  src={schoolConfig.logoUrl} 
-                  alt={schoolConfig.schoolName || "Logo da Academia"} 
-                  className="max-h-24 w-auto mx-auto mb-4 object-contain"
-                />
-              </div>
-            )}
-            
-            <h1 className="text-3xl font-bold mb-6">{schoolConfig?.schoolName || "SenseiSystem"}</h1>
+            <h1 className="text-3xl font-bold mb-6">Bem-vindo ao Senseisystem</h1>
             
             <div className="space-y-4">
               <div className="flex items-start">
@@ -453,7 +461,6 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
-      
       {/* Footer with school contact information */}
       <footer className="bg-muted border-t px-6 py-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">

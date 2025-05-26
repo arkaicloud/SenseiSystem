@@ -152,12 +152,11 @@ const Students: React.FC = () => {
           </Dialog>
         </div>
       </div>
-
       <div className="bg-white rounded-lg shadow p-4">
         <Tabs defaultValue="all">
           <TabsList className="mb-4">
-            <TabsTrigger value="all">All Students</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="all">Todos Alunos</TabsTrigger>
+            <TabsTrigger value="active">Ativos</TabsTrigger>
             <TabsTrigger value="inactive">Inactive</TabsTrigger>
           </TabsList>
 
@@ -248,7 +247,6 @@ const Students: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-
       {/* Edit Student Dialog */}
       {selectedStudent && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedStudent(null)}>

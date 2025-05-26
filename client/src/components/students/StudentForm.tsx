@@ -36,6 +36,7 @@ const studentFormSchema = insertUserSchema.extend({
   state: z.string().optional(),
   zipCode: z.string().optional(),
   complement: z.string().optional(),
+  paymentPlanId: z.number().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -71,6 +72,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       state: "",
       zipCode: "",
       complement: "",
+      paymentPlanId: undefined,
       ...defaultValues,
     },
   });
@@ -79,11 +81,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
             <TabsTrigger value="contact">Contato</TabsTrigger>
             <TabsTrigger value="address">Endereço</TabsTrigger>
             <TabsTrigger value="belt">Graduação</TabsTrigger>
+            <TabsTrigger value="plan">Plano</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="space-y-4 mt-6">
@@ -293,19 +296,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="white">
-                          <BeltWithLabel belt="white" />
+                          <BeltWithLabel level="white" />
                         </SelectItem>
                         <SelectItem value="blue">
-                          <BeltWithLabel belt="blue" />
+                          <BeltWithLabel level="blue" />
                         </SelectItem>
                         <SelectItem value="purple">
-                          <BeltWithLabel belt="purple" />
+                          <BeltWithLabel level="purple" />
                         </SelectItem>
                         <SelectItem value="brown">
-                          <BeltWithLabel belt="brown" />
+                          <BeltWithLabel level="brown" />
                         </SelectItem>
                         <SelectItem value="black">
-                          <BeltWithLabel belt="black" />
+                          <BeltWithLabel level="black" />
                         </SelectItem>
                       </SelectContent>
                     </Select>

@@ -69,9 +69,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   return (
     <aside
       id="sidebar"
-      className={`sidebar bg-primary text-white w-64 fixed h-full z-30 top-0 left-0 ${
+      className={`sidebar bg-primary text-white w-64 fixed h-full z-40 top-0 left-0 ${
         isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
-      } transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}
+      } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:z-auto`}
     >
       <div className="p-4 flex items-center border-b border-primary-light">
         <div className="bg-white p-1 rounded mr-3">

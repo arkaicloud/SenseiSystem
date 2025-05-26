@@ -90,7 +90,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

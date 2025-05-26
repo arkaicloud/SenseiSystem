@@ -123,6 +123,7 @@ export class MemStorage implements IStorage {
     this.studentPayments = new Map();
     this.activityLogs = new Map();
     this.schoolEvents = new Map();
+    this.dashboardCustomizations = new Map();
 
     this.userCurrentId = 1;
     this.studentCurrentId = 1;
@@ -132,6 +133,7 @@ export class MemStorage implements IStorage {
     this.studentPaymentCurrentId = 1;
     this.activityLogCurrentId = 1;
     this.schoolEventCurrentId = 1;
+    this.dashboardCustomizationCurrentId = 1;
 
     this.seedData();
   }
@@ -659,6 +661,40 @@ export class MemStorage implements IStorage {
 
   async deleteSchoolEvent(id: number): Promise<boolean> {
     return this.schoolEvents.delete(id);
+  }
+
+  // Dashboard Customizations
+  async getDashboardCustomization(userId: number): Promise<DashboardCustomization | undefined> {
+    for (const customization of this.dashboardCustomizations.values()) {
+      if (customization.userId === userId) {
+        return customization;
+      }
+    }
+    return undefined;
+  }
+
+  async createDashboardCustomization(customization: InsertDashboardCustomization): Promise<DashboardCustomization> {
+    const newCustomization: DashboardCustomization = {
+      id: this.dashboardCustomizationCurrentId++,
+      ...customization,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.dashboardCustomizations.set(newCustomization.id, newCustomization);
+    return newCustomization;
+  }
+
+  async updateDashboardCustomization(userId: number, customization: Partial<DashboardCustomization>): Promise<DashboardCustomization | undefined> {
+    const existing = await this.getDashboardCustomization(userId);
+    if (!existing) return undefined;
+
+    const updated = {
+      ...existing,
+      ...customization,
+      updatedAt: new Date(),
+    };
+    this.dashboardCustomizations.set(existing.id, updated);
+    return updated;
   }
 }
 

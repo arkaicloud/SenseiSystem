@@ -249,10 +249,10 @@ const Classes: React.FC = () => {
                           Duração
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Instructor
+                          Instrutor
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
+                          Ações
                         </th>
                       </tr>
                     </thead>
@@ -280,7 +280,7 @@ const Classes: React.FC = () => {
                               <div className="text-sm text-gray-900">
                                 {classItem.instructor 
                                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}` 
-                                  : 'Not assigned'}
+                                  : 'Não atribuído'}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

@@ -91,7 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           {schoolConfig?.config?.schoolName || 'SenseiSystem'}
         </h1>
       </div>
-      
       {/* Navigation links - scrollable middle section */}
       <nav className="flex-1 flex flex-col overflow-y-auto">
         <div className="flex-1 py-4">
@@ -112,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             <div className="relative">
               <Link href="/pending-users" className={linkClass("/pending-users")}>
                 <span className="material-icons mr-3">pending_actions</span>
-                <span>Pending Approvals</span>
+                <span>Aprovação Pendente</span>
                 {pendingCount > 0 && (
                   <Badge 
                     variant="destructive" 

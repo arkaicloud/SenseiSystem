@@ -159,6 +159,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             <span className="truncate">Perfil</span>
           </Link>
 
+          <Link href="/settings" className={linkClass("/settings")}>
+            <Settings className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">Configurações</span>
+          </Link>
+
           {isAdmin && (
             <>
               <Link href="/school-config" className={linkClass("/school-config")}>

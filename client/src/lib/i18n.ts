@@ -128,6 +128,11 @@ const resources = {
       settingsSaved: "Settings saved successfully",
       failedToSave: "Failed to save settings",
       
+      // Welcome messages
+      welcomeBack: "Welcome back!",
+      youAreNowLoggedInAs: "You are now logged in as {{name}}",
+      loginSuccessful: "Login successful",
+      
       // Additional translations
       manageStudents: "Manage your students",
       allStudents: "All Students",
@@ -298,6 +303,11 @@ const resources = {
       error: "Erro",
       settingsSaved: "Configurações salvas com sucesso",
       failedToSave: "Falha ao salvar configurações",
+      
+      // Welcome messages
+      welcomeBack: "Bem-vindo de volta!",
+      youAreNowLoggedInAs: "Você está logado como {{name}}",
+      loginSuccessful: "Login realizado com sucesso",
       
       // Additional translations
       manageStudents: "Gerencie seus alunos",

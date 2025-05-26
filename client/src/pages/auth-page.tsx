@@ -172,7 +172,7 @@ export default function AuthPage() {
                   <CardHeader>
                     <CardTitle>{t('login')}</CardTitle>
                     <CardDescription>
-                      {t('loginDescription')}
+                      Digite suas credenciais para acessar.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

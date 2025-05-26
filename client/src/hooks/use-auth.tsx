@@ -7,6 +7,7 @@ import {
 import { insertUserSchema, User, userRoleEnum, beltLevelEnum } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 type AuthContextType = {
@@ -39,6 +40,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const {
     data: user,
     error,
@@ -84,13 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Welcome back!",
-        description: `You are now logged in as ${user.firstName}`,
+        title: t("welcomeBack"),
+        description: t("youAreNowLoggedInAs", { name: user.firstName }),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
+        title: t("error"),
         description: error.message || "Please check your credentials and try again",
         variant: "destructive",
       });

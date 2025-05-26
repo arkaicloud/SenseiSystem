@@ -721,6 +721,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { classId } = req.body;
       const requestUser = (req as any).user;
       
+      console.log("Tentativa de confirmação de presença:", { classId, userId: requestUser?.id });
+      
       if (!classId) {
         return res.status(400).json({ message: "Class ID is required" });
       }

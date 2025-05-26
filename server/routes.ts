@@ -757,7 +757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const attendanceData = {
         studentId: student.id,
         classId: classId,
-        date: today,
+        date: new Date(), // Usar nova instância de Date
         status: 'present' as const,
         checkedInBy: requestUser.id
       };

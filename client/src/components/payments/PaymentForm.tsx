@@ -187,12 +187,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 max-w-[300px]" align="start" side="bottom" sideOffset={4}>
                     <Calendar
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
                       initialFocus
+                      className="w-full"
                     />
                   </PopoverContent>
                 </Popover>
@@ -254,12 +255,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 max-w-[300px]" align="start" side="bottom" sideOffset={4}>
                     <Calendar
                       mode="single"
                       selected={field.value || undefined}
                       onSelect={field.onChange}
                       initialFocus
+                      className="w-full"
                     />
                   </PopoverContent>
                 </Popover>

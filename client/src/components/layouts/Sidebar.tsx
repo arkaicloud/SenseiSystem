@@ -81,7 +81,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         </div>
         <h1 className="font-montserrat font-bold text-xl">SenseiSystem</h1>
       </div>
-
       {/* User info */}
       <div className="p-4 border-b border-primary-light">
         <div className="flex items-center">
@@ -107,7 +106,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           </Button>
         </div>
       </div>
-
       {/* Navigation links */}
       <nav className="mt-4 flex flex-col h-[calc(100vh-180px)] overflow-y-auto">
         <div className="px-4 py-2 text-xs text-gray-400 uppercase">{t('main')}</div>
@@ -193,7 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
         )}
 
         <div className="mt-auto px-4 py-3 text-xs text-gray-400">
-          <p>Version 1.0.0</p>
+          <p>SenseiSystem - Version 1.0.0</p>
         </div>
       </nav>
     </aside>

@@ -387,7 +387,7 @@ const Dashboard: React.FC = () => {
 
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-medium">{t('proximasAulas')}</h3>
+              <h3 className="font-medium">Próximas Aulas</h3>
               <span className="text-xs text-gray-500">{formatDate(new Date())}</span>
             </div>
 

@@ -436,6 +436,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Criar o registro do aluno
       const student = await storage.createStudent(studentInfo);
 
+      // Se um plano de pagamento foi selecionado, criar o pagamento
+      if (studentData.paymentPlanId) {
+        const paymentPlan = await storage.getPaymentPlan(studentData.paymentPlanId);
+        if (paymentPlan) {
+          await storage.createStudentPayment({
+            studentId: student.id,
+            amount: paymentPlan.amount,
+            planId: paymentPlan.id,
+            dueDate: new Date(),
+            status: "pending",
+            notes: "Plano inicial vinculado no cadastro",
+            paidDate: null
+          });
+        }
+      }
+
       // Log da atividade
       const requestUser = (req as any).user;
       await storage.createActivityLog({

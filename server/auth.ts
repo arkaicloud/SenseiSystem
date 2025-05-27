@@ -109,10 +109,10 @@ export function setupAuth(app: Express) {
             if (student) {
               const studentPayments = await storage.getStudentPaymentsByStudent(student.id);
               if (studentPayments.length === 0) {
-                return done(null, false, { message: "No payment plan assigned. Contact administration." });
+                return done(null, false, { message: "Usuário pendente. Entre em contato com a administração para vincular um plano de pagamento." });
               }
             } else {
-              return done(null, false, { message: "Student profile not found. Contact administration." });
+              return done(null, false, { message: "Perfil de estudante não encontrado. Entre em contato com a administração." });
             }
           }
           

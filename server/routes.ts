@@ -397,6 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/students", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const studentData = req.body;
+      console.log("Dados recebidos para criar aluno:", JSON.stringify(studentData, null, 2));
 
       // Validar dados do usuário primeiro
       const userData = insertUserSchema.parse({
@@ -437,10 +438,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const student = await storage.createStudent(studentInfo);
 
       // Se um plano de pagamento foi selecionado, criar o pagamento
+      console.log("Verificando plano de pagamento:", studentData.paymentPlanId);
       if (studentData.paymentPlanId) {
         const paymentPlan = await storage.getPaymentPlan(studentData.paymentPlanId);
+        console.log("Plano encontrado:", paymentPlan);
         if (paymentPlan) {
-          await storage.createStudentPayment({
+          const newPayment = await storage.createStudentPayment({
             studentId: student.id,
             amount: paymentPlan.amount,
             planId: paymentPlan.id,
@@ -449,6 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notes: "Plano inicial vinculado no cadastro",
             paidDate: null
           });
+          console.log("Pagamento criado:", newPayment);
         }
       }
 

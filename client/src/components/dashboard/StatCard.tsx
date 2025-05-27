@@ -23,19 +23,19 @@ const StatCard: React.FC<StatCardProps> = ({
   subtitle,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-gray-700 text-sm font-medium">{title}</h3>
+        <h3 className="text-gray-700 dark:text-gray-300 text-sm font-medium">{title}</h3>
         <div className={`w-8 h-8 rounded-full ${iconBgColor} flex items-center justify-center`}>
           <span className={`material-icons ${iconColor}`}>{icon}</span>
         </div>
       </div>
       <div className="flex items-end">
-        <span className="text-2xl font-bold mr-2">{value}</span>
+        <span className="text-2xl font-bold mr-2 text-gray-900 dark:text-white">{value}</span>
         {trend && (
           <span
             className={`${
-              trend.isPositive ? "text-status-success" : "text-status-danger"
+              trend.isPositive ? "text-green-500" : "text-red-500"
             } text-sm flex items-center`}
           >
             <span className="material-icons text-xs mr-1">
@@ -45,7 +45,7 @@ const StatCard: React.FC<StatCardProps> = ({
           </span>
         )}
       </div>
-      <p className="text-gray-600 text-xs mt-1">{subtitle || "comparado ao mês anterior"}</p>
+      <p className="text-gray-600 dark:text-gray-400 text-xs mt-1">{subtitle || "comparado ao mês anterior"}</p>
     </div>
   );
 };

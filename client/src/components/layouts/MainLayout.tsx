@@ -73,10 +73,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600">{t('loading')}</p>
+          <p className="text-gray-600 dark:text-gray-300">{t('loading')}</p>
         </div>
       </div>
     );
@@ -86,7 +86,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
 
   return (
-    <div className="flex min-h-screen bg-gray-100 relative">
+    <div className="flex min-h-screen bg-white dark:bg-gray-900 relative">
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div 
@@ -110,10 +110,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen`}>
         {/* Mobile header */}
         {isMobile && user && (
-          <div className="bg-white shadow-sm border-b md:hidden flex items-center justify-between px-4 py-3">
+          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3">
             <button
               id="menu-toggle"
-              className="text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary rounded p-1"
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-1"
               onClick={toggleSidebar}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,10 +123,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <div className="flex items-center">
               <div className="bg-primary p-1 rounded mr-2">
                 <div className="belt black-belt w-6 h-6 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">S</span>
+                  <span className="text-white text-xs font-bold">
+                    {schoolConfig?.schoolName?.charAt(0) || 'S'}
+                  </span>
                 </div>
               </div>
-              <h1 className="font-montserrat font-bold text-base sm:text-lg">
+              <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
             </div>

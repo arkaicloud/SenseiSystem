@@ -208,7 +208,9 @@ const Dashboard: React.FC = () => {
           
           {/* Notificações no Topo */}
           <div className="mb-6">
-            <StudentNotifications notifications={studentNotifications} />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+              <StudentNotifications notifications={studentNotifications} />
+            </div>
           </div>
           
           {/* Conteúdo do Painel do Aluno */}
@@ -217,9 +219,9 @@ const Dashboard: React.FC = () => {
             <div className="lg:col-span-2 space-y-6">
               {/* Confirmação Rápida de Presença */}
               {user && (
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-gray-200">
-                    <h3 className="font-medium text-primary">{t('confirmar_presenca_hoje')}</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="font-medium text-primary dark:text-blue-400">{t('confirmar_presenca_hoje')}</h3>
                   </div>
                   <div className="p-4">
                     <QuickAttendanceConfirm userId={user.id} compact={true} />
@@ -229,7 +231,7 @@ const Dashboard: React.FC = () => {
               
               {/* Brasão da Faixa */}
               {student && user && (
-                <div className="bg-white rounded-lg shadow-sm p-6 flex flex-col items-center">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col items-center">
                   <BeltBadge 
                     beltLevel={student.beltLevel || 'white'} 
                     studentName={`${user.firstName} ${user.lastName}`}
@@ -248,17 +250,17 @@ const Dashboard: React.FC = () => {
               )}
               
               {/* Próximas Aulas */}
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="font-medium">{t('proximasAulas')}</h3>
-                  <span className="text-xs text-gray-500">{formatDate(new Date())}</span>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">{t('proximasAulas')}</h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(new Date())}</span>
                 </div>
 
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {isClassesLoading ? (
-                    <div className="p-8 text-center">{t('loading')}</div>
+                    <div className="p-8 text-center text-gray-900 dark:text-gray-100">{t('loading')}</div>
                   ) : todaysClasses.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">{t('semAulasAgendadas')}</div>
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('semAulasAgendadas')}</div>
                   ) : (
                     todaysClasses.slice(0, 2).map((classItem: any) => {
                       const { time, period } = formatTime(classItem.startTime);
@@ -269,12 +271,12 @@ const Dashboard: React.FC = () => {
                       return (
                         <div key={classItem.id} className="p-4">
                           <div className="flex items-center">
-                            <div className={`flex-shrink-0 w-12 h-12 rounded-full ${classItem.id % 2 === 0 ? "bg-purple-100" : "bg-blue-100"} flex items-center justify-center`}>
-                              <span className={`text-lg font-bold ${classItem.id % 2 === 0 ? "text-purple-600" : "text-blue-600"}`}>{time}</span>
+                            <div className={`flex-shrink-0 w-12 h-12 rounded-full ${classItem.id % 2 === 0 ? "bg-purple-100 dark:bg-purple-900" : "bg-blue-100 dark:bg-blue-900"} flex items-center justify-center`}>
+                              <span className={`text-lg font-bold ${classItem.id % 2 === 0 ? "text-purple-600 dark:text-purple-300" : "text-blue-600 dark:text-blue-300"}`}>{time}</span>
                             </div>
                             <div className="ml-4">
-                              <h4 className="font-medium">{classItem.name}</h4>
-                              <p className="text-sm text-gray-600">{instructorName} • {classItem.duration} min</p>
+                              <h4 className="font-medium text-gray-900 dark:text-gray-100">{classItem.name}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{instructorName} • {classItem.duration} min</p>
                             </div>
                           </div>
                         </div>

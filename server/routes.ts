@@ -887,8 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: requestUser.id,
         entityType: 'attendance',
         entityId: existingAttendance.id,
-        ```text
-timestamp: new Date()
+        timestamp: new Date()
       });
 
       res.json({ message: "Attendance cancelled successfully" });

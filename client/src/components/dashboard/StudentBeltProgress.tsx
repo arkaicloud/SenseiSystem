@@ -165,11 +165,11 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
   };
 
   return (
-    <div className={`rounded-lg p-6 shadow-sm ${colors.bg} ${colors.text} mb-6 relative overflow-hidden`}>
+    <div className={`rounded-lg p-6 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-6 relative overflow-hidden`}>
       {/* Título com ícone de troféu */}
       <div className="flex items-center mb-4">
         <Trophy className="w-6 h-6 mr-2 text-yellow-500" />
-        <h3 className="text-lg font-semibold">{t('sua_progressao')}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('sua_progressao')}</h3>
       </div>
       
       {/* Exibição da faixa atual com animação */}
@@ -192,13 +192,13 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
         </div>
         
         <div className="text-center mb-2">
-          <span className="font-bold text-lg">{t(beltLevel)}</span>
-          <span className="ml-2">•</span>
-          <span className="ml-2">{stripes} {t('stripe', { count: stripes })}</span>
+          <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{t(beltLevel)}</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-300">•</span>
+          <span className="ml-2 text-gray-900 dark:text-gray-100">{stripes} {t('stripe', { count: stripes })}</span>
         </div>
         
         {/* Mensagem motivacional */}
-        <div className="text-center text-sm opacity-80 italic">
+        <div className="text-center text-sm opacity-80 italic text-gray-700 dark:text-gray-300">
           "{getMotivationalMessage()}"
         </div>
       </div>
@@ -208,9 +208,9 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
         <div className="flex justify-between mb-2">
           <div className="flex items-center">
             <Target className="w-4 h-4 mr-1 text-primary" />
-            <span className="text-sm font-medium">{t('progresso_proxima_graduacao')}</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('progresso_proxima_graduacao')}</span>
           </div>
-          <span className="text-sm font-bold">{Math.round(animateProgress)}%</span>
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{Math.round(animateProgress)}%</span>
         </div>
         
         <div className={`w-full h-4 ${colors.progressBg} rounded-full overflow-hidden relative`}>
@@ -241,33 +241,33 @@ const StudentBeltProgress: React.FC<BeltProgressProps> = ({
       </div>
       
       {/* Informações adicionais */}
-      <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200 border-opacity-40">
+      <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 border-opacity-40">
         {/* Próxima graduação */}
-        <div className="bg-white bg-opacity-50 rounded-lg p-3 shadow-sm">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 shadow-sm">
           <div className="flex items-center mb-1">
             <Star className="w-4 h-4 mr-1 text-yellow-500" />
-            <span className="text-sm font-medium">{t('proxima_graduacao')}</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('proxima_graduacao')}</span>
           </div>
-          <div className="font-semibold">
+          <div className="font-semibold text-gray-900 dark:text-gray-100">
             {getNextBelt()}
           </div>
         </div>
         
         {/* Taxa de presença */}
-        <div className="bg-white bg-opacity-50 rounded-lg p-3 shadow-sm">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 shadow-sm">
           <div className="flex items-center mb-1">
             <Zap className="w-4 h-4 mr-1 text-green-500" />
-            <span className="text-sm font-medium">{t('taxa_presenca')}</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('taxa_presenca')}</span>
           </div>
-          <div className="font-semibold">
+          <div className="font-semibold text-gray-900 dark:text-gray-100">
             {attendanceRate}%
           </div>
         </div>
       </div>
       
       {/* Botões para interagir com a animação */}
-      <div className="mt-6 border-t border-gray-200 border-opacity-40 pt-4">
-        <div className="text-sm mb-2 text-center font-medium">{t('demonstracao_interativa')}</div>
+      <div className="mt-6 border-t border-gray-200 dark:border-gray-600 border-opacity-40 pt-4">
+        <div className="text-sm mb-2 text-center font-medium text-gray-900 dark:text-gray-100">{t('demonstracao_interativa')}</div>
         <div className="flex justify-center space-x-2">
           <Button 
             onClick={handleAddStripe} 

@@ -182,8 +182,8 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-sm font-medium">{classItem.name}</div>
-            <div className="text-xs text-gray-500">
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{classItem.name}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {time} • {classItem.duration} min
             </div>
           </div>
@@ -224,7 +224,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         </div>
         
         {availableClasses.length > 1 && (
-          <div className="text-xs text-center text-primary">
+          <div className="text-xs text-center text-primary dark:text-blue-400">
             <span
               className="cursor-pointer hover:underline"
               onClick={() => setSelectedClassId(null)}

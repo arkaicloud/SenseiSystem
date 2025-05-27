@@ -199,24 +199,22 @@ const Dashboard: React.FC = () => {
       return (
         <>
           {/* Cabeçalho do Dashboard do Aluno */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
             <div>
-              <h1 className="font-montserrat font-bold text-2xl text-primary dark:text-blue-400">Meu Painel</h1>
-              <p className="text-gray-600 dark:text-gray-300">Bem-vindo, {user.firstName}</p>
+              <h1 className="font-montserrat font-bold text-xl md:text-2xl text-primary dark:text-blue-400">Meu Painel</h1>
+              <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">Bem-vindo, {user.firstName}</p>
             </div>
           </div>
           
           {/* Notificações no Topo */}
           <div className="mb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
-              <StudentNotifications notifications={studentNotifications} />
-            </div>
+            <StudentNotifications notifications={studentNotifications} />
           </div>
           
           {/* Conteúdo do Painel do Aluno */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Coluna da esquerda - Brasão e Progresso */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 md:space-y-6">
               {/* Confirmação Rápida de Presença */}
               {user && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
@@ -300,12 +298,12 @@ const Dashboard: React.FC = () => {
     return (
       <>
         {/* Cabeçalho do Dashboard */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
           <div>
-            <h1 className="font-montserrat font-bold text-2xl text-primary dark:text-blue-400">
+            <h1 className="font-montserrat font-bold text-xl md:text-2xl text-primary dark:text-blue-400">
               Painel
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">Bem-vindo, {user?.firstName || 'Administrador'}</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">Bem-vindo, {user?.firstName || 'Administrador'}</p>
           </div>
           <div className="mt-4 md:mt-0 flex gap-2">
             <div className="relative">

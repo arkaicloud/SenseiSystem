@@ -151,6 +151,14 @@ export class MemStorage implements IStorage {
       role: "admin",
       phone: "555-123-4567",
       emergencyContact: "",
+      birthDate: null,
+      street: null,
+      number: null,
+      complement: null,
+      neighborhood: null,
+      city: null,
+      state: null,
+      zipCode: null,
       joinDate: new Date(),
       active: true
     };
@@ -167,6 +175,14 @@ export class MemStorage implements IStorage {
       role: "instructor",
       phone: "555-234-5678",
       emergencyContact: "",
+      birthDate: null,
+      street: null,
+      number: null,
+      complement: null,
+      neighborhood: null,
+      city: null,
+      state: null,
+      zipCode: null,
       joinDate: new Date(),
       active: true
     };
@@ -249,7 +265,21 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      birthDate: insertUser.birthDate || null,
+      street: insertUser.street || null,
+      number: insertUser.number || null,
+      complement: insertUser.complement || null,
+      neighborhood: insertUser.neighborhood || null,
+      city: insertUser.city || null,
+      state: insertUser.state || null,
+      zipCode: insertUser.zipCode || null,
+      phone: insertUser.phone || null,
+      emergencyContact: insertUser.emergencyContact || null,
+      active: insertUser.active !== undefined ? insertUser.active : true
+    };
     this.users.set(id, user);
     return user;
   }
@@ -295,7 +325,18 @@ export class MemStorage implements IStorage {
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
     const id = this.studentCurrentId++;
-    const student: Student = { ...insertStudent, id };
+    const student: Student = { 
+      ...insertStudent, 
+      id,
+      beltLevel: insertStudent.beltLevel || "white",
+      stripes: insertStudent.stripes || 0,
+      lastPromotionDate: insertStudent.lastPromotionDate || null,
+      attendanceRate: insertStudent.attendanceRate || 0,
+      notes: insertStudent.notes || null,
+      avatarColor: insertStudent.avatarColor || null,
+      avatarStyle: insertStudent.avatarStyle || null,
+      avatarImage: insertStudent.avatarImage || null
+    };
     this.students.set(id, student);
     return student;
   }
@@ -384,27 +425,6 @@ export class MemStorage implements IStorage {
     let attendances = Array.from(this.attendance.values()).filter(
       (attendance) => attendance.classId === classId,
     );
-
-    if (date) {
-      const dateStr = date.toDateString();
-      attendances = attendances.filter(
-        (attendance) => attendance.date.toDateString() === dateStr,
-      );
-    }
-
-    return attendances;
-  }
-
-  async getAttendanceByStudent(studentId: number): Promise<Attendance[]> {
-    return Array.from(this.attendance.values()).filter(
-      (attendance) => attendance.studentId === studentId,
-    );
-  }
-
-  async getAttendanceByClass(classId: number, date?: Date): Promise<Attendance[]> {
-    let attendances = Array.from(this.attendance.values()).filter(
-      (attendance) => attendance.classId === classId,
-    );
     
     if (date) {
       const targetDate = date.toISOString().split('T')[0];
@@ -415,6 +435,12 @@ export class MemStorage implements IStorage {
     }
     
     return attendances;
+  }
+
+  async getAttendanceByStudent(studentId: number): Promise<Attendance[]> {
+    return Array.from(this.attendance.values()).filter(
+      (attendance) => attendance.studentId === studentId,
+    );
   }
 
   async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {

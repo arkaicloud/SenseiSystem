@@ -400,9 +400,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validar dados do usuário primeiro
       const userData = insertUserSchema.parse({
-        ...studentData,
+        firstName: studentData.firstName,
+        lastName: studentData.lastName,
+        username: studentData.username,
+        email: studentData.email,
+        password: studentData.password || 'temporaryPassword123',
         role: "student",
         active: true,
+        phone: studentData.phone || null,
+        emergencyContact: studentData.emergencyContact || null,
+        street: studentData.street || null,
+        city: studentData.city || null,
+        state: studentData.state || null,
+        zipCode: studentData.zipCode || null,
+        complement: studentData.complement || null,
         joinDate: new Date()
       });
 

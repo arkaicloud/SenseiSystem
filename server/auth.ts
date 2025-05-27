@@ -103,6 +103,19 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Account is pending activation" });
           }
           
+          // For students, check if they have a payment plan
+          if (user.role === 'student') {
+            const student = await storage.getStudentByUserId(user.id);
+            if (student) {
+              const studentPayments = await storage.getStudentPaymentsByStudent(student.id);
+              if (studentPayments.length === 0) {
+                return done(null, false, { message: "No payment plan assigned. Contact administration." });
+              }
+            } else {
+              return done(null, false, { message: "Student profile not found. Contact administration." });
+            }
+          }
+          
           return done(null, user);
         } catch (err) {
           return done(err);

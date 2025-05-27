@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -218,7 +217,12 @@ const PendingUsers: React.FC = () => {
               {selectedUser && (
                 <>
                   Approve registration for <strong>{selectedUser.firstName} {selectedUser.lastName}</strong>
-                  {selectedUser.role === 'student' && ' and assign a payment plan.'}
+                  {selectedUser.role === 'student' && (
+                    <>
+                      <br />
+                      <strong className="text-red-600">Payment plan assignment is required for student approval.</strong>
+                    </>
+                  )}
                 </>
               )}
             </DialogDescription>

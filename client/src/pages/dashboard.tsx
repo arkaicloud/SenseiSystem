@@ -335,41 +335,41 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
           <StatCard
             title="Total de Alunos"
             value={stats.totalStudents}
             icon="people"
-            trend={{ value: "12%", isPositive: true }}
-            iconBgColor="bg-blue-100"
-            iconColor="text-blue-500"
+            trend={{ value: "+12%", isPositive: true }}
+            iconBgColor="bg-blue-100 dark:bg-blue-900"
+            iconColor="text-blue-600 dark:text-blue-300"
             subtitle="alunos ativos matriculados"
           />
           <StatCard
             title="Aulas do Mês"
             value={stats.classesThisMonth}
             icon="event"
-            trend={{ value: "5%", isPositive: true }}
-            iconBgColor="bg-green-100"
-            iconColor="text-green-500"
+            trend={{ value: "+5%", isPositive: true }}
+            iconBgColor="bg-green-100 dark:bg-green-900"
+            iconColor="text-green-600 dark:text-green-300"
             subtitle="aulas realizadas no mês"
           />
           <StatCard
             title="Taxa de Presença"
             value={stats.avgAttendance}
             icon="fact_check"
-            trend={{ value: "3%", isPositive: false }}
-            iconBgColor="bg-purple-100"
-            iconColor="text-purple-500"
+            trend={{ value: "-3%", isPositive: false }}
+            iconBgColor="bg-purple-100 dark:bg-purple-900"
+            iconColor="text-purple-600 dark:text-purple-300"
             subtitle="presença média dos alunos"
           />
           <StatCard
             title="Receita Mensal"
             value={stats.revenue}
             icon="payments"
-            trend={{ value: "8%", isPositive: true }}
-            iconBgColor="bg-accent-light"
-            iconColor="text-accent-dark"
+            trend={{ value: "+8%", isPositive: true }}
+            iconBgColor="bg-yellow-100 dark:bg-yellow-900"
+            iconColor="text-yellow-600 dark:text-yellow-300"
             subtitle="receita total do mês"
           />
         </div>
@@ -386,17 +386,17 @@ const Dashboard: React.FC = () => {
             </Link>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-medium">Próximas Aulas</h3>
-              <span className="text-xs text-gray-500">{formatDate(new Date())}</span>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">Próximas Aulas</h3>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(new Date())}</span>
             </div>
 
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {isClassesLoading ? (
-                <div className="p-8 text-center">{t('loading')}</div>
+                <div className="p-8 text-center text-gray-900 dark:text-gray-100">{t('loading')}</div>
               ) : todaysClasses.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">{t('semAulasAgendadas')}</div>
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('semAulasAgendadas')}</div>
               ) : (
                 todaysClasses.map((classItem: any) => {
                   const { time, period } = formatTime(classItem.startTime);
@@ -435,10 +435,13 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Layout reorganizado - Distribuição de Faixas centralizada */}
-        <div className="flex justify-center mb-8">
-          <div className="w-full max-w-md">
+        {/* Layout reorganizado - Distribuição de Faixas com melhor organização */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="lg:col-span-1">
             <BeltDistribution />
+          </div>
+          <div className="lg:col-span-1">
+            <ActivityList activities={recentActivities} isLoading={isActivityLogsLoading} />
           </div>
         </div>
 

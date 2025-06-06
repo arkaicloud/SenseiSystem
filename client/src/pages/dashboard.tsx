@@ -305,37 +305,39 @@ const Dashboard: React.FC = () => {
             </h1>
             <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">Bem-vindo, {user?.firstName || 'Administrador'}</p>
           </div>
-          <div className="mt-4 md:mt-0 flex gap-2">
-            <div className="relative">
+          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1 max-w-xs">
               <input
                 type="text"
                 placeholder={t('pesquisar')}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
               <div className="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
                 <span className="material-icons text-sm">search</span>
               </div>
             </div>
             
-            <DashboardCustomizationWizard />
-            
-            <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
-                  <span className="material-icons mr-1 text-sm">add</span>
-                  {t('novoAluno')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogTitle>{t('adicionarAluno')}</DialogTitle>
-                <StudentForm onSubmit={handleAddStudent} />
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <DashboardCustomizationWizard />
+              
+              <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium whitespace-nowrap">
+                    <span className="material-icons mr-1 text-sm">add</span>
+                    {t('novoAluno')}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogTitle>{t('adicionarAluno')}</DialogTitle>
+                  <StudentForm onSubmit={handleAddStudent} />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           <StatCard
             title="Total de Alunos"
             value={stats.totalStudents}
@@ -436,12 +438,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Layout reorganizado - Distribuição de Faixas com melhor organização */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-8">
+          <div className="order-1 lg:order-1">
             <BeltDistribution />
           </div>
-          <div className="lg:col-span-1">
-            <ActivityList activities={recentActivities} isLoading={isActivityLogsLoading} />
+          <div className="order-2 lg:order-2">
+            <ActivityList activities={recentActivities} />
           </div>
         </div>
 

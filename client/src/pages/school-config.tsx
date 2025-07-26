@@ -305,31 +305,7 @@ export default function SchoolConfigPage() {
                     )}
                   />
 
-                  {/* Tema Padrão */}
-                  <FormField
-                    control={form.control}
-                    name="defaultTheme"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tema Padrão do Sistema</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tema padrão" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="light">🌞 Tema Claro</SelectItem>
-                            <SelectItem value="dark">🌙 Tema Escuro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        <p className="text-sm text-gray-500">
-                          Tema que será aplicado por padrão para todos os usuários
-                        </p>
-                      </FormItem>
-                    )}
-                  />
+                  
 
                   {/* Botão de Salvar */}
                   <Button

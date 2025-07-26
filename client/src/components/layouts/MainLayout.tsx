@@ -107,7 +107,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {user && <Sidebar isOpen={sidebarOpen} isMobile={isMobile} />}
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen`}>
+      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden`}>
         {/* Mobile header */}
         {isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3">
@@ -139,7 +139,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className="p-3 md:p-4 min-h-screen">
+        <div className="px-3 py-3 md:px-4 md:py-4 min-h-screen">
           {children}
         </div>
       </main>

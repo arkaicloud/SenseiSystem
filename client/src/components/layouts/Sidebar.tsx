@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       className={`sidebar bg-primary text-white w-64 min-w-64 h-screen ${
         isMobile 
           ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out` 
-          : "relative z-40"
+          : "fixed top-0 left-0 z-40"
       } flex flex-col`}
     >
       {/* Header */}

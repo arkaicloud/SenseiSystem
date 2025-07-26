@@ -107,9 +107,9 @@ export default function SchoolConfigPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="max-w-4xl">
       {/* Cabeçalho */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex items-center gap-3 mb-2">
           <School className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold text-gray-900">Configurações da Escola</h1>
@@ -119,7 +119,7 @@ export default function SchoolConfigPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Formulário */}
         <div className="lg:col-span-2">
           <Card>

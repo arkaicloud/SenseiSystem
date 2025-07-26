@@ -120,7 +120,7 @@ const Students: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">{t('students')}</h1>
           <p className="text-gray-600">Gerenciar Alunos</p>

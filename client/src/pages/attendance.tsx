@@ -112,7 +112,7 @@ const Attendance: React.FC = () => {
   // Renderizar interface diferente para alunos vs. professores/administradores
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">{t('attendance')}</h1>
           <p className="text-gray-600">{isStudent ? t('yourAttendance') : t('trackAttendance')}</p>
@@ -121,7 +121,7 @@ const Attendance: React.FC = () => {
 
       {/* Painel do Aluno */}
       {isStudent && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             {/* Resumo de presença do aluno */}
             {/* Usar userId diretamente em vez de studentId */}
@@ -163,7 +163,7 @@ const Attendance: React.FC = () => {
 
       {/* Painel do Professor/Admin */}
       {isAdminOrInstructor && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-1">
             <Card>
               <CardHeader>

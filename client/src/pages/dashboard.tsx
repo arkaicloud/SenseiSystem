@@ -298,7 +298,7 @@ const Dashboard: React.FC = () => {
     return (
       <>
         {/* Cabeçalho do Dashboard */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
           <div>
             <h1 className="font-montserrat font-bold text-xl md:text-2xl text-primary dark:text-blue-400">
               Painel
@@ -337,7 +337,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
           <StatCard
             title="Total de Alunos"
             value={stats.totalStudents}
@@ -438,7 +438,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Layout reorganizado - Distribuição de Faixas com melhor organização */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           <div className="order-1 lg:order-1">
             <BeltDistribution />
           </div>

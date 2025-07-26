@@ -8,6 +8,7 @@ import MainLayout from "@/components/layouts/MainLayout";
 import Dashboard from "@/pages/dashboard";
 import Students from "@/pages/students";
 import PendingUsers from "@/pages/pending-users";
+import StudentsAtRisk from "@/pages/students-at-risk";
 import Classes from "@/pages/classes";
 import Attendance from "@/pages/attendance";
 import Payments from "@/pages/payments";
@@ -26,57 +27,62 @@ function Router() {
   return (
     <Switch>
       {/* Protected routes */}
-      <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/" component={() => <Dashboard />} />
+      <ProtectedRoute path="/dashboard" component={() => <Dashboard />} />
       <ProtectedRoute 
         path="/students" 
-        component={Students} 
+        component={() => <Students />} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 
         path="/pending-users" 
-        component={PendingUsers} 
+        component={() => <PendingUsers />} 
         allowedRoles={["admin"]} 
       />
       <ProtectedRoute 
+        path="/students-at-risk" 
+        component={() => <StudentsAtRisk />} 
+        allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
         path="/attendance" 
-        component={Attendance} 
+        component={() => <Attendance />} 
       />
       <ProtectedRoute 
         path="/classes" 
-        component={Classes} 
+        component={() => <Classes />} 
       />
       <ProtectedRoute 
         path="/payments" 
-        component={Payments} 
+        component={() => <Payments />} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 
         path="/payment-plans" 
-        component={PaymentPlans} 
+        component={() => <PaymentPlans />} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 
         path="/communications" 
-        component={Communications} 
+        component={() => <Communications />} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 
         path="/reports" 
-        component={Reports} 
+        component={() => <Reports />} 
         allowedRoles={["admin", "instructor"]} 
       />
       <ProtectedRoute 
         path="/profile" 
-        component={Profile} 
+        component={() => <Profile />} 
       />
       <ProtectedRoute 
         path="/settings" 
-        component={Settings} 
+        component={() => <Settings />} 
       />
       <ProtectedRoute 
         path="/school-config" 
-        component={SchoolConfig} 
+        component={() => <SchoolConfig />} 
         allowedRoles={["admin"]} 
       />
 

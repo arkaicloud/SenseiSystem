@@ -11,7 +11,9 @@ import {
   insertStudentPaymentSchema,
   insertActivityLogSchema,
   insertSchoolEventSchema,
-  insertDashboardCustomizationSchema
+  insertDashboardCustomizationSchema,
+  insertRiskActionSchema,
+  insertRiskSettingsSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 
@@ -1501,6 +1503,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating dashboard customization:", error);
       res.status(500).json({ message: "Erro ao atualizar personalização do dashboard" });
+    }
+  });
+
+  // ===== Risk Management Routes =====
+  app.get("/api/students/at-risk", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const threshold = parseInt(req.query.threshold as string) || 60;
+      const studentsAtRisk = [];
+      
+      // Get all students with their attendance data
+      const students = await storage.getStudentsWithUsers();
+      
+      for (const student of students) {
+        try {
+          // Calculate attendance rate for this student
+          const studentAttendances = await storage.getAttendanceByStudent(student.id);
+          const totalClasses = await storage.getClasses();
+          
+          const attendanceRate = totalClasses.length > 0 ? 
+            Math.round((studentAttendances.length / totalClasses.length) * 100) : 0;
+          
+          // Calculate days since last attendance
+          const lastAttendance = studentAttendances.length > 0 ?
+            studentAttendances.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
+          
+          const daysSinceLastAttendance = lastAttendance ? 
+            Math.floor((Date.now() - new Date(lastAttendance.date).getTime()) / (1000 * 60 * 60 * 24)) : 999;
+          
+          // Determine risk level
+          let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
+          if (attendanceRate < 30 || daysSinceLastAttendance > 21) {
+            riskLevel = 'critical';
+          } else if (attendanceRate < 50 || daysSinceLastAttendance > 14) {
+            riskLevel = 'high';
+          } else if (attendanceRate < threshold || daysSinceLastAttendance > 7) {
+            riskLevel = 'medium';
+          }
+          
+          // Only include students at risk
+          if (attendanceRate < threshold || daysSinceLastAttendance > 7) {
+            studentsAtRisk.push({
+              id: student.id,
+              user: {
+                id: student.user.id,
+                firstName: student.user.firstName,
+                lastName: student.user.lastName,
+                email: student.user.email,
+                phone: student.user.phone
+              },
+              beltLevel: student.beltLevel,
+              stripes: student.stripes,
+              attendanceRate,
+              lastAttendance: lastAttendance ? lastAttendance.date : null,
+              daysSinceLastAttendance,
+              riskLevel,
+              totalClasses: totalClasses.length,
+              attendedClasses: studentAttendances.length
+            });
+          }
+        } catch (studentError) {
+          console.error(`Error processing student ${student.id}:`, studentError);
+        }
+      }
+      
+      // Sort by risk level and attendance rate
+      studentsAtRisk.sort((a, b) => {
+        const riskOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+        if (riskOrder[a.riskLevel] !== riskOrder[b.riskLevel]) {
+          return riskOrder[b.riskLevel] - riskOrder[a.riskLevel];
+        }
+        return a.attendanceRate - b.attendanceRate;
+      });
+      
+      res.json({ students: studentsAtRisk });
+    } catch (error) {
+      console.error("Erro ao buscar alunos em risco:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/students/risk-actions", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const actionData = {
+        studentId: req.body.studentId,
+        actionType: req.body.actionType,
+        notes: req.body.notes || null,
+        scheduledDate: req.body.scheduledDate ? new Date(req.body.scheduledDate) : null,
+        createdBy: req.user.id
+      };
+      
+      // Log the action
+      await storage.createActivityLog({
+        userId: req.user.id,
+        activity: `${req.user.firstName} ${req.user.lastName} registrou ação de retenção: ${actionData.actionType}`,
+        entityType: 'risk_action',
+        entityId: actionData.studentId,
+        timestamp: new Date()
+      });
+      
+      res.status(201).json({ action: actionData });
+    } catch (error) {
+      console.error("Erro ao criar ação de risco:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/risk-settings", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const settings = { 
+        frequencyThreshold: 60, 
+        daysThreshold: 7, 
+        autoAlerts: true 
+      };
+      res.json({ settings });
+    } catch (error) {
+      console.error("Erro ao buscar configurações de risco:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 

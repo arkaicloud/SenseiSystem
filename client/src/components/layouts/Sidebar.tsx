@@ -109,6 +109,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             </Link>
           )}
 
+          {isInstructor && (
+            <Link href="/students-at-risk" className={linkClass("/students-at-risk")}>
+              <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0" />
+              <span className="truncate">Alunos em Risco</span>
+            </Link>
+          )}
+
           {isAdmin && (
             <div className="relative">
               <Link href="/pending-users" className={linkClass("/pending-users")}>

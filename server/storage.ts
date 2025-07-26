@@ -9,6 +9,8 @@ import {
   schoolEvents, type SchoolEvent, type InsertSchoolEvent,
   schoolConfig, type SchoolConfig, type InsertSchoolConfig,
   dashboardCustomizations, type DashboardCustomization, type InsertDashboardCustomization,
+  riskActions, type RiskAction, type InsertRiskAction,
+  riskSettings, type RiskSettings, type InsertRiskSettings,
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails
 } from "@shared/schema";
@@ -90,6 +92,13 @@ export interface IStorage {
   getDashboardCustomization(userId: number): Promise<DashboardCustomization | undefined>;
   createDashboardCustomization(customization: InsertDashboardCustomization): Promise<DashboardCustomization>;
   updateDashboardCustomization(userId: number, customization: Partial<DashboardCustomization>): Promise<DashboardCustomization | undefined>;
+
+  // Risk Management
+  createRiskAction(action: InsertRiskAction): Promise<RiskAction>;
+  getRiskActions(studentId?: number): Promise<RiskAction[]>;
+  updateRiskAction(id: number, action: Partial<RiskAction>): Promise<RiskAction | undefined>;
+  getRiskSettings(): Promise<RiskSettings | undefined>;
+  updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings>;
 }
 
 export class MemStorage implements IStorage {
@@ -103,6 +112,8 @@ export class MemStorage implements IStorage {
   private schoolEvents: Map<number, SchoolEvent>;
   private schoolConfig: SchoolConfig | undefined;
   private dashboardCustomizations: Map<number, DashboardCustomization>;
+  private riskActions: Map<number, RiskAction>;
+  private riskSettings: RiskSettings | undefined;
 
   private userCurrentId: number;
   private studentCurrentId: number;
@@ -113,6 +124,7 @@ export class MemStorage implements IStorage {
   private activityLogCurrentId: number;
   private schoolEventCurrentId: number;
   private dashboardCustomizationCurrentId: number;
+  private riskActionCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -124,6 +136,7 @@ export class MemStorage implements IStorage {
     this.activityLogs = new Map();
     this.schoolEvents = new Map();
     this.dashboardCustomizations = new Map();
+    this.riskActions = new Map();
 
     this.userCurrentId = 1;
     this.studentCurrentId = 1;
@@ -134,6 +147,7 @@ export class MemStorage implements IStorage {
     this.activityLogCurrentId = 1;
     this.schoolEventCurrentId = 1;
     this.dashboardCustomizationCurrentId = 1;
+    this.riskActionCurrentId = 1;
 
     this.seedData();
   }

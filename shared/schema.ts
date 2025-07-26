@@ -62,6 +62,9 @@ export const schoolConfig = pgTable("school_config", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Risk Actions enum
+export const riskActionEnum = pgEnum('risk_action', ['call', 'email', 'whatsapp', 'visit', 'discount', 'other']);
+
 // School Events table
 export const schoolEvents = pgTable("school_events", {
   id: serial("id").primaryKey(),
@@ -146,6 +149,27 @@ export const dashboardCustomizations = pgTable("dashboard_customizations", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Risk Actions table
+export const riskActions = pgTable("risk_actions", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  actionType: riskActionEnum("action_type").notNull(),
+  notes: text("notes"),
+  scheduledDate: timestamp("scheduled_date"),
+  completedDate: timestamp("completed_date"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Risk Settings table
+export const riskSettings = pgTable("risk_settings", {
+  id: serial("id").primaryKey(),
+  frequencyThreshold: integer("frequency_threshold").notNull().default(60),
+  daysThreshold: integer("days_threshold").notNull().default(7),
+  autoAlerts: boolean("auto_alerts").default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users)
   .omit({ id: true })
@@ -162,6 +186,8 @@ export const insertStudentPaymentSchema = createInsertSchema(studentPayments).om
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true });
 export const insertSchoolEventSchema = createInsertSchema(schoolEvents).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCustomizations).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertRiskActionSchema = createInsertSchema(riskActions).omit({ id: true, createdAt: true });
+export const insertRiskSettingsSchema = createInsertSchema(riskSettings).omit({ id: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -193,6 +219,12 @@ export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 
 export type DashboardCustomization = typeof dashboardCustomizations.$inferSelect;
 export type InsertDashboardCustomization = z.infer<typeof insertDashboardCustomizationSchema>;
+
+export type RiskAction = typeof riskActions.$inferSelect;
+export type InsertRiskAction = z.infer<typeof insertRiskActionSchema>;
+
+export type RiskSettings = typeof riskSettings.$inferSelect;
+export type InsertRiskSettings = z.infer<typeof insertRiskSettingsSchema>;
 
 // Custom extended types for frontend use
 export type StudentWithUser = Student & {

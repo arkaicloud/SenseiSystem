@@ -1,0 +1,76 @@
+Você é um arquiteto de software que vai me ajudar a evoluir um sistema SaaS chamado SenseiSystem, usado para gestão de academias de artes marciais (jiu-jitsu, judô, karatê). O sistema já possui autenticação, gestão de alunos, aulas, presença, planos e dashboard.
+
+Desejo que você planeje e priorize as funcionalidades abaixo, pensando em: impacto para retenção, diferencial competitivo no mercado e aumento da receita.
+
+Para cada item, gere:
+
+Nome da funcionalidade
+
+Descrição objetiva
+
+Valor entregue
+
+Complexidade (Baixa / Média / Alta)
+
+Etapas para implementação
+
+Funcionalidades principais a serem implementadas:
+Módulo de Avaliações Técnicas
+
+Professores registram notas e observações para cada aluno por aula ou exame técnico.
+
+Geração de relatório de desempenho individual e comparativo com a turma.
+
+Certificados Digitais de Graduação
+
+Emissão automática ao mudar faixa/listra.
+
+PDF com logo, nome do aluno, faixa, assinatura digital do instrutor.
+
+Painel de Alunos em Risco
+
+Exibe alunos com frequência abaixo de X% no mês.
+
+Permite ações rápidas como "Enviar lembrete", "Marcar ligação", etc.
+
+CRM Interno e Funil de Leads
+
+Cadastro de interessados, etapa atual (ex: entrou em contato, aula experimental, matrícula).
+
+Follow-up automático via e-mail ou WhatsApp.
+
+Sistema de Recompensas e Gamificação
+
+Pontuação por presença, participação em eventos, boas práticas.
+
+Ranking interno por turma ou geral com títulos simbólicos (ex: Samurai do Mês).
+
+Integração com Gateway de Pagamento
+
+ASAAS, Stripe ou Juno para cobrança automatizada.
+
+Permitir pagamento recorrente e envio de boleto/PIX.
+
+Emissão de Recibo ou Nota Fiscal Simples
+
+Geração de comprovante de pagamento PDF com valor, aluno, plano e data.
+
+Download direto do painel do aluno.
+
+Notificações Automatizadas
+
+Mensagens automáticas por gatilho: ausência prolongada, aniversário, vencimento de plano, mudança de faixa.
+
+Envio por e-mail e/ou WhatsApp.
+
+Modo Aula Experimental
+
+Cadastro temporário com acesso limitado (ex: 7 dias).
+
+Botão "converter em matrícula" com envio de convite para registro completo.
+
+API Pública com Webhooks
+
+Permite integração com sites, apps, Zapier, N8N ou ferramentas de terceiros.
+
+Suporte a leitura de aulas, alunos, presença, pagamento e criação de eventos externos.

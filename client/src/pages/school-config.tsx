@@ -305,8 +305,6 @@ export default function SchoolConfigPage() {
                     )}
                   />
 
-                  
-
                   {/* Botão de Salvar */}
                   <Button
                     type="submit"

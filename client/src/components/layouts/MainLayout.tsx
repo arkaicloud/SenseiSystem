@@ -139,7 +139,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className="p-3 sm:p-4 md:p-6 lg:p-8 min-h-screen">
+        <div className="p-3 md:p-4 min-h-screen">
           {children}
         </div>
       </main>

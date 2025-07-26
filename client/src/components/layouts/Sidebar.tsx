@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, CheckSquare, Home, Clock, MessageSquare } from "lucide-react";
+import { Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, CheckSquare, Home, Clock, MessageSquare, AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";

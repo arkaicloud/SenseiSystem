@@ -61,7 +61,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return () => document.removeEventListener("click", handleOutsideClick);
   }, [isMobile, sidebarOpen]);
 
-  const toggleSidebar = () => {
+  const toggleSidebar = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     setSidebarOpen(!sidebarOpen);
   };
 
@@ -90,16 +92,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Mobile overlay */}
-      {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={toggleSidebar}
+          onTouchStart={() => setSidebarOpen(false)}
         />
       )}
       
@@ -110,11 +105,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden`}>
         {/* Mobile header */}
         {isMobile && user && (
-          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3">
+          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
             <button
               id="menu-toggle"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-1"
-              onClick={toggleSidebar}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-gray-100 dark:active:bg-gray-700 transition-colors duration-200"
+              onClick={(e) => toggleSidebar(e)}
+              onTouchStart={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)'}
+              onTouchEnd={(e) => e.currentTarget.style.backgroundColor = ''}
+              type="button"
+              aria-label="Toggle navigation menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -139,7 +138,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className="px-3 py-3 md:px-4 md:py-4 min-h-screen">
+        <div className={`px-3 py-3 md:px-4 md:py-4 min-h-screen ${isMobile && user ? "pt-16" : ""}`}>
           {children}
         </div>
       </main>

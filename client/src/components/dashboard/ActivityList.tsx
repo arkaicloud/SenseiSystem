@@ -16,8 +16,8 @@ interface ActivityListProps {
 
 const ActivityList: React.FC<ActivityListProps> = ({ activities, onViewAll }) => {
   return (
-    <div className="dashboard-card">
-      <div className="p-4 border-b border-border">
+    <div className="bg-white rounded-lg shadow">
+      <div className="p-4 border-b border-gray-200">
         <h3 className="font-montserrat font-bold">Recent Activities</h3>
       </div>
 

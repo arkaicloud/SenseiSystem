@@ -237,8 +237,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             onClick={() => toggleMenu(item.id)}
             className={cn(
               "w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-              level === 0 ? "text-gray-700 hover:bg-gray-100 hover:text-gray-900" : "text-gray-600 hover:bg-gray-50",
-              (isMenuOpen || hasActiveChildItem) && "bg-gray-100 text-gray-900"
+              level === 0 ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
+              (isMenuOpen || hasActiveChildItem) && "bg-sidebar-accent text-sidebar-accent-foreground"
             )}
           >
             <div className="flex items-center">
@@ -272,8 +272,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
     const ItemContent = (
       <div className={cn(
         "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-        level === 0 ? "text-gray-700 hover:bg-gray-100 hover:text-gray-900" : "text-gray-600 hover:bg-gray-50",
-        isItemActive && "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
+        level === 0 ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
+        isItemActive && "bg-sidebar-primary text-sidebar-primary-foreground border-r-2 border-sidebar-primary"
       )}>
         <item.icon className={cn("w-5 h-5 mr-3", level > 0 && "w-4 h-4 mr-2")} />
         <span className="flex-1">{item.label}</span>
@@ -307,7 +307,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
     <aside
       id="sidebar"
       className={cn(
-        "bg-white border-r border-gray-200 w-64 min-w-64 h-screen",
+        "bg-sidebar-background border-r border-sidebar-border w-64 min-w-64 h-screen",
         isMobile 
           ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out` 
           : "fixed top-0 left-0 z-40",
@@ -315,13 +315,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       )}
     >
       {/* Header */}
-      <div className="p-4 flex items-center border-b border-gray-100 flex-shrink-0">
-        <div className="bg-blue-600 p-2 rounded-lg mr-3">
-          <span className="text-white text-sm font-bold">
+      <div className="p-4 flex items-center border-b border-sidebar-border flex-shrink-0">
+        <div className="bg-sidebar-primary p-2 rounded-lg mr-3">
+          <span className="text-sidebar-primary-foreground text-sm font-bold">
             {schoolConfig?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
           </span>
         </div>
-        <h1 className="font-semibold text-gray-900 text-lg">
+        <h1 className="font-semibold text-sidebar-foreground text-lg">
           {schoolConfig?.config?.schoolName || 'SenseiSystem'}
         </h1>
       </div>
@@ -334,21 +334,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       </nav>
 
       {/* User info and footer - fixed at bottom */}
-      <div className="border-t border-gray-100 flex-shrink-0">
+      <div className="border-t border-sidebar-border flex-shrink-0">
         <div className="p-4 flex items-center">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center mr-3">
-            <span className="font-bold text-white text-sm">{userInitials}</span>
+          <div className="w-10 h-10 rounded-full bg-sidebar-primary flex items-center justify-center mr-3">
+            <span className="font-bold text-sidebar-primary-foreground text-sm">{userInitials}</span>
           </div>
           <div className="flex-1">
-            <p className="font-medium text-gray-900 text-sm">{user.firstName} {user.lastName}</p>
-            <p className="text-xs text-gray-500">{formatRole(user.role)}</p>
+            <p className="font-medium text-sidebar-foreground text-sm">{user.firstName} {user.lastName}</p>
+            <p className="text-xs text-sidebar-foreground/60">{formatRole(user.role)}</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
             disabled={logoutMutation.isPending}
-            className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
           >
             {logoutMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -357,7 +357,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             )}
           </Button>
         </div>
-        <div className="px-4 pb-3 text-xs text-gray-400">
+        <div className="px-4 pb-3 text-xs text-sidebar-foreground/40">
           <p>SenseiSystem - Version 1.0.0</p>
         </div>
       </div>

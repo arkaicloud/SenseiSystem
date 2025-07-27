@@ -45,7 +45,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const handleOutsideClick = (event: MouseEvent) => {
       const sidebar = document.getElementById("sidebar");
       const menuToggle = document.getElementById("menu-toggle");
-      
+
       if (
         isMobile &&
         sidebarOpen &&
@@ -97,7 +97,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchStart={() => setSidebarOpen(false)}
         />
       )}
-      
+
       {/* Sidebar navigation */}
       {user && <Sidebar isOpen={sidebarOpen} isMobile={isMobile} />}
 

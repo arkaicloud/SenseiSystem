@@ -3,7 +3,11 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, CheckSquare, Home, Clock, MessageSquare, AlertTriangle } from "lucide-react";
+import { 
+  Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, 
+  CheckSquare, Home, Clock, MessageSquare, AlertTriangle, GraduationCap, 
+  UserCheck, DollarSign, Megaphone, Building2, BarChart3, UserCog
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -96,31 +100,40 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       {/* Navigation links - scrollable middle section */}
       <nav className="flex-1 flex flex-col overflow-y-auto">
         <div className="flex-1 py-4">
-          <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">{t('main')}</div>
+          {/* 🧭 Painel de Controle */}
+          <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide flex items-center">
+            <BarChart3 className="w-3 h-3 mr-2" />
+            Painel de Controle
+          </div>
           <Link href="/" className={linkClass("/")}>
             <Home className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Painel</span>
+            <span className="truncate">Dashboard</span>
           </Link>
 
+          {/* 🧑‍🎓 Gestão de Alunos */}
           {isInstructor && (
-            <Link href="/students" className={linkClass("/students")}>
-              <Users className="w-5 h-5 mr-3 flex-shrink-0" />
-              <span className="truncate">Alunos</span>
-            </Link>
-          )}
-
-          {isInstructor && (
-            <Link href="/students-at-risk" className={linkClass("/students-at-risk")}>
-              <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0" />
-              <span className="truncate">Alunos em Risco</span>
-            </Link>
+            <>
+              <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
+                <GraduationCap className="w-3 h-3 mr-2" />
+                Gestão de Alunos
+              </div>
+              <Link href="/students" className={linkClass("/students")}>
+                <Users className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Lista de Alunos</span>
+              </Link>
+              
+              <Link href="/students-at-risk" className={linkClass("/students-at-risk")}>
+                <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Alunos em Risco</span>
+              </Link>
+            </>
           )}
 
           {isAdmin && (
             <div className="relative">
               <Link href="/pending-users" className={linkClass("/pending-users")}>
-                <Clock className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Aprovações</span>
+                <UserCheck className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Pedidos Pendentes</span>
                 {pendingCount > 0 && (
                   <Badge 
                     variant="destructive" 
@@ -133,57 +146,78 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             </div>
           )}
 
-          <Link href="/attendance" className={linkClass("/attendance")}>
-            <CheckSquare className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Presença</span>
-          </Link>
-
+          {/* 📆 Aulas e Presença */}
+          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
+            <Calendar className="w-3 h-3 mr-2" />
+            Aulas e Presença
+          </div>
+          
           {!isStudent && (
             <Link href="/classes" className={linkClass("/classes")}>
               <Calendar className="w-5 h-5 mr-3 flex-shrink-0" />
-              <span className="truncate">Aulas</span>
+              <span className="truncate">Turmas e Horários</span>
             </Link>
           )}
 
+          <Link href="/attendance" className={linkClass("/attendance")}>
+            <CheckSquare className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">Controle de Presença</span>
+          </Link>
+
+          {/* 💰 Financeiro */}
           {isInstructor && (
             <>
+              <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
+                <DollarSign className="w-3 h-3 mr-2" />
+                Financeiro
+              </div>
               <Link href="/payments" className={linkClass("/payments")}>
                 <CreditCard className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Pagamentos</span>
+                <span className="truncate">Mensalidades</span>
               </Link>
               
               <Link href="/payment-plans" className={linkClass("/payment-plans")}>
                 <FileText className="w-5 h-5 mr-3 flex-shrink-0" />
                 <span className="truncate">Planos</span>
               </Link>
+            </>
+          )}
 
+          {/* 📢 Comunicação */}
+          {isInstructor && (
+            <>
+              <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
+                <Megaphone className="w-3 h-3 mr-2" />
+                Comunicação
+              </div>
               <Link href="/communications" className={linkClass("/communications")}>
                 <MessageSquare className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Comunicados</span>
+                <span className="truncate">Comunicados e Avisos</span>
               </Link>
             </>
           )}
 
-          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide">
-            CONTA
+          {/* ⚙️ Configurações */}
+          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
+            <Settings className="w-3 h-3 mr-2" />
+            Configurações
           </div>
+          
           <Link href="/profile" className={linkClass("/profile")}>
-            <User className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Perfil</span>
+            <UserCog className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">Meu Perfil</span>
           </Link>
 
           <Link href="/settings" className={linkClass("/settings")}>
             <Settings className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Configurações</span>
+            <span className="truncate">Configurações Pessoais</span>
           </Link>
 
           {isAdmin && (
-            <>
-              <Link href="/school-config" className={linkClass("/school-config")}>
-                <Settings className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Configurações da Escola</span>
-              </Link>
-            </>
+            <Link href="/school-config" className={linkClass("/school-config")}>
+              <Building2 className="w-5 h-5 mr-3 flex-shrink-0" />
+              <span className="truncate">Configurações da Escola</span>
+            </Link>
           )}
 
         </div>

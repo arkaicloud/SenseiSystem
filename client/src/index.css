@@ -58,6 +58,9 @@
   /* Dashboard customization variables */
   --dashboard-bg: var(--background);
   --dashboard-accent: var(--primary);
+  --dashboard-card-bg: 0 0% 100%; /* #FFFFFF - Branco para cards */
+  --dashboard-card-text: 215 28% 17%; /* #1E293B - Texto escuro */
+  --dashboard-section-bg: 210 40% 98%; /* #F8FAFC - Fundo de seções */
 }
 
 .dark {
@@ -113,6 +116,9 @@
   /* Dashboard customization variables */
   --dashboard-bg: var(--background);
   --dashboard-accent: var(--primary);
+  --dashboard-card-bg: 215 28% 17%; /* #1E293B - Azul Chumbo para cards */
+  --dashboard-card-text: 210 40% 98%; /* #F1F5F9 - Texto claro */
+  --dashboard-section-bg: 222 84% 5%; /* #0F172A - Fundo escuro de seções */
 }
 
 @layer base {
@@ -170,5 +176,47 @@
 
   .black-belt { 
     @apply bg-black; 
+  }
+
+  /* Dashboard Components */
+  .dashboard-card {
+    @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm;
+  }
+
+  .dashboard-section {
+    @apply bg-card text-card-foreground;
+  }
+
+  .dashboard-text-primary {
+    @apply text-foreground;
+  }
+
+  .dashboard-text-secondary {
+    @apply text-muted-foreground;
+  }
+
+  .dashboard-bg-primary {
+    @apply bg-background;
+  }
+
+  .dashboard-bg-card {
+    @apply bg-card;
+  }
+
+  /* Classes específicas para melhor contraste */
+  .today-classes-card {
+    @apply bg-card text-card-foreground border border-border p-6 rounded-lg shadow-sm;
+  }
+
+  .belt-distribution-card {
+    @apply bg-card text-card-foreground border border-border p-6 rounded-lg shadow-sm;
+  }
+
+  .students-attention-card {
+    @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm;
+  }
+
+  .activity-list-card {
+    @apply bg-card text-card-foreground border border-border p-6 rounded-lg shadow-sm;
   }
 }

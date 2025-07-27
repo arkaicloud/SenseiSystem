@@ -203,11 +203,11 @@ const Dashboard: React.FC = () => {
       {/* Today's Classes Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat font-bold text-xl">
+          <h2 className="font-montserrat font-bold text-xl dashboard-text-primary">
             {t('aulasDeHoje') || 'Aulas de Hoje'}
           </h2>
           <Link href="/classes">
-            <div className="text-secondary font-medium text-sm flex items-center">
+            <div className="text-primary hover:text-primary-dark font-medium text-sm flex items-center">
               {t('verTodasAsAulas') || 'Ver todas as aulas'}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </div>
@@ -216,9 +216,9 @@ const Dashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {classesLoading ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">{t('carregandoAulas') || 'Carregando aulas...'}</div>
+            <div className="today-classes-card text-center">{t('carregandoAulas') || 'Carregando aulas...'}</div>
           ) : todaysClasses.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            <div className="today-classes-card text-center dashboard-text-secondary">
               {t('nenhumaAulaAgendada') || 'Nenhuma aula agendada para hoje'}
             </div>
           ) : (
@@ -261,10 +261,14 @@ const Dashboard: React.FC = () => {
       {/* Belt Distribution and Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div className="order-1 lg:order-1">
-          <BeltDistribution />
+          <div className="belt-distribution-card">
+            <BeltDistribution />
+          </div>
         </div>
         <div className="order-2 lg:order-2">
-          <ActivityList activities={recentActivities} onViewAll={() => {}} />
+          <div className="activity-list-card">
+            <ActivityList activities={recentActivities} onViewAll={() => {}} />
+          </div>
         </div>
       </div>
 
@@ -276,11 +280,11 @@ const Dashboard: React.FC = () => {
       {/* Students Requiring Attention Section */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat font-bold text-xl">
+          <h2 className="font-montserrat font-bold text-xl dashboard-text-primary">
             {t('alunosComPendencias') || 'Alunos com Pendências'}
           </h2>
           <Link href="/reports">
-            <div className="text-secondary font-medium text-sm flex items-center">
+            <div className="text-primary hover:text-primary-dark font-medium text-sm flex items-center">
               {t('verRelatorioDetalhado') || 'Ver relatório detalhado'}
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </div>
@@ -288,16 +292,17 @@ const Dashboard: React.FC = () => {
         </div>
 
         {isOverduePaymentsLoading ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="students-attention-card p-8 text-center">
             {t('carregandoAlunos') || 'Carregando alunos...'}
           </div>
         ) : studentsRequiringAttention.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+          <div className="students-attention-card p-8 text-center dashboard-text-secondary">
             {t('nenhumAlunoComPendencia') || 'Nenhum aluno com pendência'}
           </div>
         ) : (
-          <StudentsTable
-            students={studentsRequiringAttention.map((payment: any) => {
+          <div className="students-attention-card">
+            <StudentsTable
+              students={studentsRequiringAttention.map((payment: any) => {
               const student = payment.student || {};
               const user = student.user || {};
 
@@ -322,9 +327,10 @@ const Dashboard: React.FC = () => {
               };
             })}
             onEmail={handleEmailStudent}
-            onCall={handleCallStudent}
-            onMore={handleMoreOptions}
-          />
+              onCall={handleCallStudent}
+              onMore={handleMoreOptions}
+            />
+          </div>
         )}
       </div>
 

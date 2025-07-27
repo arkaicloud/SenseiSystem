@@ -90,8 +90,8 @@ const BeltDistribution: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-4 border-b border-gray-200">
+    <div className="dashboard-card">
+      <div className="p-4 border-b border-border">
         <h3 className="font-montserrat font-bold">Distribuição de Faixas</h3>
       </div>
       <div className="p-4">

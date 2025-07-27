@@ -51,6 +51,10 @@
   --destructive-foreground: 210 40% 98%;
   --ring: 222 84% 5%;
   --radius: 0.5rem;
+
+  /* Dashboard customization variables */
+  --dashboard-bg: var(--background);
+  --dashboard-accent: var(--primary);
 }
 
 .dark {
@@ -99,6 +103,10 @@
   --destructive-foreground: 210 40% 98%;
   --ring: 210 40% 98%;
   --radius: 0.5rem;
+
+  /* Dashboard customization variables */
+  --dashboard-bg: var(--background);
+  --dashboard-accent: var(--primary);
 }
 
 @layer base {

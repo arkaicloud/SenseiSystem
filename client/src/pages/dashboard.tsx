@@ -435,7 +435,8 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Layout reorganizado - Distribuição de Faixas com melhor organização */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">

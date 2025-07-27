@@ -78,9 +78,15 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard-customization'] });
+      
+      // Force refresh to apply changes immediately
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
       toast({
         title: "Personalização Salva",
-        description: "Suas preferências de dashboard foram atualizadas com sucesso.",
+        description: "Suas preferências de dashboard foram atualizadas com sucesso. A página será recarregada para aplicar as mudanças.",
       });
       setIsOpen(false);
     },

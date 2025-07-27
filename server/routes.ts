@@ -616,16 +616,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/classes/today", isAuthenticated, async (req, res) => {
     try {
-      const classes = await storage.getTodaysClasses();
-
-      // Adicionar contador de presença para cada aula
+      // Buscar todas as aulas em vez de apenas as de hoje para debug
+      const allClasses = await storage.getClassesWithInstructors();
+      
+      // Para debug, vamos retornar todas as aulas
       const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      
+      console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeek}`);
+      console.log(`Total de aulas encontradas: ${allClasses.length}`);
+      
+      // Filtrar aulas para hoje (por enquanto retornando todas para debug)
+      const todaysClasses = allClasses.filter(classItem => {
+        // Por enquanto, incluir todas as aulas ativas
+        return classItem.isActive !== false;
+      });
+
+      console.log(`Aulas filtradas para hoje: ${todaysClasses.length}`);
 
       const classesWithAttendance = await Promise.all(
-        classes.map(async (classItem) => {
+        todaysClasses.map(async (classItem) => {
           try {
             const attendances = await storage.getAttendanceByClass(classItem.id);
+            const todayStr = today.toISOString().split('T')[0];
 
             // Contar presenças confirmadas para hoje
             const todayAttendanceCount = attendances.filter(attendance => {
@@ -638,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               attendanceCount: todayAttendanceCount,
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
-                : undefined
+                : 'Sem instrutor'
             };
           } catch (error) {
             console.error(`Erro ao buscar presença para aula ${classItem.id}:`, error);
@@ -647,12 +660,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               attendanceCount: 0,
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
-                : undefined
+                : 'Sem instrutor'
             };
           }
         })
       );
 
+      console.log(`Retornando ${classesWithAttendance.length} aulas com dados de presença`);
       res.json({ classes: classesWithAttendance });
     } catch (error) {
       console.error("Erro na rota de aulas de hoje:", error);

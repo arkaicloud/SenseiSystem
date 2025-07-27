@@ -248,12 +248,16 @@ const Attendance: React.FC = () => {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-medium">{t('todaysClasses')}</CardTitle>
+                  <p className="text-xs text-gray-500">{todaysClasses.length} aulas encontradas</p>
                 </CardHeader>
                 <CardContent className="p-3">
                   {classesLoading ? (
                     <div className="text-center py-4 text-sm">{t('loading')}</div>
                   ) : todaysClasses.length === 0 ? (
-                    <div className="text-center py-4 text-gray-500 text-sm">{t('noClassesScheduled')}</div>
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      <p>{t('noClassesScheduled')}</p>
+                      <p className="text-xs mt-1">Debug: Verifique se há aulas cadastradas no sistema</p>
+                    </div>
                   ) : (
                     <div className="space-y-3">
                       {todaysClasses.map((classItem: any) => {
@@ -261,7 +265,7 @@ const Attendance: React.FC = () => {
                         return (
                           <div 
                             key={classItem.id}
-                            className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                            className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
                             onClick={() => handleTakeAttendance(classItem)}
                           >
                             <div className="flex flex-col space-y-2">
@@ -269,11 +273,19 @@ const Attendance: React.FC = () => {
                                 <h3 className="font-medium text-sm truncate">{classItem.name}</h3>
                                 <span className="text-xs text-gray-500 whitespace-nowrap ml-2">{time} {period}</span>
                               </div>
-                              <p className="text-xs text-gray-600 truncate">
-                                {classItem.instructor 
-                                  ? `${classItem.instructor.firstName} Sensei` 
-                                  : t('noInstructorAssigned')}
-                              </p>
+                              <div className="flex items-center justify-between text-xs text-gray-600">
+                                <span>
+                                  {classItem.instructor 
+                                    ? `${classItem.instructor.firstName} Sensei` 
+                                    : t('noInstructorAssigned')}
+                                </span>
+                                <span>
+                                  {classItem.attendanceCount || 0} presentes
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                ID: {classItem.id} | Dia: {classItem.dayOfWeek || 'Não definido'} | Ativa: {classItem.isActive ? 'Sim' : 'Não'}
+                              </div>
                               <Button 
                                 className="w-full bg-secondary hover:bg-secondary-dark text-white text-xs py-1 h-7"
                                 onClick={(e) => {

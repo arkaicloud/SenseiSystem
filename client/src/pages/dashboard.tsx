@@ -40,10 +40,20 @@ const Dashboard: React.FC = () => {
   });
 
   // Fetch today's classes
-  const { data: classesData, isLoading: isClassesLoading } = useQuery<any[]>({
+  const { data: classesData, isLoading: classesLoading, error: classesError } = useQuery({
     queryKey: ['/api/classes/today'],
-    refetchInterval: 300000,
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Debug log para aulas
+  React.useEffect(() => {
+    if (classesData) {
+      console.log('Classes data loaded:', classesData);
+    }
+    if (classesError) {
+      console.error('Error loading classes:', classesError);
+    }
+  }, [classesData, classesError]);
 
   // Fetch activity logs
   const { data: activityLogsData, isLoading: isActivityLogsLoading } = useQuery<any[]>({
@@ -171,7 +181,7 @@ const Dashboard: React.FC = () => {
           subtitle={t('aulasRealizadasNoMes') || 'Aulas realizadas no mês'}
         />
         <StatCard
-          title={t('taxaDePresenca') || 'Taxa de Presença'}
+          title={t('taxaDePresenca') || 'Taxa de Presenca'}
           value={stats.avgAttendance}
           icon="fact_check"
           trend={{ value: "-3%", isPositive: false }}
@@ -205,7 +215,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {isClassesLoading ? (
+          {classesLoading ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">{t('carregandoAulas') || 'Carregando aulas...'}</div>
           ) : todaysClasses.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">

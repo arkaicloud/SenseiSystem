@@ -11,5 +11,10 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Log da conexão (apenas em desenvolvimento)
+if (process.env.NODE_ENV === 'development') {
+  console.log('Conectando ao banco PostgreSQL:', process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
+}
+
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });

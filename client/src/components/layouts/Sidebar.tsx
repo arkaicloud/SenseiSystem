@@ -1,16 +1,28 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { 
-  Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, FileText, 
-  CheckSquare, Home, Clock, MessageSquare, AlertTriangle, GraduationCap, 
-  UserCheck, DollarSign, Megaphone, Building2, BarChart3, UserCog
+  Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, 
+  Home, CheckSquare, MessageSquare, AlertTriangle, GraduationCap, 
+  UserCheck, DollarSign, Building2, BarChart3, UserCog, ChevronDown,
+  FileText, Clock
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  path?: string;
+  children?: MenuItem[];
+  roles?: string[];
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,41 +33,181 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   // Buscar configuração da escola para obter o nome
   const { data: schoolConfig } = useQuery({
     queryKey: ['/api/school-config'],
   });
 
-  // Determine if a link is active
+  // Get pending users count for admin
+  const { data: pendingUsersData } = useQuery({
+    queryKey: ['/api/users/pending'],
+    enabled: user?.role === 'admin',
+    refetchInterval: 30000,
+  });
+
+  const pendingCount = pendingUsersData?.users?.length || 0;
+
+  // Menu structure
+  const menuItems: MenuItem[] = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: BarChart3,
+      path: "/",
+    },
+    {
+      id: "alunos",
+      label: "Alunos",
+      icon: GraduationCap,
+      roles: ["admin", "instructor"],
+      children: [
+        {
+          id: "lista-alunos",
+          label: "Lista de Alunos",
+          icon: Users,
+          path: "/students",
+          roles: ["admin", "instructor"],
+        },
+        {
+          id: "alunos-risco",
+          label: "Alunos em Risco",
+          icon: AlertTriangle,
+          path: "/students-at-risk",
+          roles: ["admin", "instructor"],
+        },
+        {
+          id: "pedidos-pendentes",
+          label: "Pedidos Pendentes",
+          icon: UserCheck,
+          path: "/pending-users",
+          roles: ["admin"],
+        },
+      ],
+    },
+    {
+      id: "aulas",
+      label: "Aulas",
+      icon: Calendar,
+      children: [
+        {
+          id: "turmas-horarios",
+          label: "Turmas e Horários",
+          icon: Clock,
+          path: "/classes",
+          roles: ["admin", "instructor"],
+        },
+        {
+          id: "controle-presenca",
+          label: "Controle de Presença",
+          icon: CheckSquare,
+          path: "/attendance",
+        },
+      ],
+    },
+    {
+      id: "financeiro",
+      label: "Financeiro",
+      icon: DollarSign,
+      roles: ["admin", "instructor"],
+      children: [
+        {
+          id: "mensalidades",
+          label: "Mensalidades",
+          icon: CreditCard,
+          path: "/payments",
+          roles: ["admin", "instructor"],
+        },
+        {
+          id: "planos",
+          label: "Planos",
+          icon: FileText,
+          path: "/payment-plans",
+          roles: ["admin", "instructor"],
+        },
+      ],
+    },
+    {
+      id: "comunicados",
+      label: "Comunicados",
+      icon: MessageSquare,
+      path: "/communications",
+      roles: ["admin", "instructor"],
+    },
+    {
+      id: "configuracoes",
+      label: "Configurações",
+      icon: Settings,
+      children: [
+        {
+          id: "meu-perfil",
+          label: "Meu Perfil",
+          icon: UserCog,
+          path: "/profile",
+        },
+        {
+          id: "pessoais",
+          label: "Pessoais",
+          icon: User,
+          path: "/settings",
+        },
+        {
+          id: "da-escola",
+          label: "Da Escola",
+          icon: Building2,
+          path: "/school-config",
+          roles: ["admin"],
+        },
+      ],
+    },
+  ];
+
+  // Check if user has permission for a menu item
+  const hasPermission = (item: MenuItem) => {
+    if (!item.roles) return true;
+    return item.roles.includes(user?.role || "");
+  };
+
+  // Filter menu items based on user role
+  const getFilteredMenuItems = (items: MenuItem[]): MenuItem[] => {
+    return items
+      .filter(hasPermission)
+      .map(item => ({
+        ...item,
+        children: item.children ? getFilteredMenuItems(item.children) : undefined
+      }))
+      .filter(item => !item.children || item.children.length > 0);
+  };
+
+  const filteredMenuItems = getFilteredMenuItems(menuItems);
+
+  // Check if a path is active
   const isActive = (path: string) => {
     return location === path || (path !== '/' && location.startsWith(path));
   };
 
-  const linkClass = (path: string) => {
-    return `flex items-center px-4 py-3 w-full text-sm font-medium transition-colors duration-200 ${
-      isActive(path)
-        ? "text-white bg-primary-light border-r-4 border-white"
-        : "text-gray-300 hover:bg-primary-light hover:text-white"
-    }`;
+  // Check if any child is active
+  const hasActiveChild = (children?: MenuItem[]): boolean => {
+    if (!children) return false;
+    return children.some(child => 
+      (child.path && isActive(child.path)) || hasActiveChild(child.children)
+    );
+  };
+
+  // Toggle submenu
+  const toggleMenu = (menuId: string) => {
+    setOpenMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    );
   };
 
   // Handle logout
   const handleLogout = () => {
     logoutMutation.mutate();
   };
-
-  // Get pending users count for admin
-  const { data: pendingUsersData } = useQuery({
-    queryKey: ['/api/users/pending'],
-    enabled: user?.role === 'admin',
-    refetchInterval: 30000, // Check every 30 seconds
-  });
-
-  // If not authenticated, don't show sidebar
-  if (!user) {
-    return null;
-  }
 
   // Get user initials for avatar safely
   const userInitials = user && user.firstName && user.lastName 
@@ -68,189 +220,148 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
     return role.charAt(0).toUpperCase() + role.slice(1);
   };
 
-  // Determine which menu items to show based on role
-  const isAdmin = user?.role === "admin";
-  const isInstructor = user?.role === "instructor" || isAdmin;
-  const isStudent = user?.role === "student";
+  if (!user) {
+    return null;
+  }
 
-  const pendingCount = pendingUsersData?.users?.length || 0;
+  // Render menu item
+  const renderMenuItem = (item: MenuItem, level = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isMenuOpen = openMenus.includes(item.id);
+    const isItemActive = item.path && isActive(item.path);
+    const hasActiveChildItem = hasActiveChild(item.children);
+
+    if (hasChildren) {
+      return (
+        <div key={item.id} className="mb-1">
+          <button
+            onClick={() => toggleMenu(item.id)}
+            className={cn(
+              "w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+              level === 0 ? "text-gray-700 hover:bg-gray-100 hover:text-gray-900" : "text-gray-600 hover:bg-gray-50",
+              (isMenuOpen || hasActiveChildItem) && "bg-gray-100 text-gray-900"
+            )}
+          >
+            <div className="flex items-center">
+              <item.icon className={cn("w-5 h-5 mr-3", level > 0 && "w-4 h-4 mr-2")} />
+              <span>{item.label}</span>
+            </div>
+            <ChevronDown 
+              className={cn(
+                "w-4 h-4 transition-transform duration-200",
+                isMenuOpen && "rotate-180"
+              )} 
+            />
+          </button>
+          
+          {/* Submenu com animação */}
+          <div 
+            className={cn(
+              "overflow-hidden transition-all duration-300 ease-in-out",
+              isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            )}
+          >
+            <div className="ml-4 mt-1 space-y-1">
+              {item.children?.map(child => renderMenuItem(child, level + 1))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Menu item sem filhos
+    const ItemContent = (
+      <div className={cn(
+        "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+        level === 0 ? "text-gray-700 hover:bg-gray-100 hover:text-gray-900" : "text-gray-600 hover:bg-gray-50",
+        isItemActive && "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
+      )}>
+        <item.icon className={cn("w-5 h-5 mr-3", level > 0 && "w-4 h-4 mr-2")} />
+        <span className="flex-1">{item.label}</span>
+        
+        {/* Badge para pedidos pendentes */}
+        {item.id === "pedidos-pendentes" && pendingCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="ml-2 h-5 w-5 flex items-center justify-center text-xs p-0"
+          >
+            {pendingCount}
+          </Badge>
+        )}
+      </div>
+    );
+
+    return (
+      <div key={item.id} className="mb-1">
+        {item.path ? (
+          <Link href={item.path}>
+            {ItemContent}
+          </Link>
+        ) : (
+          ItemContent
+        )}
+      </div>
+    );
+  };
 
   return (
     <aside
       id="sidebar"
-      className={`sidebar bg-primary text-white w-64 min-w-64 h-screen ${
+      className={cn(
+        "bg-white border-r border-gray-200 w-64 min-w-64 h-screen",
         isMobile 
           ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out` 
-          : "fixed top-0 left-0 z-40"
-      } flex flex-col`}
+          : "fixed top-0 left-0 z-40",
+        "flex flex-col shadow-sm"
+      )}
     >
       {/* Header */}
-      <div className="p-4 flex items-center border-b border-primary-light flex-shrink-0">
-        <div className="bg-white p-1 rounded mr-3">
-          <div className="belt black-belt w-8 h-8 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">
-              {schoolConfig?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
-            </span>
-          </div>
+      <div className="p-4 flex items-center border-b border-gray-100 flex-shrink-0">
+        <div className="bg-blue-600 p-2 rounded-lg mr-3">
+          <span className="text-white text-sm font-bold">
+            {schoolConfig?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
+          </span>
         </div>
-        <h1 className="font-montserrat font-bold text-[16px]">
+        <h1 className="font-semibold text-gray-900 text-lg">
           {schoolConfig?.config?.schoolName || 'SenseiSystem'}
         </h1>
       </div>
-      {/* Navigation links - scrollable middle section */}
+
+      {/* Navigation - scrollable middle section */}
       <nav className="flex-1 flex flex-col overflow-y-auto">
-        <div className="flex-1 py-4">
-          {/* 🧭 Painel de Controle */}
-          <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide flex items-center">
-            <BarChart3 className="w-3 h-3 mr-2" />
-            Painel de Controle
-          </div>
-          <Link href="/" className={linkClass("/")}>
-            <Home className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Dashboard</span>
-          </Link>
-
-          {/* 🧑‍🎓 Gestão de Alunos */}
-          {isInstructor && (
-            <>
-              <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
-                <GraduationCap className="w-3 h-3 mr-2" />
-                Gestão de Alunos
-              </div>
-              <Link href="/students" className={linkClass("/students")}>
-                <Users className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Lista de Alunos</span>
-              </Link>
-              
-              <Link href="/students-at-risk" className={linkClass("/students-at-risk")}>
-                <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Alunos em Risco</span>
-              </Link>
-            </>
-          )}
-
-          {isAdmin && (
-            <div className="relative">
-              <Link href="/pending-users" className={linkClass("/pending-users")}>
-                <UserCheck className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Pedidos Pendentes</span>
-                {pendingCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="ml-auto h-5 w-5 flex items-center justify-center text-xs p-0"
-                  >
-                    {pendingCount}
-                  </Badge>
-                )}
-              </Link>
-            </div>
-          )}
-
-          {/* 📆 Aulas e Presença */}
-          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
-            <Calendar className="w-3 h-3 mr-2" />
-            Aulas e Presença
-          </div>
-          
-          {!isStudent && (
-            <Link href="/classes" className={linkClass("/classes")}>
-              <Calendar className="w-5 h-5 mr-3 flex-shrink-0" />
-              <span className="truncate">Turmas e Horários</span>
-            </Link>
-          )}
-
-          <Link href="/attendance" className={linkClass("/attendance")}>
-            <CheckSquare className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Controle de Presença</span>
-          </Link>
-
-          {/* 💰 Financeiro */}
-          {isInstructor && (
-            <>
-              <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
-                <DollarSign className="w-3 h-3 mr-2" />
-                Financeiro
-              </div>
-              <Link href="/payments" className={linkClass("/payments")}>
-                <CreditCard className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Mensalidades</span>
-              </Link>
-              
-              <Link href="/payment-plans" className={linkClass("/payment-plans")}>
-                <FileText className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Planos</span>
-              </Link>
-            </>
-          )}
-
-          {/* 📢 Comunicação */}
-          {isInstructor && (
-            <>
-              <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
-                <Megaphone className="w-3 h-3 mr-2" />
-                Comunicação
-              </div>
-              <Link href="/communications" className={linkClass("/communications")}>
-                <MessageSquare className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Comunicados e Avisos</span>
-              </Link>
-            </>
-          )}
-
-          {/* ⚙️ Configurações */}
-          <div className="px-4 py-2 mt-4 text-xs text-gray-400 uppercase tracking-wide flex items-center">
-            <Settings className="w-3 h-3 mr-2" />
-            Configurações
-          </div>
-          
-          <Link href="/profile" className={linkClass("/profile")}>
-            <UserCog className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Meu Perfil</span>
-          </Link>
-
-          <Link href="/settings" className={linkClass("/settings")}>
-            <Settings className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">Configurações Pessoais</span>
-          </Link>
-
-          {isAdmin && (
-            <Link href="/school-config" className={linkClass("/school-config")}>
-              <Building2 className="w-5 h-5 mr-3 flex-shrink-0" />
-              <span className="truncate">Configurações da Escola</span>
-            </Link>
-          )}
-
-        </div>
-        
-        {/* User info and footer - fixed at bottom */}
-        <div className="border-t border-primary-light flex-shrink-0">
-          <div className="p-4 flex items-center">
-            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mr-3">
-              <span className="font-bold text-white">{userInitials}</span>
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-white">{user.firstName} {user.lastName}</p>
-              <p className="text-xs text-gray-300">{formatRole(user.role)}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              disabled={logoutMutation.isPending}
-              className="h-8 w-8 text-gray-300 hover:text-white hover:bg-primary-light"
-            >
-              {logoutMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LogOut className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          <div className="px-4 pb-3 text-xs text-gray-400">
-            <p className="text-[14px]">SenseiSystem - Version 1.0.0</p>
-          </div>
+        <div className="flex-1 p-4">
+          {filteredMenuItems.map(item => renderMenuItem(item))}
         </div>
       </nav>
+
+      {/* User info and footer - fixed at bottom */}
+      <div className="border-t border-gray-100 flex-shrink-0">
+        <div className="p-4 flex items-center">
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center mr-3">
+            <span className="font-bold text-white text-sm">{userInitials}</span>
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900 text-sm">{user.firstName} {user.lastName}</p>
+            <p className="text-xs text-gray-500">{formatRole(user.role)}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            disabled={logoutMutation.isPending}
+            className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+          >
+            {logoutMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <div className="px-4 pb-3 text-xs text-gray-400">
+          <p>SenseiSystem - Version 1.0.0</p>
+        </div>
+      </div>
     </aside>
   );
 };

@@ -48,6 +48,7 @@ interface AttendanceFormProps {
   students: StudentAttendance[];
   onSubmit: (data: AttendanceFormValues) => void;
   isLoading?: boolean;
+  placeholder?: string;
 }
 
 const AttendanceForm: React.FC<AttendanceFormProps> = ({
@@ -55,6 +56,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
   students,
   onSubmit,
   isLoading = false,
+  placeholder = "Search students...",
 }) => {
   const [filter, setFilter] = useState("");
 
@@ -94,7 +96,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
         <div className="relative">
           <input
             type="text"
-            placeholder="Search students..."
+            placeholder={placeholder}
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}

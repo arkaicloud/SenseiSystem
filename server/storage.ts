@@ -759,7 +759,7 @@ import session from "express-session";
 import { db, pool } from "./db";
 import { eq, and, desc, sql, asc, gte, lte } from "drizzle-orm";
 import { relations } from "drizzle-orm";
-import { schema } from "@shared/schema"; // Import schema
+import * as schema from "@shared/schema";
 
 // Database-backed storage implementation
 export class DatabaseStorage implements IStorage {
@@ -899,58 +899,21 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(classes).where(eq(classes.instructorId, instructorId));
   }
 
-  async getTodaysClasses() {
-    try {
-      const today = new Date();
-      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  async getTodaysClasses(): Promise<ClassWithInstructor[]> {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const classesResult = await db.select({
+      class: classes,
+      instructor: users
+    })
+    .from(classes)
+    .leftJoin(users, eq(classes.instructorId, users.id))
+    .where(eq(classes.dayOfWeek, dayOfWeek));
 
-      console.log(`Buscando aulas para o dia: ${dayOfWeek}`);
-
-      // Primeiro, buscar todas as aulas ativas
-      const allClasses = await this.db
-        .select()
-        .from(schema.classes)
-        .where(eq(schema.classes.isActive, true));
-
-      console.log(`Total de aulas ativas encontradas: ${allClasses.length}`);
-
-      // Filtrar por dia da semana (se o campo existir)
-      const todaysClasses = allClasses.filter(classItem => {
-        // Se não há campo dayOfWeek, incluir todas as aulas ativas
-        if (!classItem.dayOfWeek) {
-          console.log(`Aula ${classItem.name} não tem dia da semana definido, incluindo`);
-          return true;
-        }
-        const matches = classItem.dayOfWeek.toLowerCase() === dayOfWeek;
-        console.log(`Aula ${classItem.name} - Dia configurado: ${classItem.dayOfWeek}, Hoje: ${dayOfWeek}, Match: ${matches}`);
-        return matches;
-      });
-
-      console.log(`Aulas filtradas para hoje: ${todaysClasses.length}`);
-
-      // Get instructor details for each class
-      const classesWithInstructors = await Promise.all(
-        todaysClasses.map(async (classItem) => {
-          let instructor = null;
-          if (classItem.instructorId) {
-            try {
-              instructor = await this.getUser(classItem.instructorId);
-            } catch (error) {
-              console.error(`Erro ao buscar instrutor ${classItem.instructorId}:`, error);
-            }
-          }
-          return {
-            ...classItem,
-            instructor
-          };
-        })
-      );
-
-      return classesWithInstructors;
-    } catch (error) {
-      console.error("Erro em getTodaysClasses:", error);
-      throw error;
-    }
+    return classesResult.map(item => ({
+      ...item.class,
+      instructor: item.instructor
+    }));
   }
 
   async createClass(classData: InsertClass): Promise<Class> {

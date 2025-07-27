@@ -12,9 +12,9 @@ export function getInitials(firstName?: string, lastName?: string): string {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BRL',
   }).format(amount / 100);
 }
 
@@ -57,12 +57,12 @@ export function formatTime(time: string): { time: string; period: string } {
 }
 
 export function getDayName(dayOfWeek: number): string {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
   return days[dayOfWeek];
 }
 
 export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('pt-BR', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -71,7 +71,7 @@ export function formatDate(date: Date): string {
 }
 
 export function formatDateShort(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('pt-BR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -83,34 +83,34 @@ export function calculateTimeAgo(date: Date): string {
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   
   if (diffInSeconds < 60) {
-    return 'just now';
+    return 'agora há pouco';
   }
   
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
+    return `há ${diffInMinutes} minuto${diffInMinutes !== 1 ? 's' : ''}`;
   }
   
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
+    return `há ${diffInHours} hora${diffInHours !== 1 ? 's' : ''}`;
   }
   
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+    return `há ${diffInDays} dia${diffInDays !== 1 ? 's' : ''}`;
   }
   
   const diffInWeeks = Math.floor(diffInDays / 7);
   if (diffInWeeks < 4) {
-    return `${diffInWeeks} week${diffInWeeks !== 1 ? 's' : ''} ago`;
+    return `há ${diffInWeeks} semana${diffInWeeks !== 1 ? 's' : ''}`;
   }
   
   const diffInMonths = Math.floor(diffInDays / 30);
   if (diffInMonths < 12) {
-    return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`;
+    return `há ${diffInMonths} mês${diffInMonths !== 1 ? 'es' : ''}`;
   }
   
   const diffInYears = Math.floor(diffInDays / 365);
-  return `${diffInYears} year${diffInYears !== 1 ? 's' : ''} ago`;
+  return `há ${diffInYears} ano${diffInYears !== 1 ? 's' : ''}`;
 }

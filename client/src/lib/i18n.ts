@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -17,14 +16,14 @@ const resources = {
       state: "State",
       zipCode: "ZIP Code",
       searchAddress: "Search Address",
-      
+
       // Belt Names
       whiteBelt: "White Belt",
       blueBelt: "Blue Belt",
       purpleBelt: "Purple Belt",
       brownBelt: "Brown Belt",
       blackBelt: "Black Belt",
-      
+
       // Auth Hero Section
       appDescription: "Jiu-Jitsu School Management",
       appSubDescription: "Track your progress, manage your attendance, and stay connected with your Jiu-Jitsu community.",
@@ -49,7 +48,7 @@ const resources = {
       profile: "Profile",
       settings: "Settings",
       logout: "Logout",
-      
+
       // Dashboard
       totalStudents: "Total Students",
       activeClasses: "Active Classes",
@@ -70,7 +69,7 @@ const resources = {
       takeAttendance: "Take Attendance",
       paymentOverdue: "Payment Overdue",
       paymentDueSoon: "Payment Due Soon",
-      
+
       // Students
       addStudent: "Add Student",
       editStudent: "Edit Student",
@@ -82,7 +81,7 @@ const resources = {
       beltLevel: "Belt Level",
       active: "Active",
       inactive: "Inactive",
-      
+
       // Classes
       addClass: "Add Class",
       className: "Class Name",
@@ -91,7 +90,7 @@ const resources = {
       startTime: "Start Time",
       endTime: "End Time",
       capacity: "Capacity",
-      
+
       // Common
       save: "Save",
       cancel: "Cancel",
@@ -101,7 +100,7 @@ const resources = {
       actions: "Actions",
       loading: "Loading...",
       noData: "No data found",
-      
+
       // Settings
       settingsTitle: "Settings",
       configurePreferences: "Configure your application preferences",
@@ -115,24 +114,24 @@ const resources = {
       notificationSettings: "Notification Settings",
       emailNotifications: "Email Notifications",
       smsNotifications: "SMS Notifications",
-      
+
       // Auth
       login: "Login",
       register: "Register",
       username: "Username",
       password: "Password",
-      
+
       // Success/Error messages
       success: "Success",
       error: "Error",
       settingsSaved: "Settings saved successfully",
       failedToSave: "Failed to save settings",
-      
+
       // Welcome messages
       welcomeBack: "Welcome back!",
       youAreNowLoggedInAs: "You are now logged in as {{name}}",
       loginSuccessful: "Login successful",
-      
+
       // Additional translations
       manageStudents: "Manage your students",
       allStudents: "All Students",
@@ -143,7 +142,7 @@ const resources = {
       byStudent: "By Student",
       noAttendanceRecords: "No attendance records found for this date",
       studentViewComingSoon: "Student view coming soon",
-      
+
       // Payment Form
       student: "Student",
       select_student: "Select a student",
@@ -177,14 +176,14 @@ const resources = {
       state: "Estado",
       zipCode: "CEP",
       searchAddress: "Buscar Endereço",
-      
+
       // Belt Names
       whiteBelt: "Faixa Branca",
       blueBelt: "Faixa Azul",
       purpleBelt: "Faixa Roxa",
       brownBelt: "Faixa Marrom",
       blackBelt: "Faixa Preta",
-      
+
       // Auth Hero Section
       appDescription: "Sistema de Gestão para Escolas de Jiu-Jitsu",
       appSubDescription: "Acompanhe seu progresso, gerencie sua presença e mantenha-se conectado com sua comunidade de Jiu-Jitsu.",
@@ -196,7 +195,7 @@ const resources = {
       classScheduleDescription: "Visualize as próximas aulas e gerencie seu cronograma de treinamento.",
       paymentManagementFeature: "Gestão de Pagamentos",
       paymentManagementDescription: "Gerencie suas mensalidades e cronogramas de pagamento facilmente.",
-      
+
       // Navigation
       main: "Principal",
       account: "Conta",
@@ -214,7 +213,7 @@ const resources = {
       pendingUsers: "Usuários Pendentes",
       paymentPlans: "Planos de Pagamento",
       schoolConfig: "Configuração da Escola",
-      
+
       // Dashboard
       totalStudents: "Total de Alunos",
       activeClasses: "Aulas Ativas",
@@ -241,7 +240,7 @@ const resources = {
       todayAttendance: "Presença de Hoje",
       customizeDashboard: "Personalizar Painel",
       quickActions: "Ações Rápidas",
-      
+
       // Students
       addStudent: "Adicionar Aluno",
       editStudent: "Editar Aluno",
@@ -261,7 +260,7 @@ const resources = {
       medicalInfo: "Informações Médicas",
       allergies: "Alergias",
       medications: "Medicamentos",
-      
+
       // Classes
       addClass: "Adicionar Aula",
       className: "Nome da Aula",
@@ -284,7 +283,7 @@ const resources = {
       friday: "Sexta-feira",
       saturday: "Sábado",
       sunday: "Domingo",
-      
+
       // Attendance
       attendanceManagement: "Gestão de Presença",
       markAttendance: "Marcar Presença",
@@ -297,7 +296,7 @@ const resources = {
       totalClasses: "Total de Aulas",
       classesAttended: "Aulas Frequentadas",
       attendancePercentage: "Porcentagem de Presença",
-      
+
       // Common
       save: "Salvar",
       cancel: "Cancelar",
@@ -326,7 +325,7 @@ const resources = {
       upload: "Enviar",
       clear: "Limpar",
       reset: "Resetar",
-      
+
       // Settings
       settingsTitle: "Configurações",
       configurePreferences: "Configure suas preferências do aplicativo",
@@ -345,7 +344,7 @@ const resources = {
       generalSettings: "Configurações Gerais",
       privacySettings: "Configurações de Privacidade",
       securitySettings: "Configurações de Segurança",
-      
+
       // Auth
       login: "Entrar",
       register: "Registrar",
@@ -375,7 +374,7 @@ const resources = {
       role: "Função",
       admin: "Administrador",
       student: "Aluno",
-      
+
       // Success/Error messages
       success: "Sucesso",
       error: "Erro",
@@ -392,16 +391,16 @@ const resources = {
       accessDenied: "Acesso negado",
       networkError: "Erro de rede",
       serverError: "Erro do servidor",
-      
+
       // Welcome messages
       welcomeBack: "Bem-vindo de volta!",
       youAreNowLoggedInAs: "Você está logado como {{name}}",
       loginSuccessful: "Login realizado com sucesso",
-      
+
       // Logout messages
       loggedOut: "Saiu do sistema",
       loggedOutSuccessfully: "Você saiu do sistema com sucesso",
-      
+
       // Additional translations
       manageStudents: "Gerencie seus alunos",
       allStudents: "Todos os Alunos",
@@ -418,7 +417,7 @@ const resources = {
       noInstructorAssigned: "Nenhum instrutor designado",
       studentsPresent: "alunos presentes",
       studentPresent: "aluno presente",
-      
+
       // Payment Plans
       payment_plans: "Planos de Pagamento",
       manage_payment_plans: "Gerencie os planos de pagamento para alunos",
@@ -453,9 +452,8 @@ const resources = {
       failed_to_update_plan: "Falha ao atualizar plano",
       failed_to_delete_plan: "Falha ao excluir plano",
       confirm_delete_plan: "Tem certeza que deseja excluir este plano?",
-      
+
       // Payment Form
-      student: "Aluno",
       select_student: "Selecione um aluno",
       payment_plan: "Plano de Pagamento",
       select_payment_plan: "Selecione um plano de pagamento",
@@ -480,7 +478,7 @@ const resources = {
       debit_card: "Cartão de Débito",
       bank_transfer: "Transferência Bancária",
       pix: "PIX",
-      
+
       // School Configuration
       schoolConfiguration: "Configuração da Escola",
       schoolName: "Nome da Escola",
@@ -493,7 +491,7 @@ const resources = {
       currency: "Moeda",
       dateFormat: "Formato de Data",
       timeFormat: "Formato de Hora",
-      
+
       // Reports
       reportsAndAnalytics: "Relatórios e Análises",
       attendanceReport: "Relatório de Presença",
@@ -506,7 +504,7 @@ const resources = {
       fromDate: "Data Inicial",
       toDate: "Data Final",
       reportType: "Tipo de Relatório",
-      
+
       // User Management
       userManagement: "Gestão de Usuários",
       pendingApproval: "Pendente de Aprovação",
@@ -514,18 +512,17 @@ const resources = {
       rejectUser: "Rejeitar Usuário",
       userApproved: "Usuário aprovado com sucesso",
       userRejected: "Usuário rejeitado com sucesso",
-      
+
       // Communications
       communicationsCenter: "Central de Comunicações",
       sendMessage: "Enviar Mensagem",
       messageSubject: "Assunto da Mensagem",
-      messageBody: "Corpo da Mensagem",
+      messageBody: "Corpo Da Mensagem",
       recipients: "Destinatários",
-      allStudents: "Todos os Alunos",
-      allInstructors: "Todos os Instrutores",
+      allInstructors: "Todos Os Instrutores",
       specificUsers: "Usuários Específicos",
       messageSent: "Mensagem enviada com sucesso",
-      
+
       // Risk Assessment
       studentsAtRiskTitle: "Alunos em Risco",
       riskFactors: "Fatores de Risco",
@@ -539,7 +536,7 @@ const resources = {
       riskSettings: "Configurações de Risco",
       attendanceThreshold: "Limite de Frequência",
       paymentDelayThreshold: "Limite de Atraso de Pagamento",
-      
+
       // Belt Progression
       beltProgression: "Progressão de Faixa",
       promoteStudent: "Promover Aluno",
@@ -549,14 +546,13 @@ const resources = {
       promotionDate: "Data da Promoção",
       promotionNotes: "Observações da Promoção",
       beltHistory: "Histórico de Faixas",
-      
+
       // Notifications
       notifications: "Notificações",
       newNotification: "Nova Notificação",
-      markAsRead: "Marcar como Lida",
-      markAllAsRead: "Marcar Todas como Lidas",
-      notificationSettings: "Configurações de Notificação",
-      
+      markAsRead: "Marcar Como Lida",
+      markAllAsRead: "Marcar Todas Como Lidas",
+
       // Dashboard Customization
       customizeDashboardTitle: "Personalizar Painel",
       widgetSettings: "Configurações de Widgets",
@@ -564,7 +560,7 @@ const resources = {
       hideWidget: "Ocultar Widget",
       widgetPosition: "Posição do Widget",
       resetToDefault: "Restaurar Padrão",
-      
+
       // Time and Date
       today: "Hoje",
       yesterday: "Ontem",
@@ -575,7 +571,7 @@ const resources = {
       lastWeek: "Semana Passada",
       lastMonth: "Mês Passado",
       lastYear: "Ano Passado",
-      
+
       // Units and Measurements
       days: "dias",
       weeks: "semanas",
@@ -585,7 +581,7 @@ const resources = {
       minute: "minuto",
       second: "segundo",
       seconds: "segundos",
-      
+
       // Validation Messages
       fieldRequired: "Este campo é obrigatório",
       invalidEmail: "E-mail inválido",
@@ -594,7 +590,7 @@ const resources = {
       invalidPhoneNumber: "Número de telefone inválido",
       invalidDate: "Data inválida",
       valueOutOfRange: "Valor fora do intervalo",
-      
+
       // File Operations
       uploadFile: "Enviar Arquivo",
       downloadFile: "Baixar Arquivo",
@@ -603,14 +599,14 @@ const resources = {
       fileDeleted: "Arquivo excluído com sucesso",
       fileTooLarge: "Arquivo muito grande",
       invalidFileType: "Tipo de arquivo inválido",
-      
+
       // Pagination
       page: "Página",
       of: "de",
       itemsPerPage: "Itens por página",
       showingResults: "Mostrando {{start}} a {{end}} de {{total}} resultados",
       noResults: "Nenhum resultado encontrado",
-      
+
       // Quick Actions
       quickAttendance: "Presença Rápida",
       quickPayment: "Pagamento Rápido",
@@ -632,7 +628,7 @@ const resources = {
       profile: "Perfil",
       settings: "Configuración",
       logout: "Cerrar Sesión",
-      
+
       // Dashboard
       totalStudents: "Total de Estudiantes",
       activeClasses: "Clases Activas",
@@ -641,7 +637,7 @@ const resources = {
       recentActivity: "Actividad Reciente",
       beltDistribution: "Distribución de Cinturones",
       upcomingClasses: "Próximas Clases",
-      
+
       // Students
       addStudent: "Agregar Estudiante",
       editStudent: "Editar Estudiante",
@@ -653,7 +649,7 @@ const resources = {
       beltLevel: "Nivel de Cinturón",
       active: "Activo",
       inactive: "Inactivo",
-      
+
       // Classes
       addClass: "Agregar Clase",
       className: "Nombre de la Clase",
@@ -662,7 +658,7 @@ const resources = {
       startTime: "Hora de Inicio",
       endTime: "Hora de Fin",
       capacity: "Capacidad",
-      
+
       // Common
       save: "Guardar",
       cancel: "Cancelar",
@@ -672,7 +668,7 @@ const resources = {
       actions: "Acciones",
       loading: "Cargando...",
       noData: "No se encontraron datos",
-      
+
       // Settings
       settingsTitle: "Configuración",
       configurePreferences: "Configure sus preferencias de la aplicación",
@@ -686,13 +682,13 @@ const resources = {
       notificationSettings: "Configuración de Notificaciones",
       emailNotifications: "Notificaciones por Correo",
       smsNotifications: "Notificaciones por SMS",
-      
+
       // Auth
       login: "Iniciar Sesión",
       register: "Registrar",
       username: "Usuario",
       password: "Contraseña",
-      
+
       // Success/Error messages
       success: "Éxito",
       error: "Error",
@@ -714,7 +710,7 @@ const resources = {
       profile: "プロフィール",
       settings: "設定",
       logout: "ログアウト",
-      
+
       // Dashboard
       totalStudents: "生徒総数",
       activeClasses: "アクティブクラス",
@@ -723,7 +719,7 @@ const resources = {
       recentActivity: "最近の活動",
       beltDistribution: "帯の分布",
       upcomingClasses: "今後のクラス",
-      
+
       // Students
       addStudent: "生徒を追加",
       editStudent: "生徒を編集",
@@ -735,7 +731,7 @@ const resources = {
       beltLevel: "帯のレベル",
       active: "アクティブ",
       inactive: "非アクティブ",
-      
+
       // Classes
       addClass: "クラスを追加",
       className: "クラス名",
@@ -744,7 +740,7 @@ const resources = {
       startTime: "開始時間",
       endTime: "終了時間",
       capacity: "定員",
-      
+
       // Common
       save: "保存",
       cancel: "キャンセル",
@@ -754,7 +750,7 @@ const resources = {
       actions: "アクション",
       loading: "読み込み中...",
       noData: "データが見つかりません",
-      
+
       // Settings
       settingsTitle: "設定",
       configurePreferences: "アプリケーションの設定を構成",
@@ -768,13 +764,13 @@ const resources = {
       notificationSettings: "通知設定",
       emailNotifications: "メール通知",
       smsNotifications: "SMS通知",
-      
+
       // Auth
       login: "ログイン",
       register: "登録",
       username: "ユーザー名",
       password: "パスワード",
-      
+
       // Success/Error messages
       success: "成功",
       error: "エラー",
@@ -791,7 +787,7 @@ i18n
     resources,
     lng: localStorage.getItem('language') || 'en',
     fallbackLng: 'en',
-    
+
     interpolation: {
       escapeValue: false,
     },

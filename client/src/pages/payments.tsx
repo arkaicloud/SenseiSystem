@@ -10,8 +10,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrencyBRL, formatDateShort } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const Payments: React.FC = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
@@ -43,16 +45,16 @@ const Payments: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Sucesso",
-        description: "Pagamento cadastrado com sucesso",
+        title: t('success'),
+        description: t('payment_added_successfully'),
       });
       setIsAddPaymentOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/student-payments'] });
     },
     onError: (error) => {
       toast({
-        title: "Erro",
-        description: `Falha ao cadastrar pagamento: ${error}`,
+        title: t('error'),
+        description: `${t('failed_to_add_payment')}: ${error}`,
         variant: "destructive",
       });
     },
@@ -66,16 +68,16 @@ const Payments: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Sucesso",
-        description: "Pagamento atualizado com sucesso",
+        title: t('success'),
+        description: t('payment_updated_successfully'),
       });
       setSelectedPayment(null);
       queryClient.invalidateQueries({ queryKey: ['/api/student-payments'] });
     },
     onError: (error) => {
       toast({
-        title: "Erro",
-        description: `Falha ao atualizar pagamento: ${error}`,
+        title: t('error'),
+        description: `${t('failed_to_update_payment')}: ${error}`,
         variant: "destructive",
       });
     },
@@ -136,18 +138,27 @@ const Payments: React.FC = () => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'paid': return t('paid');
+      case 'pending': return t('pending');
+      case 'overdue': return t('overdue');
+      default: return status;
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Payments</h1>
-          <p className="text-gray-600">Manage student payments and plans</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('payments')}</h1>
+          <p className="text-gray-600">{t('manage_payment_history')}</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">
             <input
               type="text"
-              placeholder="Search payments..."
+              placeholder={t('searchPayments')}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -160,11 +171,11 @@ const Payments: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                New Payment
+                {t('create_payment')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Adicionar Novo Pagamento</DialogTitle>
+              <DialogTitle>{t('create_payment')}</DialogTitle>
               <PaymentForm 
                 students={students.map((student: any) => ({
                   id: student.id,
@@ -181,23 +192,23 @@ const Payments: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Payment Records</CardTitle>
+          <CardTitle>{t('payment_history')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all">
             <TabsList className="mb-4">
-              <TabsTrigger value="all">All Payments</TabsTrigger>
-              <TabsTrigger value="paid">Paid</TabsTrigger>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="overdue">Overdue</TabsTrigger>
+              <TabsTrigger value="all">{t('allPayments')}</TabsTrigger>
+              <TabsTrigger value="paid">{t('paid')}</TabsTrigger>
+              <TabsTrigger value="pending">{t('pending')}</TabsTrigger>
+              <TabsTrigger value="overdue">{t('overdue')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="all">
               {paymentsLoading ? (
-                <div className="text-center py-8">Loading payments...</div>
+                <div className="text-center py-8">{t('loading_payments')}</div>
               ) : filteredPayments.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  {searchQuery ? "No payments found matching your search" : "No payments found"}
+                  {searchQuery ? t('no_payments_matching_search') : t('no_payments_found')}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -205,25 +216,25 @@ const Payments: React.FC = () => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Student
+                          {t('student')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Plan
+                          {t('payment_plan')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Amount
+                          {t('amount')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
+                          {t('status')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Due Date
+                          {t('due_date')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Payment Date
+                          {t('payment_date')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
+                          {t('actions')}
                         </th>
                       </tr>
                     </thead>
@@ -248,7 +259,7 @@ const Payments: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{payment.plan.name}</div>
-                            <div className="text-xs text-gray-500">{payment.plan.frequency}</div>
+                            <div className="text-xs text-gray-500">{t(payment.plan.frequency)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
@@ -257,7 +268,7 @@ const Payments: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(payment.status)}`}>
-                              {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                              {getStatusLabel(payment.status)}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -273,7 +284,7 @@ const Payments: React.FC = () => {
                               className="text-secondary hover:text-secondary-dark"
                               onClick={() => setSelectedPayment(payment)}
                             >
-                              Edit
+                              {t('edit')}
                             </Button>
                           </td>
                         </tr>
@@ -286,19 +297,19 @@ const Payments: React.FC = () => {
 
             <TabsContent value="paid">
               <div className="text-center py-8 text-gray-500">
-                Filter feature coming soon
+                {t('filter_feature_coming_soon')}
               </div>
             </TabsContent>
 
             <TabsContent value="pending">
               <div className="text-center py-8 text-gray-500">
-                Filter feature coming soon
+                {t('filter_feature_coming_soon')}
               </div>
             </TabsContent>
 
             <TabsContent value="overdue">
               <div className="text-center py-8 text-gray-500">
-                Filter feature coming soon
+                {t('filter_feature_coming_soon')}
               </div>
             </TabsContent>
           </Tabs>
@@ -309,7 +320,7 @@ const Payments: React.FC = () => {
       {selectedPayment && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedPayment(null)}>
           <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Editar Pagamento</DialogTitle>
+            <DialogTitle>{t('update_payment')}</DialogTitle>
             <PaymentForm 
               students={students.map((student: any) => ({
                 id: student.id,

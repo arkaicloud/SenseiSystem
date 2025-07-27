@@ -625,7 +625,19 @@ const resources = {
       enterClassName: "Digite o nome da aula",
       enterMaxCapacity: "Digite a capacidade máxima",
       selectStudent: "Selecione um aluno",
-      selectPaymentPlan: "Selecione um plano de pagamento"
+      selectPaymentPlan: "Selecione um plano de pagamento",
+
+      // Payment page specific translations
+      manage_payment_history: "Gerencie o histórico de pagamentos dos alunos",
+      allPayments: "Todos os Pagamentos",
+      loading_payments: "Carregando pagamentos...",
+      no_payments_found: "Nenhum pagamento encontrado",
+      no_payments_matching_search: "Nenhum pagamento corresponde à busca",
+      payment_added_successfully: "Pagamento adicionado com sucesso",
+      payment_updated_successfully: "Pagamento atualizado com sucesso",
+      failed_to_add_payment: "Falha ao adicionar pagamento",
+      failed_to_update_payment: "Falha ao atualizar pagamento",
+      filter_feature_coming_soon: "Recurso de filtro em breve"
     }
   },
   es: {

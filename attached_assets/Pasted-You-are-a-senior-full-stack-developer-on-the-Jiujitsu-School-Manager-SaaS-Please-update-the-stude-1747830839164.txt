@@ -1,0 +1,45 @@
+You are a senior full-stack developer on the “Jiujitsu School Manager” SaaS. Please update the student management feature with these specific fixes:
+
+1. 🐞 Student Email Persistence  
+   - Ensure the **email** field in the student edit form is properly bound and saved.  
+   - Currently, updating a student and changing their email causes the email to be cleared in the database. Fix the API handler and Prisma call so that `Student.email` is correctly updated on PUT /students/:id.
+
+2. ➕ Student Type Field  
+   - Add a new **“modality”** dropdown to the student registration and edit forms with options:  
+     - Adulto  
+     - Feminino  
+     - Kids  
+   - Update the Prisma schema: add `modality` (enum or string) to the `Student` model (non-null).  
+   - Migrate the database to include this new column.  
+   - In the UI, render a `<Select>` or radio group for modality, bind it to the student object, and include it in both create and edit API calls.
+
+3. 🖥️ Deliverables  
+   - **Prisma Migration**: add `email` persistence fix (if needed) and new `Student.modality` column.  
+   - **API**:  
+     • Update `PUT /students/:id` to accept and save both `email` and `modality`.  
+     • Update `POST /students` to require `modality`.  
+   - **Frontend JSX**:  
+     • StudentForm.jsx (used for both Create and Edit):  
+       ```jsx
+       <label htmlFor="email">Email</label>
+       <input id="email" name="email" type="email" value={form.email} onChange={...} required />
+
+       <label htmlFor="modality">Modalidade</label>
+       <select id="modality" name="modality" value={form.modality} onChange={...} required>
+         <option value="">Selecione...</option>
+         <option value="Adulto">Adulto</option>
+         <option value="Feminino">Feminino</option>
+         <option value="Kids">Kids</option>
+       </select>
+       ```
+   - **Validation**: add form-level checks (Yup/Zod) to ensure `email` is valid and `modality` is selected.  
+   - **Internationalization**: include new label keys for `email` and `modality` in both `pt-BR.json` and `en-US.json`.
+
+Please generate the migration file, updated route handler code, and the revised React component snippet to fully implement these changes.  
+
+
+
+
+
+
+

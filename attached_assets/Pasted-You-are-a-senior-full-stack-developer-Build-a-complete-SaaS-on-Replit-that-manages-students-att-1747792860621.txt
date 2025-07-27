@@ -1,0 +1,75 @@
+You are a senior full-stack developer.  
+Build a complete SaaS on Replit that manages students, attendance, belt progression and plans for a jiu-jitsu school, with the following specifications:
+
+1. 📋 Project Overview  
+   - Project Name: “Jiujitsu School Manager”  
+   - Goal: register students, track attendance, belt/grade promotions, manage subscription plans and provide dashboards for students, instructors and admins.
+
+2. 🛠 Tech Stack  
+   - Backend: Node.js + Express  
+   - Database: PostgreSQL  
+   - ORM: Prisma  
+   - Authentication: JWT + bcrypt  
+   - Frontend: React (Vite) + Tailwind CSS  
+   - Deploy: Replit (auto-deploy on commit)
+
+3. 🌐 Internationalization (i18n)  
+   - Default locale: Portuguese (Brazil) – pt-BR  
+   - Support for English (en-US)  
+   - Use a library like react-i18next for translations  
+   - All labels, dates and messages must be externalized into translation files
+
+4. 🗄️ Database Schema  
+   - **Student**: id, name, cpf, address (street, city, state, zip), birthDate, joinDate, currentBelt, currentGrade, isActive  
+   - **Plan**: id, name, price, expirationDate (nullable for promotions)  
+   - **StudentPlan**: id, studentId, planId, startDate, endDate, isActive  
+   - **ClassSession**: id, title, date, startTime, endTime, beltLevel (optional), capacity  
+   - **Attendance**: id, studentId, classSessionId, timestamp, status (present/absent)  
+   - **User** (login): id, email, passwordHash, role (admin|manager|instructor|student)
+
+5. 🔑 Authentication & Authorization  
+   - Public routes: signup (student), login  
+   - Middleware:  
+     - `auth.verifyToken` — JWT validation  
+     - `auth.requireRole(role)` — RBAC enforcement
+
+6. 🚀 API Endpoints  
+   - **Students**: GET /students, GET /students/:id, POST /students, PUT /students/:id, PATCH /students/:id/activate, PATCH /students/:id/deactivate  
+   - **Plans**: GET /plans, POST /plans, PUT /plans/:id, DELETE /plans/:id  
+   - **Classes**: GET /classes, POST /classes/:id/checkin (body: studentId)  
+   - **Attendance**: GET /students/:id/attendance, GET /classes/:id/attendance  
+   - **Dashboards**: GET /dash/student, GET /dash/instructor, GET /dash/admin
+
+7. 🎨 UI / UX Requirements  
+   - Dark theme (black and greys)  
+   - Tailwind-based design system with reusable components  
+   - Key pages:  
+     - Login / Signup (with language switcher)  
+     - Admin Panel: manage students, plans, sessions  
+     - Manager Panel: activate/deactivate students, schedule classes  
+     - Instructor Panel: student attendance dashboard  
+     - Student Panel: check-in screen, attendance history  
+     - Universal Dashboard: active students, total students, revenue by active plans
+
+8. 📊 Dashboards  
+   - **Student**: simple attendance chart (presents vs. absences)  
+   - **Instructor**: class list, per-student attendance, date filters  
+   - **Admin**: total students, active students, current/projected revenue, belt distribution percentages
+
+9. ✨ Extra Features  
+   - Student photo upload  
+   - Email notifications (e.g. absence > 3 consecutive classes)  
+   - PDF report of belt progression  
+   - Advanced RBAC permissions
+
+10. ⚙️ Scripts & Deploy  
+    - `npm run dev` → start both frontend and backend  
+    - `npm run migrate` → apply Prisma migrations  
+    - CI/CD on Replit: auto-deploy on push to main
+
+11. 📐 Style Guide  
+    - Palette: black (#000), white (#FFF), light gray accents  
+    - Typography: responsive font-sans  
+    - Layout: flexible grid, rounded-xl cards, subtle shadows
+
+Please generate the full codebase: folder structure, Prisma schema, Express routes, React components, Tailwind config, translation files, and Replit deployment settings.

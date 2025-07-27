@@ -1,0 +1,68 @@
+import React, { useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
+import { Layout } from '@/components/layout/layout';
+import { useTranslations } from '@/hooks/use-translations';
+import AdminDashboard from './admin';
+import InstructorDashboard from './instructor';
+import StudentDashboard from './student';
+
+export default function DashboardPage() {
+  const { user, isLoading } = useAuth();
+  const { t } = useTranslations();
+  const [_, navigate] = useLocation();
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/login');
+    }
+  }, [isLoading, user, navigate]);
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900">
+        <div className="text-white text-xl">{t('common.loading')}</div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return null; // Will redirect to login
+  }
+  
+  // Render different dashboard based on user role
+  const renderDashboard = () => {
+    switch (user.role) {
+      case 'admin':
+      case 'manager':
+        return <AdminDashboard />;
+      case 'instructor':
+        return <InstructorDashboard />;
+      case 'student':
+        return <StudentDashboard />;
+      default:
+        return <StudentDashboard />;
+    }
+  };
+  
+  const getDashboardTitle = () => {
+    switch (user.role) {
+      case 'admin':
+      case 'manager':
+        return t('dashboard.adminDashboard');
+      case 'instructor':
+        return t('dashboard.instructorDashboard');
+      case 'student':
+        return t('dashboard.studentDashboard');
+      default:
+        return t('common.dashboard');
+    }
+  };
+  
+  return (
+    <Layout title={getDashboardTitle()}>
+      {renderDashboard()}
+    </Layout>
+  );
+}

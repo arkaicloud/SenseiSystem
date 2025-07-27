@@ -1,0 +1,52 @@
+You are a senior full-stack developer working on the existing “Jiujitsu School Manager” SaaS.  
+Please fix the following bugs and implement these enhancements, keeping the same tech stack (Node.js/Express, PostgreSQL w/Prisma, React/Vite + Tailwind, JWT auth, react-i18next):
+
+1. 🐞 Bug Fixes  
+   a. **Student Screen**  
+      - Add an **email** field to the student table and UI (this email is used by students to check in).  
+      - Fix the 404 “Page Not Found” error when calling **PUT /students/:id** or navigating to the “Edit Student” page.  
+   b. **Class Creation**  
+      - Resolve the runtime error:  
+        ```
+        [plugin:runtime-error-plugin] A <Select.Item /> must have a value prop that is not an empty string…
+        ```  
+      - Ensure your `<Select>` components always supply a non-empty `value` and placeholder.  
+   c. **Plans Screen**  
+      - Change the **price** field to a free-form numeric input (not masked).  
+      - Make **expirationDate** optional in both the database schema and form validation.  
+   d. **Settings Screen**  
+      - Fix 404 on **/settings** route.  
+      - Create two separate settings views:  
+        • **Admin Settings**: school name, operating hours, system-wide configs  
+        • **Student Settings**: change password flow, plus any extra student-profile options  
+
+2. ➕ New Features  
+   a. **Class Schedule Builder**  
+      - New “Create Class” screen that lets managers define:  
+        • Class group (e.g. Adulto, Feminino, Kids)  
+        • Weekly schedule: multiple days + times (e.g. Mon/Tue/Wed/Fri at 17:50 & 21:00)  
+      - Persist to a new `ClassSession` / `RecurringSession` table.  
+   b. **Profile Photo**  
+      - Allow users (students, instructors, admins) to upload a profile image.  
+      - Show the avatar next to name/email in the app footer/header.  
+   c. **Internal Chat / Notifications**  
+      - Implement a simple chat/notification module:  
+        • Admin can send a text or image notification to either all students or an individual student  
+        • Notifications appear in the student’s dashboard (with unread count badge)  
+        • Store messages in a new `Notification` table (senderId, recipientId or null for all, content, imageUrl, timestamp)  
+   d. **Internationalization**  
+      - Verify that all screens respect the language switch between **pt-BR** and **en-US**.  
+      - Externalize any new labels into your i18n translation files.
+
+3. 📐 Technical Details & Deliverables  
+   - **Database Migrations**: Prisma schema updates for email in `Student`, optional `expirationDate`, `Notification`, and any session recurrence tables.  
+   - **API**:  
+     • Update `PUT /students/:id` to accept/edit email.  
+     • New endpoints: `POST /notifications`, `GET /notifications/:studentId`, `POST /sessions` (with recurrence payload).  
+   - **Frontend**:  
+     • React components and forms for the above screens.  
+     • Ensure your `<Select>` controls always pass `value` and handle placeholder properly.  
+   - **Validation & Error Handling**: form-level checks, display friendly error messages.  
+   - **Testing**: add end-to-end or unit tests for each bug fix and new feature.
+
+Please generate the updated code snippets, migration files, route definitions and component examples to fully implement these fixes and features.  

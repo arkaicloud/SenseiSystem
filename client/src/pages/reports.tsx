@@ -71,7 +71,7 @@ const Reports: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Reports</h1>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('reports')}</h1>
           <p className="text-gray-600">Analytics and activity tracking</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
@@ -102,7 +102,7 @@ const Reports: React.FC = () => {
           <TabsTrigger value="finance">Financial</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="activities">
           <Card>
             <CardHeader>
@@ -117,7 +117,7 @@ const Reports: React.FC = () => {
                 <div className="space-y-4">
                   {activityLogs.map((log: any) => {
                     const date = new Date(log.timestamp);
-                    
+
                     return (
                       <div key={log.id} className="border-b pb-4 last:border-0">
                         <div className="flex items-start">
@@ -148,7 +148,7 @@ const Reports: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="attendance">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <Card>
@@ -183,7 +183,7 @@ const Reports: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-blue-50 p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold text-blue-600">
@@ -196,7 +196,7 @@ const Reports: React.FC = () => {
                         <div className="text-sm text-gray-600">Avg. Attendance Rate</div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4">
                       <h3 className="text-sm font-medium text-gray-700 mb-2">Attendance by Belt Level</h3>
                       <div className="space-y-2">
@@ -228,7 +228,7 @@ const Reports: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Attendance Trends</CardTitle>
@@ -240,7 +240,7 @@ const Reports: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Students with Low Attendance</CardTitle>
@@ -330,7 +330,7 @@ const Reports: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="finance">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <Card>
@@ -344,7 +344,7 @@ const Reports: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-1">All time paid payments</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Pending Revenue</CardTitle>
@@ -356,7 +356,7 @@ const Reports: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-1">Awaiting payment</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Overdue Payments</CardTitle>
@@ -369,7 +369,7 @@ const Reports: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Payment Plan Distribution</CardTitle>
@@ -380,7 +380,7 @@ const Reports: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Recent Payments</CardTitle>
@@ -449,7 +449,7 @@ const Reports: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="stats">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
@@ -462,7 +462,7 @@ const Reports: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Belt Progression</CardTitle>
@@ -497,7 +497,7 @@ const Reports: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="mt-8">
                     <h3 className="text-sm font-medium text-gray-700 mb-2">Upcoming Belt Tests</h3>
                     <div className="space-y-2">
@@ -512,7 +512,7 @@ const Reports: React.FC = () => {
                         </div>
                         <div className="text-sm font-medium">Nov 15, 2023</div>
                       </div>
-                      
+
                       <div className="p-3 border rounded-lg flex justify-between items-center">
                         <div>
                           <div className="flex items-center">
@@ -524,7 +524,7 @@ const Reports: React.FC = () => {
                         </div>
                         <div className="text-sm font-medium">Dec 05, 2023</div>
                       </div>
-                      
+
                       <div className="p-3 border rounded-lg flex justify-between items-center">
                         <div>
                           <div className="flex items-center">

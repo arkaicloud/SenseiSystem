@@ -611,7 +611,21 @@ const resources = {
       quickAttendance: "Presença Rápida",
       quickPayment: "Pagamento Rápido",
       quickStudentAdd: "Adicionar Aluno Rapidamente",
-      quickClassAdd: "Adicionar Aula Rapidamente"
+      quickClassAdd: "Adicionar Aula Rapidamente",
+
+      // Additional missing translations
+      searchStudents: "Buscar alunos",
+      searchClasses: "Buscar aulas",
+      searchPayments: "Buscar pagamentos",
+      searchPlans: "Buscar planos",
+      enterFirstName: "Digite o nome",
+      enterLastName: "Digite o sobrenome",
+      enterEmail: "Digite o email",
+      enterPhone: "Digite o telefone",
+      enterClassName: "Digite o nome da aula",
+      enterMaxCapacity: "Digite a capacidade máxima",
+      selectStudent: "Selecione um aluno",
+      selectPaymentPlan: "Selecione um plano de pagamento"
     }
   },
   es: {

@@ -115,9 +115,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>{t('firstName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="João" {...field} />
+                      <Input placeholder="Digite o nome" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -128,9 +128,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sobrenome</FormLabel>
+                    <FormLabel>{t('lastName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Silva" {...field} />
+                      <Input placeholder="Digite o sobrenome" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,7 +144,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('email')}</FormLabel>
                     <FormControl>
                       <Input placeholder="joao.silva@exemplo.com" {...field} />
                     </FormControl>

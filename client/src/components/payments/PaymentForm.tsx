@@ -72,7 +72,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   isLoading = false,
 }) => {
   const { t } = useTranslation();
-  
+
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {

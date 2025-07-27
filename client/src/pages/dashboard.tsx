@@ -145,17 +145,17 @@ const Dashboard: React.FC = () => {
     queryKey: ['/api/students/by-user', user?.id],
     enabled: !!user && user.role === 'student',
   });
-  
+
   // Buscar notificações do sistema a partir dos eventos cadastrados
   const { data: eventsData } = useQuery({
     queryKey: ['/api/school-events'],
     enabled: !!user && user.role === 'student',
   });
-  
+
   // Construir notificações do sistema a partir dos eventos
   const studentNotifications = React.useMemo(() => {
     const notifications = [];
-    
+
     // Adicionar notificações de eventos da escola
     if (eventsData?.events && eventsData.events.length > 0) {
       eventsData.events.forEach((event: any, index: number) => {
@@ -169,12 +169,12 @@ const Dashboard: React.FC = () => {
         });
       });
     }
-    
+
     // Adicionar uma notificação para o estudante sobre sua faixa
     if (studentData?.student) {
       const student = studentData.student;
       const stripes = student.stripes || 0;
-      
+
       if (stripes >= 3) {
         notifications.push({
           id: notifications.length + 1,
@@ -186,7 +186,7 @@ const Dashboard: React.FC = () => {
         });
       }
     }
-    
+
     return notifications;
   }, [eventsData, studentData]);
 
@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
     // Painel do Aluno - conteúdo restrito e visual interativo
     if (user?.role === 'student') {
       const student = studentData?.student;
-      
+
       return (
         <>
           {/* Cabeçalho do Dashboard do Aluno */}
@@ -205,12 +205,12 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">Bem-vindo, {user.firstName}</p>
             </div>
           </div>
-          
+
           {/* Notificações no Topo */}
           <div className="mb-6">
             <StudentNotifications notifications={studentNotifications} />
           </div>
-          
+
           {/* Conteúdo do Painel do Aluno */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Coluna da esquerda - Brasão e Progresso */}
@@ -226,7 +226,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Brasão da Faixa */}
               {student && user && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col items-center">
@@ -237,7 +237,7 @@ const Dashboard: React.FC = () => {
                   />
                 </div>
               )}
-              
+
               {/* Progresso da Faixa com Animação */}
               {student && (
                 <StudentBeltProgress 
@@ -246,7 +246,7 @@ const Dashboard: React.FC = () => {
                   attendanceRate={student.attendanceRate || 0}
                 />
               )}
-              
+
               {/* Próximas Aulas */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -284,7 +284,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Coluna da direita - Eventos e Informações */}
             <div>
               <SchoolEventList limit={2} />
@@ -293,7 +293,7 @@ const Dashboard: React.FC = () => {
         </>
       );
     }
-    
+
     // Painel do Administrador ou Professor
     return (
       <>
@@ -316,10 +316,10 @@ const Dashboard: React.FC = () => {
                 <span className="material-icons text-sm">search</span>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <DashboardCustomizationWizard />
-              
+
               <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium whitespace-nowrap">
@@ -339,47 +339,47 @@ const Dashboard: React.FC = () => {
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
           <StatCard
-            title="Total de Alunos"
+            title={t('totalDeAlunos')}
             value={stats.totalStudents}
             icon="people"
             trend={{ value: "+12%", isPositive: true }}
             iconBgColor="bg-blue-100 dark:bg-blue-900"
             iconColor="text-blue-600 dark:text-blue-300"
-            subtitle="alunos ativos matriculados"
+            subtitle={t('alunosAtivosMatriculados')}
           />
           <StatCard
-            title="Aulas do Mês"
+            title={t('aulasDoMes')}
             value={stats.classesThisMonth}
             icon="event"
             trend={{ value: "+5%", isPositive: true }}
             iconBgColor="bg-green-100 dark:bg-green-900"
             iconColor="text-green-600 dark:text-green-300"
-            subtitle="aulas realizadas no mês"
+            subtitle={t('aulasRealizadasNoMes')}
           />
           <StatCard
-            title="Taxa de Presença"
+            title={t('taxaDePresenca')}
             value={stats.avgAttendance}
             icon="fact_check"
             trend={{ value: "-3%", isPositive: false }}
             iconBgColor="bg-purple-100 dark:bg-purple-900"
             iconColor="text-purple-600 dark:text-purple-300"
-            subtitle="presença média dos alunos"
+            subtitle={t('presencaMediaDosAlunos')}
           />
           <StatCard
-            title="Receita Mensal"
+            title={t('receitaMensal')}
             value={stats.revenue}
             icon="payments"
             trend={{ value: "+8%", isPositive: true }}
             iconBgColor="bg-yellow-100 dark:bg-yellow-900"
             iconColor="text-yellow-600 dark:text-yellow-300"
-            subtitle="receita total do mês"
+            subtitle={t('receitaTotalDoMes')}
           />
         </div>
 
         {/* Seção de aulas do dia */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-montserrat font-bold text-xl">Aulas Hoje</h2>
+            <h2 className="font-montserrat font-bold text-xl">{t('aulasHoje')}</h2>
             <Link href="/classes">
               <div className="text-secondary font-medium text-sm flex items-center">
                 {t('verTodas')}
@@ -390,7 +390,7 @@ const Dashboard: React.FC = () => {
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100">Próximas Aulas</h3>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">{t('proximasAulas')}</h3>
               <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(new Date())}</span>
             </div>
 

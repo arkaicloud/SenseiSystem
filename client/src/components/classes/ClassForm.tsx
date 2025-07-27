@@ -89,7 +89,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             <FormItem>
               <FormLabel>Nome da Aula</FormLabel>
               <FormControl>
-                <Input placeholder="Aula Fundamentals" {...field} />
+                <Input placeholder="Digite o nome da aula" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

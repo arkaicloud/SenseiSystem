@@ -99,7 +99,7 @@ const PaymentPlans: React.FC = () => {
     const planName = plan.name.toLowerCase();
     const planDescription = (plan.description || '').toLowerCase();
     const query = searchQuery.toLowerCase();
-    
+
     return planName.includes(query) || planDescription.includes(query);
   });
 
@@ -132,7 +132,7 @@ const PaymentPlans: React.FC = () => {
           <div className="relative mr-2">
             <input
               type="text"
-              placeholder={t('search_plans')}
+              placeholder={t('search') + ' planos...'}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

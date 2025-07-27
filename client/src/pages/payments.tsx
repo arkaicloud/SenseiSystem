@@ -90,7 +90,7 @@ const Payments: React.FC = () => {
     const studentName = `${payment.student.user.firstName} ${payment.student.user.lastName}`.toLowerCase();
     const planName = payment.plan.name.toLowerCase();
     const query = searchQuery.toLowerCase();
-    
+
     return studentName.includes(query) || planName.includes(query);
   });
 
@@ -107,7 +107,7 @@ const Payments: React.FC = () => {
       dueDate: new Date(data.dueDate),
       paidDate: data.paidDate ? new Date(data.paidDate) : null
     };
-    
+
     addPayment(formattedData);
   };
 
@@ -122,7 +122,7 @@ const Payments: React.FC = () => {
         dueDate: new Date(data.dueDate),
         paidDate: data.paidDate ? new Date(data.paidDate) : null
       };
-      
+
       updatePayment({ id: selectedPayment.id, data: formattedData });
     }
   };
@@ -191,7 +191,7 @@ const Payments: React.FC = () => {
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="overdue">Overdue</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all">
               {paymentsLoading ? (
                 <div className="text-center py-8">Loading payments...</div>
@@ -283,19 +283,19 @@ const Payments: React.FC = () => {
                 </div>
               )}
             </TabsContent>
-            
+
             <TabsContent value="paid">
               <div className="text-center py-8 text-gray-500">
                 Filter feature coming soon
               </div>
             </TabsContent>
-            
+
             <TabsContent value="pending">
               <div className="text-center py-8 text-gray-500">
                 Filter feature coming soon
               </div>
             </TabsContent>
-            
+
             <TabsContent value="overdue">
               <div className="text-center py-8 text-gray-500">
                 Filter feature coming soon

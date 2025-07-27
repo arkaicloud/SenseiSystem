@@ -104,11 +104,11 @@ const Attendance: React.FC = () => {
     queryKey: ['/api/students/by-user', user?.id],
     enabled: !!user && user.role === 'student',
   });
-  
+
   // Verificar se o usuário é um aluno
   const isStudent = user?.role === 'student';
   const isAdminOrInstructor = user?.role === 'admin' || user?.role === 'instructor';
-  
+
   // Renderizar interface diferente para alunos vs. professores/administradores
   return (
     <>
@@ -129,7 +129,7 @@ const Attendance: React.FC = () => {
               <StudentAttendanceSummary studentId={user.id} />
             )}
           </div>
-          
+
           <div>
             {/* Confirmação rápida de presença */}
             <Card className="mb-6">
@@ -142,7 +142,7 @@ const Attendance: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Calendário */}
             <Card>
               <CardHeader>
@@ -322,7 +322,7 @@ const Attendance: React.FC = () => {
           </div>
         </div>
       )}
-      
+
 
       {/* Take Attendance Dialog */}
       {selectedClass && (
@@ -346,6 +346,7 @@ const Attendance: React.FC = () => {
               ]}
               onSubmit={handleSubmitAttendance}
               isLoading={isSubmittingAttendance}
+              placeholder={t('search') + ' alunos...'}
             />
           </DialogContent>
         </Dialog>

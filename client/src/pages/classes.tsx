@@ -145,7 +145,7 @@ const Classes: React.FC = () => {
               <TabsTrigger value="schedule">Programação Semanal</TabsTrigger>
               <TabsTrigger value="list">Visualização em Lista</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="schedule">
               {classesLoading ? (
                 <div className="text-center py-8">Loading classes...</div>
@@ -159,7 +159,7 @@ const Classes: React.FC = () => {
                       <div className="bg-gray-100 p-3 font-medium">
                         {getDayName(day)}
                       </div>
-                      
+
                       {!classesByDay[day] || classesByDay[day].length === 0 ? (
                         <div className="p-4 text-center text-gray-500">
                           Nenhuma aula agendada
@@ -225,7 +225,7 @@ const Classes: React.FC = () => {
                 </div>
               )}
             </TabsContent>
-            
+
             <TabsContent value="list">
               {classesLoading ? (
                 <div className="text-center py-8">Carregando aulas...</div>

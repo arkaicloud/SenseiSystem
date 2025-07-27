@@ -32,7 +32,7 @@ const Profile: React.FC = () => {
     enabled: !!user?.id,
     refetchInterval: false,
   });
-  
+
   // Fetch student data if user is a student
   const { data: studentData, isLoading: studentLoading } = useQuery({
     queryKey: [`/api/students/by-user/${user?.id || 0}`],
@@ -61,7 +61,7 @@ const Profile: React.FC = () => {
       });
     },
   });
-  
+
   const handleAvatarUpdate = (data: AvatarData) => {
     if (studentData?.student?.id) {
       updateAvatar(data);
@@ -120,7 +120,7 @@ const Profile: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if passwords match for password change
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
       toast({
@@ -130,7 +130,7 @@ const Profile: React.FC = () => {
       });
       return;
     }
-    
+
     // Prepare data for update
     const updateData = {
       firstName: formData.firstName,
@@ -139,12 +139,12 @@ const Profile: React.FC = () => {
       phone: formData.phone,
       emergencyContact: formData.emergencyContact,
     };
-    
+
     // Only include password if changing it
     if (formData.newPassword) {
       (updateData as any).password = formData.newPassword;
     }
-    
+
     updateUser(updateData);
   };
 
@@ -206,7 +206,7 @@ const Profile: React.FC = () => {
                   <div className="mt-2 bg-primary-light text-white text-sm px-3 py-1 rounded-full">
                     {userData?.user?.role ? userData.user.role.charAt(0).toUpperCase() + userData.user.role.slice(1) : ""}
                   </div>
-                  
+
                   {isStudent && (
                     <div className="mt-4 w-full">
                       <div className="border-t pt-4 text-center">
@@ -223,7 +223,7 @@ const Profile: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="mt-6 w-full">
                     <div className="border-t pt-4">
                       <h3 className="text-sm font-medium text-gray-700 mb-2">Account Information</h3>
@@ -251,7 +251,7 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
@@ -264,7 +264,7 @@ const Profile: React.FC = () => {
                     <TabsTrigger value="security">Security</TabsTrigger>
                     {isStudent && <TabsTrigger value="membership">Membership</TabsTrigger>}
                   </TabsList>
-                  
+
                   <TabsContent value="details">
                     {isEditing ? (
                       <form onSubmit={handleSubmit} className="space-y-4">
@@ -292,7 +292,7 @@ const Profile: React.FC = () => {
                             />
                           </div>
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Email
@@ -305,7 +305,7 @@ const Profile: React.FC = () => {
                             required
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Phone Number
@@ -317,7 +317,7 @@ const Profile: React.FC = () => {
                             placeholder="Optional"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Emergency Contact
@@ -329,7 +329,7 @@ const Profile: React.FC = () => {
                             placeholder="Name: XXX-XXX-XXXX"
                           />
                         </div>
-                        
+
                         <div className="flex justify-end space-x-2 pt-4">
                           <Button
                             type="button"
@@ -359,17 +359,17 @@ const Profile: React.FC = () => {
                             <p className="font-medium">{user.lastName}</p>
                           </div>
                         </div>
-                        
+
                         <div>
                           <p className="text-sm text-gray-500">Email</p>
                           <p className="font-medium">{user.email}</p>
                         </div>
-                        
+
                         <div>
                           <p className="text-sm text-gray-500">Phone Number</p>
                           <p className="font-medium">{user.phone || "Not provided"}</p>
                         </div>
-                        
+
                         <div>
                           <p className="text-sm text-gray-500">Emergency Contact</p>
                           <p className="font-medium">{user.emergencyContact || "Not provided"}</p>
@@ -377,7 +377,7 @@ const Profile: React.FC = () => {
                       </div>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="security">
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
@@ -392,7 +392,7 @@ const Profile: React.FC = () => {
                           placeholder="Enter your current password"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           New Password
@@ -405,7 +405,7 @@ const Profile: React.FC = () => {
                           placeholder="Enter your new password"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Confirm New Password
@@ -418,7 +418,7 @@ const Profile: React.FC = () => {
                           placeholder="Confirm your new password"
                         />
                       </div>
-                      
+
                       <div className="flex justify-end space-x-2 pt-4">
                         <Button
                           type="submit"
@@ -430,7 +430,7 @@ const Profile: React.FC = () => {
                       </div>
                     </form>
                   </TabsContent>
-                  
+
                   {isStudent && (
                     <TabsContent value="membership">
                       <div className="space-y-6">
@@ -448,7 +448,7 @@ const Profile: React.FC = () => {
                             <p className="text-sm text-gray-500">Next payment: Oct 15, 2023</p>
                           </div>
                         </div>
-                        
+
                         <div>
                           <h3 className="font-medium text-lg mb-3">Payment History</h3>
                           <div className="border rounded-lg divide-y">

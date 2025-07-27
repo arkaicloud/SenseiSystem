@@ -31,11 +31,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Inicializar tema baseado na personalização, configuração da escola ou localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as Theme;
-    const customTheme = dashboardCustomization?.theme as Theme;
-    const defaultTheme = configData?.config?.defaultTheme as Theme || "light";
+    const customTheme = (dashboardCustomization as any)?.theme as Theme;
+    const defaultTheme = (configData?.config?.defaultTheme as Theme) || "light";
     
     // Prioridade: tema personalizado > tema salvo > tema padrão da escola
-    const initialTheme = customTheme && customTheme !== 'auto' ? customTheme : (savedTheme || defaultTheme);
+    const initialTheme = customTheme && customTheme === 'light' || customTheme === 'dark' ? customTheme : (savedTheme || defaultTheme);
     setThemeState(initialTheme);
     
     // Aplicar o tema no documento

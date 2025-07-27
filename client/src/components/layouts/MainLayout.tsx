@@ -183,8 +183,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <Sun className="w-5 h-5" />
                 )}
               </Button>
-            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-              <span className="font-bold text-white text-xs">{userInitials}</span>
+              
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <span className="font-bold text-white text-xs">{userInitials}</span>
+              </div>
             </div>
           </div>
         )}

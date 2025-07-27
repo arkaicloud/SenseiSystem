@@ -582,6 +582,36 @@ const resources = {
       second: "segundo",
       seconds: "segundos",
 
+      // Calendar months
+      january: "Janeiro",
+      february: "Fevereiro",
+      march: "Março",
+      april: "Abril",
+      may: "Maio",
+      june: "Junho",
+      july: "Julho",
+      august: "Agosto",
+      september: "Setembro",
+      october: "Outubro",
+      november: "Novembro",
+      december: "Dezembro",
+
+      // Calendar days
+      sun: "Dom",
+      mon: "Seg",
+      tue: "Ter",
+      wed: "Qua",
+      thu: "Qui",
+      fri: "Sex",
+      sat: "Sáb",
+      sunday: "Domingo",
+      monday: "Segunda-feira",
+      tuesday: "Terça-feira",
+      wednesday: "Quarta-feira",
+      thursday: "Quinta-feira",
+      friday: "Sexta-feira",
+      saturday: "Sábado",
+
       // Validation Messages
       fieldRequired: "Este campo é obrigatório",
       invalidEmail: "E-mail inválido",

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -253,7 +252,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
               )} 
             />
           </button>
-          
+
           {/* Submenu com animação */}
           <div 
             className={cn(
@@ -278,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       )}>
         <item.icon className={cn("w-5 h-5 mr-3", level > 0 && "w-4 h-4 mr-2")} />
         <span className="flex-1">{item.label}</span>
-        
+
         {/* Badge para pedidos pendentes */}
         {item.id === "pedidos-pendentes" && pendingCount > 0 && (
           <Badge 

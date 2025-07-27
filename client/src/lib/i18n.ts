@@ -604,13 +604,6 @@ const resources = {
       thu: "Qui",
       fri: "Sex",
       sat: "Sáb",
-      sunday: "Domingo",
-      monday: "Segunda-feira",
-      tuesday: "Terça-feira",
-      wednesday: "Quarta-feira",
-      thursday: "Quinta-feira",
-      friday: "Sexta-feira",
-      saturday: "Sábado",
 
       // Validation Messages
       fieldRequired: "Este campo é obrigatório",

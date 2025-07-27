@@ -82,20 +82,20 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-2">{classInfo.name}</h2>
-        <p className="text-gray-600">
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl font-bold mb-1 md:mb-2">{classInfo.name}</h2>
+        <p className="text-gray-600 text-sm md:text-base">
           {classInfo.date.toLocaleDateString()} at {classInfo.startTime} • Instructor: {classInfo.instructor}
         </p>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-3 md:mb-4">
         <div className="relative">
           <input
             type="text"
             placeholder="Search students..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -105,7 +105,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
         </div>
       </div>
 
-      <div className="mb-4 flex justify-between items-center">
+      <div className="mb-3 md:mb-4 flex justify-between items-center">
         <p className="text-sm text-gray-500">
           {filteredStudents.length} students
         </p>
@@ -121,7 +121,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 md:space-y-4">
           <div className="divide-y divide-gray-100">
             {filteredStudents.map((student, index) => (
               <FormField
@@ -129,7 +129,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 control={form.control}
                 name={`students.${index}.isPresent`}
                 render={({ field }) => (
-                  <FormItem className="py-3 flex items-center space-x-3">
+                  <FormItem className="py-2 md:py-3 flex items-center space-x-3">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -137,12 +137,12 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                       />
                     </FormControl>
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                        <span className="font-medium text-sm">{student.initials}</span>
+                      <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-full bg-gray-200 flex items-center justify-center mr-2 md:mr-3">
+                        <span className="font-medium text-xs md:text-sm">{student.initials}</span>
                       </div>
                       <div>
                         <FormLabel className={cn(
-                          "text-base font-medium text-gray-900",
+                          "text-sm md:text-base font-medium text-gray-900",
                           field.value && "line-through text-gray-400"
                         )}>
                           {student.name}
@@ -156,10 +156,10 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
             ))}
           </div>
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-3 md:pt-4 flex justify-end">
             <Button
               type="submit"
-              className="bg-secondary hover:bg-secondary-dark"
+              className="bg-secondary hover:bg-secondary-dark text-sm md:text-base"
               disabled={isLoading}
             >
               {isLoading ? "Saving..." : "Save Attendance"}

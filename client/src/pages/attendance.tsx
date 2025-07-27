@@ -114,14 +114,14 @@ const Attendance: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('attendance')}</h1>
+          <h1 className="font-montserrat font-bold text-xl md:text-2xl text-primary">{t('attendance')}</h1>
           <p className="text-gray-600">{isStudent ? t('yourAttendance') : t('trackAttendance')}</p>
         </div>
       </div>
 
       {/* Painel do Aluno */}
       {isStudent && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             {/* Resumo de presença do aluno */}
             {/* Usar userId diretamente em vez de studentId */}
@@ -132,9 +132,9 @@ const Attendance: React.FC = () => {
 
           <div>
             {/* Confirmação rápida de presença */}
-            <Card className="mb-6">
+            <Card className="mb-4">
               <CardHeader>
-                <CardTitle>{t('confirmar_presenca')}</CardTitle>
+                <CardTitle className="text-lg">{t('confirmar_presenca')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {user && (
@@ -146,14 +146,14 @@ const Attendance: React.FC = () => {
             {/* Calendário */}
             <Card>
               <CardHeader>
-                <CardTitle>{t('calendar')}</CardTitle>
+                <CardTitle className="text-lg">{t('calendar')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  className="rounded-md border"
+                  className="rounded-md border w-full"
                 />
               </CardContent>
             </Card>
@@ -163,25 +163,25 @@ const Attendance: React.FC = () => {
 
       {/* Painel do Professor/Admin */}
       {isAdminOrInstructor && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="md:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle>{t('selectDate')}</CardTitle>
+                <CardTitle className="text-lg">{t('selectDate')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  className="rounded-md border"
+                  className="rounded-md border w-full"
                 />
               </CardContent>
             </Card>
 
-            <Card className="mt-6">
+            <Card className="mt-4">
               <CardHeader>
-                <CardTitle>{t('todaysClasses')}</CardTitle>
+                <CardTitle className="text-lg">{t('todaysClasses')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {classesLoading ? (
@@ -233,7 +233,7 @@ const Attendance: React.FC = () => {
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>
+                <CardTitle className="text-lg">
                   {selectedDate 
                     ? `${t('attendance')} - ${formatDate(selectedDate)}` 
                     : t('attendance')}

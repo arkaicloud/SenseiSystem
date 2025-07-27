@@ -121,6 +121,16 @@
   }
 }
 
+@screen xs {
+  .xs\:inline {
+    display: inline;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
+}
+
 @layer components {
   .belt {
     @apply inline-block mr-1;

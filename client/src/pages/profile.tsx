@@ -154,8 +154,8 @@ const Profile: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Profile</h1>
-          <p className="text-gray-600">Manage your personal information</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Perfil</h1>
+          <p className="text-gray-600 dark:text-gray-300">Gerencie suas informações pessoais</p>
         </div>
         {!isEditing && (
           <Button
@@ -163,15 +163,15 @@ const Profile: React.FC = () => {
             onClick={() => setIsEditing(true)}
           >
             <span className="material-icons mr-1 text-sm">edit</span>
-            Edit Profile
+            Editar Perfil
           </Button>
         )}
       </div>
 
       {userLoading ? (
-        <div className="text-center py-8">Loading profile...</div>
+        <div className="text-center py-8 text-gray-600 dark:text-gray-300">Carregando perfil...</div>
       ) : !user ? (
-        <div className="text-center py-8 text-gray-500">User not found</div>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Usuário não encontrado</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
@@ -210,15 +210,15 @@ const Profile: React.FC = () => {
                   {isStudent && (
                     <div className="mt-4 w-full">
                       <div className="border-t pt-4 text-center">
-                        <p className="text-sm text-gray-500 mb-2">Belt Level</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Graduação</p>
                         <div className="flex justify-center">
                           <BeltWithLabel level="blue" size="lg" />
                         </div>
                         <p className="mt-2 text-sm font-medium">
-                          Blue Belt • 2 Stripes
+                          Faixa Azul • 2 Graus
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Last Promotion: 3 months ago
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Última Promoção: 3 meses atrás
                         </p>
                       </div>
                     </div>
@@ -226,22 +226,22 @@ const Profile: React.FC = () => {
 
                   <div className="mt-6 w-full">
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">Account Information</h3>
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Informações da Conta</h3>
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-500">Username</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Usuário</span>
                           <span className="text-sm font-medium">{user.username}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-500">Join Date</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Data de Entrada</span>
                           <span className="text-sm font-medium">
-                            {new Date(user.joinDate).toLocaleDateString()}
+                            {new Date(user.joinDate).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-500">Status</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Status</span>
                           <span className="text-sm font-medium text-status-success">
-                            Active
+                            Ativo
                           </span>
                         </div>
                       </div>
@@ -255,14 +255,14 @@ const Profile: React.FC = () => {
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Profile Details</CardTitle>
+                <CardTitle>Detalhes do Perfil</CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="details">
                   <TabsList className="mb-4">
-                    <TabsTrigger value="details">Personal Details</TabsTrigger>
-                    <TabsTrigger value="security">Security</TabsTrigger>
-                    {isStudent && <TabsTrigger value="membership">Membership</TabsTrigger>}
+                    <TabsTrigger value="details">Detalhes Pessoais</TabsTrigger>
+                    <TabsTrigger value="security">Segurança</TabsTrigger>
+                    {isStudent && <TabsTrigger value="membership">Mensalidade</TabsTrigger>}
                   </TabsList>
 
                   <TabsContent value="details">

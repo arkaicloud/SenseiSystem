@@ -123,20 +123,20 @@ const PendingUsers: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Pending Approvals</h1>
-          <p className="text-gray-600">Review and approve new user registrations</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Aprovações Pendentes</h1>
+          <p className="text-gray-600 dark:text-gray-300">Revise e aprove novos registros de usuários</p>
         </div>
         <Badge variant="secondary" className="mt-2 md:mt-0">
-          {pendingUsers.length} pending
+          {pendingUsers.length} pendentes
         </Badge>
       </div>
 
       {pendingLoading ? (
-        <div className="text-center py-8">Loading pending users...</div>
+        <div className="text-center py-8 text-gray-600 dark:text-gray-300">Carregando usuários pendentes...</div>
       ) : pendingUsers.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-gray-500">No pending registrations at this time</p>
+            <p className="text-gray-500 dark:text-gray-400">Nenhum registro pendente no momento</p>
           </CardContent>
         </Card>
       ) : (
@@ -161,23 +161,23 @@ const PendingUsers: React.FC = () => {
                     <span className="font-medium">Email:</span> {user.email}
                   </div>
                   <div>
-                    <span className="font-medium">Username:</span> {user.username}
+                    <span className="font-medium">Usuário:</span> {user.username}
                   </div>
                   {user.phone && (
                     <div>
-                      <span className="font-medium">Phone:</span> {user.phone}
+                      <span className="font-medium">Telefone:</span> {user.phone}
                     </div>
                   )}
                   <div>
-                    <span className="font-medium">Registration Date:</span>{" "}
-                    {new Date(user.joinDate).toLocaleDateString()}
+                    <span className="font-medium">Data de Registro:</span>{" "}
+                    {new Date(user.joinDate).toLocaleDateString('pt-BR')}
                   </div>
                 </div>
 
                 {/* Show belt level for students */}
                 {user.role === 'student' && (
                   <div className="pt-2">
-                    <Label className="text-sm font-medium">Requested Belt Level:</Label>
+                    <Label className="text-sm font-medium">Graduação Solicitada:</Label>
                     <div className="mt-1">
                       <BeltWithLabel level="white" />
                     </div>
@@ -190,7 +190,7 @@ const PendingUsers: React.FC = () => {
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     size="sm"
                   >
-                    Approve
+                    Aprovar
                   </Button>
                   <Button
                     onClick={() => handleReject(user.id)}
@@ -199,7 +199,7 @@ const PendingUsers: React.FC = () => {
                     size="sm"
                     disabled={isRejecting}
                   >
-                    Reject
+                    Rejeitar
                   </Button>
                 </div>
               </CardContent>
@@ -212,15 +212,15 @@ const PendingUsers: React.FC = () => {
       <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve User Registration</DialogTitle>
+            <DialogTitle>Aprovar Registro de Usuário</DialogTitle>
             <DialogDescription>
               {selectedUser && (
                 <>
-                  Approve registration for <strong>{selectedUser.firstName} {selectedUser.lastName}</strong>
+                  Aprovar registro para <strong>{selectedUser.firstName} {selectedUser.lastName}</strong>
                   {selectedUser.role === 'student' && (
                     <>
                       <br />
-                      <strong className="text-red-600">Payment plan assignment is required for student approval.</strong>
+                      <strong className="text-red-600">A atribuição de plano de pagamento é obrigatória para aprovação de aluno.</strong>
                     </>
                   )}
                 </>
@@ -231,15 +231,15 @@ const PendingUsers: React.FC = () => {
           {selectedUser?.role === 'student' && (
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="payment-plan">Payment Plan *</Label>
+                <Label htmlFor="payment-plan">Plano de Pagamento *</Label>
                 <Select value={selectedPlan} onValueChange={setSelectedPlan}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a payment plan" />
+                    <SelectValue placeholder="Selecione um plano de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
                     {plans.map((plan: any) => (
                       <SelectItem key={plan.id} value={plan.id.toString()}>
-                        {plan.name} - ${(plan.price / 100).toFixed(2)}/{plan.billingCycle}
+                        {plan.name} - R$ {(plan.price / 100).toFixed(2)}/{plan.billingCycle === 'monthly' ? 'mês' : plan.billingCycle}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -253,7 +253,7 @@ const PendingUsers: React.FC = () => {
               variant="outline"
               onClick={() => setIsApprovalDialogOpen(false)}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={handleConfirmApproval}
@@ -263,7 +263,7 @@ const PendingUsers: React.FC = () => {
               }
               className="bg-green-600 hover:bg-green-700"
             >
-              {isApproving ? "Approving..." : "Confirm Approval"}
+              {isApproving ? "Aprovando..." : "Confirmar Aprovação"}
             </Button>
           </div>
         </DialogContent>

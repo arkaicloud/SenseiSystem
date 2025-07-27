@@ -107,6 +107,38 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Main content */}
       <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden`}>
+        {/* Desktop header */}
+        {!isMobile && user && (
+          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 hidden md:flex items-center justify-between px-6 py-3 sticky top-0 z-40">
+            <div className="flex items-center">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Bem-vindo, {user.firstName}!
+              </h2>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Theme toggle button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
+                title={theme === 'light' ? 'Alternar para tema escuro' : 'Alternar para tema claro'}
+              >
+                {theme === 'light' ? (
+                  <Moon className="w-5 h-5" />
+                ) : (
+                  <Sun className="w-5 h-5" />
+                )}
+              </Button>
+              
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <span className="font-bold text-white text-xs">{userInitials}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Mobile header */}
         {isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
@@ -123,7 +155,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="flex items-center">
+            <div className="flex items-center flex-1">
               <div className="bg-primary p-1 rounded mr-2">
                 <div className="belt black-belt w-6 h-6 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs font-bold">
@@ -135,6 +167,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
             </div>
+            
+            <div className="flex items-center space-x-2">
               {/* Theme toggle button */}
               <Button
                 variant="ghost"
@@ -156,7 +190,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className={`px-3 py-3 md:px-4 md:py-4 min-h-screen ${isMobile && user ? "pt-16" : ""}`}>
+        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""}`}>
           {children}
         </div>
       </main>

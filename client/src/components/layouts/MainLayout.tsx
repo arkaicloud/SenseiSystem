@@ -7,6 +7,9 @@ import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import type { SchoolConfig } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -18,6 +21,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
 
   // Buscar configuração da escola
   const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
@@ -131,6 +135,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
             </div>
+              {/* Theme toggle button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
+                title={theme === 'light' ? 'Alternar para tema escuro' : 'Alternar para tema claro'}
+              >
+                {theme === 'light' ? (
+                  <Moon className="w-5 h-5" />
+                ) : (
+                  <Sun className="w-5 h-5" />
+                )}
+              </Button>
             <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
               <span className="font-bold text-white text-xs">{userInitials}</span>
             </div>

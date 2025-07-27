@@ -54,6 +54,18 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        // SenseiSystem Status Colors
+        success: "hsl(var(--status-success))",
+        danger: "hsl(var(--status-danger))",
+        warning: "hsl(var(--status-warning))",
+        info: "hsl(var(--status-info))",
+        // SenseiSystem Primary Variants
+        "primary-light": "hsl(var(--primary-light))",
+        "primary-dark": "hsl(var(--primary-dark))",
+        "secondary-light": "hsl(var(--secondary-light))",
+        "secondary-dark": "hsl(var(--secondary-dark))",
+        "accent-light": "hsl(var(--accent-light))",
+        "accent-dark": "hsl(var(--accent-dark))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

@@ -6,50 +6,53 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 84% 5%;
-  --muted: 210 40% 98%;
-  --muted-foreground: 215 20% 65%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 84% 5%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 84% 5%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
+  /* SenseiSystem - Tema Claro (Light Mode) */
+  --background: 0 0% 100%; /* #FFFFFF - Branco */
+  --foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
+  --muted: 210 40% 98%; /* #F8FAFC - Cinza Claro */
+  --muted-foreground: 215 16% 47%; /* #64748B - Cinza Médio */
+  --popover: 0 0% 100%; /* #FFFFFF - Branco */
+  --popover-foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
+  --card: 0 0% 100%; /* #FFFFFF - Branco */
+  --card-foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
+  --border: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
+  --input: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
 
-  /* Custom colors based on design (light mode) */
-  --primary: 358 60% 52%;
-  --primary-foreground: 0 0% 100%;
-  --primary-light: 358 60% 59%;
-  --primary-dark: 358 60% 44%;
+  /* Cores Primárias do SenseiSystem */
+  --primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
+  --primary-light: 213 93% 68%; /* Azul mais claro */
+  --primary-dark: 221 83% 53%; /* Azul mais escuro */
 
-  --secondary: 210 40% 30%;
-  --secondary-foreground: 0 0% 100%;
-  --secondary-light: 210 40% 35%;
-  --secondary-dark: 210 40% 25%;
+  --secondary: 215 16% 47%; /* #94A3B8 - Gray-400 */
+  --secondary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
+  --secondary-light: 215 20% 65%; /* Cinza mais claro */
+  --secondary-dark: 215 25% 35%; /* Cinza mais escuro */
 
-  --accent: 43 84% 61%;
-  --accent-foreground: 222 84% 5%;
-  --accent-light: 43 84% 70%;
-  --accent-dark: 43 84% 55%;
+  --accent: 43 96% 56%; /* #FBBF24 - Amber-400 */
+  --accent-foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
+  --accent-light: 43 96% 70%; /* Amarelo mais claro */
+  --accent-dark: 43 96% 45%; /* Amarelo mais escuro */
 
-  --status-success: 122 39% 49%;
-  --status-danger: 4 90% 58%;
-  --status-warning: 36 100% 50%;
-  --status-info: 207 90% 54%;
+  /* Status Colors */
+  --status-success: 142 76% 36%; /* #22C55E - Verde Sucesso */
+  --status-danger: 0 84% 60%; /* #EF4444 - Vermelho Erro */
+  --status-warning: 25 95% 53%; /* #F97316 - Laranja Alerta */
+  --status-info: 217 91% 60%; /* #2563EB - Azul Info */
 
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 222 84% 5%;
-  --sidebar-primary: 358 60% 52%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 43 84% 61%;
-  --sidebar-accent-foreground: 222 84% 5%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-ring: 222 84% 5%;
+  /* Sidebar Colors */
+  --sidebar-background: 0 0% 100%; /* #FFFFFF - Branco */
+  --sidebar-foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
+  --sidebar-primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
+  --sidebar-accent: 213 100% 97%; /* #EFF6FF - Azul Claro hover */
+  --sidebar-accent-foreground: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-border: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
+  --sidebar-ring: 217 91% 60%; /* #2563EB - Azul Royal */
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --ring: 222 84% 5%;
+  --destructive: 0 84% 60%; /* #EF4444 - Vermelho Erro */
+  --destructive-foreground: 210 40% 98%; /* #F8FAFC - Cinza Claro */
+  --ring: 217 91% 60%; /* #2563EB - Azul Royal */
   --radius: 0.5rem;
 
   /* Dashboard customization variables */
@@ -58,50 +61,53 @@
 }
 
 .dark {
-  --background: 222 84% 5%; /* #0a0e1a */
-  --foreground: 210 40% 98%;
-  --muted: 217 32% 17%;
-  --muted-foreground: 215 20% 65%;
-  --popover: 224 71% 4%;
-  --popover-foreground: 210 40% 98%;
-  --card: 224 71% 4%;
-  --card-foreground: 210 40% 98%;
-  --border: 217 32% 17%;
-  --input: 217 32% 17%;
+  /* SenseiSystem - Tema Escuro (Dark Mode) */
+  --background: 222 84% 5%; /* #0F172A - Azul Grafite */
+  --foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --muted: 215 28% 17%; /* #1E293B - Azul Chumbo */
+  --muted-foreground: 215 16% 65%; /* #94A3B8 - Azul Cinzento */
+  --popover: 222 84% 5%; /* #0F172A - Azul Grafite */
+  --popover-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --card: 215 28% 17%; /* #1E293B - Azul Chumbo */
+  --card-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --border: 215 25% 27%; /* #334155 - Cinza Profundo */
+  --input: 215 25% 27%; /* #334155 - Cinza Profundo */
 
-  /* Custom colors based on design (dark mode) */
-  --primary: 358 60% 52%;
-  --primary-foreground: 210 40% 98%;
-  --primary-light: 358 60% 59%;
-  --primary-dark: 358 60% 44%;
+  /* Cores Primárias do SenseiSystem - Dark Mode */
+  --primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --primary-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --primary-light: 213 93% 68%; /* Azul mais claro */
+  --primary-dark: 221 83% 53%; /* Azul mais escuro */
 
-  --secondary: 210 40% 80%;
-  --secondary-foreground: 222 84% 5%;
-  --secondary-light: 210 40% 85%;
-  --secondary-dark: 210 40% 75%;
+  --secondary: 215 16% 65%; /* #94A3B8 - Azul Cinzento */
+  --secondary-foreground: 222 84% 5%; /* #0F172A - Azul Grafite */
+  --secondary-light: 215 20% 75%; /* Cinza mais claro */
+  --secondary-dark: 215 25% 55%; /* Cinza mais escuro */
 
-  --accent: 43 84% 61%;
-  --accent-foreground: 222 84% 5%;
-  --accent-light: 43 84% 70%;
-  --accent-dark: 43 84% 55%;
+  --accent: 43 96% 56%; /* #FBBF24 - Amber-400 */
+  --accent-foreground: 222 84% 5%; /* #0F172A - Azul Grafite */
+  --accent-light: 43 96% 70%; /* Amarelo mais claro */
+  --accent-dark: 43 96% 45%; /* Amarelo mais escuro */
 
-  --status-success: 122 39% 49%;
-  --status-danger: 4 90% 58%;
-  --status-warning: 36 100% 50%;
-  --status-info: 207 90% 54%;
+  /* Status Colors - Dark Mode */
+  --status-success: 142 76% 36%; /* #22C55E - Verde Sucesso */
+  --status-danger: 0 84% 60%; /* #EF4444 - Vermelho Erro */
+  --status-warning: 25 95% 53%; /* #F97316 - Laranja Alerta */
+  --status-info: 217 91% 60%; /* #2563EB - Azul Info */
 
-  --sidebar-background: 222 84% 5%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 358 60% 52%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 43 84% 61%;
-  --sidebar-accent-foreground: 222 84% 5%;
-  --sidebar-border: 217 32% 17%;
-  --sidebar-ring: 210 40% 98%;
+  /* Sidebar Colors - Dark Mode */
+  --sidebar-background: 222 84% 5%; /* #0F172A - Azul Grafite */
+  --sidebar-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-primary-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-accent: 220 91% 54%; /* #1D4ED8 - Azul Acetinado hover */
+  --sidebar-accent-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-border: 215 25% 27%; /* #334155 - Cinza Profundo */
+  --sidebar-ring: 210 40% 98%; /* #F1F5F9 - Branco Suave */
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --ring: 210 40% 98%;
+  --destructive: 0 84% 60%; /* #EF4444 - Vermelho Erro */
+  --destructive-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --ring: 210 40% 98%; /* #F1F5F9 - Branco Suave */
   --radius: 0.5rem;
 
   /* Dashboard customization variables */

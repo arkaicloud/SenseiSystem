@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, confirmPassword: string) => {
+  const register = async (email: string, password: string, additionalData: any) => {
     setIsLoading(true);
     setError(null);
     
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password, confirmPassword }),
+        body: JSON.stringify({ email, password, ...additionalData }),
       });
       
       const data = await response.json();

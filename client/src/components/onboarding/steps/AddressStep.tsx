@@ -116,6 +116,9 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
                     )}
                   </div>
                 </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Digite o CEP para preencher automaticamente o endereço
+                </div>
                 <FormMessage />
               </FormItem>
             )}

@@ -155,10 +155,8 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
 
           {currentStep === 3 && (
             <DocumentsStep 
-              onNext={handleDocumentsSubmit}
+              onNext={() => handleDocumentsSubmit({})}
               onBack={() => setCurrentStep(2)}
-              defaultValues={onboardingData}
-              isSubmitting={isSubmitting}
             />
           )}
         </CardContent>

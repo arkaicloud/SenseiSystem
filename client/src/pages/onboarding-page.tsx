@@ -89,55 +89,55 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
-      {/* Header */}
+      {/* Header - Responsivo */}
       <div className="bg-white border-b shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
             <div>
-              <h1 className="text-2xl font-bold text-primary">Matrícula SenseiSystem</h1>
-              <p className="text-sm text-muted-foreground">Complete sua inscrição em apenas 3 etapas</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-primary">Matrícula SenseiSystem</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Complete sua inscrição em apenas 3 etapas</p>
             </div>
             <button 
               onClick={() => window.close()} 
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground self-end sm:self-auto"
               title="Fechar"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Progress Section */}
+      {/* Progress Section - Responsivo */}
       <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="space-y-4">
-            <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
               <span>Etapa {currentStep} de 3</span>
               <span>{Math.round(progressPercentage)}% concluído</span>
             </div>
             <Progress value={progressPercentage} className="w-full h-2" />
 
-            {/* Step Indicators */}
-            <div className="flex justify-between mt-6">
+            {/* Step Indicators - Responsivo */}
+            <div className="flex justify-between mt-4 sm:mt-6 overflow-x-auto">
               {steps.map((step) => {
                 const StepIcon = step.icon;
                 const isActive = currentStep === step.number;
                 const isCompleted = currentStep > step.number;
                 
                 return (
-                  <div key={step.number} className="flex flex-col items-center space-y-2">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors ${
+                  <div key={step.number} className="flex flex-col items-center space-y-1 sm:space-y-2 min-w-0 flex-1">
+                    <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-colors ${
                       isCompleted 
                         ? 'bg-green-500 border-green-500 text-white' 
                         : isActive 
                           ? 'bg-primary border-primary text-white' 
                           : 'bg-muted border-muted-foreground/20 text-muted-foreground'
                     }`}>
-                      {isCompleted ? <CheckCircle className="w-6 h-6" /> : <StepIcon className="w-6 h-6" />}
+                      {isCompleted ? <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6" /> : <StepIcon className="w-4 h-4 sm:w-6 sm:h-6" />}
                     </div>
                     <div className="text-center">
-                      <div className={`text-sm font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                      <div className={`text-xs sm:text-sm font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'} px-1 text-center`}>
                         {step.title}
                       </div>
                     </div>
@@ -149,11 +149,11 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 py-8">
-        <div className="max-w-2xl mx-auto px-6">
+      {/* Main Content - Responsivo */}
+      <div className="flex-1 py-4 sm:py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card className="border-0 shadow-lg">
-            <CardContent className="pt-8 pb-6">
+            <CardContent className="pt-6 sm:pt-8 pb-4 sm:pb-6">
               {error && (
                 <Alert variant="destructive" className="mb-6">
                   <AlertDescription>{error}</AlertDescription>
@@ -188,10 +188,10 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - Responsivo */}
       <div className="bg-white border-t">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="text-center text-sm text-muted-foreground">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="text-center text-xs sm:text-sm text-muted-foreground">
             <p>Dúvidas? Entre em contato conosco através do sistema principal.</p>
           </div>
         </div>

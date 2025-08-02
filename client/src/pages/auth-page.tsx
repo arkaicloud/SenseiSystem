@@ -234,7 +234,7 @@ export default function AuthPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => window.open('/onboarding', '_blank')}
+                onClick={() => window.location.href = '/onboarding'}
               >
                 Matrícula
               </Button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +8,7 @@ import PersonalInfoStep, { type PersonalInfoData } from "@/components/onboarding
 import HealthFormStep, { type HealthFormData } from "@/components/onboarding/steps/HealthFormStep";
 import DocumentsStep from "@/components/onboarding/steps/DocumentsStep";
 import ReviewStep from "@/components/onboarding/steps/ReviewStep";
+import MobileStudentOnboarding from "@/components/onboarding/MobileStudentOnboarding";
 import { beltLevelEnum } from "@shared/schema";
 
 type OnboardingData = PersonalInfoData & HealthFormData & {
@@ -21,7 +22,20 @@ export default function OnboardingPage() {
   const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { register, error } = useAuth();
+
+  // Detectar se é mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   const handlePersonalInfoSubmit = (data: any) => {
     setOnboardingData(prev => ({ ...prev, ...data }));
@@ -84,6 +98,16 @@ export default function OnboardingPage() {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Usar versão mobile se for dispositivo móvel
+  if (isMobile) {
+    return (
+      <MobileStudentOnboarding 
+        onBack={() => window.close()}
+        onSuccess={() => setSuccess(true)}
+      />
     );
   }
 

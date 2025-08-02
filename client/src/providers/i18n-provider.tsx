@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { LanguageContextType } from '../types';
+import { LanguageContextType } from '../types/index';
 import enUS from '../locales/en-US';
 import ptBR from '../locales/pt-BR';
 
@@ -32,16 +32,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let result = translations[locale];
+    let result: any = translations[locale];
 
     for (const k of keys) {
-      if (result[k] === undefined) {
+      if (result && typeof result === 'object' && result[k] !== undefined) {
+        result = result[k];
+      } else {
         return key;
       }
-      result = result[k];
     }
 
-    return result;
+    return typeof result === 'string' ? result : key;
   };
 
   return (

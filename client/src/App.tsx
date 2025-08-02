@@ -20,6 +20,7 @@ import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "@/providers/auth-provider";
+import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ProtectedRoute } from "@/lib/protected-route";
 
@@ -98,18 +99,20 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <ThemeProvider>
-            <div className="min-h-screen bg-background">
-              <Toaster />
-              <MainLayout>
-                <Router />
-              </MainLayout>
-            </div>
-          </ThemeProvider>
-        </TooltipProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <ThemeProvider>
+              <div className="min-h-screen bg-background">
+                <Toaster />
+                <MainLayout>
+                  <Router />
+                </MainLayout>
+              </div>
+            </ThemeProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

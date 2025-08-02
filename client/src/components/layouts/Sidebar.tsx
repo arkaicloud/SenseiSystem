@@ -113,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       children: [
         {
           id: "mensalidades",
-          label: "Mensalidades",
+          label: "Contas a Receber",
           icon: CreditCard,
           path: "/payments",
           roles: ["admin", "instructor"],

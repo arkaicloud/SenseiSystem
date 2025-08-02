@@ -37,6 +37,12 @@ const Payments: React.FC = () => {
     refetchInterval: false,
   });
 
+  // Fetch financial stats
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/financial-stats'],
+    refetchInterval: false,
+  });
+
   // Add payment mutation
   const { mutate: addPayment, isPending: isAddingPayment } = useMutation({
     mutationFn: async (data: any) => {
@@ -45,16 +51,16 @@ const Payments: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: t('success'),
-        description: t('payment_added_successfully'),
+        title: "Sucesso",
+        description: "Pagamento adicionado com sucesso",
       });
       setIsAddPaymentOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/student-payments'] });
     },
     onError: (error) => {
       toast({
-        title: t('error'),
-        description: `${t('failed_to_add_payment')}: ${error}`,
+        title: "Erro",
+        description: `Falha ao adicionar pagamento: ${error}`,
         variant: "destructive",
       });
     },
@@ -68,8 +74,8 @@ const Payments: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: t('success'),
-        description: t('payment_updated_successfully'),
+        title: "Sucesso",
+        description: "Pagamento atualizado com sucesso",
       });
       setSelectedPayment(null);
       queryClient.invalidateQueries({ queryKey: ['/api/student-payments'] });
@@ -140,25 +146,114 @@ const Payments: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'paid': return t('paid');
-      case 'pending': return t('pending');
-      case 'overdue': return t('overdue');
+      case 'paid': return 'Pago';
+      case 'pending': return 'Pendente';
+      case 'overdue': return 'Em Atraso';
       default: return status;
     }
   };
 
+  const stats = (statsData as any) || {};
+  const financialMetrics = {
+    totalReceived: stats.totalReceived || 0,
+    pendingAmount: stats.pendingAmount || 0,
+    overdueAmount: stats.overdueAmount || 0,
+    monthlyRecurring: stats.monthlyRecurring || 0,
+    revenueGrowth: stats.revenueGrowth || 0,
+    totalStudents: stats.totalStudents || 0
+  };
+
   return (
     <>
+      {/* Mini Dashboard Financeiro */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Recebido no Mês</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrencyBRL(financialMetrics.totalReceived)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {financialMetrics.revenueGrowth > 0 ? '+' : ''}{financialMetrics.revenueGrowth.toFixed(1)}% vs mês anterior
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="material-icons text-green-600">trending_up</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pendente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {formatCurrencyBRL(financialMetrics.pendingAmount)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  A receber este mês
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <span className="material-icons text-yellow-600">schedule</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Em Atraso</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {formatCurrencyBRL(financialMetrics.overdueAmount)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Requer atenção
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <span className="material-icons text-red-600">warning</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Receita Recorrente</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatCurrencyBRL(financialMetrics.monthlyRecurring)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {financialMetrics.totalStudents} alunos ativos
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="material-icons text-blue-600">refresh</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('payments')}</h1>
-          <p className="text-gray-600">{t('manage_payment_history')}</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Contas a Receber</h1>
+          <p className="text-gray-600">Gerencie os pagamentos e receitas</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">
             <input
               type="text"
-              placeholder={t('searchPayments')}
+              placeholder="Buscar pagamentos..."
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,11 +266,11 @@ const Payments: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                {t('create_payment')}
+                Lançar Pagamento
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>{t('create_payment')}</DialogTitle>
+              <DialogTitle>Lançar Novo Pagamento</DialogTitle>
               <PaymentForm 
                 students={students.map((student: any) => ({
                   id: student.id,
@@ -192,23 +287,23 @@ const Payments: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('payment_history')}</CardTitle>
+          <CardTitle>Histórico de Pagamentos</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all">
             <TabsList className="mb-4">
-              <TabsTrigger value="all">{t('allPayments')}</TabsTrigger>
-              <TabsTrigger value="paid">{t('paid')}</TabsTrigger>
-              <TabsTrigger value="pending">{t('pending')}</TabsTrigger>
-              <TabsTrigger value="overdue">{t('overdue')}</TabsTrigger>
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="paid">Pagos</TabsTrigger>
+              <TabsTrigger value="pending">Pendentes</TabsTrigger>
+              <TabsTrigger value="overdue">Em Atraso</TabsTrigger>
             </TabsList>
 
             <TabsContent value="all">
               {paymentsLoading ? (
-                <div className="text-center py-8">{t('loading_payments')}</div>
+                <div className="text-center py-8">Carregando pagamentos...</div>
               ) : filteredPayments.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  {searchQuery ? t('no_payments_matching_search') : t('no_payments_found')}
+                  {searchQuery ? "Nenhum pagamento encontrado para a busca" : "Nenhum pagamento encontrado"}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -216,25 +311,25 @@ const Payments: React.FC = () => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('student')}
+                          Aluno
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('payment_plan')}
+                          Plano
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('amount')}
+                          Valor
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('status')}
+                          Status
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('due_date')}
+                          Vencimento
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('payment_date')}
+                          Data Pagamento
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('actions')}
+                          Ações
                         </th>
                       </tr>
                     </thead>
@@ -259,7 +354,11 @@ const Payments: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{payment.plan.name}</div>
-                            <div className="text-xs text-gray-500">{t(payment.plan.frequency)}</div>
+                            <div className="text-xs text-gray-500">
+                              {payment.plan.frequency === 'monthly' ? 'Mensal' : 
+                               payment.plan.frequency === 'quarterly' ? 'Trimestral' : 
+                               payment.plan.frequency === 'yearly' ? 'Anual' : payment.plan.frequency}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">

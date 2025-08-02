@@ -147,6 +147,11 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email already in use" });
       }
 
+      // Generate username from email if not provided
+      if (!req.body.username) {
+        req.body.username = req.body.email.split('@')[0].toLowerCase();
+      }
+
       // Check if username already exists
       const existingUsername = await storage.getUserByUsername(req.body.username);
       if (existingUsername) {

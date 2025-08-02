@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Steps
@@ -111,7 +111,19 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   ];
 
   if (success) {
-    return <ReviewStep />;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md mx-auto text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Cadastro Realizado!</h3>
+          <p className="text-muted-foreground">
+            Seu cadastro foi enviado para aprovação. Você receberá um e-mail quando for aprovado.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

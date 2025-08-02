@@ -209,31 +209,46 @@ export function setupAuth(app: Express) {
 
   // Login route
   app.post("/api/login", (req, res, next) => {
+    console.log('📧 Login attempt for:', req.body.email);
+    
     passport.authenticate("local", (err, user, info) => {
       if (err) {
+        console.error('🔥 Authentication error:', err);
         return next(err);
       }
       
       if (!user) {
-        return res.status(401).json({ message: info.message || "Authentication failed" });
+        console.log('❌ Authentication failed:', info?.message || "No user found");
+        return res.status(401).json({ message: info?.message || "Email ou senha incorretos" });
       }
+      
+      console.log('✅ User authenticated:', user.email);
       
       req.login(user, async (err) => {
         if (err) {
+          console.error('🔥 Session creation error:', err);
           return next(err);
         }
         
-        // Create activity log for login
-        await storage.createActivityLog({
-          activity: `User logged in: ${user.firstName} ${user.lastName}`,
-          userId: user.id,
-          entityType: "user",
-          entityId: user.id,
-          timestamp: new Date()
-        });
+        try {
+          // Create activity log for login
+          await storage.createActivityLog({
+            activity: `User logged in: ${user.firstName} ${user.lastName}`,
+            userId: user.id,
+            entityType: "user",
+            entityId: user.id,
+            timestamp: new Date()
+          });
+          
+          console.log('📝 Activity log created for login');
+        } catch (logError) {
+          console.error('⚠️ Failed to create activity log:', logError);
+          // Don't fail the login for this
+        }
         
         // Return user without password
         const { password, ...userWithoutPassword } = user;
+        console.log('🎉 Login successful for:', user.email);
         return res.json({ user: userWithoutPassword });
       });
     })(req, res, next);
@@ -315,18 +330,27 @@ export function setupAuth(app: Express) {
 }
 
 // Function to create default admin user
-async function initializeDefaultAdmin() {
+export async function initializeDefaultAdmin() {
   try {
-    const existingAdmin = await storage.getUserByEmail("arkaihub@gmail.com");
+    // Test database connection first
+    if (storage.testDatabaseConnection) {
+      const connectionTest = await storage.testDatabaseConnection();
+      if (!connectionTest) {
+        throw new Error("Failed to connect to database");
+      }
+    }
+
+    // Create admin user
+    const existingAdmin = await storage.getUserByEmail("adm@senseisystem.com.br");
     
     if (!existingAdmin) {
       const hashedPassword = await hashPassword("12345678");
       
       await storage.createUser({
-        firstName: "Arkaia",
-        lastName: "Admin",
-        username: "arkaiadm",
-        email: "arkaihub@gmail.com",
+        firstName: "Administrador",
+        lastName: "Sistema",
+        username: "admin",
+        email: "adm@senseisystem.com.br",
         password: hashedPassword,
         role: "admin",
         active: true,
@@ -335,9 +359,72 @@ async function initializeDefaultAdmin() {
         joinDate: new Date(),
       });
       
-      console.log("Admin user created: arkaiadm");
+      console.log("Admin user created: admin (adm@senseisystem.com.br)");
+    }
+
+    // Create student user
+    const existingStudent = await storage.getUserByEmail("aluno@senseisystem.com.br");
+    
+    if (!existingStudent) {
+      const hashedPassword = await hashPassword("12345678");
+      
+      const studentUser = await storage.createUser({
+        firstName: "Aluno",
+        lastName: "Teste",
+        username: "aluno",
+        email: "aluno@senseisystem.com.br",
+        password: hashedPassword,
+        role: "student",
+        active: true,
+        phone: null,
+        emergencyContact: null,
+        joinDate: new Date(),
+      });
+
+      // Create student profile
+      const student = await storage.createStudent({
+        userId: studentUser.id,
+        beltLevel: "white",
+        stripes: 0,
+        lastPromotionDate: new Date(),
+        attendanceRate: 0,
+        notes: "Usuário de teste criado automaticamente"
+      });
+
+      // Create a default payment plan if none exists
+      try {
+        const existingPlans = await storage.getPaymentPlans();
+        let defaultPlan = existingPlans.find(p => p.name === "Plano Básico");
+        
+        if (!defaultPlan) {
+          defaultPlan = await storage.createPaymentPlan({
+            name: "Plano Básico",
+            description: "Plano básico para usuários de teste",
+            price: 100,
+            durationDays: 30,
+            active: true
+          });
+        }
+
+        // Create student payment record
+        await storage.createStudentPayment({
+          studentId: student.id,
+          paymentPlanId: defaultPlan.id,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          status: "paid",
+          amount: defaultPlan.price,
+          notes: "Plano de teste criado automaticamente"
+        });
+        
+        console.log("Default payment plan assigned to student user");
+      } catch (planError) {
+        console.error("Failed to create payment plan for student:", planError);
+      }
+      
+      console.log("Student user created: aluno (aluno@senseisystem.com.br)");
     }
   } catch (err) {
-    console.error("Error creating admin user:", err);
+    console.error("Error creating default users:", err);
   }
 }

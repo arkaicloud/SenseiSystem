@@ -177,6 +177,13 @@ export default function AuthPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {error && (
+                      <Alert className="mb-4" variant="destructive">
+                        <AlertDescription>
+                          {error}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                     <Form {...loginForm}>
                       <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                         <FormField

@@ -317,16 +317,17 @@ export function setupAuth(app: Express) {
 // Function to create default admin user
 async function initializeDefaultAdmin() {
   try {
-    const existingAdmin = await storage.getUserByEmail("arkaihub@gmail.com");
+    // Create admin user
+    const existingAdmin = await storage.getUserByEmail("adm@senseisystem.com.br");
     
     if (!existingAdmin) {
       const hashedPassword = await hashPassword("12345678");
       
       await storage.createUser({
-        firstName: "Arkaia",
-        lastName: "Admin",
-        username: "arkaiadm",
-        email: "arkaihub@gmail.com",
+        firstName: "Administrador",
+        lastName: "Sistema",
+        username: "admin",
+        email: "adm@senseisystem.com.br",
         password: hashedPassword,
         role: "admin",
         active: true,
@@ -335,9 +336,41 @@ async function initializeDefaultAdmin() {
         joinDate: new Date(),
       });
       
-      console.log("Admin user created: arkaiadm");
+      console.log("Admin user created: admin (adm@senseisystem.com.br)");
+    }
+
+    // Create student user
+    const existingStudent = await storage.getUserByEmail("aluno@senseisystem.com.br");
+    
+    if (!existingStudent) {
+      const hashedPassword = await hashPassword("12345678");
+      
+      const studentUser = await storage.createUser({
+        firstName: "Aluno",
+        lastName: "Teste",
+        username: "aluno",
+        email: "aluno@senseisystem.com.br",
+        password: hashedPassword,
+        role: "student",
+        active: true,
+        phone: null,
+        emergencyContact: null,
+        joinDate: new Date(),
+      });
+
+      // Create student profile
+      await storage.createStudent({
+        userId: studentUser.id,
+        beltLevel: "white",
+        stripes: 0,
+        lastPromotionDate: new Date(),
+        attendanceRate: 0,
+        notes: "Usuário de teste criado automaticamente"
+      });
+      
+      console.log("Student user created: aluno (aluno@senseisystem.com.br)");
     }
   } catch (err) {
-    console.error("Error creating admin user:", err);
+    console.error("Error creating default users:", err);
   }
 }

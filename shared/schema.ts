@@ -8,6 +8,7 @@ export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student
 export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'brown', 'black']);
 export const paymentStatusEnum = pgEnum('payment_status', ['paid', 'pending', 'overdue']);
 export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'absent', 'late']);
+export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
 
 // Users table
 export const users = pgTable("users", {
@@ -185,6 +186,25 @@ export const riskSettings = pgTable("risk_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Documents table
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  documentType: documentTypeEnum("document_type").notNull(),
+  fileName: text("file_name").notNull(),
+  originalFileName: text("original_file_name").notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
+  notes: text("notes"),
+  isVerified: boolean("is_verified").default(false),
+  verifiedBy: integer("verified_by").references(() => users.id),
+  verifiedAt: timestamp("verified_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users)
   .omit({ id: true })
@@ -204,6 +224,7 @@ export const insertSchoolEventSchema = createInsertSchema(schoolEvents).omit({ i
 export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCustomizations).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertRiskActionSchema = createInsertSchema(riskActions).omit({ id: true, createdAt: true });
 export const insertRiskSettingsSchema = createInsertSchema(riskSettings).omit({ id: true, updatedAt: true });
+export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -244,6 +265,9 @@ export type InsertRiskAction = z.infer<typeof insertRiskActionSchema>;
 
 export type RiskSettings = typeof riskSettings.$inferSelect;
 export type InsertRiskSettings = z.infer<typeof insertRiskSettingsSchema>;
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 
 // Custom extended types for frontend use
 export type StudentWithUser = Student & {

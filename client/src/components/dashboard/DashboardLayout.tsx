@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { 
@@ -13,9 +14,12 @@ import {
   ArrowUpRight,
   Activity,
   DollarSign,
-  UserCheck
+  UserCheck,
+  Gift,
+  Bell
 } from "lucide-react";
 import { FinancialDashboard } from "./FinancialDashboard";
+import { BirthdayNotifications, BirthdayCard } from "./BirthdayNotifications";
 import { formatCurrencyBRL } from "@/lib/utils";
 
 interface DashboardStats {
@@ -112,6 +116,9 @@ export function DashboardLayout() {
 
   return (
     <div className="space-y-6">
+      {/* Birthday Notifications */}
+      <BirthdayNotifications />
+
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -171,7 +178,8 @@ export function DashboardLayout() {
       </div>
 
       {/* Statistics Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <BirthdayCard />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

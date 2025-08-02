@@ -1,6 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { users, students } from "@shared/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { 
   insertUserSchema, 
@@ -21,6 +24,40 @@ import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
+
+  // =====Birthdays Route=====
+  app.get("/api/birthdays/today", isAuthenticated, async (req, res) => {
+    try {
+      const today = new Date();
+      const month = today.getMonth() + 1; // getMonth() returns 0-11
+      const day = today.getDate();
+      
+      const birthdayStudents = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          birthDate: users.birthDate,
+          phone: users.phone,
+          beltLevel: students.beltLevel,
+          stripes: students.stripes
+        })
+        .from(users)
+        .innerJoin(students, eq(users.id, students.userId))
+        .where(
+          and(
+            eq(users.active, true),
+            sql`EXTRACT(MONTH FROM ${users.birthDate}) = ${month}`,
+            sql`EXTRACT(DAY FROM ${users.birthDate}) = ${day}`
+          )
+        );
+
+      res.json({ birthdays: birthdayStudents });
+    } catch (error) {
+      console.error('Error fetching birthdays:', error);
+      res.status(500).json({ error: 'Failed to fetch birthdays' });
+    }
+  });
 
   // =====Financial Stats Route=====
   app.get("/api/financial-stats", isAuthenticated, async (req, res) => {

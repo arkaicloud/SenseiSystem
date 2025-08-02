@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { AuthContextType, LoginResponse, StudentWithUser } from '../types';
+import { AuthContextType, LoginResponse, User } from '../types';
 import { api } from '../lib/api';
 
 export const AuthContext = createContext<AuthContextType>({
@@ -14,7 +14,7 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<StudentWithUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

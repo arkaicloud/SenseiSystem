@@ -10,12 +10,12 @@ export type {
 
 // Missing types that need to be defined
 export interface LoginResponse {
-  user: StudentWithUser;
+  user: User;
   token: string;
 }
 
 export interface AuthState {
-  user: StudentWithUser | null;
+  user: User | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
@@ -39,7 +39,7 @@ export interface ThemeContextType {
 }
 
 export interface AuthContextType {
-  user: StudentWithUser | null;
+  user: User | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;

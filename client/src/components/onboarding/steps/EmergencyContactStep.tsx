@@ -59,7 +59,6 @@ export default function EmergencyContactStep({ onNext, onBack, defaultValues }: 
           Pessoa para contato em caso de emergência
         </p>
       </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <FormField
@@ -67,7 +66,7 @@ export default function EmergencyContactStep({ onNext, onBack, defaultValues }: 
             name="emergencyContact"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Nome Completo *</FormLabel>
+                <FormLabel className="text-base font-medium">Nome *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Nome do responsável" 

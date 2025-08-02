@@ -1,11 +1,10 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { LanguageContextType } from '../types/index';
-import enUS from '../locales/en-US';
-import ptBR from '../locales/pt-BR';
+import ptBR from '../translations/pt-BR';
 
 const translations = {
-  'en-US': enUS,
-  'pt-BR': ptBR
+  'pt-BR': ptBR,
+  'en-US': ptBR // Usar português como fallback até implementar inglês completo
 };
 
 export const LanguageContext = createContext<LanguageContextType>({

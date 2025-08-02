@@ -33,10 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUser = async (token: string) => {
     try {
-      const response = await fetch('/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+      const response = await fetch('/api/user', {
         credentials: 'include'
       });
       
@@ -45,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       const userData = await response.json();
-      setUser(userData);
+      setUser(userData.user);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -60,17 +57,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const response = await api.auth.login({ email, password });
-      const data: LoginResponse = await response.json();
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
       
       setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('token', data.token);
+      setToken('authenticated'); // Session-based auth
+      localStorage.setItem('token', 'authenticated');
       setIsLoading(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError('Invalid email or password');
+      setError(err.message || 'Email ou senha incorretos');
       setIsLoading(false);
+      throw err; // Re-throw to handle in components
     }
   };
 
@@ -79,24 +89,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const response = await api.auth.register({ email, password, confirmPassword });
-      const data: LoginResponse = await response.json();
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, confirmPassword }),
+      });
       
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('token', data.token);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+      
+      // Registration successful but user needs approval
+      setError(null);
       setIsLoading(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Register error:', err);
-      setError('Error creating account');
+      setError(err.message || 'Erro ao criar conta');
       setIsLoading(false);
+      throw err;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('token');
+    }
   };
 
   const clearError = () => {

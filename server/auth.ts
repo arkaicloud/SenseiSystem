@@ -382,7 +382,7 @@ export async function initializeDefaultAdmin() {
       });
 
       // Create student profile
-      await storage.createStudent({
+      const student = await storage.createStudent({
         userId: studentUser.id,
         beltLevel: "white",
         stripes: 0,
@@ -390,6 +390,37 @@ export async function initializeDefaultAdmin() {
         attendanceRate: 0,
         notes: "Usuário de teste criado automaticamente"
       });
+
+      // Create a default payment plan if none exists
+      try {
+        const existingPlans = await storage.getPaymentPlans();
+        let defaultPlan = existingPlans.find(p => p.name === "Plano Básico");
+        
+        if (!defaultPlan) {
+          defaultPlan = await storage.createPaymentPlan({
+            name: "Plano Básico",
+            description: "Plano básico para usuários de teste",
+            price: 100,
+            durationDays: 30,
+            active: true
+          });
+        }
+
+        // Create student payment record
+        await storage.createStudentPayment({
+          studentId: student.id,
+          paymentPlanId: defaultPlan.id,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          status: "paid",
+          amount: defaultPlan.price,
+          notes: "Plano de teste criado automaticamente"
+        });
+        
+        console.log("Default payment plan assigned to student user");
+      } catch (planError) {
+        console.error("Failed to create payment plan for student:", planError);
+      }
       
       console.log("Student user created: aluno (aluno@senseisystem.com.br)");
     }

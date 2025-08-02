@@ -1,11 +1,10 @@
 import { apiRequest } from './queryClient';
-import { LoginUserInput, RegisterUserInput } from '@shared/schema';
 
 export const api = {
   auth: {
-    login: (data: LoginUserInput) => apiRequest('POST', '/api/auth/login', data),
-    register: (data: RegisterUserInput) => apiRequest('POST', '/api/auth/register', data),
-    me: () => apiRequest('GET', '/api/auth/me')
+    login: (data: { email: string; password: string }) => apiRequest('POST', '/api/login', data),
+    register: (data: any) => apiRequest('POST', '/api/register', data),
+    me: () => apiRequest('GET', '/api/user')
   },
   students: {
     getAll: () => apiRequest('GET', '/api/students'),

@@ -99,14 +99,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <MainLayout>
-              <Router />
-            </MainLayout>
-          </TooltipProvider>
-        </ThemeProvider>
+        <TooltipProvider>
+          <ThemeProvider>
+            <div className="min-h-screen bg-background">
+              <Toaster />
+              <MainLayout>
+                <Router />
+              </MainLayout>
+            </div>
+          </ThemeProvider>
+        </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

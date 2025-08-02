@@ -136,12 +136,6 @@ export function DashboardLayout() {
         </div>
       </div>
 
-      {/* Dashboard Financeiro */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Métricas Financeiras</h2>
-        <FinancialDashboard />
-      </div>
-
       {/* Quick Actions Cards */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Navegação Rápida</h2>
@@ -176,6 +170,17 @@ export function DashboardLayout() {
             );
           })}
         </div>
+      </div>
+
+      {/* Dashboard Financeiro */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Métricas Financeiras</h2>
+        <FinancialDashboard />
+      </div>
+
+      {/* Enrollment Chart */}
+      <div className="mt-6">
+        <EnrollmentChart />
       </div>
 
       {/* Statistics Overview */}
@@ -241,11 +246,6 @@ export function DashboardLayout() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Enrollment Chart */}
-      <div className="mt-6">
-        <EnrollmentChart />
       </div>
     </div>
   );

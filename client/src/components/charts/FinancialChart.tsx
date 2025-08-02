@@ -10,10 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig,
 } from "@/components/ui/chart"
 import {
   Select,
@@ -39,12 +39,12 @@ const chartConfig = {
 export function FinancialChart() {
   const [timeRange, setTimeRange] = React.useState("30d")
 
-  const { data: chartData = [], isLoading } = useQuery({
+  const { data: chartData, isLoading } = useQuery({
     queryKey: ['/api/financial-chart', timeRange],
   })
 
   const filteredData = React.useMemo(() => {
-    if (!chartData || chartData.length === 0) {
+    if (!chartData || !Array.isArray(chartData) || chartData.length === 0) {
       // Generate sample data for the last 30 days if no real data
       const data = []
       const today = new Date()
@@ -169,7 +169,7 @@ export function FinancialChart() {
                   }}
                   formatter={(value, name) => [
                     formatCurrencyBRL(Number(value)),
-                    chartConfig[name as keyof typeof chartConfig]?.label || name
+                    String(chartConfig[name as keyof typeof chartConfig]?.label || name)
                   ]}
                   indicator="dot"
                 />

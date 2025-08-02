@@ -12,7 +12,7 @@ import ContactInfoStep, { type ContactInfoType } from "./steps/ContactInfoStep";
 import EmergencyContactStep, { type EmergencyContactType } from "./steps/EmergencyContactStep";
 import AddressStep, { type AddressType } from "./steps/AddressStep";
 import FinalReviewStep, { type CompleteFormData } from "./steps/FinalReviewStep";
-import ReviewStep from "./steps/ReviewStep";
+import PhysicalAssessmentStep, { type PhysicalAssessmentType } from "./steps/PhysicalAssessmentStep";
 
 interface MobileStudentOnboardingProps {
   onBack: () => void;
@@ -26,7 +26,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   const [success, setSuccess] = useState(false);
   const { register, error } = useAuth();
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   // Step handlers
@@ -48,6 +48,17 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   const handleAddress = (data: AddressType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(5);
+  };
+
+  const handleFinalReview = (data: CompleteFormData) => {
+    setFormData(prev => ({ ...prev, ...data }));
+    setCurrentStep(6);
+  };
+
+  const handlePhysicalAssessment = (data: PhysicalAssessmentType) => {
+    setFormData(prev => ({ ...prev, ...data }));
+    // Aqui seguiria para as próximas etapas como no desktop
+    handleFinalSubmit({ ...formData, ...data } as CompleteFormData);
   };
 
   const handleFinalSubmit = async (data: CompleteFormData) => {
@@ -95,7 +106,8 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
     "Contato", 
     "Emergência",
     "Endereço",
-    "Revisão"
+    "Revisão",
+    "Aptidão Física"
   ];
 
   if (success) {
@@ -167,10 +179,18 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
 
               {currentStep === 5 && (
                 <FinalReviewStep
-                  onSubmit={handleFinalSubmit}
+                  onNext={handleFinalReview}
                   onBack={goBack}
                   formData={formData as CompleteFormData}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={false}
+                />
+              )}
+
+              {currentStep === 6 && (
+                <PhysicalAssessmentStep
+                  onNext={handlePhysicalAssessment}
+                  onBack={goBack}
+                  defaultValues={formData as PhysicalAssessmentType}
                 />
               )}
             </CardContent>

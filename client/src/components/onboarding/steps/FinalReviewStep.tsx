@@ -12,21 +12,29 @@ import type { AddressType } from "./AddressStep";
 export type CompleteFormData = PersonalDataType & ContactInfoType & EmergencyContactType & AddressType;
 
 interface FinalReviewStepProps {
-  onSubmit: (data: CompleteFormData) => Promise<void>;
+  onNext?: (data: CompleteFormData) => void;
+  onSubmit?: (data: CompleteFormData) => Promise<void>;
   onBack: () => void;
   formData: CompleteFormData;
   isSubmitting?: boolean;
 }
 
-export default function FinalReviewStep({ onSubmit, onBack, formData, isSubmitting = false }: FinalReviewStepProps) {
+export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, isSubmitting = false }: FinalReviewStepProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async () => {
-    setIsProcessing(true);
-    try {
-      await onSubmit(formData);
-    } finally {
-      setIsProcessing(false);
+    if (onNext) {
+      onNext(formData);
+      return;
+    }
+    
+    if (onSubmit) {
+      setIsProcessing(true);
+      try {
+        await onSubmit(formData);
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
@@ -178,7 +186,7 @@ export default function FinalReviewStep({ onSubmit, onBack, formData, isSubmitti
           ) : (
             <>
               <CheckCircle className="w-4 h-4 mr-2" />
-              Finalizar Cadastro
+              {onNext ? "Continuar" : "Finalizar Cadastro"}
             </>
           )}
         </Button>

@@ -17,7 +17,7 @@ const healthFormSchema = z.object({
   emergencyPhone: z.string().min(10, "Telefone de emergência é obrigatório"),
 });
 
-type HealthFormData = z.infer<typeof healthFormSchema>;
+export type HealthFormData = z.infer<typeof healthFormSchema>;
 
 interface HealthFormStepProps {
   onNext: (data: HealthFormData) => void;

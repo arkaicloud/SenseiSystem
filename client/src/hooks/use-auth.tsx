@@ -53,7 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        // Use direct fetch call with full error handling
+        console.log('Attempting login with:', { email: credentials.email });
+        
         const response = await fetch('/api/login', {
           method: 'POST',
           headers: {
@@ -63,16 +64,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           credentials: 'include'
         });
 
+        console.log('Login response status:', response.status);
+        console.log('Login response headers:', Object.fromEntries(response.headers.entries()));
+
         // If we get HTML instead of JSON (which happens due to Vite middleware)
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('text/html')) {
-          throw new Error("Login service unavailable. Please try again later.");
+          console.error('Received HTML response instead of JSON');
+          throw new Error("Serviço de login indisponível. Tente novamente.");
         }
 
+        const responseText = await response.text();
+        console.log('Login response text:', responseText);
+
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Login failed");
+          let errorData;
+          try {
+            errorData = JSON.parse(responseText);
+          } catch (e) {
+            console.error('Failed to parse error response:', responseText);
+            throw new Error("Erro na comunicação com o servidor");
+          }
+          throw new Error(errorData.message || `Login falhou (${response.status})`);
         }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse success response:', responseText);
+          throw new Error("Resposta inválida do servidor");
+        }
+
+        console.log('Login successful:', data);
+        return data;
 
         const data = await response.json();
         return data.user;

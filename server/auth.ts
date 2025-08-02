@@ -209,31 +209,46 @@ export function setupAuth(app: Express) {
 
   // Login route
   app.post("/api/login", (req, res, next) => {
+    console.log('📧 Login attempt for:', req.body.email);
+    
     passport.authenticate("local", (err, user, info) => {
       if (err) {
+        console.error('🔥 Authentication error:', err);
         return next(err);
       }
       
       if (!user) {
-        return res.status(401).json({ message: info.message || "Authentication failed" });
+        console.log('❌ Authentication failed:', info?.message || "No user found");
+        return res.status(401).json({ message: info?.message || "Email ou senha incorretos" });
       }
+      
+      console.log('✅ User authenticated:', user.email);
       
       req.login(user, async (err) => {
         if (err) {
+          console.error('🔥 Session creation error:', err);
           return next(err);
         }
         
-        // Create activity log for login
-        await storage.createActivityLog({
-          activity: `User logged in: ${user.firstName} ${user.lastName}`,
-          userId: user.id,
-          entityType: "user",
-          entityId: user.id,
-          timestamp: new Date()
-        });
+        try {
+          // Create activity log for login
+          await storage.createActivityLog({
+            activity: `User logged in: ${user.firstName} ${user.lastName}`,
+            userId: user.id,
+            entityType: "user",
+            entityId: user.id,
+            timestamp: new Date()
+          });
+          
+          console.log('📝 Activity log created for login');
+        } catch (logError) {
+          console.error('⚠️ Failed to create activity log:', logError);
+          // Don't fail the login for this
+        }
         
         // Return user without password
         const { password, ...userWithoutPassword } = user;
+        console.log('🎉 Login successful for:', user.email);
         return res.json({ user: userWithoutPassword });
       });
     })(req, res, next);

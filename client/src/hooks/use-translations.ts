@@ -10,3 +10,6 @@ export const useTranslations = () => {
   
   return context;
 };
+
+// Alias para compatibilidade
+export const useTranslation = useTranslations;

@@ -7,6 +7,7 @@ import {
   insertStudentSchema, 
   insertClassSchema,
   insertAttendanceSchema,
+  insertAttendanceChangesSchema,
   insertPaymentPlanSchema,
   insertStudentPaymentSchema,
   insertActivityLogSchema,
@@ -604,6 +605,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para converter estudante em bolsista
+  app.post("/api/students/:id/scholarship", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { scholarshipPlanId, reason } = req.body;
+
+      const student = await storage.getStudent(Number(id));
+      if (!student) {
+        return res.status(404).json({ message: "Estudante não encontrado" });
+      }
+
+      // Verificar se o plano de bolsista existe
+      const scholarshipPlan = await storage.getPaymentPlan(scholarshipPlanId);
+      if (!scholarshipPlan || !scholarshipPlan.isScholarship) {
+        return res.status(400).json({ message: "Plano de bolsista inválido" });
+      }
+
+      // Atualizar estudante para bolsista
+      const updatedStudent = await storage.updateStudent(Number(id), {
+        isScholarship: true,
+        scholarshipReason: reason || null
+      });
+
+      // Criar um pagamento gratuito para o bolsista
+      await storage.createStudentPayment({
+        studentId: Number(id),
+        planId: scholarshipPlanId,
+        status: 'paid',
+        dueDate: new Date(),
+        paidDate: new Date(),
+        amount: 0,
+        notes: `Plano de bolsista: ${reason || 'Convertido pelo administrador'}`
+      });
+
+      // Log da atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `Converteu estudante ID: ${id} para bolsista - Motivo: ${reason || 'Não especificado'}`,
+        entityType: 'student',
+        entityId: Number(id),
+        timestamp: new Date()
+      });
+
+      res.json({ 
+        message: "Estudante convertido para bolsista com sucesso",
+        student: updatedStudent 
+      });
+    } catch (error) {
+      console.error("Erro ao converter estudante para bolsista:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // ===== Class Routes =====
   app.get("/api/classes", isAuthenticated, async (req, res) => {
     try {
@@ -822,13 +877,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota específica para alunos confirmarem presença
+  // Rota específica para alunos confirmarem presença com controle de limites
   app.post("/api/attendance/confirm", isAuthenticated, async (req, res) => {
     try {
-      const { classId } = req.body;
+      const { classId, date } = req.body;
       const requestUser = (req as any).user;
 
-      console.log("Tentativa de confirmação de presença:", { classId, userId: requestUser?.id });
+      console.log("Tentativa de confirmação de presença:", { classId, userId: requestUser?.id, date });
 
       if (!classId) {
         return res.status(400).json({ message: "Class ID is required" });
@@ -846,30 +901,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student profile not found" });
       }
 
-      // Verificar se já existe presença para hoje
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const classDate = date ? new Date(date) : new Date();
+      const classDateStr = classDate.toISOString().split('T')[0];
 
-      const existingAttendances = await storage.getAttendanceByClass(classId, today);
+      // Verificar limite de alunos por aula
+      if (classItem.maxStudents && classItem.maxStudents > 0) {
+        const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
+        const confirmedCount = existingAttendances.filter(att => 
+          new Date(att.date).toISOString().split('T')[0] === classDateStr &&
+          att.status === 'present'
+        ).length;
+
+        if (confirmedCount >= classItem.maxStudents) {
+          return res.status(400).json({ 
+            message: "Esta aula já atingiu o limite máximo de alunos" 
+          });
+        }
+      }
+
+      // Verificar se já existe presença para esta data
+      const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === todayStr
+        new Date(att.date).toISOString().split('T')[0] === classDateStr
       );
 
       if (existingAttendance) {
-        return res.status(400).json({ message: "Attendance already recorded for today" });
+        return res.status(400).json({ message: "Presença já registrada para esta data" });
+      }
+
+      // Verificar limite de confirmações para esta aula
+      const changes = await storage.getAttendanceChanges(student.id, classId, classDate);
+      const confirmations = changes.filter(change => change.changeType === 'confirm');
+      
+      if (confirmations.length >= 2) {
+        return res.status(400).json({ 
+          message: "Você atingiu o limite de alterações. Fale com o Sensei." 
+        });
       }
 
       // Criar registro de presença
       const attendanceData = {
         studentId: student.id,
         classId: classId,
-        date: new Date(), // Usar nova instância de Date
+        date: classDate,
         status: 'present' as const,
         checkedInBy: requestUser.id
       };
 
       const attendance = await storage.createAttendance(attendanceData);
+
+      // Registrar a mudança na tabela de controle
+      await storage.createAttendanceChange({
+        studentId: student.id,
+        classId: classId,
+        date: classDate,
+        changeType: 'confirm'
+      });
 
       // Log da atividade
       await storage.createActivityLog({
@@ -887,10 +975,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para cancelar presença
+  // Rota para cancelar presença com controle de limites
   app.delete("/api/attendance/cancel", isAuthenticated, async (req, res) => {
     try {
-      const { classId } = req.body;
+      const { classId, date } = req.body;
       const requestUser = (req as any).user;
 
       if (!classId) {
@@ -903,26 +991,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student profile not found" });
       }
 
-      // Buscar presença existente para hoje
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const classDate = date ? new Date(date) : new Date();
+      const classDateStr = classDate.toISOString().split('T')[0];
 
-      const existingAttendances = await storage.getAttendanceByClass(classId, today);
+      // Buscar presença existente para a data especificada
+      const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === todayStr
+        new Date(att.date).toISOString().split('T')[0] === classDateStr
       );
 
       if (!existingAttendance) {
-        return res.status(404).json({ message: "No attendance record found for today" });
+        return res.status(404).json({ message: "Nenhuma presença encontrada para esta data" });
+      }
+
+      // Verificar limite de cancelamentos para esta aula
+      const changes = await storage.getAttendanceChanges(student.id, classId, classDate);
+      const cancellations = changes.filter(change => change.changeType === 'cancel');
+      
+      if (cancellations.length >= 2) {
+        return res.status(400).json({ 
+          message: "Você atingiu o limite de alterações. Fale com o Sensei." 
+        });
       }
 
       // Cancelar presença
       const success = await storage.deleteAttendance(existingAttendance.id);
 
       if (!success) {
-        return res.status(400).json({ message: "Failed to cancel attendance" });
+        return res.status(400).json({ message: "Falha ao cancelar presença" });
       }
+
+      // Registrar a mudança na tabela de controle
+      await storage.createAttendanceChange({
+        studentId: student.id,
+        classId: classId,
+        date: classDate,
+        changeType: 'cancel'
+      });
 
       // Log da atividade
       await storage.createActivityLog({
@@ -933,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date()
       });
 
-      res.json({ message: "Attendance cancelled successfully" });
+      res.json({ message: "Presença cancelada com sucesso" });
     } catch (error) {
       console.error("Erro ao cancelar presença:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -942,64 +1048,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Cancelar presença
-  app.delete("/api/attendance/cancel", isAuthenticated, async (req, res) => {
+  // Rota para verificar alterações de presença
+  app.get("/api/attendance/changes/:studentId/:classId", isAuthenticated, async (req, res) => {
     try {
-      const { studentId, classId, date } = req.body;
+      const { studentId, classId } = req.params;
+      const { date } = req.query;
+      const requestUser = (req as any).user;
 
       if (!studentId || !classId) {
-        return res.status(400).json({ message: "studentId e classId são obrigatórios" });
+        return res.status(400).json({ message: "Student ID e Class ID são obrigatórios" });
       }
 
       // Verificar permissões
-      const requestUser = (req as any).user;
-      const student = await storage.getStudent(studentId);
-
+      const student = await storage.getStudent(Number(studentId));
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
       }
 
-      // Alunos só podem cancelar sua própria presença
+      // Alunos só podem ver suas próprias alterações
       if (requestUser.role === 'student') {
         const studentUser = await storage.getUser(student.userId);
         if (!studentUser || studentUser.id !== requestUser.id) {
           return res.status(403).json({ 
-            message: "Forbidden: Students can only cancel their own attendance" 
+            message: "Acesso negado: você só pode ver suas próprias informações" 
           });
         }
       }
 
-      // Buscar presença existente
-      const today = date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-      const attendances = await storage.getAttendanceByStudent(studentId);
+      const queryDate = date ? new Date(date as string) : new Date();
+      const changes = await storage.getAttendanceChanges(Number(studentId), Number(classId), queryDate);
 
-      const attendance = attendances.find(att => {
-        const attDate = new Date(att.date).toISOString().split('T')[0];
-        return attDate === today && att.classId === classId;
+      const confirmations = changes.filter(c => c.changeType === 'confirm').length;
+      const cancellations = changes.filter(c => c.changeType === 'cancel').length;
+
+      res.json({ 
+        changes,
+        summary: {
+          confirmations,
+          cancellations,
+          remainingConfirmations: Math.max(0, 2 - confirmations),
+          remainingCancellations: Math.max(0, 2 - cancellations)
+        }
       });
-
-      if (!attendance) {
-        return res.status(404).json({ message: "Attendance record not found" });
-      }
-
-      // Cancelar presença
-      await storage.deleteAttendance(attendance.id);
-
-      // Registrar atividade
-      const user = await storage.getUser(student.userId);
-      const classItem = await storage.getClass(classId);
-
-      await storage.createActivityLog({
-        userId: requestUser.id,
-        activity: `${requestUser.firstName} ${requestUser.lastName} cancelou presença de ${user?.firstName} ${user?.lastName} na aula ${classItem?.name}`,
-        entityType: 'attendance',
-        entityId: attendance.id
-      });
-
-      res.json({ success: true });
     } catch (error) {
-      console.error("Erro ao cancelar presença:", error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error("Erro ao buscar alterações de presença:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
@@ -1009,6 +1102,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plans = await storage.getPaymentPlans();
       res.json({ plans });
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Rota específica para buscar planos de bolsistas
+  app.get("/api/payment-plans/scholarships", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const plans = await storage.getPaymentPlans();
+      const scholarshipPlans = plans.filter(plan => plan.isScholarship);
+      res.json({ plans: scholarshipPlans });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Rota para criar plano de bolsista
+  app.post("/api/payment-plans/scholarship", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { name, description } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Nome do plano é obrigatório" });
+      }
+
+      const scholarshipPlan = await storage.createPaymentPlan({
+        name: name,
+        amount: 0, // Planos de bolsista são gratuitos
+        frequency: "monthly",
+        description: description || "Plano de bolsista - gratuito",
+        isScholarship: true
+      });
+
+      // Log da atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `Criou plano de bolsista: ${scholarshipPlan.name}`,
+        entityType: 'payment-plan',
+        entityId: scholarshipPlan.id,
+        timestamp: new Date()
+      });
+
+      res.status(201).json({ plan: scholarshipPlan });
+    } catch (error) {
+      console.error("Erro ao criar plano de bolsista:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -1119,9 +1257,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/student-payments/overdue", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const payments = await storage.getOverduePayments();
-      res.json({ payments });
+      const overduePayments = await storage.getOverduePayments();
+      
+      // Separar bolsistas dos inadimplentes
+      const scholars = [];
+      const delinquents = [];
+      
+      for (const payment of overduePayments) {
+        if (payment.student?.isScholarship) {
+          scholars.push(payment);
+        } else {
+          delinquents.push(payment);
+        }
+      }
+
+      res.json({ 
+        overdue: delinquents,
+        scholars: scholars,
+        total: overduePayments.length 
+      });
     } catch (error) {
+      console.error("Erro ao buscar inadimplentes:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -1218,6 +1374,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para marcar pagamento como inadimplente e bloquear acesso
+  app.post("/api/student-payments/:id/mark-overdue", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const payment = await storage.getStudentPayment(Number(id));
+
+      if (!payment) {
+        return res.status(404).json({ message: "Pagamento não encontrado" });
+      }
+
+      // Não aplicar a estudantes bolsistas
+      const student = await storage.getStudent(payment.studentId);
+      if (student?.isScholarship) {
+        return res.status(400).json({ 
+          message: "Bolsistas não podem ser marcados como inadimplentes" 
+        });
+      }
+
+      // Marcar como inadimplente e desativar o usuário
+      await storage.updateStudentPayment(Number(id), {
+        status: 'overdue',
+        overdueAt: new Date()
+      });
+
+      // Desativar o usuário do estudante
+      if (student) {
+        await storage.updateUser(student.userId, { active: false });
+      }
+
+      // Log da atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `Marcou pagamento ID: ${id} como inadimplente e bloqueou acesso do estudante`,
+        entityType: 'student-payment',
+        entityId: Number(id),
+        timestamp: new Date()
+      });
+
+      res.json({ message: "Estudante marcado como inadimplente e bloqueado" });
+    } catch (error) {
+      console.error("Erro ao marcar como inadimplente:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Rota para reativar estudante após pagamento
+  app.post("/api/student-payments/:id/reactivate", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const payment = await storage.getStudentPayment(Number(id));
+
+      if (!payment) {
+        return res.status(404).json({ message: "Pagamento não encontrado" });
+      }
+
+      // Marcar como pago e reativar o usuário
+      await storage.updateStudentPayment(Number(id), {
+        status: 'paid',
+        paidDate: new Date(),
+        overdueAt: null
+      });
+
+      // Reativar o usuário do estudante
+      const student = await storage.getStudent(payment.studentId);
+      if (student) {
+        await storage.updateUser(student.userId, { active: true });
+      }
+
+      // Log da atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `Reativou estudante após pagamento ID: ${id}`,
+        entityType: 'student-payment',
+        entityId: Number(id),
+        timestamp: new Date()
+      });
+
+      res.json({ message: "Estudante reativado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao reativar estudante:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ===== Activity Log Routes =====
   app.get("/api/activity-logs", isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -1225,6 +1467,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const logs = await storage.getActivityLogs(limit ? Number(limit) : undefined);
       res.json({ logs });
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Rota para dashboard de aniversários
+  app.get("/api/birthdays", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const { month } = req.query;
+      
+      const students = await storage.getStudentsWithUsers();
+      const currentMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      
+      // Filtrar estudantes que fazem aniversário no mês especificado
+      const birthdayStudents = students.filter(student => {
+        if (!student.user?.birthDate) return false;
+        
+        const birthDate = new Date(student.user.birthDate);
+        return birthDate.getMonth() + 1 === currentMonth;
+      }).map(student => ({
+        id: student.id,
+        name: `${student.user.firstName} ${student.user.lastName}`,
+        birthDate: student.user.birthDate,
+        age: student.user.birthDate ? 
+          new Date().getFullYear() - new Date(student.user.birthDate).getFullYear() : null,
+        belt: student.belt || 'white',
+        stripes: student.stripes || 0
+      })).sort((a, b) => {
+        const dateA = new Date(a.birthDate!).getDate();
+        const dateB = new Date(b.birthDate!).getDate();
+        return dateA - dateB;
+      });
+
+      res.json({ 
+        birthdays: birthdayStudents,
+        month: currentMonth,
+        total: birthdayStudents.length
+      });
+    } catch (error) {
+      console.error("Erro ao buscar aniversários:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

@@ -1,0 +1,35 @@
+Você é um programador fullstack sênior responsável por aplicar as seguintes melhorias no projeto SenseiSystem (Node.js, Express, PostgreSQL com Drizzle ORM, React com Vite e Tailwind, autenticação JWT). A base está funcionando e agora o foco é aplicar as regras de negócio abaixo. Para cada item, siga o padrão atual do sistema, valide com o banco e garanta que tudo esteja funcional:
+
+1. **Cadastro de Aluno Bolsista (Plano gratuito)**
+   - Permitir criar planos com preço igual a zero (`price = 0`)
+   - Adicionar campo `isScholarship = true` no plano
+   - Ocultar cobranças e lógica de inadimplência para alunos com esse plano
+
+2. **Parâmetro de X dias para visualizar/confirmar aulas**
+   - Adicionar configuração global `attendance_max_days_ahead` em `school_config`
+   - Ajustar rota de listagem de aulas para exibir apenas aulas até esse número de dias no futuro
+
+3. **Regras de confirmação e cancelamento de presença**
+   - Permitir no máximo 2 confirmações por aula por aluno
+   - Permitir apenas 1 cancelamento por aula
+   - Excedendo o limite, retornar: "Você atingiu o limite de alterações. Fale com o Sensei."
+
+4. **Limite de Alunos por Aula**
+   - Adicionar campo `max_students` no modelo de aula
+   - Antes de confirmar presença, validar se o número de confirmações já atingiu o limite
+
+5. **Bloqueio automático após 10 dias de inadimplência**
+   - Criar job diário que verifica alunos com `overdue_at` > 10 dias
+   - Atualizar `user.status = 'blocked'`
+   - Enviar mensagem por e-mail e WhatsApp informando o bloqueio e instruções para regularização
+
+6. **Aniversariantes do dia + Popup no dashboard**
+   - Utilizar campo `birth_date` dos estudantes
+   - Criar painel lateral com "Aniversariantes de Hoje"
+   - Permitir envio de popup personalizado para o aluno aniversariante
+
+⚠️ Priorize a correção dos seguintes erros de frontend antes de prosseguir:
+- Corrigir `useTheme` fora do `ThemeProvider`
+- Corrigir `logoutMutation` undefined no Sidebar
+
+Todas as implementações devem seguir o padrão do projeto, com middlewares de autenticação, validações backend, integração com frontend e banco via Drizzle. Documente cada nova rota e campo adicionado.

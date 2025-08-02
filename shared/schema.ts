@@ -30,6 +30,7 @@ export const users = pgTable("users", {
   zipCode: text("zip_code"),
   joinDate: timestamp("join_date").defaultNow(),
   active: boolean("active").default(true),
+  status: text("status").default('active'), // active, blocked, inactive
 });
 
 // Students table
@@ -58,6 +59,7 @@ export const schoolConfig = pgTable("school_config", {
   email: text("email"),
   website: text("website"),
   defaultTheme: text("default_theme").notNull().default("light"), // "light" or "dark"
+  attendanceMaxDaysAhead: integer("attendance_max_days_ahead").notNull().default(7), // Máximo de dias para visualizar/confirmar aulas
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -89,6 +91,7 @@ export const classes = pgTable("classes", {
   startTime: text("start_time").notNull(), // "HH:MM" format
   duration: integer("duration").notNull(), // in minutes
   maxCapacity: integer("max_capacity"),
+  maxStudents: integer("max_students").default(20), // Limite máximo de alunos por aula
 });
 
 // Attendance table
@@ -108,6 +111,7 @@ export const paymentPlans = pgTable("payment_plans", {
   amount: integer("amount").notNull(), // in cents
   frequency: text("frequency").notNull(), // monthly, quarterly, etc.
   description: text("description"),
+  isScholarship: boolean("is_scholarship").default(false), // Indica se é plano de bolsista
 });
 
 // Student payments table
@@ -120,6 +124,17 @@ export const studentPayments = pgTable("student_payments", {
   paidDate: timestamp("paid_date"),
   amount: integer("amount").notNull(), // in cents
   notes: text("notes"),
+  overdueAt: timestamp("overdue_at"), // Data quando ficou inadimplente
+});
+
+// Attendance Changes table - Controle de confirmações e cancelamentos
+export const attendanceChanges = pgTable("attendance_changes", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  classId: integer("class_id").references(() => classes.id, { onDelete: 'cascade' }).notNull(),
+  date: timestamp("date").notNull(), // Data da aula
+  changeType: text("change_type").notNull(), // 'confirm' ou 'cancel'
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Activity log table
@@ -181,6 +196,7 @@ export const insertStudentSchema = createInsertSchema(students).omit({ id: true 
 export const insertSchoolConfigSchema = createInsertSchema(schoolConfig).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertClassSchema = createInsertSchema(classes).omit({ id: true });
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });
+export const insertAttendanceChangesSchema = createInsertSchema(attendanceChanges).omit({ id: true, createdAt: true });
 export const insertPaymentPlanSchema = createInsertSchema(paymentPlans).omit({ id: true });
 export const insertStudentPaymentSchema = createInsertSchema(studentPayments).omit({ id: true });
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true });
@@ -207,6 +223,9 @@ export type InsertClass = z.infer<typeof insertClassSchema>;
 
 export type Attendance = typeof attendance.$inferSelect;
 export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
+
+export type AttendanceChanges = typeof attendanceChanges.$inferSelect;
+export type InsertAttendanceChanges = z.infer<typeof insertAttendanceChangesSchema>;
 
 export type PaymentPlan = typeof paymentPlans.$inferSelect;
 export type InsertPaymentPlan = z.infer<typeof insertPaymentPlanSchema>;

@@ -15,6 +15,7 @@ import { formatDate, formatTime, formatCurrencyBRL } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import type { SchoolConfig } from "@shared/schema";
 
 interface Notification {
@@ -29,6 +30,11 @@ interface Notification {
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // Use new shadcn-style dashboard for admin/instructor
+  if (user?.role === 'admin' || user?.role === 'instructor') {
+    return <DashboardLayout />;
+  }
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const { t } = useTranslation();

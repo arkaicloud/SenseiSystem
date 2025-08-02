@@ -32,16 +32,16 @@ const PaymentPlans: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: t('success'),
-        description: t('plan_added_successfully'),
+        title: "Sucesso",
+        description: "Plano adicionado com sucesso",
       });
       setIsAddPlanOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/payment-plans'] });
     },
     onError: (error) => {
       toast({
-        title: t('error'),
-        description: `${t('failed_to_add_plan')}: ${error}`,
+        title: "Erro",
+        description: `Falha ao adicionar plano: ${error}`,
         variant: "destructive",
       });
     },
@@ -55,16 +55,16 @@ const PaymentPlans: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: t('success'),
-        description: t('plan_updated_successfully'),
+        title: "Sucesso",
+        description: "Plano atualizado com sucesso",
       });
       setSelectedPlan(null);
       queryClient.invalidateQueries({ queryKey: ['/api/payment-plans'] });
     },
     onError: (error) => {
       toast({
-        title: t('error'),
-        description: `${t('failed_to_update_plan')}: ${error}`,
+        title: "Erro",
+        description: `Falha ao atualizar plano: ${error}`,
         variant: "destructive",
       });
     },
@@ -78,21 +78,21 @@ const PaymentPlans: React.FC = () => {
     },
     onSuccess: () => {
       toast({
-        title: t('success'),
-        description: t('plan_deleted_successfully'),
+        title: "Sucesso",
+        description: "Plano excluído com sucesso",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/payment-plans'] });
     },
     onError: (error) => {
       toast({
-        title: t('error'),
-        description: `${t('failed_to_delete_plan')}: ${error}`,
+        title: "Erro",
+        description: `Falha ao excluir plano: ${error}`,
         variant: "destructive",
       });
     },
   });
 
-  const plans = data?.plans || [];
+  const plans = (data as any)?.plans || [];
 
   // Filter plans by search query
   const filteredPlans = plans.filter((plan: any) => {
@@ -114,7 +114,7 @@ const PaymentPlans: React.FC = () => {
   };
 
   const handleDeletePlan = (id: number) => {
-    if (confirm(t('confirm_delete_plan'))) {
+    if (confirm("Tem certeza que deseja excluir este plano?")) {
       deletePlan(id);
     }
   };
@@ -125,14 +125,14 @@ const PaymentPlans: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('payment_plans')}</h1>
-          <p className="text-gray-600">{t('manage_payment_plans')}</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Planos de Pagamento</h1>
+          <p className="text-gray-600">Gerencie os planos de pagamento</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">
             <input
               type="text"
-              placeholder={t('search') + ' planos...'}
+              placeholder="Buscar planos..."
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -145,11 +145,11 @@ const PaymentPlans: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                {t('new_plan')}
+                Novo Plano
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>{t('add_new_plan')}</DialogTitle>
+              <DialogTitle>Adicionar Novo Plano</DialogTitle>
               <PaymentPlanForm 
                 onSubmit={handleAddPlan}
                 isLoading={isAddingPlan}
@@ -161,14 +161,14 @@ const PaymentPlans: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('payment_plans')}</CardTitle>
+          <CardTitle>Planos de Pagamento</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">{t('loading_plans')}</div>
+            <div className="text-center py-8">Carregando planos...</div>
           ) : filteredPlans.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {searchQuery ? t('no_plans_matching_search') : t('no_plans_found')}
+              {searchQuery ? "Nenhum plano encontrado para a busca" : "Nenhum plano encontrado"}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -176,19 +176,19 @@ const PaymentPlans: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('name')}
+                      Nome
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('amount')}
+                      Valor
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('frequency')}
+                      Frequência
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('description')}
+                      Descrição
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('actions')}
+                      Ações
                     </th>
                   </tr>
                 </thead>
@@ -202,7 +202,11 @@ const PaymentPlans: React.FC = () => {
                         <div className="text-sm text-gray-900">{formatCurrencyBRL(plan.amount)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{t(plan.frequency)}</div>
+                        <div className="text-sm text-gray-900">
+                          {plan.frequency === 'monthly' ? 'Mensal' : 
+                           plan.frequency === 'quarterly' ? 'Trimestral' : 
+                           plan.frequency === 'yearly' ? 'Anual' : plan.frequency}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 max-w-xs truncate">{plan.description || '-'}</div>
@@ -235,7 +239,7 @@ const PaymentPlans: React.FC = () => {
       {selectedPlan && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedPlan(null)}>
           <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>{t('edit_plan')}</DialogTitle>
+            <DialogTitle>Editar Plano</DialogTitle>
             <PaymentPlanForm 
               defaultValues={{
                 name: selectedPlan.name,

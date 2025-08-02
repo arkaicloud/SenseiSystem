@@ -14,7 +14,8 @@ import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { beltLevelEnum, userRoleEnum, type SchoolConfig } from "@shared/schema";
-import { useTranslation } from "react-i18next";
+import { useTranslations } from "@/hooks/use-translations";
+import StudentOnboarding from "@/components/onboarding/StudentOnboarding";
 
 // Login form schema
 const loginSchema = z.object({
@@ -66,8 +67,9 @@ const registerSchema = z.object({
 export default function AuthPage() {
   const { user, isLoading, login, register, error } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  const { t } = useTranslation();
+  const { t } = useTranslations();
 
   // Carregar configurações da escola
   const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
@@ -232,14 +234,14 @@ export default function AuthPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => setActiveTab('register')}
+                onClick={() => setShowOnboarding(true)}
               >
                 Matrícula
               </Button>
             </div>
 
             {/* Register Form Modal/Dialog */}
-            {activeTab === 'register' && (
+            {activeTab === 'register' && !showOnboarding && (
                 <Card>
                   <CardHeader>
                     <CardTitle>{t('createAccount')}</CardTitle>
@@ -418,6 +420,19 @@ export default function AuthPage() {
                     )}
                   </CardContent>
                 </Card>
+            )}
+
+            {/* Student Onboarding */}
+            {showOnboarding && (
+              <div className="mt-6">
+                <StudentOnboarding 
+                  onBack={() => setShowOnboarding(false)}
+                  onSuccess={() => {
+                    setShowOnboarding(false);
+                    setRegistrationSuccess(true);
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>

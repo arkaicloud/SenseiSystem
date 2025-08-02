@@ -1,15 +1,21 @@
 import { 
-  User, Student, Plan, StudentPlan, ClassSession, Attendance, 
-  LoginResponse, UserWithStudent
+  User, Student, PaymentPlan, StudentPayment, Class, Attendance, 
+  StudentWithUser
 } from '@shared/schema';
 
 export type { 
-  User, Student, Plan, StudentPlan, ClassSession, Attendance, 
-  LoginResponse, UserWithStudent
+  User, Student, PaymentPlan, StudentPayment, Class, Attendance, 
+  StudentWithUser
 };
 
+// Missing types that need to be defined
+export interface LoginResponse {
+  user: StudentWithUser;
+  token: string;
+}
+
 export interface AuthState {
-  user: UserWithStudent | null;
+  user: StudentWithUser | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
@@ -33,7 +39,7 @@ export interface ThemeContextType {
 }
 
 export interface AuthContextType {
-  user: UserWithStudent | null;
+  user: StudentWithUser | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
@@ -58,7 +64,7 @@ export interface DashboardStatsResponse {
 }
 
 export interface InstructorDashboardResponse {
-  classes: ClassSession[];
+  classes: Class[];
   activeStudents: Student[];
 }
 
@@ -67,8 +73,8 @@ export interface StudentDashboardResponse {
     present: number;
     absent: number;
   };
-  classes: ClassSession[];
-  currentPlan: (StudentPlan & { plan: Plan }) | null;
+  classes: Class[];
+  currentPlan: (StudentPayment & { plan: PaymentPlan }) | null;
 }
 
 export interface SidebarMenuItem {

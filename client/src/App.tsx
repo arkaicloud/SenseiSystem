@@ -19,7 +19,7 @@ import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import AuthPage from "@/pages/auth-page";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@/providers/auth-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ProtectedRoute } from "@/lib/protected-route";
 

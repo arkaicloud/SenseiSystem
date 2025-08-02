@@ -64,7 +64,7 @@ const registerSchema = z.object({
 );
 
 export default function AuthPage() {
-  const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const { user, isLoading, login, register, error } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { t } = useTranslation();
@@ -116,20 +116,21 @@ export default function AuthPage() {
   const selectedRole = registerForm.watch("role");
 
   // Login form submission
-  const onLoginSubmit = (values: z.infer<typeof loginSchema>) => {
-    loginMutation.mutate(values);
+  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
+    await login(values.email, values.password);
   };
 
   // Registration form submission
-  const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
-    // Enviar os valores diretamente, como o birthDate já é uma string
-    registerMutation.mutate(values, {
-      onSuccess: () => {
-        setRegistrationSuccess(true);
-        // Clear form
-        registerForm.reset();
-      },
-    });
+  const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
+    try {
+      // For now, we'll use the simple register function that only takes email and password
+      // The full registration logic will need to be implemented in the API
+      await register(values.email, values.password, values.confirmPassword);
+      setRegistrationSuccess(true);
+      registerForm.reset();
+    } catch (error) {
+      console.error('Registration error:', error);
+    }
   };
 
   // If user is already logged in, redirect to home
@@ -207,9 +208,9 @@ export default function AuthPage() {
                         <Button
                           type="submit"
                           className="w-full"
-                          disabled={loginMutation.isPending}
+                          disabled={isLoading}
                         >
-                          {loginMutation.isPending ? (
+                          {isLoading ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               {t('loggingIn')}
@@ -388,9 +389,9 @@ export default function AuthPage() {
                           <Button
                             type="submit"
                             className="w-full"
-                            disabled={registerMutation.isPending}
+                            disabled={isLoading}
                           >
-                            {registerMutation.isPending ? (
+                            {isLoading ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 {t('creatingAccount')}

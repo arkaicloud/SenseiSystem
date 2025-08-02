@@ -7,13 +7,16 @@ import {
 import { insertUserSchema, User, userRoleEnum, beltLevelEnum } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
+import { useTranslations } from "@/hooks/use-translations";
 import { z } from "zod";
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, userData?: any) => Promise<void>;
   loginMutation: UseMutationResult<User, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<User, Error, RegisterData>;
@@ -40,7 +43,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslations();
   const {
     data: user,
     error,
@@ -214,12 +217,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Convenience functions
+  const login = async (email: string, password: string) => {
+    return loginMutation.mutateAsync({ email, password });
+  };
+
+  const logout = async () => {
+    return logoutMutation.mutateAsync();
+  };
+
+  const register = async (email: string, password: string, userData: any = {}) => {
+    return registerMutation.mutateAsync({
+      email,
+      password,
+      confirmPassword: password,
+      ...userData,
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user: user || null,
         isLoading,
         error,
+        login,
+        logout,
+        register,
         loginMutation,
         logoutMutation,
         registerMutation,

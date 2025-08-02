@@ -17,6 +17,9 @@ import {
 import { eq, and, gte, lte, desc, or } from "drizzle-orm";
 
 export interface IStorage {
+  // Database connection test
+  testDatabaseConnection?(): Promise<boolean>;
+  
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -150,6 +153,11 @@ export class MemStorage implements IStorage {
     this.riskActionCurrentId = 1;
 
     this.seedData();
+  }
+
+  // Test database connection (always returns true for memory storage)
+  async testDatabaseConnection(): Promise<boolean> {
+    return true;
   }
 
   // Seed initial data
@@ -1294,5 +1302,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Export the memory storage instance (temporary fix for date validation issue)
-export const storage = new MemStorage();
+// Export the database storage instance
+export const storage = new DatabaseStorage();

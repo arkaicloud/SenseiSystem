@@ -318,9 +318,11 @@ export function setupAuth(app: Express) {
 export async function initializeDefaultAdmin() {
   try {
     // Test database connection first
-    const connectionTest = await storage.testDatabaseConnection();
-    if (!connectionTest) {
-      throw new Error("Failed to connect to database");
+    if (storage.testDatabaseConnection) {
+      const connectionTest = await storage.testDatabaseConnection();
+      if (!connectionTest) {
+        throw new Error("Failed to connect to database");
+      }
     }
 
     // Create admin user

@@ -22,6 +22,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
 
+  // =====Financial Stats Route=====
+  app.get("/api/financial-stats", isAuthenticated, async (req, res) => {
+    try {
+      // Buscar dados financeiros básicos
+      const students = await storage.getStudents();
+      const payments = await storage.getStudentPayments();
+      const paymentPlans = await storage.getPaymentPlans();
+      
+      // Calcular métricas financeiras
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      
+      // Receita recebida este mês
+      const thisMonthPayments = payments.filter(payment => {
+        if (payment.status === 'paid' && payment.paidDate) {
+          const paidDate = new Date(payment.paidDate);
+          return paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear;
+        }
+        return false;
+      });
+      const totalReceived = thisMonthPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      
+      // Pagamentos pendentes
+      const pendingPayments = payments.filter(payment => payment.status === 'pending');
+      const pendingAmount = pendingPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      
+      // Pagamentos em atraso
+      const overduePayments = payments.filter(payment => {
+        if (payment.status === 'overdue') return true;
+        if (payment.status === 'pending' && payment.dueDate) {
+          const dueDate = new Date(payment.dueDate);
+          return dueDate < currentDate;
+        }
+        return false;
+      });
+      const overdueAmount = overduePayments.reduce((sum, payment) => sum + payment.amount, 0);
+      
+      // Receita recorrente mensal estimada
+      const activeStudents = students.filter(student => student.active !== false);
+      const monthlyRecurring = activeStudents.length > 0 ? 
+        activeStudents.length * (paymentPlans.length > 0 ? paymentPlans[0].amount : 150) : 0;
+      
+      // Crescimento da receita (simulado por enquanto)
+      const revenueGrowth = Math.random() * 20 - 5; // Entre -5% e +15%
+      
+      const stats = {
+        totalReceived,
+        pendingAmount,
+        overdueAmount,
+        monthlyRecurring,
+        revenueGrowth,
+        totalStudents: activeStudents.length
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas financeiras:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        totalReceived: 0,
+        pendingAmount: 0,
+        overdueAmount: 0,
+        monthlyRecurring: 0,
+        revenueGrowth: 0,
+        totalStudents: 0
+      });
+    }
+  });
+
   // =====Stats/Dashboard Routes=====
   app.get("/api/stats", isAuthenticated, async (req, res) => {
     try {

@@ -161,79 +161,85 @@ export default function AuthPage() {
               </h1>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">{t('login')}</TabsTrigger>
-                <TabsTrigger value="register">{t('register')}</TabsTrigger>
-              </TabsList>
+            {/* Login Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('login')}</CardTitle>
+                <CardDescription>
+                  Digite suas credenciais para acessar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {error && (
+                  <Alert className="mb-4" variant="destructive">
+                    <AlertDescription>
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('email')}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="you@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('password')}</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {t('loggingIn')}
+                        </>
+                      ) : (
+                        t('login')
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
 
-              {/* Login Tab */}
-              <TabsContent value="login">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('login')}</CardTitle>
-                    <CardDescription>
-                      Digite suas credenciais para acessar.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {error && (
-                      <Alert className="mb-4" variant="destructive">
-                        <AlertDescription>
-                          {error}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    <Form {...loginForm}>
-                      <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                        <FormField
-                          control={loginForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('email')}</FormLabel>
-                              <FormControl>
-                                <Input placeholder="you@example.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={loginForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('password')}</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {t('loggingIn')}
-                            </>
-                          ) : (
-                            t('login')
-                          )}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            {/* Registration Section */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                Ainda não tem conta?
+              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setActiveTab('register')}
+              >
+                Matrícula
+              </Button>
+            </div>
 
-              {/* Register Tab */}
-              <TabsContent value="register">
+            {/* Register Form Modal/Dialog */}
+            {activeTab === 'register' && (
                 <Card>
                   <CardHeader>
                     <CardTitle>{t('createAccount')}</CardTitle>
@@ -412,8 +418,7 @@ export default function AuthPage() {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
+            )}
           </div>
         </div>
 

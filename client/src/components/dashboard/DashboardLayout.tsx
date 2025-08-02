@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FinancialDashboard } from "./FinancialDashboard";
 import { BirthdayNotifications, BirthdayCard } from "./BirthdayNotifications";
+import { EnrollmentChart } from "@/components/charts/EnrollmentChart";
 import { formatCurrencyBRL } from "@/lib/utils";
 
 interface DashboardStats {
@@ -240,6 +241,11 @@ export function DashboardLayout() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Enrollment Chart */}
+      <div className="mt-6">
+        <EnrollmentChart />
       </div>
     </div>
   );

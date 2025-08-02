@@ -59,6 +59,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====Financial Chart Data Route=====
+  app.get("/api/financial-chart", isAuthenticated, async (req, res) => {
+    try {
+      const { timeRange = "30d" } = req.query;
+      const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
+      
+      // Get payment data for the specified period
+      const payments = await storage.getStudentPaymentsWithDetails();
+      const today = new Date();
+      
+      // Generate chart data for each day in the period
+      const chartData = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Calculate received and pending amounts for this date
+        const dayPayments = payments.filter(payment => {
+          if (payment.paidDate) {
+            const paidDate = new Date(payment.paidDate);
+            return paidDate.toISOString().split('T')[0] === dateStr;
+          }
+          return false;
+        });
+        
+        const received = dayPayments
+          .filter(p => p.status === 'paid')
+          .reduce((sum, p) => sum + p.amount, 0);
+        
+        const pending = payments
+          .filter(p => p.status === 'pending' && p.dueDate && new Date(p.dueDate).toISOString().split('T')[0] <= dateStr)
+          .reduce((sum, p) => sum + p.amount, 0);
+        
+        chartData.push({
+          date: dateStr,
+          received,
+          pending: Math.max(0, pending)
+        });
+      }
+      
+      res.json(chartData);
+    } catch (error) {
+      console.error("Erro ao buscar dados do gráfico financeiro:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
+  // =====Enrollment Chart Data Route=====
+  app.get("/api/enrollment-chart", isAuthenticated, async (req, res) => {
+    try {
+      const { timeRange = "30d" } = req.query;
+      const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
+      
+      // Get all students for enrollment data
+      const students = await storage.getStudents();
+      const today = new Date();
+      
+      // Generate chart data for enrollment trends
+      const chartData = [];
+      let cumulativeTotal = 0;
+      
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Count new students registered on this date
+        const newStudents = students.filter(student => {
+          if (student.createdAt) {
+            const createdDate = new Date(student.createdAt);
+            return createdDate.toISOString().split('T')[0] === dateStr;
+          }
+          return false;
+        }).length;
+        
+        cumulativeTotal += newStudents;
+        
+        // Calculate total active students up to this date
+        const totalStudents = students.filter(student => {
+          if (student.createdAt) {
+            const createdDate = new Date(student.createdAt);
+            return createdDate <= date && student.active !== false;
+          }
+          return false;
+        }).length;
+        
+        chartData.push({
+          date: dateStr,
+          newStudents,
+          totalStudents: Math.max(totalStudents, cumulativeTotal)
+        });
+      }
+      
+      res.json(chartData);
+    } catch (error) {
+      console.error("Erro ao buscar dados do gráfico de matrículas:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
   // =====Financial Stats Route=====
   app.get("/api/financial-stats", isAuthenticated, async (req, res) => {
     try {

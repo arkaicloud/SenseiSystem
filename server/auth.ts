@@ -5,12 +5,12 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
-import { User, userRoleEnum } from "@shared/schema";
+import { User as SchemaUser, userRoleEnum } from "@shared/schema";
 
 // Add User type to Express' User interface
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User extends SchemaUser {}
   }
 }
 

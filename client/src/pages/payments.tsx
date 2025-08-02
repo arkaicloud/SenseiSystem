@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrencyBRL, formatDateShort } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { FinancialDashboard } from "@/components/dashboard/FinancialDashboard";
+import { FinancialChart } from "@/components/charts/FinancialChart";
 
 const Payments: React.FC = () => {
   const { t } = useTranslation();
@@ -157,6 +158,11 @@ const Payments: React.FC = () => {
       {/* Dashboard Financeiro Shadcn/UI Style */}
       <div className="mb-8">
         <FinancialDashboard />
+      </div>
+
+      {/* Gráfico Financeiro */}
+      <div className="mb-8">
+        <FinancialChart />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">

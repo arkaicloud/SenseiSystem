@@ -13,8 +13,6 @@ const healthFormSchema = z.object({
   beltLevel: z.enum(beltLevelEnum.enumValues, { required_error: "Selecione sua graduação atual" }),
   stripes: z.preprocess((val) => (val === "" ? 0 : Number(val)), z.number().min(0).max(4)),
   medicalConditions: z.string().optional(),
-  emergencyContact: z.string().min(1, "Contato de emergência é obrigatório"),
-  emergencyPhone: z.string().min(10, "Telefone de emergência é obrigatório"),
 });
 
 export type HealthFormData = z.infer<typeof healthFormSchema>;
@@ -32,8 +30,6 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
       beltLevel: undefined,
       stripes: 0,
       medicalConditions: "",
-      emergencyContact: "",
-      emergencyPhone: "",
       ...defaultValues,
     },
   });
@@ -123,35 +119,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="emergencyContact"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contato de Emergência *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome do contato" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <FormField
-              control={form.control}
-              name="emergencyPhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefone de Emergência *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="(11) 99999-9999" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           <div className="flex justify-between pt-4">
             <Button type="button" variant="outline" onClick={onBack}>

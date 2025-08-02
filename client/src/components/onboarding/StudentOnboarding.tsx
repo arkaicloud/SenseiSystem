@@ -5,23 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, User, Heart, FileText, ArrowLeft } from "lucide-react";
-import PersonalInfoStep from "./steps/PersonalInfoStep";
-import HealthFormStep from "./steps/HealthFormStep";
+import PersonalInfoStep, { type PersonalInfoData } from "./steps/PersonalInfoStep";
+import HealthFormStep, { type HealthFormData } from "./steps/HealthFormStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
-
 import { beltLevelEnum } from "@shared/schema";
 
-type OnboardingData = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  beltLevel: typeof beltLevelEnum.enumValues[number];
-  stripes: number;
-  medicalConditions?: string;
-  emergencyContact: string;
-  emergencyPhone: string;
+type OnboardingData = PersonalInfoData & HealthFormData & {
   username: string;
   password: string;
   confirmPassword: string;
@@ -63,14 +53,14 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
         beltLevel: completeData.beltLevel,
         stripes: completeData.stripes,
         emergencyContact: completeData.emergencyContact || "",
-        birthDate: undefined,
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        zipCode: "",
+        birthDate: completeData.birthDate,
+        street: completeData.street,
+        number: completeData.number,
+        complement: completeData.complement || "",
+        neighborhood: completeData.neighborhood,
+        city: completeData.city,
+        state: completeData.state,
+        zipCode: completeData.zipCode,
       });
       setSuccess(true);
       setTimeout(() => onSuccess(), 2000);

@@ -216,7 +216,7 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     console.log('📧 Login attempt for:', req.body.email);
     
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error('🔥 Authentication error:', err);
         return next(err);
@@ -229,7 +229,7 @@ export function setupAuth(app: Express) {
       
       console.log('✅ User authenticated:', user.email);
       
-      req.login(user, async (err) => {
+      req.login(user, async (err: any) => {
         if (err) {
           console.error('🔥 Session creation error:', err);
           return next(err);
@@ -315,7 +315,7 @@ export function setupAuth(app: Express) {
       // Create activity log for account activation
       await storage.createActivityLog({
         activity: `User account activated: ${user.firstName} ${user.lastName}`,
-        userId: req.user.id, // Admin/instructor who performed the action
+        userId: req.user?.id, // Admin/instructor who performed the action
         entityType: "user",
         entityId: userId,
         timestamp: new Date()
@@ -405,7 +405,7 @@ export async function initializeDefaultAdmin() {
           defaultPlan = await storage.createPaymentPlan({
             name: "Plano Básico",
             description: "Plano básico para usuários de teste",
-            price: 100,
+            amount: 10000, // em centavos
             durationDays: 30,
             active: true
           });
@@ -414,11 +414,10 @@ export async function initializeDefaultAdmin() {
         // Create student payment record
         await storage.createStudentPayment({
           studentId: student.id,
-          paymentPlanId: defaultPlan.id,
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          planId: defaultPlan.id,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           status: "paid",
-          amount: defaultPlan.price,
+          amount: defaultPlan.amount,
           notes: "Plano de teste criado automaticamente"
         });
         

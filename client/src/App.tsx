@@ -19,6 +19,7 @@ import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import AuthPage from "@/pages/auth-page";
+import OnboardingPage from "@/pages/onboarding-page";
 import { AuthProvider } from "@/providers/auth-provider";
 import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -89,6 +90,7 @@ function Router() {
 
       {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
+      <Route path="/onboarding" component={OnboardingPage} />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />

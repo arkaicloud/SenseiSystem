@@ -10,12 +10,14 @@ import HealthFormStep from "./steps/HealthFormStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
 
+import { beltLevelEnum } from "@shared/schema";
+
 type OnboardingData = {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  beltLevel: string;
+  beltLevel: typeof beltLevelEnum.enumValues[number];
   stripes: number;
   medicalConditions?: string;
   emergencyContact: string;
@@ -35,7 +37,7 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
   const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const { registerMutation, error } = useAuth();
+  const { register, error } = useAuth();
 
   const handlePersonalInfoSubmit = (data: any) => {
     setOnboardingData(prev => ({ ...prev, ...data }));
@@ -52,13 +54,10 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
     setIsSubmitting(true);
 
     try {
-      await registerMutation.mutateAsync({
+      await register(completeData.email, completeData.password, {
         firstName: completeData.firstName,
         lastName: completeData.lastName,
         username: completeData.username,
-        email: completeData.email,
-        password: completeData.password,
-        confirmPassword: completeData.confirmPassword,
         role: "student" as const,
         phone: completeData.phone,
         beltLevel: completeData.beltLevel,

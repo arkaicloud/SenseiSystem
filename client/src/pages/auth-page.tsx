@@ -67,7 +67,7 @@ const registerSchema = z.object({
 export default function AuthPage() {
   const { user, isLoading, login, register, error } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
-  const [showOnboarding, setShowOnboarding] = useState(false);
+
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { t } = useTranslations();
 
@@ -234,7 +234,7 @@ export default function AuthPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => setShowOnboarding(true)}
+                onClick={() => window.open('/onboarding', '_blank')}
               >
                 Matrícula
               </Button>
@@ -242,18 +242,7 @@ export default function AuthPage() {
 
 
 
-            {/* Student Onboarding */}
-            {showOnboarding && (
-              <div className="mt-6">
-                <StudentOnboarding 
-                  onBack={() => setShowOnboarding(false)}
-                  onSuccess={() => {
-                    setShowOnboarding(false);
-                    setRegistrationSuccess(true);
-                  }}
-                />
-              </div>
-            )}
+
           </div>
         </div>
 

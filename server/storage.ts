@@ -3,6 +3,7 @@ import {
   students, type Student, type InsertStudent,
   classes, type Class, type InsertClass,
   attendance, type Attendance, type InsertAttendance,
+  attendanceChanges, type AttendanceChanges, type InsertAttendanceChanges,
   paymentPlans, type PaymentPlan, type InsertPaymentPlan,
   studentPayments, type StudentPayment, type InsertStudentPayment,
   activityLogs, type ActivityLog, type InsertActivityLog,
@@ -67,6 +68,10 @@ export interface IStorage {
   createAttendance(attendance: InsertAttendance): Promise<Attendance>;
   updateAttendance(id: number, attendance: Partial<Attendance>): Promise<Attendance | undefined>;
   deleteAttendance(id: number): Promise<boolean>;
+
+  // Attendance Changes
+  getAttendanceChanges(studentId: number, classId: number, date: Date): Promise<AttendanceChanges[]>;
+  createAttendanceChange(change: InsertAttendanceChanges): Promise<AttendanceChanges>;
 
   // Payment Plans
   getPaymentPlan(id: number): Promise<PaymentPlan | undefined>;
@@ -1066,6 +1071,26 @@ export class DatabaseStorage implements IStorage {
   async deleteAttendance(id: number): Promise<boolean> {
     await db.delete(attendance).where(eq(attendance.id, id));
     return true;
+  }
+
+  // Attendance Changes
+  async getAttendanceChanges(studentId: number, classId: number, date: Date): Promise<AttendanceChanges[]> {
+    const dateStr = date.toISOString().split('T')[0];
+    return await db.select().from(attendanceChanges)
+      .where(and(
+        eq(attendanceChanges.studentId, studentId),
+        eq(attendanceChanges.classId, classId),
+        gte(attendanceChanges.date, new Date(dateStr + ' 00:00:00')),
+        lte(attendanceChanges.date, new Date(dateStr + ' 23:59:59'))
+      ));
+  }
+
+  async createAttendanceChange(changeData: InsertAttendanceChanges): Promise<AttendanceChanges> {
+    const [change] = await db.insert(attendanceChanges).values({
+      ...changeData,
+      createdAt: new Date()
+    }).returning();
+    return change;
   }
 
   // Payment Plans

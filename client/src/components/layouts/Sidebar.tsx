@@ -205,7 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
 
   // Handle logout
   const handleLogout = () => {
-    logoutMutation.mutate();
+    logoutMutation?.mutate();
   };
 
   // Get user initials for avatar safely
@@ -346,11 +346,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
+            onClick={() => logoutMutation?.mutate()}
+            disabled={logoutMutation?.isPending}
             className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
           >
-            {logoutMutation.isPending ? (
+            {logoutMutation?.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <LogOut className="h-4 w-4" />

@@ -29,7 +29,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
     refetchInterval: 30000,
   });
 
-  const pendingCount = pendingUsersData?.users?.length || 0;
+  const pendingCount = (pendingUsersData as any)?.users?.length || 0;
 
   // Menu structure
   const menuItems: MenuItem[] = [
@@ -204,8 +204,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
   };
 
   // Handle logout
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   // Get user initials for avatar safely
@@ -318,11 +322,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       <div className="p-4 flex items-center border-b border-sidebar-border flex-shrink-0">
         <div className="bg-sidebar-primary p-2 rounded-lg mr-3">
           <span className="text-sidebar-primary-foreground text-sm font-bold">
-            {schoolConfig?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
+            {(schoolConfig as any)?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
           </span>
         </div>
         <h1 className="font-semibold text-sidebar-foreground text-lg">
-          {schoolConfig?.config?.schoolName || 'SenseiSystem'}
+          {(schoolConfig as any)?.config?.schoolName || 'SenseiSystem'}
         </h1>
       </div>
 
@@ -347,10 +351,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            disabled={logoutMutation.isPending}
+            disabled={isLoading}
             className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
           >
-            {logoutMutation.isPending ? (
+            {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <LogOut className="h-4 w-4" />

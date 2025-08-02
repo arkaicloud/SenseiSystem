@@ -97,9 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         console.log('Login successful:', data);
-        return data;
-
-        const data = await response.json();
         return data.user;
       } catch (err: any) {
         if (err.message.includes('JSON')) {

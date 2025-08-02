@@ -1312,6 +1312,92 @@ export class DatabaseStorage implements IStorage {
       return newConfig;
     }
   }
+
+  // Dashboard Customizations
+  async getDashboardCustomization(userId: number): Promise<DashboardCustomization | undefined> {
+    const [customization] = await db.select()
+      .from(dashboardCustomizations)
+      .where(eq(dashboardCustomizations.userId, userId));
+    return customization;
+  }
+
+  async createDashboardCustomization(customization: InsertDashboardCustomization): Promise<DashboardCustomization> {
+    const [newCustomization] = await db.insert(dashboardCustomizations).values({
+      ...customization,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return newCustomization;
+  }
+
+  async updateDashboardCustomization(userId: number, customization: Partial<DashboardCustomization>): Promise<DashboardCustomization | undefined> {
+    const [updatedCustomization] = await db
+      .update(dashboardCustomizations)
+      .set({
+        ...customization,
+        updatedAt: new Date(),
+      })
+      .where(eq(dashboardCustomizations.userId, userId))
+      .returning();
+    return updatedCustomization;
+  }
+
+  // Risk Management  
+  async createRiskAction(action: InsertRiskAction): Promise<RiskAction> {
+    const [riskAction] = await db.insert(riskActions).values({
+      ...action,
+      createdAt: new Date()
+    }).returning();
+    return riskAction;
+  }
+
+  async getRiskActions(studentId?: number): Promise<RiskAction[]> {
+    if (studentId) {
+      return await db.select().from(riskActions).where(eq(riskActions.studentId, studentId));
+    }
+    return await db.select().from(riskActions);
+  }
+
+  async updateRiskAction(id: number, action: Partial<RiskAction>): Promise<RiskAction | undefined> {
+    const [updatedAction] = await db
+      .update(riskActions)
+      .set(action)
+      .where(eq(riskActions.id, id))
+      .returning();
+    return updatedAction;
+  }
+
+  async getRiskSettings(): Promise<RiskSettings | undefined> {
+    const [settings] = await db.select().from(riskSettings).limit(1);
+    return settings;
+  }
+
+  async updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings> {
+    // First check if settings exist
+    const existing = await this.getRiskSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(riskSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(riskSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(riskSettings)
+        .values({
+          ...settings,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return created;
+    }
+  }
 }
 
 // Export the database storage instance

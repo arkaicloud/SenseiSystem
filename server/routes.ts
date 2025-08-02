@@ -27,7 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Buscar dados financeiros básicos
       const students = await storage.getStudents();
-      const payments = await storage.getStudentPayments();
+      const payments = await storage.getStudentPaymentsWithDetails();
       const paymentPlans = await storage.getPaymentPlans();
       
       // Calcular métricas financeiras

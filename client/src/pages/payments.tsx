@@ -11,6 +11,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrencyBRL, formatDateShort } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { FinancialDashboard } from "@/components/dashboard/FinancialDashboard";
 
 const Payments: React.FC = () => {
   const { t } = useTranslation();
@@ -37,11 +38,7 @@ const Payments: React.FC = () => {
     refetchInterval: false,
   });
 
-  // Fetch financial stats
-  const { data: statsData, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/financial-stats'],
-    refetchInterval: false,
-  });
+  // Financial stats are now handled by FinancialDashboard component
 
   // Add payment mutation
   const { mutate: addPayment, isPending: isAddingPayment } = useMutation({
@@ -153,95 +150,13 @@ const Payments: React.FC = () => {
     }
   };
 
-  const stats = (statsData as any) || {};
-  const financialMetrics = {
-    totalReceived: stats.totalReceived || 0,
-    pendingAmount: stats.pendingAmount || 0,
-    overdueAmount: stats.overdueAmount || 0,
-    monthlyRecurring: stats.monthlyRecurring || 0,
-    revenueGrowth: stats.revenueGrowth || 0,
-    totalStudents: stats.totalStudents || 0
-  };
+  // Financial metrics moved to FinancialDashboard component
 
   return (
     <>
-      {/* Mini Dashboard Financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Recebido no Mês</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrencyBRL(financialMetrics.totalReceived)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {financialMetrics.revenueGrowth > 0 ? '+' : ''}{financialMetrics.revenueGrowth.toFixed(1)}% vs mês anterior
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="material-icons text-green-600">trending_up</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pendente</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {formatCurrencyBRL(financialMetrics.pendingAmount)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  A receber este mês
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <span className="material-icons text-yellow-600">schedule</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Em Atraso</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatCurrencyBRL(financialMetrics.overdueAmount)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Requer atenção
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <span className="material-icons text-red-600">warning</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Receita Recorrente</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrencyBRL(financialMetrics.monthlyRecurring)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {financialMetrics.totalStudents} alunos ativos
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="material-icons text-blue-600">refresh</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Dashboard Financeiro Shadcn/UI Style */}
+      <div className="mb-8">
+        <FinancialDashboard />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">

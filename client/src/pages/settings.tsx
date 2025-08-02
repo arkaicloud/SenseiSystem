@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Languages, Palette, Bell, Shield, User, Moon, Sun } from "lucide-react";
+import { Palette, Bell, Shield, User, Moon, Sun } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -59,13 +59,7 @@ export default function Settings() {
     }
   };
 
-  const handleLanguageChange = (language: string) => {
-    // Por enquanto apenas português é suportado
-    toast({
-      title: "Idioma",
-      description: "Atualmente apenas português está disponível.",
-    });
-  };
+  
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -79,83 +73,9 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-6">
-        {/* Aparência */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="w-5 h-5" />
-              Aparência
-            </CardTitle>
-            <CardDescription>
-              Personalize a aparência do sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">Tema</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Escolha entre tema claro ou escuro
-                </div>
-              </div>
-              <Select 
-                value={schoolConfig?.config?.defaultTheme || "light"} 
-                onValueChange={handleThemeChange}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Selecione o tema" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">
-                    <div className="flex items-center gap-2">
-                      <Sun className="w-4 h-4" />
-                      Claro
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="dark">
-                    <div className="flex items-center gap-2">
-                      <Moon className="w-4 h-4" />
-                      Escuro
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        
 
-        {/* Idioma */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Languages className="w-5 h-5" />
-              Idioma
-            </CardTitle>
-            <CardDescription>
-              Selecione o idioma do sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">Idioma do sistema</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Idioma usado em toda a interface
-                </div>
-              </div>
-              <Select value="pt-BR" onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                  <SelectItem value="en-US" disabled>English (US)</SelectItem>
-                  <SelectItem value="es-ES" disabled>Español</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        
 
         {/* Notificações */}
         <Card>

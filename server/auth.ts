@@ -315,8 +315,14 @@ export function setupAuth(app: Express) {
 }
 
 // Function to create default admin user
-async function initializeDefaultAdmin() {
+export async function initializeDefaultAdmin() {
   try {
+    // Test database connection first
+    const connectionTest = await storage.testDatabaseConnection();
+    if (!connectionTest) {
+      throw new Error("Failed to connect to database");
+    }
+
     // Create admin user
     const existingAdmin = await storage.getUserByEmail("adm@senseisystem.com.br");
     

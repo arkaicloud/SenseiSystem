@@ -761,6 +761,18 @@ import { eq, and, desc, sql, asc, gte, lte } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import * as schema from "@shared/schema";
 
+// Test database connection
+export async function testDatabaseConnection() {
+  try {
+    const result = await db.select().from(schema.users).limit(1);
+    console.log("✅ Database connection successful");
+    return true;
+  } catch (error) {
+    console.error("❌ Database connection failed:", error);
+    return false;
+  }
+}
+
 // Database-backed storage implementation
 export class DatabaseStorage implements IStorage {
   sessionStore: session.SessionStore;

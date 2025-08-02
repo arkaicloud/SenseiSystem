@@ -125,7 +125,7 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
         <div>
           <h1 className="font-montserrat font-bold text-xl md:text-2xl text-primary dark:text-blue-400">
-            {t('painel') || 'Painel'}
+            Painel
           </h1>
           <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">
             Bem-vindo, {user?.firstName || 'Administrador'}
@@ -135,7 +135,7 @@ const Dashboard: React.FC = () => {
           <div className="relative flex-1 max-w-xs">
             <input
               type="text"
-              placeholder={t('pesquisar') || 'Pesquisar'}
+              placeholder="pesquisar"
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <div className="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
               <DialogTrigger asChild>
                 <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium whitespace-nowrap">
                   <span className="material-icons mr-1 text-sm">add</span>
-                  {t('novoAluno') || 'Novo Aluno'}
+                  novoAluno
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
@@ -163,40 +163,40 @@ const Dashboard: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
         <StatCard
-          title={t('totalDeAlunos') || 'Total de Alunos'}
+          title="Total de Alunos"
           value={stats.totalStudents}
           icon="people"
           trend={{ value: "+12%", isPositive: true }}
           iconBgColor="bg-blue-100 dark:bg-blue-900"
           iconColor="text-blue-600 dark:text-blue-300"
-          subtitle={t('alunosAtivosMatriculados') || 'Alunos ativos matriculados'}
+          subtitle="Alunos ativos matriculados"
         />
         <StatCard
-          title={t('aulasDoMes') || 'Aulas do Mês'}
+          title="Aulas do Mês"
           value={stats.classesThisMonth}
           icon="event"
           trend={{ value: "+5%", isPositive: true }}
           iconBgColor="bg-green-100 dark:bg-green-900"
           iconColor="text-green-600 dark:text-green-300"
-          subtitle={t('aulasRealizadasNoMes') || 'Aulas realizadas no mês'}
+          subtitle="Aulas realizadas no mês"
         />
         <StatCard
-          title={t('taxaDePresenca') || 'Taxa de Presenca'}
+          title="Taxa de Presença"
           value={stats.avgAttendance}
           icon="fact_check"
           trend={{ value: "-3%", isPositive: false }}
           iconBgColor="bg-purple-100 dark:bg-purple-900"
           iconColor="text-purple-600 dark:text-purple-300"
-          subtitle={t('presencaMediaDosAlunos') || 'Presença média dos alunos'}
+          subtitle="Presença média dos alunos"
         />
         <StatCard
-          title={t('receitaMensal') || 'Receita Mensal'}
+          title="Receita Mensal"
           value={stats.revenue}
           icon="payments"
           trend={{ value: "+8%", isPositive: true }}
           iconBgColor="bg-yellow-100 dark:bg-yellow-900"
           iconColor="text-yellow-600 dark:text-yellow-300"
-          subtitle={t('receitaTotalDoMes') || 'Receita total do mês'}
+          subtitle="Receita total do mês"
         />
       </div>
 
@@ -204,11 +204,11 @@ const Dashboard: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-montserrat font-bold text-xl">
-            {t('aulasDeHoje') || 'Aulas de Hoje'}
+            Aulas de Hoje
           </h2>
           <Link href="/classes">
             <div className="text-secondary font-medium text-sm flex items-center">
-              {t('verTodasAsAulas') || 'Ver todas as aulas'}
+              ver todas as aulas
               <span className="material-icons text-sm ml-1">arrow_forward</span>
             </div>
           </Link>

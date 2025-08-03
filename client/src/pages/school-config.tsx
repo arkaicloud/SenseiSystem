@@ -158,12 +158,18 @@ export default function SchoolConfigPage() {
                           <div className="space-y-4">
                             {/* Preview da imagem atual */}
                             {field.value && (
-                              <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                <img 
-                                  src={field.value} 
-                                  alt="Logo preview" 
-                                  className="max-w-full max-h-full object-contain rounded-lg"
-                                />
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium text-gray-700">Preview do Logo:</p>
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                  <img 
+                                    src={field.value} 
+                                    alt="Logo preview" 
+                                    className="max-w-full max-h-full object-contain rounded-lg"
+                                  />
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Visualização em tamanho real (128x128px)
+                                </p>
                               </div>
                             )}
                             
@@ -238,9 +244,12 @@ export default function SchoolConfigPage() {
                           </div>
                         </FormControl>
                         <FormMessage />
-                        <p className="text-sm text-gray-500">
-                          Faça upload de uma imagem (máximo 2MB) ou cole uma URL
-                        </p>
+                        <div className="text-sm text-gray-500 space-y-1">
+                          <p>• Faça upload de uma imagem (máximo 2MB) ou cole uma URL</p>
+                          <p>• <strong>Tamanho recomendado:</strong> 400x400 pixels (formato quadrado)</p>
+                          <p>• <strong>Formatos aceitos:</strong> PNG, JPG, JPEG (PNG com fundo transparente funciona melhor)</p>
+                          <p>• O logo será exibido em 128x128 pixels na tela de login</p>
+                        </div>
                       </FormItem>
                     )}
                   />

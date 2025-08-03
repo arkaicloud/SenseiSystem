@@ -123,13 +123,13 @@ const Students: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">{t('students')}</h1>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">students</h1>
           <p className="text-gray-600">Gerenciar Alunos</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">
             <Input
-              placeholder={t('search') + ' alunos...'}
+              placeholder="search alunos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -142,7 +142,7 @@ const Students: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                {t('addStudent')}
+                addStudent
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
@@ -157,92 +157,157 @@ const Students: React.FC = () => {
           <TabsList className="mb-4">
             <TabsTrigger value="all">Todos Alunos</TabsTrigger>
             <TabsTrigger value="active">Ativos</TabsTrigger>
-            <TabsTrigger value="inactive">Inactive</TabsTrigger>
+            <TabsTrigger value="inactive">Inativos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all">
             {isLoading ? (
-              <div className="text-center py-8">Loading students...</div>
+              <div className="text-center py-8">Carregando alunos...</div>
             ) : filteredStudents.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchQuery ? "No students found matching your search" : "No students found"}
+                {searchQuery ? "Nenhum aluno encontrado para sua busca" : "Nenhum aluno encontrado"}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredStudents.map((student: any) => (
-                  <Card 
-                    key={student.id} 
-                    className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => setSelectedStudent(student)}
-                  >
-                    <CardContent className="p-0">
-                      <div className="p-4 flex items-start">
-                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white mr-4">
-                          <span className="font-bold">
-                            {student.user.firstName.charAt(0)}
-                            {student.user.lastName.charAt(0)}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.user')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.project')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.address')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.date')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.status')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredStudents.map((student: any, index: number) => (
+                      <tr 
+                        key={student.id} 
+                        className="border-b hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        <td className="py-3 px-4">
+                          <span className="text-sm font-medium text-gray-600">
+                            #STU{String(student.id).padStart(3, '0')}
                           </span>
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{student.user.firstName} {student.user.lastName}</h3>
-                          <p className="text-sm text-gray-500">{student.user.email}</p>
-                          <div className="mt-2 flex items-center">
-                            <BeltWithLabel level={student.beltLevel} size="sm" />
-                            {student.stripes > 0 && (
-                              <span className="ml-2 text-xs bg-gray-200 rounded-full px-2 py-1">
-                                {student.stripes} stripe{student.stripes !== 1 ? 's' : ''}
-                              </span>
-                            )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-medium mr-3">
+                              {student.user.firstName.charAt(0)}{student.user.lastName.charAt(0)}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {student.user.firstName} {student.user.lastName}
+                            </span>
                           </div>
-                        </div>
-                      </div>
-                      <div className="bg-gray-100 p-3 flex justify-between items-center">
-                        <span className="text-xs text-gray-500">
-                          Joined: {new Date(student.user.joinDate).toLocaleDateString()}
-                        </span>
-                        <div className="flex space-x-1">
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-gray-900">
+                            <BeltWithLabel level={student.beltLevel} size="sm" />
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-gray-600">
+                            {student.user.street || 'Não informado'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <span className="material-icons text-xs mr-1">schedule</span>
+                            {(() => {
+                              const joinDate = new Date(student.user.joinDate);
+                              const now = new Date();
+                              const diffMs = now.getTime() - joinDate.getTime();
+                              const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                              
+                              if (diffMinutes < 60) {
+                                return diffMinutes < 5 ? t('student.table.justNow') : `${diffMinutes} ${t('student.table.minutesAgo')}`;
+                              } else if (diffHours < 24) {
+                                return diffHours === 1 ? `1 ${t('student.table.hourAgo')}` : `${diffHours} ${t('student.table.hoursAgo')}`;
+                              } else if (diffDays === 1) {
+                                return t('student.table.yesterday');
+                              } else {
+                                return joinDate.toLocaleDateString('pt-BR');
+                              }
+                            })()}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            student.user.active 
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              student.user.active ? 'bg-green-400' : 'bg-red-400'
+                            }`}></div>
+                            {student.user.active ? t('student.active') : t('student.inactive')}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-8 w-8 p-0"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.location.href = `mailto:${student.user.email}`;
+                              // Menu de ações aqui
                             }}
                           >
-                            <span className="material-icons text-secondary text-sm">mail</span>
+                            <span className="material-icons text-gray-400 text-sm">more_horiz</span>
                           </Button>
-                          {student.user.phone && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `tel:${student.user.phone}`;
-                              }}
-                            >
-                              <span className="material-icons text-primary text-sm">phone</span>
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {/* Paginação */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="flex items-center text-sm text-gray-600">
+                    Mostrando {filteredStudents.length} de {filteredStudents.length} resultados
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" disabled>
+                      <span className="material-icons text-sm">chevron_left</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="bg-primary text-white">
+                      1
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      2
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      3
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      4
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      5
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <span className="material-icons text-sm">chevron_right</span>
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="active">
             <div className="text-center py-8 text-gray-500">
-              Filter feature coming soon
+              Funcionalidade de filtro em breve
             </div>
           </TabsContent>
 
           <TabsContent value="inactive">
             <div className="text-center py-8 text-gray-500">
-              Filter feature coming soon
+              Funcionalidade de filtro em breve
             </div>
           </TabsContent>
         </Tabs>

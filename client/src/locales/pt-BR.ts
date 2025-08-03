@@ -65,6 +65,8 @@ export default {
     editStudent: 'Editar Aluno',
     studentInfo: 'Informações do Aluno',
     fullName: 'Nome Completo',
+    firstName: 'Nome',
+    lastName: 'Sobrenome',
     cpf: 'CPF',
     email: 'Email',
     birthDate: 'Data de Nascimento',
@@ -98,7 +100,24 @@ export default {
     whiteBeltToBlue: 'Faixa Branca → Faixa Azul',
     blueBeltToPurple: 'Faixa Azul → Faixa Roxa',
     purpleBeltToBrown: 'Faixa Roxa → Faixa Marrom',
-    brownBeltToBlack: 'Faixa Marrom → Faixa Preta'
+    brownBeltToBlack: 'Faixa Marrom → Faixa Preta',
+    table: {
+      user: 'Usuário',
+      project: 'Projeto',
+      address: 'Endereço',
+      date: 'Data',
+      phone: 'Telefone',
+      actions: 'Ações',
+      inProgress: 'Em Progresso',
+      complete: 'Completo',
+      pending: 'Pendente',
+      rejected: 'Rejeitado',
+      justNow: 'Agora mesmo',
+      minutesAgo: 'minutos atrás',
+      hourAgo: 'hora atrás',
+      hoursAgo: 'horas atrás',
+      yesterday: 'Ontem'
+    }
   },
   class: {
     addClass: 'Adicionar Nova Aula',

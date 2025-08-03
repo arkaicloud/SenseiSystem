@@ -75,42 +75,45 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="max-w-md w-full space-y-8">
           {/* School Branding */}
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-8">
+            {/* Logo Grande */}
             <div className="flex justify-center">
               {schoolConfig?.logoUrl ? (
-                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 bg-white">
                   <img 
                     src={schoolConfig.logoUrl} 
                     alt={`Logo ${schoolConfig.schoolName}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-3"
                     onError={(e) => {
                       // Fallback to default logo if image fails to load
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling?.classList.remove('hidden');
                     }}
                   />
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl hidden">
-                    <Award className="h-10 w-10 text-white" />
+                  <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-2xl hidden">
+                    <Award className="h-16 w-16 text-white" />
                   </div>
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border border-gray-100 bg-white">
+                <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 bg-white">
                   <img 
                     src={huiosLogo} 
                     alt="Logo Huios Jiu Jitsu"
-                    className="w-full h-full object-contain p-2"
+                    className="w-full h-full object-contain p-3"
                     onError={(e) => {
                       // Fallback to icon if logo fails
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling?.classList.remove('hidden');
                     }}
                   />
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl hidden">
-                    <Award className="h-10 w-10 text-white" />
+                  <div className="w-32 h-32 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-2xl hidden">
+                    <Award className="h-16 w-16 text-white" />
                   </div>
                 </div>
               )}
             </div>
+            
+            {/* Texto abaixo do logo */}
             <div className="space-y-3">
               <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                 Acesso exclusivo da<br />

@@ -18,12 +18,12 @@ export default function LoginPage() {
   const { t } = useContext(LanguageContext);
 
   // Fetch school configuration for tenant-specific branding
-  const { data: schoolConfigResponse } = useQuery({
+  const { data: schoolConfigResponse } = useQuery<{ config: any }>({
     queryKey: ["/api/school-config"],
   });
 
   // Safely extract config from response
-  const schoolConfig = schoolConfigResponse?.config;
+  const schoolConfig = schoolConfigResponse?.config || null;
 
   // Redirect if already authenticated
   useEffect(() => {

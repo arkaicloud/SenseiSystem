@@ -81,7 +81,7 @@ export default function LoginPage() {
               <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                 Acesso exclusivo da<br />
                 <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  {schoolConfig?.config?.schoolName || "Huios Jiu Jitsu"}
+                  {(schoolConfig as any)?.config?.schoolName || "Huios Jiu Jitsu"}
                 </span>
               </h1>
               <p className="text-gray-500 text-base font-medium">no SenseiSystem</p>
@@ -116,15 +116,7 @@ export default function LoginPage() {
               </div>
               
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password" className="text-sm font-semibold text-gray-700">{t("auth.password")}</Label>
-                  <button 
-                    type="button" 
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                  >
-                    {t("auth.forgotPassword")}
-                  </button>
-                </div>
+                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">{t("auth.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -150,6 +142,15 @@ export default function LoginPage() {
                   t("auth.login")
                 )}
               </Button>
+
+              <div className="text-center">
+                <button 
+                  type="button" 
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                >
+                  {t("auth.forgotPassword")}
+                </button>
+              </div>
 
               <div className="text-center space-y-4 pt-6 border-t border-gray-100">
                 <p className="text-sm text-gray-600">Ainda não tem acesso?</p>

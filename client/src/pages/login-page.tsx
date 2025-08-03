@@ -50,205 +50,186 @@ export default function LoginPage() {
     {
       icon: Award,
       title: "Progressão de Graduação", 
-      description: "Acompanhe o desenvolvimento de cada estudante."
+      description: "Gerencie graduações e evolução técnica com facilidade."
     },
     {
       icon: Users,
       title: "Gestão de Turmas",
-      description: "Organize horários e instrutores responsáveis." 
+      description: "Planeje horários, instrutores e capacidade de cada turma." 
     }
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row font-['Inter',sans-serif] antialiased">
-      {/* Left Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
-        <div className="max-w-md w-full space-y-4 sm:space-y-6">
-          {/* School Branding */}
-          <div className="text-center space-y-4 sm:space-y-6">
-            {/* Logo Compacto */}
-            <div className="flex justify-center">
-              {schoolConfig?.logoUrl ? (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl shadow-lg bg-white p-2 flex items-center justify-center">
-                  <img 
-                    src={schoolConfig.logoUrl} 
-                    alt={schoolConfig.schoolName || "Logo da Academia"} 
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                </div>
-              ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl shadow-lg bg-white p-2 flex items-center justify-center">
-                  <img 
-                    src={huiosLogo} 
-                    alt="Logo Huios Jiu Jitsu"
-                    className="w-full h-full object-contain rounded-lg"
-                    onError={(e) => {
-                      // Fallback to icon if logo fails
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg hidden">
-                    <Award className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+    <div className="min-h-screen bg-gray-50 font-['Inter',sans-serif] antialiased">
+      <div className="max-w-screen-lg mx-auto min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-y-8 lg:gap-x-12">
+        {/* Left Side - Login Form */}
+        <div className="flex items-center justify-center px-6 py-10">
+          <div className="max-w-md w-full space-y-6">
+            {/* School Branding */}
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                {schoolConfig?.logoUrl ? (
+                  <div className="w-16 h-16 rounded-xl shadow-md bg-white p-2 flex items-center justify-center">
+                    <img 
+                      src={schoolConfig.logoUrl} 
+                      alt={schoolConfig.schoolName || "Logo da Academia"} 
+                      className="w-full h-full object-contain rounded-lg"
+                    />
                   </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Título Compacto */}
-            <div className="space-y-2">
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-700">
-                Acesso exclusivo da
-              </h1>
-              <h2 className="text-xl sm:text-2xl font-bold text-blue-600">
-                {schoolConfig?.schoolName || "Huios Jiu Jitsu"}
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500">
-                no SenseiSystem
-              </p>
-            </div>
-          </div>
-
-          {/* Login Form */}
-          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100">
-            <div className="mb-4 sm:mb-6">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{t("auth.loginToAccount")}</h2>
-              <p className="text-gray-600 text-xs sm:text-sm">{t("auth.loginDescription")}</p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
-              {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-800">{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-semibold text-gray-700">{t("auth.email")}</Label>
-                <Input
-                  id="username"
-                  type="email"
-                  value={loginData.username}
-                  onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                  placeholder="seu@email.com"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">{t("auth.password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {t("auth.loggingIn")}
-                  </>
                 ) : (
-                  t("auth.login")
+                  <div className="w-16 h-16 rounded-xl shadow-md bg-white p-2 flex items-center justify-center">
+                    <img 
+                      src={huiosLogo} 
+                      alt="Logo Huios Jiu Jitsu"
+                      className="w-full h-full object-contain rounded-lg"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md hidden">
+                      <Award className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
                 )}
-              </Button>
-
-              <div className="text-center">
-                <button 
-                  type="button" 
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                >
-                  {t("auth.forgotPassword")}
-                </button>
               </div>
-
-              <div className="text-center space-y-4 pt-6 border-t border-gray-100">
-                <p className="text-sm text-gray-600">Ainda não tem acesso?</p>
-                <button 
-                  type="button" 
-                  onClick={handleRegisterClick}
-                  className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 hover:text-gray-900 font-medium py-3 px-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 flex items-center justify-center space-x-2"
-                >
-                  <Users className="h-4 w-4" />
-                  <span>Solicitar Acesso • Nova Matrícula</span>
-                </button>
+              
+              <div className="space-y-1">
+                <p className="text-sm text-gray-600">
+                  Acesso exclusivo da <span className="font-semibold text-blue-600">{schoolConfig?.schoolName || "Huios Jiu Jitsu"}</span>
+                </p>
+                <p className="text-xs text-gray-500">no SenseiSystem</p>
               </div>
-            </form>
-          </div>
-
-          {/* Footer - SenseiSystem Branding */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white text-sm font-bold">S</span>
-              </div>
-              <span className="text-lg font-bold text-gray-800">SenseiSystem</span>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600 font-medium">
-                Junte-se às <span className="font-bold text-gray-900">escolas</span> que confiam no SenseiSystem
-              </p>
+
+            {/* Login Form */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Entre na sua conta</h2>
+                <p className="text-gray-600 text-sm">Digite suas credenciais para acessar sua conta.</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive" className="border-red-200 bg-red-50">
+                    <AlertDescription className="text-red-800">{error}</AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-sm font-medium text-gray-700">E-mail</Label>
+                  <Input
+                    id="username"
+                    type="email"
+                    value={loginData.username}
+                    onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                    placeholder="seu@email.com"
+                    className="w-full rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    required
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-md shadow-sm hover:shadow-md transition-all duration-200"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Entrando...
+                    </>
+                  ) : (
+                    "Entrar"
+                  )}
+                </Button>
+
+                <div className="text-center">
+                  <button 
+                    type="button" 
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                  >
+                    Esqueceu sua senha?
+                  </button>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 text-center mb-3">Ainda não tem acesso?</p>
+                  <button 
+                    type="button" 
+                    onClick={handleRegisterClick}
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-md border border-gray-300 transition-all duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Solicitar Acesso</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-6 h-6 bg-gradient-to-br from-purple-600 to-blue-600 rounded-md flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">S</span>
+                </div>
+                <span className="text-base font-bold text-gray-800">SenseiSystem</span>
+              </div>
               <p className="text-xs text-gray-500">Plataforma líder em gestão para artes marciais</p>
             </div>
           </div>
         </div>
-      </div>
-      {/* Right Side - Features Showcase Elegante */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 items-center justify-center p-6 lg:p-8 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-600 rounded-full mix-blend-multiply filter blur-xl"></div>
-          <div className="absolute -bottom-8 -left-4 w-72 h-72 bg-indigo-600 rounded-full mix-blend-multiply filter blur-xl"></div>
-        </div>
-        
-        <div className="max-w-lg w-full relative z-10 mt-[12px] mb-[12px] pl-[5px] pr-[5px] text-left pt-[80px] pb-[80px]">
-          {/* Header Elegante Compacto */}
-          <div className="text-center mb-8 lg:mb-10">
-            <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-              O futuro da<br />
-              <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent">
-                gestão escolar
-              </span>
-            </h1>
-            <p className="text-gray-600 text-sm lg:text-base leading-relaxed">
-              Plataforma completa para transformar a administração da sua escola de artes marciais
-            </p>
-          </div>
 
-          {/* Features List com Glassmorphism Compacto */}
-          <div className="space-y-3 lg:space-y-4">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="group relative flex items-start space-x-4 p-4 lg:p-5 rounded-xl lg:rounded-2xl bg-white/60 backdrop-blur-md border border-white/20 shadow-lg hover:shadow-xl hover:bg-white/80 transition-all duration-300 hover:scale-[1.02]"
-              >
-                {/* Gradient Border Effect */}
-                <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                <div className="relative bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg p-2.5 lg:p-3 flex-shrink-0 shadow-lg">
-                  <feature.icon className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
+        {/* Right Side - Features Showcase */}
+        <div className="flex items-center justify-center px-6 py-10 bg-gradient-to-br from-blue-50 to-indigo-50 lg:rounded-none rounded-t-3xl">
+          <div className="max-w-md w-full space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                Transforme sua escola<br />
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  com tecnologia
+                </span>
+              </h1>
+              <p className="text-gray-600 leading-relaxed">
+                A gestão moderna que seu dojo merece
+              </p>
+            </div>
+
+            {/* Features List */}
+            <div className="space-y-4">
+              {features.map((feature, index) => (
+                <div 
+                  key={index} 
+                  className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md flex items-start gap-3 transition-all duration-200"
+                >
+                  <div className="bg-blue-100 text-blue-600 rounded-lg p-2 flex-shrink-0">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="relative">
-                  <h3 className="text-sm lg:text-base font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 text-xs lg:text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

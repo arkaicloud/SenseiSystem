@@ -23,6 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeltWithLabel } from "@/components/ui/belt";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "@/hooks/use-translations";
 
 // Extend the user schema for student creation
 const studentFormSchema = insertUserSchema.extend({
@@ -53,6 +54,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const { t } = useTranslations();
   // Fetch payment plans
   const { data: plansData } = useQuery({
     queryKey: ['/api/payment-plans'],
@@ -115,7 +117,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('firstName')}</FormLabel>
+                    <FormLabel>{t('student.firstName')}</FormLabel>
                     <FormControl>
                       <Input placeholder="Digite o nome" {...field} />
                     </FormControl>
@@ -128,7 +130,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('lastName')}</FormLabel>
+                    <FormLabel>{t('student.lastName')}</FormLabel>
                     <FormControl>
                       <Input placeholder="Digite o sobrenome" {...field} />
                     </FormControl>
@@ -144,7 +146,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('email')}</FormLabel>
+                    <FormLabel>{t('student.email')}</FormLabel>
                     <FormControl>
                       <Input placeholder="joao.silva@exemplo.com" {...field} />
                     </FormControl>

@@ -167,45 +167,72 @@ export default function SchoolConfigPage() {
                               </div>
                             )}
                             
-                            {/* Input de arquivo */}
-                            <div className="flex flex-col gap-2">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    // Verificar tamanho (máximo 2MB)
-                                    if (file.size > 2 * 1024 * 1024) {
-                                      toast({
-                                        title: "Arquivo muito grande",
-                                        description: "Por favor, selecione uma imagem menor que 2MB",
-                                        variant: "destructive",
-                                      });
-                                      return;
+                            {/* Opções de logo */}
+                            <div className="flex flex-col gap-4">
+                              {/* Usar logo padrão Huios */}
+                              <div className="flex items-center gap-3">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    // Usar a imagem do logo Huios como padrão
+                                    field.onChange("/assets/targeted_element_1754259068936.png");
+                                    toast({
+                                      title: "Logo atualizado",
+                                      description: "Logo padrão Huios Jiu Jitsu aplicado com sucesso",
+                                    });
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Award className="h-4 w-4" />
+                                  Usar Logo Padrão Huios
+                                </Button>
+                              </div>
+
+                              {/* Upload de arquivo */}
+                              <div className="border-t pt-3">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      // Verificar tamanho (máximo 2MB)
+                                      if (file.size > 2 * 1024 * 1024) {
+                                        toast({
+                                          title: "Arquivo muito grande",
+                                          description: "Por favor, selecione uma imagem menor que 2MB",
+                                          variant: "destructive",
+                                        });
+                                        return;
+                                      }
+                                      
+                                      // Converter para base64
+                                      const reader = new FileReader();
+                                      reader.onload = (event) => {
+                                        const base64 = event.target?.result as string;
+                                        field.onChange(base64);
+                                        toast({
+                                          title: "Imagem carregada",
+                                          description: "Logo personalizado aplicado com sucesso",
+                                        });
+                                      };
+                                      reader.readAsDataURL(file);
                                     }
-                                    
-                                    // Converter para base64
-                                    const reader = new FileReader();
-                                    reader.onload = (event) => {
-                                      const base64 = event.target?.result as string;
-                                      field.onChange(base64);
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                                className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                              />
-                              
-                              {/* URL manual como alternativa */}
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">ou</span>
-                                <Input 
-                                  placeholder="URL da imagem (https://...)"
-                                  value={field.value?.startsWith('http') ? field.value : ''}
-                                  onChange={(e) => field.onChange(e.target.value)}
-                                  className="flex-1"
+                                  }}
+                                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
+                                
+                                {/* URL manual como alternativa */}
+                                <div className="flex items-center gap-2 mt-3">
+                                  <span className="text-sm text-gray-500">ou</span>
+                                  <Input 
+                                    placeholder="URL da imagem (https://...)"
+                                    value={field.value?.startsWith('http') ? field.value : ''}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    className="flex-1"
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>

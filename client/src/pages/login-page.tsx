@@ -66,22 +66,25 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row font-sans">
+    <div className="min-h-screen flex flex-col lg:flex-row font-['Inter',sans-serif] antialiased">
       {/* Left Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="max-w-md w-full space-y-8">
           {/* School Branding */}
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-6">
             <div className="flex justify-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
-                <Award className="h-8 w-8 text-white" />
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl">
+                <Award className="h-10 w-10 text-white" />
               </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {schoolConfig?.config?.schoolName || "Huios Jiu Jitsu"}
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold text-gray-900 leading-tight">
+                Acesso exclusivo da<br />
+                <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                  {schoolConfig?.config?.schoolName || "Huios Jiu Jitsu"}
+                </span>
               </h1>
-              <p className="text-gray-600 text-sm">Sistema de Gestão Escolar</p>
+              <p className="text-gray-500 text-base font-medium">no SenseiSystem</p>
             </div>
           </div>
 
@@ -148,66 +151,78 @@ export default function LoginPage() {
                 )}
               </Button>
 
-              <div className="text-center space-y-3 pt-4 border-t border-gray-100">
+              <div className="text-center space-y-4 pt-6 border-t border-gray-100">
                 <p className="text-sm text-gray-600">Ainda não tem acesso?</p>
                 <button 
                   type="button" 
                   onClick={handleRegisterClick}
-                  className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-semibold transition-colors"
+                  className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 hover:text-gray-900 font-medium py-3 px-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 flex items-center justify-center space-x-2"
                 >
-                  Solicitar Acesso
-                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                    Nova matrícula
-                  </span>
+                  <Users className="h-4 w-4" />
+                  <span>Solicitar Acesso • Nova Matrícula</span>
                 </button>
               </div>
             </form>
           </div>
 
           {/* Footer - SenseiSystem Branding */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-purple-600 to-blue-600 rounded-md flex items-center justify-center">
-                <span className="text-white text-xs font-bold">S</span>
+              <div className="w-7 h-7 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-white text-sm font-bold">S</span>
               </div>
-              <span className="text-sm font-semibold text-gray-700">SenseiSystem</span>
+              <span className="text-lg font-bold text-gray-800">SenseiSystem</span>
             </div>
-            <p className="text-xs text-gray-500">Plataforma de Gestão para Artes Marciais</p>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 font-medium">
+                Junte-se às <span className="font-bold text-gray-900">1000+ escolas</span> que confiam no SenseiSystem
+              </p>
+              <p className="text-xs text-gray-500">Plataforma líder em gestão para artes marciais</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Features Showcase - Hidden on Mobile */}
-      <div className="flex-1 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 lg:flex items-center justify-center p-8 hidden lg:block">
-        <div className="max-w-xl w-full">
+      {/* Right Side - Features Showcase */}
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 items-center justify-center p-8 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-600 rounded-full mix-blend-multiply filter blur-xl"></div>
+          <div className="absolute -bottom-8 -left-4 w-72 h-72 bg-indigo-600 rounded-full mix-blend-multiply filter blur-xl"></div>
+        </div>
+        
+        <div className="max-w-xl w-full relative z-10">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
-              Bem-vindo ao<br />
-              <span className="bg-gradient-to-r from-yellow-300 to-yellow-100 bg-clip-text text-transparent">
-                Futuro da Gestão
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              O futuro da<br />
+              <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent">
+                gestão escolar
               </span>
             </h1>
-            <p className="text-blue-100 text-lg">
-              Transforme a administração da sua escola de artes marciais
+            <p className="text-gray-600 text-lg leading-relaxed">
+              Plataforma completa para transformar a administração da sua escola de artes marciais
             </p>
           </div>
 
-          {/* Features List */}
-          <div className="space-y-6">
+          {/* Features List with Glassmorphism */}
+          <div className="space-y-4">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="flex items-start space-x-4 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300"
+                className="group relative flex items-start space-x-4 p-6 rounded-2xl bg-white/60 backdrop-blur-md border border-white/20 shadow-lg hover:shadow-xl hover:bg-white/80 transition-all duration-300 hover:scale-[1.02]"
               >
-                <div className="bg-gradient-to-br from-white/20 to-white/10 rounded-lg p-3 flex-shrink-0">
+                {/* Gradient Border Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="relative bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl p-3 flex-shrink-0 shadow-lg">
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
-                <div className="text-white">
-                  <h3 className="text-lg font-semibold mb-2">
+                <div className="relative">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-blue-100 text-sm leading-relaxed">
+                  <p className="text-gray-600 text-sm leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -215,11 +230,12 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* Enhanced CTA */}
           <div className="mt-12 text-center">
-            <p className="text-blue-100 text-sm">
-              Mais de <span className="font-semibold text-white">1000+ escolas</span> confiam no SenseiSystem
-            </p>
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg">
+              <CheckCircle className="h-4 w-4" />
+              <span>Mais de 1000+ escolas confiam no SenseiSystem</span>
+            </div>
           </div>
         </div>
       </div>

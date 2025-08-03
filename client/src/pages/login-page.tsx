@@ -69,36 +69,44 @@ export default function LoginPage() {
             <div className="text-center space-y-4">
               <div className="flex justify-center">
                 {schoolConfig?.logoUrl ? (
-                  <div className="w-16 h-16 rounded-xl shadow-md bg-white p-2 flex items-center justify-center">
+                  <div className="relative">
                     <img 
                       src={schoolConfig.logoUrl} 
                       alt={schoolConfig.schoolName || "Logo da Academia"} 
-                      className="w-full h-full object-contain rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 rounded-xl shadow-md bg-white p-2 flex items-center justify-center">
-                    <img 
-                      src={huiosLogo} 
-                      alt="Logo Huios Jiu Jitsu"
-                      className="w-full h-full object-contain rounded-lg"
+                      className="h-20 w-auto max-w-[200px] sm:h-24 sm:max-w-[240px] object-contain rounded-xl shadow-md bg-white p-3"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                         e.currentTarget.nextElementSibling?.classList.remove('hidden');
                       }}
                     />
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md hidden">
-                      <Award className="w-8 h-8 text-white" />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md hidden">
+                      <Award className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <img 
+                      src={huiosLogo} 
+                      alt="Logo Huios Jiu Jitsu"
+                      className="h-20 w-auto max-w-[200px] sm:h-24 sm:max-w-[240px] object-contain rounded-xl shadow-md bg-white p-3"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md hidden">
+                      <Award className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
                     </div>
                   </div>
                 )}
               </div>
               
               <div className="space-y-1">
-                <p className="text-sm text-gray-600">
-                  Acesso exclusivo da <span className="font-semibold text-blue-600">{schoolConfig?.schoolName || "Huios Jiu Jitsu"}</span>
+                <p className="text-sm text-gray-600 text-center">
+                  Acesso exclusivo da <br />
+                  <span className="font-semibold text-blue-600 text-base">{schoolConfig?.schoolName || "Huios Jiu Jitsu"}</span>
                 </p>
-                <p className="text-xs text-gray-500">no SenseiSystem</p>
+                <p className="text-xs text-gray-500 text-center">no SenseiSystem</p>
               </div>
             </div>
 

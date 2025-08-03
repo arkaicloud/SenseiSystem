@@ -182,7 +182,7 @@ export default function LoginPage() {
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-md border border-gray-300 transition-all duration-200 flex items-center justify-center space-x-2"
                   >
                     <Users className="h-4 w-4" />
-                    <span>Solicitar Acesso</span>
+                    <span>Matricule-se Agora</span>
                   </button>
                 </div>
               </form>

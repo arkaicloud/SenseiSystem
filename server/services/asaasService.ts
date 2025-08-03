@@ -39,8 +39,9 @@ export class AsaasService {
   private readonly baseUrl: string;
   private readonly apiKey: string;
 
-  constructor(apiKey?: string) {
-    this.baseUrl = 'https://www.asaas.com/api/v3';
+  constructor(apiKey?: string, useSandbox: boolean = true) {
+    // Use sandbox environment by default for testing
+    this.baseUrl = useSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://www.asaas.com/api/v3';
     this.apiKey = apiKey || process.env.ASAAS_API_KEY || '';
   }
 
@@ -126,7 +127,40 @@ export class AsaasService {
   // Validar webhook do ASAAS
   validateWebhook(event: AsaasWebhookEvent): boolean {
     // Implementar validação de webhook se necessário
-    return event && event.event && event.payment;
+    return Boolean(event && event.event && event.payment);
+  }
+
+  // Testar conexão com a API ASAAS
+  async testConnection(): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      console.log('🔍 Testing ASAAS API connection...');
+      
+      if (!this.apiKey) {
+        return {
+          success: false,
+          message: 'API Key do ASAAS não configurada'
+        };
+      }
+
+      // Tentar buscar informações da conta
+      const response = await this.makeRequest('/myAccount');
+      
+      return {
+        success: true,
+        message: 'Conexão com ASAAS estabelecida com sucesso',
+        data: {
+          name: response.name || 'Não informado',
+          email: response.email || 'Não informado',
+          environment: this.baseUrl.includes('sandbox') ? 'Sandbox (Teste)' : 'Produção'
+        }
+      };
+    } catch (error) {
+      console.error('❌ Error testing ASAAS connection:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erro desconhecido ao conectar com ASAAS'
+      };
+    }
   }
 
   // Processar evento de webhook

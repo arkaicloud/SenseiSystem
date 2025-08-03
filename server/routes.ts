@@ -1943,10 +1943,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: updatedConfig.id
       });
 
-      res.json({ config: updatedConfig });
+      res.json({ 
+        success: true,
+        message: "Configurações atualizadas com sucesso",
+        config: updatedConfig 
+      });
     } catch (error) {
       console.error("Error updating school config:", error);
-      res.status(500).json({ message: "Erro ao salvar configurações" });
+      res.status(500).json({ 
+        success: false,
+        message: "Erro ao salvar configurações",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
     }
   });
 
@@ -2339,7 +2347,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Testar conexão com ASAAS
+  app.post("/api/asaas/test-connection", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const config = await storage.getSchoolConfig();
+      if (!config?.asaasApiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "API Key do ASAAS não configurada" 
+        });
+      }
 
+      const { AsaasService } = await import("./services/asaasService");
+      const asaasService = new AsaasService(config.asaasApiKey, true); // Use sandbox
+      const result = await asaasService.testConnection();
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing ASAAS connection:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

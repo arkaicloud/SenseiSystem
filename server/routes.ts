@@ -642,11 +642,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: studentData.notes || null,
         avatarColor: null,
         avatarStyle: null,
-        avatarImage: null
+        avatarImage: null,
+        // Financial responsibility data
+        financialResponsibleName: studentData.financialResponsibleName || null,
+        financialResponsibleEmail: studentData.financialResponsibleEmail || null,
+        financialResponsiblePhone: studentData.financialResponsiblePhone || null,
+        financialResponsibleCpf: studentData.financialResponsibleCpf || null,
+        financialResponsibleRelationship: studentData.financialResponsibleRelationship || null,
+        asaasCustomerId: null // Will be filled after ASAAS customer creation
       });
 
       // Criar o registro do aluno
       const student = await storage.createStudent(studentInfo);
+
+      // Criar cliente no ASAAS se os dados do responsável financeiro estão disponíveis
+      let asaasCustomerId = null;
+      if (studentData.financialResponsibleName && studentData.financialResponsibleEmail) {
+        try {
+          const config = await storage.getSchoolConfig();
+          if (config?.asaasApiKey) {
+            const { AsaasService } = await import("./services/asaasService");
+            const asaasService = new AsaasService(config.asaasApiKey, true); // Use sandbox
+
+            console.log('🔄 Creating ASAAS customer for student:', studentData.firstName, studentData.lastName);
+            
+            const asaasCustomer = await asaasService.createCustomer({
+              name: studentData.financialResponsibleName,
+              email: studentData.financialResponsibleEmail,
+              cpfCnpj: studentData.financialResponsibleCpf?.replace(/\D/g, ''), // Remove formatting
+              phone: studentData.financialResponsiblePhone?.replace(/\D/g, ''), // Remove formatting
+              externalReference: `student_${student.id}` // Link to our student
+            });
+
+            asaasCustomerId = asaasCustomer.id;
+            console.log('✅ ASAAS customer created:', asaasCustomerId);
+
+            // Update student with ASAAS customer ID
+            await storage.updateStudent(student.id, { asaasCustomerId });
+          }
+        } catch (error) {
+          console.error('❌ Error creating ASAAS customer:', error);
+          // Don't fail student creation if ASAAS fails, just log the error
+        }
+      }
 
       // Se um plano de pagamento foi selecionado, criar o pagamento
       if (studentData.paymentPlanId) {

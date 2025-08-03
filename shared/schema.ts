@@ -48,6 +48,14 @@ export const students = pgTable("students", {
   avatarColor: text("avatar_color").default('#3b82f6'),
   avatarStyle: text("avatar_style").default('initials'),
   avatarImage: text("avatar_image"),
+  // Financial responsibility information
+  financialResponsibleName: text("financial_responsible_name"),
+  financialResponsibleEmail: text("financial_responsible_email"),
+  financialResponsiblePhone: text("financial_responsible_phone"),
+  financialResponsibleCpf: text("financial_responsible_cpf"),
+  financialResponsibleRelationship: text("financial_responsible_relationship"), // "self", "parent", "guardian", "spouse"
+  // ASAAS integration fields
+  asaasCustomerId: text("asaas_customer_id"), // ID do cliente no ASAAS
 });
 
 // School Configuration table (tenant information)

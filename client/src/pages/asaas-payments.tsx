@@ -55,7 +55,12 @@ export default function AsaasPayments() {
   // Mutation para atualizar configuração ASAAS
   const updateAsaasConfig = useMutation({
     mutationFn: async (data: typeof asaasConfig) => {
-      return await apiRequest("/api/school-config", "PATCH", data);
+      const response = await apiRequest("PATCH", "/api/school-config", data);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Erro ao salvar configurações");
+      }
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -65,9 +70,44 @@ export default function AsaasPayments() {
       queryClient.invalidateQueries({ queryKey: ["/api/school-config"] });
     },
     onError: (error: any) => {
+      console.error("Erro ao atualizar ASAAS config:", error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao atualizar configurações",
+        description: error?.message || "Erro ao atualizar configurações ASAAS",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para testar conexão ASAAS
+  const testAsaasConnection = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/asaas/test-connection");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Erro ao testar conexão");
+      }
+      return await response.json();
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        toast({
+          title: "Conexão Bem-sucedida",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Erro na Conexão",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error("Erro ao testar conexão ASAAS:", error);
+      toast({
+        title: "Erro",
+        description: error?.message || "Erro ao testar conexão com ASAAS",
         variant: "destructive",
       });
     },
@@ -143,6 +183,12 @@ export default function AsaasPayments() {
           <CardDescription>
             Configure sua integração com o gateway de pagamentos ASAAS
           </CardDescription>
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              🧪 <strong>Ambiente Sandbox (Teste)</strong> - Use a API key de teste do ASAAS. Os pagamentos não serão reais.
+            </AlertDescription>
+          </Alert>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -171,12 +217,22 @@ export default function AsaasPayments() {
             </div>
           </div>
           
-          <Button 
-            onClick={() => updateAsaasConfig.mutate(asaasConfig)}
-            disabled={updateAsaasConfig.isPending}
-          >
-            {updateAsaasConfig.isPending ? "Salvando..." : "Salvar Configurações"}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => updateAsaasConfig.mutate(asaasConfig)}
+              disabled={updateAsaasConfig.isPending}
+            >
+              {updateAsaasConfig.isPending ? "Salvando..." : "Salvar Configurações"}
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={() => testAsaasConnection.mutate()}
+              disabled={testAsaasConnection.isPending || !asaasConfig.asaasApiKey}
+            >
+              {testAsaasConnection.isPending ? "Testando..." : "Testar Conexão"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

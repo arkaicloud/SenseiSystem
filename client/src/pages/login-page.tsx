@@ -9,7 +9,7 @@ import { CheckCircle, Award, Calendar, CreditCard, Loader2, Shield, Users, BarCh
 import { useContext } from "react";
 import { LanguageContext } from "@/providers/i18n-provider";
 import { useQuery } from "@tanstack/react-query";
-import logoPlaceholder from "@assets/IMG_8653.png";
+import huiosLogo from "@assets/targeted_element_1754259068936.png";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -94,13 +94,13 @@ export default function LoginPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border border-gray-100 bg-white">
                   <img 
-                    src={logoPlaceholder} 
-                    alt="Logo da escola"
-                    className="w-full h-full object-cover"
+                    src={huiosLogo} 
+                    alt="Logo Huios Jiu Jitsu"
+                    className="w-full h-full object-contain p-2"
                     onError={(e) => {
-                      // Fallback to icon if placeholder fails
+                      // Fallback to icon if logo fails
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling?.classList.remove('hidden');
                     }}

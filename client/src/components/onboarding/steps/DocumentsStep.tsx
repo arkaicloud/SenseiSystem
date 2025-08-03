@@ -6,8 +6,10 @@ import { ArrowLeft, ArrowRight, FileText, Upload, CheckCircle, FileIcon, Downloa
 import { Badge } from "@/components/ui/badge";
 
 interface DocumentsStepProps {
-  onNext: () => void;
+  onNext: (data?: any) => void;
   onBack: () => void;
+  defaultValues?: any;
+  isSubmitting?: boolean;
 }
 
 interface DocumentInfo {
@@ -19,7 +21,7 @@ interface DocumentInfo {
   uploadedAt?: Date;
 }
 
-export default function DocumentsStep({ onNext, onBack }: DocumentsStepProps) {
+export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: DocumentsStepProps) {
   const [documents] = useState<DocumentInfo[]>([
     {
       id: '1',

@@ -28,16 +28,28 @@ const personalInfoSchema = z.object({
   city: z.string().min(1, "Cidade é obrigatória"),
   state: z.string().min(2, "Estado é obrigatório").max(2, "Estado deve ter 2 caracteres"),
   // Financial responsibility fields
-  financialResponsibleName: z.string().min(1, "Nome do responsável financeiro é obrigatório"),
-  financialResponsibleEmail: z.string().email("E-mail do responsável financeiro inválido"),
-  financialResponsiblePhone: z.string().min(10, "Telefone do responsável financeiro deve ter pelo menos 10 dígitos"),
-  financialResponsibleCpf: z.string().min(11, "CPF do responsável financeiro é obrigatório"),
+  financialResponsibleName: z.string().optional(),
+  financialResponsibleEmail: z.string().optional(),
+  financialResponsiblePhone: z.string().optional(),
+  financialResponsibleCpf: z.string().optional(),
   financialResponsibleRelationship: z.enum(["self", "parent", "guardian", "spouse"], {
     errorMap: () => ({ message: "Selecione o grau de parentesco" })
   }),
   // Payment plan and due date
   paymentPlanId: z.string().min(1, "Selecione um plano de pagamento"),
   dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+}).refine((data) => {
+  // Se não for "self", os campos do responsável financeiro são obrigatórios
+  if (data.financialResponsibleRelationship !== "self") {
+    return data.financialResponsibleName && 
+           data.financialResponsibleEmail && 
+           data.financialResponsiblePhone && 
+           data.financialResponsibleCpf;
+  }
+  return true;
+}, {
+  message: "Dados do responsável financeiro são obrigatórios",
+  path: ["financialResponsibleName"]
 });
 
 export type PersonalInfoData = z.infer<typeof personalInfoSchema>;
@@ -86,6 +98,9 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
       ...defaultValues,
     },
   });
+
+  // Watch the financial responsible relationship to show/hide fields
+  const financialRelationship = form.watch("financialResponsibleRelationship");
 
   const handleSubmit = (data: PersonalInfoData) => {
     onNext(data);
@@ -340,80 +355,91 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="financialResponsibleName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome Completo do Responsável *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Nome completo" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {financialRelationship !== "self" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="financialResponsibleName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome Completo do Responsável *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Nome completo" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="financialResponsibleCpf"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CPF do Responsável *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="000.000.000-00"
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, "");
-                          const formattedValue = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-                          field.onChange(formattedValue);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  <FormField
+                    control={form.control}
+                    name="financialResponsibleCpf"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CPF do Responsável *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="000.000.000-00"
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, "");
+                              const formattedValue = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                              field.onChange(formattedValue);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="financialResponsibleEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail do Responsável *</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" placeholder="email@exemplo.com" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="financialResponsibleEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-mail do Responsável *</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" placeholder="email@exemplo.com" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="financialResponsiblePhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone do Responsável *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="(11) 99999-9999"
-                        onChange={(e) => {
-                          const formatted = formatPhone(e.target.value);
-                          field.onChange(formatted);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  <FormField
+                    control={form.control}
+                    name="financialResponsiblePhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone do Responsável *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="(11) 99999-9999"
+                            onChange={(e) => {
+                              const formatted = formatPhone(e.target.value);
+                              field.onChange(formatted);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+            {financialRelationship === "self" && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-800">
+                <p className="font-medium">✓ Responsável financeiro definido</p>
+                <p>Os dados do responsável financeiro serão os mesmos dados pessoais preenchidos acima.</p>
+              </div>
+            )}
 
             <div className="space-y-4 mt-6">
               <h5 className="font-medium">Plano de Pagamento</h5>

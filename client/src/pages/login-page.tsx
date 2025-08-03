@@ -204,36 +204,51 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      {/* Right Side - Features Compacto */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100 items-center justify-center p-6">
-        <div className="max-w-md w-full">
-          {/* Header Compacto - Removido/Reduzido */}
-          <div className="mb-6 text-center">
-            <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
-              Sistema completo para sua escola
-            </h2>
+      {/* Right Side - Features Showcase Elegante */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 items-center justify-center p-6 lg:p-8 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-600 rounded-full mix-blend-multiply filter blur-xl"></div>
+          <div className="absolute -bottom-8 -left-4 w-72 h-72 bg-indigo-600 rounded-full mix-blend-multiply filter blur-xl"></div>
+        </div>
+        
+        <div className="max-w-lg w-full relative z-10">
+          {/* Header Elegante Compacto */}
+          <div className="text-center mb-8 lg:mb-10">
+            <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+              O futuro da<br />
+              <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent">
+                gestão escolar
+              </span>
+            </h1>
+            <p className="text-gray-600 text-sm lg:text-base leading-relaxed">
+              Plataforma completa para transformar a administração da sua escola de artes marciais
+            </p>
           </div>
 
-          {/* Features Grid Compacto */}
-          <div className="space-y-4">
-            {features.map((feature, index) => {
-              const IconComponent = feature.icon;
-              return (
-                <div key={index} className="flex items-start space-x-3 group">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <IconComponent className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                      {feature.title}
-                    </h3>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
+          {/* Features List com Glassmorphism Compacto */}
+          <div className="space-y-3 lg:space-y-4">
+            {features.map((feature, index) => (
+              <div 
+                key={index} 
+                className="group relative flex items-start space-x-4 p-4 lg:p-5 rounded-xl lg:rounded-2xl bg-white/60 backdrop-blur-md border border-white/20 shadow-lg hover:shadow-xl hover:bg-white/80 transition-all duration-300 hover:scale-[1.02]"
+              >
+                {/* Gradient Border Effect */}
+                <div className="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="relative bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg p-2.5 lg:p-3 flex-shrink-0 shadow-lg">
+                  <feature.icon className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
                 </div>
-              );
-            })}
+                <div className="relative">
+                  <h3 className="text-sm lg:text-base font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 text-xs lg:text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

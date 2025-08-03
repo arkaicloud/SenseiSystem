@@ -230,32 +230,23 @@ export class MemStorage implements IStorage {
     this.users.set(instructorUser.id, instructorUser);
 
     // Create payment plans
-    const basicPlan: PaymentPlan = {
+    const individualPlan: PaymentPlan = {
       id: this.paymentPlanCurrentId++,
-      name: "Basic Membership",
-      amount: 9900, // $99.00
+      name: "Individual",
+      amount: 11000, // R$ 110.00
       frequency: "monthly",
-      description: "Access to 2 classes per week"
+      description: "Plano individual - aulas ilimitadas"
     };
-    this.paymentPlans.set(basicPlan.id, basicPlan);
+    this.paymentPlans.set(individualPlan.id, individualPlan);
 
-    const standardPlan: PaymentPlan = {
+    const familyPlan: PaymentPlan = {
       id: this.paymentPlanCurrentId++,
-      name: "Standard Membership",
-      amount: 12900, // $129.00
+      name: "Familiar",
+      amount: 22000, // R$ 220.00
       frequency: "monthly",
-      description: "Unlimited classes"
+      description: "Plano familiar - aulas ilimitadas para a família"
     };
-    this.paymentPlans.set(standardPlan.id, standardPlan);
-
-    const premiumPlan: PaymentPlan = {
-      id: this.paymentPlanCurrentId++,
-      name: "Premium Membership",
-      amount: 14900, // $149.00
-      frequency: "monthly",
-      description: "Unlimited classes + private lesson"
-    };
-    this.paymentPlans.set(premiumPlan.id, premiumPlan);
+    this.paymentPlans.set(familyPlan.id, familyPlan);
 
     // Create classes
     const fundamentalsClass: Class = {

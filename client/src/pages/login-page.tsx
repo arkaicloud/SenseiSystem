@@ -212,7 +212,7 @@ export default function LoginPage() {
           <div className="absolute -bottom-8 -left-4 w-72 h-72 bg-indigo-600 rounded-full mix-blend-multiply filter blur-xl"></div>
         </div>
         
-        <div className="max-w-lg w-full relative z-10 mt-[12px] mb-[12px] pl-[5px] pr-[5px] text-left pt-[175px] pb-[175px]">
+        <div className="max-w-lg w-full relative z-10 mt-[12px] mb-[12px] pl-[5px] pr-[5px] text-left pt-[80px] pb-[80px]">
           {/* Header Elegante Compacto */}
           <div className="text-center mb-8 lg:mb-10">
             <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 leading-tight">

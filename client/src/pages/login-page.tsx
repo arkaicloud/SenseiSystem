@@ -9,6 +9,7 @@ import { CheckCircle, Award, Calendar, CreditCard, Loader2, Shield, Users, BarCh
 import { useContext } from "react";
 import { LanguageContext } from "@/providers/i18n-provider";
 import { useQuery } from "@tanstack/react-query";
+import logoPlaceholder from "@assets/IMG_8653.png";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -17,9 +18,12 @@ export default function LoginPage() {
   const { t } = useContext(LanguageContext);
 
   // Fetch school configuration for tenant-specific branding
-  const { data: schoolConfig } = useQuery({
+  const { data: schoolConfigResponse } = useQuery({
     queryKey: ["/api/school-config"],
   });
+
+  // Safely extract config from response
+  const schoolConfig = schoolConfigResponse?.config;
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -73,15 +77,45 @@ export default function LoginPage() {
           {/* School Branding */}
           <div className="text-center space-y-6">
             <div className="flex justify-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl">
-                <Award className="h-10 w-10 text-white" />
-              </div>
+              {schoolConfig?.logoUrl ? (
+                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                  <img 
+                    src={schoolConfig.logoUrl} 
+                    alt={`Logo ${schoolConfig.schoolName}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to default logo if image fails to load
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl hidden">
+                    <Award className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                  <img 
+                    src={logoPlaceholder} 
+                    alt="Logo da escola"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to icon if placeholder fails
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl hidden">
+                    <Award className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                 Acesso exclusivo da<br />
                 <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  {(schoolConfig as any)?.config?.schoolName || "Huios Jiu Jitsu"}
+                  {schoolConfig?.schoolName || "Huios Jiu Jitsu"}
                 </span>
               </h1>
               <p className="text-gray-500 text-base font-medium">no SenseiSystem</p>

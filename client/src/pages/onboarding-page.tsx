@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,10 +22,30 @@ type OnboardingData = PersonalInfoData & HealthFormData & {
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const { register, error } = useAuth();
+  const { toast } = useToast();
+
+  // Student registration mutation
+  const { mutate: registerStudent, isPending: isSubmitting, error } = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest('POST', '/api/register-student', data);
+    },
+    onSuccess: () => {
+      setSuccess(true);
+      toast({
+        title: "Cadastro Realizado com Sucesso!",
+        description: "Sua solicitação de matrícula foi enviada e está aguardando aprovação.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro no Cadastro",
+        description: `Falha ao processar sua matrícula: ${error.message || error}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Detectar se é mobile
   useEffect(() => {
@@ -47,35 +69,11 @@ export default function OnboardingPage() {
     setCurrentStep(3);
   };
 
-  const handleDocumentsSubmit = async (data: any) => {
+  const handleDocumentsSubmit = (data: any) => {
     const completeData = { ...onboardingData, ...data } as OnboardingData;
-    setIsSubmitting(true);
-
-    try {
-      await register(completeData.email, completeData.password, {
-        firstName: completeData.firstName,
-        lastName: completeData.lastName,
-        username: completeData.username,
-        role: "student" as const,
-        phone: completeData.phone,
-        beltLevel: completeData.beltLevel,
-        stripes: completeData.stripes,
-        emergencyContact: completeData.emergencyContact || "",
-        birthDate: completeData.birthDate,
-        street: completeData.street,
-        number: completeData.number,
-        complement: completeData.complement || "",
-        neighborhood: completeData.neighborhood,
-        city: completeData.city,
-        state: completeData.state,
-        zipCode: completeData.zipCode,
-      });
-      setSuccess(true);
-    } catch (err) {
-      console.error("Registration failed:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
+    
+    // Submit registration
+    registerStudent(completeData);
   };
 
   const progressPercentage = (currentStep / 3) * 100;

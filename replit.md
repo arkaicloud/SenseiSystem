@@ -184,3 +184,12 @@ The application follows a monorepo structure with shared TypeScript definitions,
 - **Storage Layer**: Full implementation in both DatabaseStorage and MemStorage for payment operations
 - **API Routes**: Complete set of endpoints for payment management, webhook handling, and configuration
 - **Integration Ready**: System prepared for automated monthly billing and payment processing via ASAAS gateway
+
+### August 3, 2025 - ASAAS Customer Integration During Student Onboarding
+- **Student Schema Extended**: Added financial responsible party fields (name, email, phone, CPF, relationship)
+- **ASAAS Customer ID**: Added asaasCustomerId field to students table for linking with payment gateway
+- **Onboarding Enhanced**: PersonalInfoStep now collects financial responsible party data with auto-fill when "self"
+- **Automatic ASAAS Integration**: Student registration now automatically creates ASAAS customers during onboarding
+- **Smart Data Handling**: Financial responsibility data flows from onboarding form to ASAAS customer creation
+- **Error Resilience**: Student creation continues even if ASAAS customer creation fails (logged but non-blocking)
+- **Connection Testing**: Added test connection functionality in ASAAS admin interface

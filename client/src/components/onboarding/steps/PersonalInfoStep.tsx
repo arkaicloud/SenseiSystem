@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, User, Phone, Users, Calendar } from "lucide-react";
+import { ArrowRight, User, Phone, Users, Calendar, CreditCard } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddressForm from "@/components/ui/address-form";
 
 const personalInfoSchema = z.object({
@@ -23,6 +24,14 @@ const personalInfoSchema = z.object({
   neighborhood: z.string().min(1, "Bairro é obrigatório"),
   city: z.string().min(1, "Cidade é obrigatória"),
   state: z.string().min(2, "Estado é obrigatório").max(2, "Estado deve ter 2 caracteres"),
+  // Financial responsibility fields
+  financialResponsibleName: z.string().min(1, "Nome do responsável financeiro é obrigatório"),
+  financialResponsibleEmail: z.string().email("E-mail do responsável financeiro inválido"),
+  financialResponsiblePhone: z.string().min(10, "Telefone do responsável financeiro deve ter pelo menos 10 dígitos"),
+  financialResponsibleCpf: z.string().min(11, "CPF do responsável financeiro é obrigatório"),
+  financialResponsibleRelationship: z.enum(["self", "parent", "guardian", "spouse"], {
+    errorMap: () => ({ message: "Selecione o grau de parentesco" })
+  }),
 });
 
 export type PersonalInfoData = z.infer<typeof personalInfoSchema>;
@@ -50,6 +59,12 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
       neighborhood: "",
       city: "",
       state: "",
+      // Financial responsibility defaults
+      financialResponsibleName: "",
+      financialResponsibleEmail: "",
+      financialResponsiblePhone: "",
+      financialResponsibleCpf: "",
+      financialResponsibleRelationship: "self",
       ...defaultValues,
     },
   });
@@ -217,6 +232,127 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                           field.onChange(formatted);
                         }}
                         maxLength={15}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Responsável Financeiro */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <CreditCard className="w-4 h-4 text-primary" />
+              <h4 className="font-medium">Responsável Financeiro</h4>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Dados da pessoa responsável pelos pagamentos da mensalidade.
+            </p>
+
+            <FormField
+              control={form.control}
+              name="financialResponsibleRelationship"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grau de Parentesco *</FormLabel>
+                  <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    // Se for "self", preencher automaticamente os dados
+                    if (value === "self") {
+                      const currentData = form.getValues();
+                      form.setValue("financialResponsibleName", `${currentData.firstName} ${currentData.lastName}`);
+                      form.setValue("financialResponsibleEmail", currentData.email);
+                      form.setValue("financialResponsiblePhone", currentData.phone);
+                    }
+                  }} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o grau de parentesco" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="self">Eu mesmo(a)</SelectItem>
+                      <SelectItem value="parent">Pai/Mãe</SelectItem>
+                      <SelectItem value="guardian">Responsável/Tutor</SelectItem>
+                      <SelectItem value="spouse">Cônjuge</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="financialResponsibleName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo do Responsável *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Nome completo" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="financialResponsibleCpf"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CPF do Responsável *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="000.000.000-00"
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          const formattedValue = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                          field.onChange(formattedValue);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="financialResponsibleEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail do Responsável *</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="email@exemplo.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="financialResponsiblePhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone do Responsável *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="(11) 99999-9999"
+                        onChange={(e) => {
+                          const formatted = formatPhone(e.target.value);
+                          field.onChange(formatted);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

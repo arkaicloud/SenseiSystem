@@ -16,6 +16,8 @@ const personalInfoSchema = z.object({
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
   email: z.string().email("E-mail inválido"),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
+  cpf: z.string().min(11, "CPF é obrigatório"),
+  rg: z.string().min(1, "RG é obrigatório"),
   emergencyContact: z.string().min(1, "Contato de emergência é obrigatório"),
   emergencyPhone: z.string().min(10, "Telefone de emergência deve ter pelo menos 10 dígitos"),
   zipCode: z.string().min(8, "CEP é obrigatório"),
@@ -61,6 +63,8 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
       birthDate: "",
       email: "",
       phone: "",
+      cpf: "",
+      rg: "",
       emergencyContact: "",
       emergencyPhone: "",
       zipCode: "",
@@ -158,6 +162,35 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="cpf"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CPF *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="000.000.000-00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="rg"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>RG *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="00.000.000-0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <Separator />
@@ -278,9 +311,16 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                     // Se for "self", preencher automaticamente os dados
                     if (value === "self") {
                       const currentData = form.getValues();
-                      form.setValue("financialResponsibleName", `${currentData.firstName} ${currentData.lastName}`);
+                      form.setValue("financialResponsibleName", `${currentData.firstName} ${currentData.lastName}`.trim());
                       form.setValue("financialResponsibleEmail", currentData.email);
                       form.setValue("financialResponsiblePhone", currentData.phone);
+                      form.setValue("financialResponsibleCpf", currentData.cpf);
+                    } else {
+                      // Limpar campos quando não for "self"
+                      form.setValue("financialResponsibleName", "");
+                      form.setValue("financialResponsibleEmail", "");
+                      form.setValue("financialResponsiblePhone", "");
+                      form.setValue("financialResponsibleCpf", "");
                     }
                   }} defaultValue={field.value}>
                     <FormControl>

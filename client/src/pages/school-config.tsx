@@ -75,7 +75,7 @@ export default function SchoolConfigPage() {
   // Mutation para salvar configurações
   const updateConfigMutation = useMutation({
     mutationFn: async (data: SchoolConfigForm) => {
-      const response = await apiRequest("PUT", "/api/school-config", data);
+      const response = await apiRequest("PATCH", "/api/school-config", data);
       return response.json();
     },
     onSuccess: () => {
@@ -86,9 +86,10 @@ export default function SchoolConfigPage() {
       });
     },
     onError: (error: Error) => {
+      console.error("School config update error:", error);
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: error.message || "Erro desconhecido ao salvar configurações",
         variant: "destructive",
       });
     },

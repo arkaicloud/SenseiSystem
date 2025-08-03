@@ -1960,6 +1960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== School Configuration Routes =====
   app.get("/api/school-config", async (req, res) => {
     try {
+      res.setHeader('Content-Type', 'application/json');
       const config = await storage.getSchoolConfig();
       res.json({ config: config || {
         schoolName: "Academia de Jiu-Jitsu",
@@ -1971,18 +1972,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         website: null
       }});
     } catch (error) {
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.patch("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
+      // Ensure proper JSON response headers
+      res.setHeader('Content-Type', 'application/json');
+      
       // Clean and validate the data manually to avoid schema issues
       const cleanData: any = {};
       
       // School basic info
       if (req.body.schoolName !== undefined) cleanData.schoolName = String(req.body.schoolName || "");
-      if (req.body.logoUrl !== undefined) cleanData.logoUrl = req.body.logoUrl ? String(req.body.logoUrl) : null;
+      if (req.body.logoUrl !== undefined) {
+        // Handle base64 images and URLs properly
+        const logoValue = req.body.logoUrl;
+        if (logoValue && (logoValue.startsWith('data:image/') || logoValue.startsWith('http') || logoValue.startsWith('/assets'))) {
+          cleanData.logoUrl = String(logoValue);
+        } else {
+          cleanData.logoUrl = null;
+        }
+      }
       if (req.body.address !== undefined) cleanData.address = req.body.address ? String(req.body.address) : null;
       if (req.body.phone !== undefined) cleanData.phone = req.body.phone ? String(req.body.phone) : null;
       if (req.body.email !== undefined) cleanData.email = req.body.email ? String(req.body.email) : null;
@@ -2020,6 +2033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error updating school config:", error);
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ 
         success: false,
         message: "Erro ao salvar configurações",

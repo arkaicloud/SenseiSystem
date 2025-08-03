@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { 
   Users, 
@@ -33,14 +34,29 @@ interface DashboardStats {
 }
 
 export function DashboardLayout() {
+  // Auto-refresh dashboard data every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Invalidate all dashboard-related queries to force refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/student-payments/overdue'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/financial-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enrollment-chart'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/financial-chart'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/birthdays/today'] });
+    }, 60000); // 1 minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/stats'],
-    refetchInterval: false,
+    refetchInterval: 60000, // Auto-refresh every minute
   });
 
   const { data: overdueData } = useQuery({
     queryKey: ['/api/student-payments/overdue'],
-    refetchInterval: false,
+    refetchInterval: 60000, // Auto-refresh every minute
   });
 
   const stats = (statsData?.stats as DashboardStats) || {

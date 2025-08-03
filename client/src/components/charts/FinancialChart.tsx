@@ -41,6 +41,7 @@ export function FinancialChart() {
 
   const { data: chartData, isLoading } = useQuery({
     queryKey: ['/api/financial-chart', timeRange],
+    refetchInterval: 60000, // Auto-refresh every minute
   })
 
   const filteredData = React.useMemo(() => {

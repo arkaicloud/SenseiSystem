@@ -40,6 +40,7 @@ export function EnrollmentChart() {
 
   const { data: chartData, isLoading } = useQuery({
     queryKey: ['/api/enrollment-chart', timeRange],
+    refetchInterval: 60000, // Auto-refresh every minute
   })
 
   const filteredData = React.useMemo(() => {

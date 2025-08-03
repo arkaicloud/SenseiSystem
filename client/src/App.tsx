@@ -19,7 +19,6 @@ import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
-import AuthPage from "@/pages/auth-page";
 import LoginPage from "@/pages/login-page";
 import OnboardingPage from "@/pages/onboarding-page";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -96,7 +95,6 @@ function Router() {
       />
 
       {/* Public routes */}
-      <Route path="/auth" component={AuthPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
 

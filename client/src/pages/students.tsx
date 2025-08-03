@@ -173,15 +173,15 @@ const Students: React.FC = () => {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.user')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.project')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.address')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.date')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.plan')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.financialStatus')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.responsible')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.status')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.actions')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -229,11 +229,11 @@ const Students: React.FC = () => {
                                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
                                 
                                 if (diffMinutes < 60) {
-                                  return diffMinutes < 5 ? t('student.table.justNow') : `${diffMinutes} ${t('student.table.minutesAgo')}`;
+                                  return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
                                 } else if (diffHours < 24) {
-                                  return diffHours === 1 ? `1 ${t('student.table.hourAgo')}` : `${diffHours} ${t('student.table.hoursAgo')}`;
+                                  return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
                                 } else if (diffDays === 1) {
-                                  return t('student.table.yesterday');
+                                  return 'Ontem';
                                 } else {
                                   return joinDate.toLocaleDateString('pt-BR');
                                 }
@@ -258,7 +258,7 @@ const Students: React.FC = () => {
                             <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
                               Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
                             }`}></div>
-                            {Math.random() > 0.3 ? t('student.table.upToDate') : Math.random() > 0.5 ? t('student.table.pending') : t('student.table.overdue')}
+                            {Math.random() > 0.3 ? 'Em dia' : Math.random() > 0.5 ? 'Pendente' : 'Atrasado'}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -275,7 +275,7 @@ const Students: React.FC = () => {
                             <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
                               student.user.active ? 'bg-green-400' : 'bg-red-400'
                             }`}></div>
-                            {student.user.active ? t('student.active') : t('student.inactive')}
+                            {student.user.active ? 'Ativo' : 'Inativo'}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">

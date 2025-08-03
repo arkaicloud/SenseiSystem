@@ -9,6 +9,7 @@ import {
   activityLogs, type ActivityLog, type InsertActivityLog,
   schoolEvents, type SchoolEvent, type InsertSchoolEvent,
   schoolConfig, type SchoolConfig, type InsertSchoolConfig,
+  schoolPayments, type SchoolPayment, type InsertSchoolPayment,
   dashboardCustomizations, type DashboardCustomization, type InsertDashboardCustomization,
   riskActions, type RiskAction, type InsertRiskAction,
   riskSettings, type RiskSettings, type InsertRiskSettings,
@@ -96,6 +97,15 @@ export interface IStorage {
   getActivityLogsByUser(userId: number, limit?: number): Promise<ActivityLog[]>;
   createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
 
+  // School Payments (ASAAS Integration)
+  getSchoolPayment(id: number): Promise<SchoolPayment | undefined>;
+  getSchoolPayments(): Promise<SchoolPayment[]>;
+  getSchoolPaymentsByTenant(tenantId: number): Promise<SchoolPayment[]>;
+  getSchoolPaymentByAsaasId(asaasPaymentId: string): Promise<SchoolPayment | undefined>;
+  createSchoolPayment(payment: InsertSchoolPayment): Promise<SchoolPayment>;
+  updateSchoolPayment(id: number, payment: Partial<SchoolPayment>): Promise<SchoolPayment | undefined>;
+  deleteSchoolPayment(id: number): Promise<boolean>;
+
   // Dashboard Customizations
   getDashboardCustomization(userId: number): Promise<DashboardCustomization | undefined>;
   createDashboardCustomization(customization: InsertDashboardCustomization): Promise<DashboardCustomization>;
@@ -119,6 +129,7 @@ export class MemStorage implements IStorage {
   private activityLogs: Map<number, ActivityLog>;
   private schoolEvents: Map<number, SchoolEvent>;
   private schoolConfig: SchoolConfig | undefined;
+  private schoolPayments: Map<number, SchoolPayment>;
   private dashboardCustomizations: Map<number, DashboardCustomization>;
   private riskActions: Map<number, RiskAction>;
   private riskSettings: RiskSettings | undefined;
@@ -131,6 +142,7 @@ export class MemStorage implements IStorage {
   private studentPaymentCurrentId: number;
   private activityLogCurrentId: number;
   private schoolEventCurrentId: number;
+  private schoolPaymentCurrentId: number;
   private dashboardCustomizationCurrentId: number;
   private riskActionCurrentId: number;
 
@@ -143,6 +155,7 @@ export class MemStorage implements IStorage {
     this.studentPayments = new Map();
     this.activityLogs = new Map();
     this.schoolEvents = new Map();
+    this.schoolPayments = new Map();
     this.dashboardCustomizations = new Map();
     this.riskActions = new Map();
 
@@ -154,6 +167,7 @@ export class MemStorage implements IStorage {
     this.studentPaymentCurrentId = 1;
     this.activityLogCurrentId = 1;
     this.schoolEventCurrentId = 1;
+    this.schoolPaymentCurrentId = 1;
     this.dashboardCustomizationCurrentId = 1;
     this.riskActionCurrentId = 1;
 
@@ -764,6 +778,118 @@ export class MemStorage implements IStorage {
     };
     this.dashboardCustomizations.set(existing.id, updated);
     return updated;
+  }
+
+  // School Payments (ASAAS Integration) - MemStorage Implementation
+  async getSchoolPayment(id: number): Promise<SchoolPayment | undefined> {
+    return this.schoolPayments.get(id);
+  }
+
+  async getSchoolPayments(): Promise<SchoolPayment[]> {
+    return Array.from(this.schoolPayments.values()).sort((a, b) => 
+      b.createdAt!.getTime() - a.createdAt!.getTime()
+    );
+  }
+
+  async getSchoolPaymentsByTenant(tenantId: number): Promise<SchoolPayment[]> {
+    return Array.from(this.schoolPayments.values())
+      .filter(payment => payment.tenantId === tenantId)
+      .sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+  }
+
+  async getSchoolPaymentByAsaasId(asaasPaymentId: string): Promise<SchoolPayment | undefined> {
+    for (const payment of this.schoolPayments.values()) {
+      if (payment.asaasPaymentId === asaasPaymentId) {
+        return payment;
+      }
+    }
+    return undefined;
+  }
+
+  async createSchoolPayment(payment: InsertSchoolPayment): Promise<SchoolPayment> {
+    const newPayment: SchoolPayment = {
+      id: this.schoolPaymentCurrentId++,
+      ...payment,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.schoolPayments.set(newPayment.id, newPayment);
+    return newPayment;
+  }
+
+  async updateSchoolPayment(id: number, payment: Partial<SchoolPayment>): Promise<SchoolPayment | undefined> {
+    const existingPayment = await this.getSchoolPayment(id);
+    if (!existingPayment) return undefined;
+
+    const updatedPayment = {
+      ...existingPayment,
+      ...payment,
+      updatedAt: new Date()
+    };
+    this.schoolPayments.set(id, updatedPayment);
+    return updatedPayment;
+  }
+
+  async deleteSchoolPayment(id: number): Promise<boolean> {
+    return this.schoolPayments.delete(id);
+  }
+
+  // Risk Actions - MemStorage Implementation
+  async createRiskAction(action: InsertRiskAction): Promise<RiskAction> {
+    const newAction: RiskAction = {
+      id: this.riskActionCurrentId++,
+      ...action,
+      createdAt: new Date()
+    };
+    this.riskActions.set(newAction.id, newAction);
+    return newAction;
+  }
+
+  async getRiskActions(studentId?: number): Promise<RiskAction[]> {
+    const actions = Array.from(this.riskActions.values());
+    if (studentId) {
+      return actions.filter(action => action.studentId === studentId);
+    }
+    return actions;
+  }
+
+  async updateRiskAction(id: number, action: Partial<RiskAction>): Promise<RiskAction | undefined> {
+    const existingAction = await this.getRiskAction(id);
+    if (!existingAction) return undefined;
+
+    const updatedAction = {
+      ...existingAction,
+      ...action,
+      updatedAt: new Date()
+    };
+    this.riskActions.set(id, updatedAction);
+    return updatedAction;
+  }
+
+  async getRiskAction(id: number): Promise<RiskAction | undefined> {
+    return this.riskActions.get(id);
+  }
+
+  async getRiskSettings(): Promise<RiskSettings | undefined> {
+    return this.riskSettings;
+  }
+
+  async updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings> {
+    if (!this.riskSettings) {
+      this.riskSettings = {
+        id: 1,
+        ...settings,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    } else {
+      this.riskSettings = {
+        ...this.riskSettings,
+        ...settings,
+        updatedAt: new Date()
+      };
+    }
+    return this.riskSettings;
   }
 }
 
@@ -1422,6 +1548,54 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // School Payments (ASAAS Integration)
+  async getSchoolPayment(id: number): Promise<SchoolPayment | undefined> {
+    const [payment] = await db.select().from(schoolPayments).where(eq(schoolPayments.id, id));
+    return payment;
+  }
+
+  async getSchoolPayments(): Promise<SchoolPayment[]> {
+    return await db.select().from(schoolPayments).orderBy(desc(schoolPayments.createdAt));
+  }
+
+  async getSchoolPaymentsByTenant(tenantId: number): Promise<SchoolPayment[]> {
+    return await db.select().from(schoolPayments)
+      .where(eq(schoolPayments.tenantId, tenantId))
+      .orderBy(desc(schoolPayments.createdAt));
+  }
+
+  async getSchoolPaymentByAsaasId(asaasPaymentId: string): Promise<SchoolPayment | undefined> {
+    const [payment] = await db.select().from(schoolPayments)
+      .where(eq(schoolPayments.asaasPaymentId, asaasPaymentId));
+    return payment;
+  }
+
+  async createSchoolPayment(payment: InsertSchoolPayment): Promise<SchoolPayment> {
+    const [newPayment] = await db.insert(schoolPayments).values({
+      ...payment,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newPayment;
+  }
+
+  async updateSchoolPayment(id: number, payment: Partial<SchoolPayment>): Promise<SchoolPayment | undefined> {
+    const [updatedPayment] = await db
+      .update(schoolPayments)
+      .set({
+        ...payment,
+        updatedAt: new Date()
+      })
+      .where(eq(schoolPayments.id, id))
+      .returning();
+    return updatedPayment;
+  }
+
+  async deleteSchoolPayment(id: number): Promise<boolean> {
+    const result = await db.delete(schoolPayments).where(eq(schoolPayments.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 }
 

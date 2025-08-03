@@ -17,7 +17,8 @@ import {
   insertSchoolEventSchema,
   insertDashboardCustomizationSchema,
   insertRiskActionSchema,
-  insertRiskSettingsSchema
+  insertRiskSettingsSchema,
+  insertSchoolPaymentSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 
@@ -2193,6 +2194,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ settings });
     } catch (error) {
       console.error("Erro ao buscar configurações de risco:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ===== ASAAS Integration Routes =====
+  
+  // Webhook para receber notificações do ASAAS
+  app.post("/webhooks/asaas", async (req, res) => {
+    try {
+      console.log('🔔 ASAAS Webhook received:', req.body);
+      
+      const event = req.body;
+      
+      // Validar se é um evento válido
+      if (!event || !event.event || !event.payment) {
+        return res.status(400).json({ message: "Invalid webhook payload" });
+      }
+
+      const { payment } = event;
+      
+      // Buscar o pagamento pelo ID do ASAAS
+      const schoolPayment = await storage.getSchoolPaymentByAsaasId(payment.id);
+      if (!schoolPayment) {
+        console.log(`⚠️ Payment not found for ASAAS ID: ${payment.id}`);
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      // Processar diferentes tipos de eventos
+      let newStatus = 'pending';
+      let paidAt: Date | null = null;
+
+      switch (event.event) {
+        case 'PAYMENT_RECEIVED':
+        case 'PAYMENT_CONFIRMED':
+          newStatus = 'paid';
+          paidAt = new Date(payment.paymentDate || payment.clientPaymentDate);
+          break;
+        case 'PAYMENT_OVERDUE':
+          newStatus = 'overdue';
+          break;
+        case 'PAYMENT_DELETED':
+        case 'PAYMENT_CANCELLED':
+          newStatus = 'cancelled';
+          break;
+        default:
+          console.log(`🤷 Unknown event type: ${event.event}`);
+          break;
+      }
+
+      // Atualizar status do pagamento
+      const updatedPayment = await storage.updateSchoolPayment(schoolPayment.id, {
+        status: newStatus as any,
+        paidAt
+      });
+
+      // Se foi pago, reativar a escola
+      if (newStatus === 'paid') {
+        await storage.updateSchoolConfig({
+          active: true
+        });
+        console.log('✅ School reactivated after payment');
+      }
+
+      // Se está em atraso há mais de 10 dias, bloquear a escola
+      if (newStatus === 'overdue') {
+        const dueDate = new Date(schoolPayment.dueDate);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 10) {
+          await storage.updateSchoolConfig({
+            active: false
+          });
+          console.log('🚫 School blocked due to overdue payment > 10 days');
+        }
+      }
+
+      console.log(`✅ Payment ${payment.id} updated to status: ${newStatus}`);
+      res.json({ success: true, payment: updatedPayment });
+      
+    } catch (error) {
+      console.error('❌ Error processing ASAAS webhook:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Obter pagamentos da escola
+  app.get("/api/school-payments", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const config = await storage.getSchoolConfig();
+      if (!config) {
+        return res.status(404).json({ message: "School config not found" });
+      }
+
+      const payments = await storage.getSchoolPaymentsByTenant(config.id);
+      res.json({ payments });
+    } catch (error) {
+      console.error("Error fetching school payments:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Criar pagamento manual
+  app.post("/api/school-payments", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const config = await storage.getSchoolConfig();
+      if (!config) {
+        return res.status(404).json({ message: "School config not found" });
+      }
+
+      const paymentData = insertSchoolPaymentSchema.parse({
+        ...req.body,
+        tenantId: config.id
+      });
+
+      const payment = await storage.createSchoolPayment(paymentData);
+
+      // Log activity
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `Criou pagamento manual da escola - Valor: R$ ${(payment.value / 100).toFixed(2)}`,
+        entityType: 'school-payment',
+        entityId: payment.id
+      });
+
+      res.status(201).json({ payment });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid payment data", errors: error.errors });
+      }
+      console.error("Error creating school payment:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Atualizar configuração ASAAS
+  app.patch("/api/school/asaas-config", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { asaasApiKey, planValue, planType } = req.body;
+      
+      const config = await storage.updateSchoolConfig({
+        asaasApiKey,
+        planValue: planValue ? Number(planValue) : undefined,
+        planType
+      });
+
+      // Log activity
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `Atualizou configurações do ASAAS`,
+        entityType: 'school-config',
+        entityId: config.id
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Configurações ASAAS atualizadas com sucesso" 
+      });
+    } catch (error) {
+      console.error("Error updating ASAAS config:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

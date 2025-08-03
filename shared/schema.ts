@@ -9,6 +9,7 @@ export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'b
 export const paymentStatusEnum = pgEnum('payment_status', ['paid', 'pending', 'overdue']);
 export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'absent', 'late']);
 export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
+export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
 
 // Users table
 export const users = pgTable("users", {
@@ -49,7 +50,7 @@ export const students = pgTable("students", {
   avatarImage: text("avatar_image"),
 });
 
-// School Configuration table
+// School Configuration table (tenant information)
 export const schoolConfig = pgTable("school_config", {
   id: serial("id").primaryKey(),
   schoolName: text("school_name").notNull().default("Academia de Jiu-Jitsu"),
@@ -61,6 +62,28 @@ export const schoolConfig = pgTable("school_config", {
   website: text("website"),
   defaultTheme: text("default_theme").notNull().default("light"), // "light" or "dark"
   attendanceMaxDaysAhead: integer("attendance_max_days_ahead").notNull().default(7), // Máximo de dias para visualizar/confirmar aulas
+  // ASAAS Integration fields
+  asaasCustomerId: text("asaas_customer_id"), // Customer ID no ASAAS
+  asaasApiKey: text("asaas_api_key"), // API Key ASAAS (pode ser criptografada)
+  planValue: integer("plan_value").default(19990), // Valor do plano em centavos (R$ 199,90)
+  planType: text("plan_type").default("monthly"), // Tipo do plano
+  active: boolean("active").default(true), // Status da escola
+  trialEndDate: timestamp("trial_end_date"), // Data fim do trial
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// School Payments table - Pagamentos da escola/tenant no ASAAS
+export const schoolPayments = pgTable("school_payments", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => schoolConfig.id, { onDelete: 'cascade' }).notNull(),
+  asaasPaymentId: text("asaas_payment_id").unique(), // ID do pagamento no ASAAS
+  status: schoolPaymentStatusEnum("status").notNull().default('pending'),
+  dueDate: timestamp("due_date").notNull(),
+  value: integer("value").notNull(), // Valor em centavos
+  paidAt: timestamp("paid_at"),
+  description: text("description").default("Mensalidade SenseiSystem"),
+  externalReference: text("external_reference"), // Referência externa
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -214,6 +237,7 @@ export const insertUserSchema = createInsertSchema(users)
   });
 export const insertStudentSchema = createInsertSchema(students).omit({ id: true });
 export const insertSchoolConfigSchema = createInsertSchema(schoolConfig).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSchoolPaymentSchema = createInsertSchema(schoolPayments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertClassSchema = createInsertSchema(classes).omit({ id: true });
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });
 export const insertAttendanceChangesSchema = createInsertSchema(attendanceChanges).omit({ id: true, createdAt: true });
@@ -235,6 +259,9 @@ export type InsertStudent = z.infer<typeof insertStudentSchema>;
 
 export type SchoolConfig = typeof schoolConfig.$inferSelect;
 export type InsertSchoolConfig = z.infer<typeof insertSchoolConfigSchema>;
+
+export type SchoolPayment = typeof schoolPayments.$inferSelect;
+export type InsertSchoolPayment = z.infer<typeof insertSchoolPaymentSchema>;
 
 export type SchoolEvent = typeof schoolEvents.$inferSelect;
 export type InsertSchoolEvent = z.infer<typeof insertSchoolEventSchema>;

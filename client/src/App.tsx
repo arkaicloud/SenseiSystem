@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import Students from "@/pages/students";
 import PendingUsers from "@/pages/pending-users";
 import StudentsAtRisk from "@/pages/students-at-risk";
+import AsaasPayments from "@/pages/asaas-payments";
 import Classes from "@/pages/classes";
 import Attendance from "@/pages/attendance";
 import Payments from "@/pages/payments";
@@ -46,6 +47,11 @@ function Router() {
         path="/students-at-risk" 
         component={() => <StudentsAtRisk />} 
         allowedRoles={["admin", "instructor"]} 
+      />
+      <ProtectedRoute 
+        path="/asaas-payments" 
+        component={() => <AsaasPayments />} 
+        allowedRoles={["admin"]} 
       />
       <ProtectedRoute 
         path="/attendance" 

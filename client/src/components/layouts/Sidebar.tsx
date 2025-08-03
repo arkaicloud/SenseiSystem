@@ -125,6 +125,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           path: "/payment-plans",
           roles: ["admin", "instructor"],
         },
+        {
+          id: "asaas-payments",
+          label: "Integração ASAAS",
+          icon: CreditCard,
+          path: "/asaas-payments",
+          roles: ["admin"],
+        },
       ],
     },
     {

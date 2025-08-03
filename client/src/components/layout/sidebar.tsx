@@ -83,7 +83,7 @@ export const Sidebar = () => {
                 ? 'bg-primary text-white' 
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}>
-              <i className={`${isActive('/dashboard') ? 'text-primary-light' : 'text-gray-400'} mr-3 fas fa-tachometer-alt`}></i>
+              <i className={`${isActive('/dashboard') ? 'text-primary-light' : 'text-gray-400'} mr-3 fas fa-tachometer-alt w-4 text-center`}></i>
               {t('common.dashboard')}
             </a>
           </Link>
@@ -101,7 +101,7 @@ export const Sidebar = () => {
                     ? 'bg-primary text-white' 
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}>
-                  <i className={`${isActive(item.href) ? 'text-primary-light' : 'text-gray-400'} mr-3 ${item.icon}`}></i>
+                  <i className={`${isActive(item.href) ? 'text-primary-light' : 'text-gray-400'} mr-3 ${item.icon} w-4 text-center`}></i>
                   {item.label}
                 </a>
               </Link>
@@ -117,7 +117,7 @@ export const Sidebar = () => {
                 ? 'bg-primary text-white' 
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white'
             }`}>
-              <i className={`${isActive('/settings') ? 'text-primary-light' : 'text-gray-400'} mr-3 fas fa-cog`}></i>
+              <i className={`${isActive('/settings') ? 'text-primary-light' : 'text-gray-400'} mr-3 fas fa-cog w-4 text-center`}></i>
               {t('common.settings')}
             </a>
           </Link>
@@ -130,7 +130,7 @@ export const Sidebar = () => {
               logout();
             }}
           >
-            <i className="fas fa-sign-out-alt mr-3 text-gray-400"></i>
+            <i className="fas fa-sign-out-alt mr-3 text-gray-400 w-4 text-center"></i>
             {t('common.logout')}
           </a>
         </nav>

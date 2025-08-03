@@ -115,6 +115,7 @@ export class AsaasService {
     cycle: 'MONTHLY' | 'YEARLY';
     description?: string;
     nextDueDate: string;
+    externalReference?: string;
   }): Promise<any> {
     console.log('🔄 Creating ASAAS subscription for customer:', subscriptionData.customer);
     

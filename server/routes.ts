@@ -679,6 +679,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Update student with ASAAS customer ID
             await storage.updateStudent(student.id, { asaasCustomerId });
+
+            // Create first payment/subscription if payment plan is selected
+            if (studentData.paymentPlanId && studentData.dueDate) {
+              const paymentPlan = await storage.getPaymentPlan(parseInt(studentData.paymentPlanId));
+              if (paymentPlan) {
+                console.log('🔄 Creating ASAAS subscription for student:', studentData.firstName, studentData.lastName);
+                
+                // Calculate next due date based on selected day
+                const today = new Date();
+                const selectedDay = parseInt(studentData.dueDate);
+                const nextDueDate = new Date(today.getFullYear(), today.getMonth(), selectedDay);
+                
+                // If the selected day has passed this month, move to next month
+                if (nextDueDate <= today) {
+                  nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+                }
+
+                const subscription = await asaasService.createSubscription({
+                  customer: asaasCustomerId,
+                  billingType: "BOLETO",
+                  value: paymentPlan.amount / 100, // Convert from cents to reais
+                  nextDueDate: nextDueDate.toISOString().split('T')[0], // YYYY-MM-DD format
+                  cycle: "MONTHLY",
+                  description: `Mensalidade - ${paymentPlan.name} - ${studentData.firstName} ${studentData.lastName}`,
+                  externalReference: `student_${student.id}_plan_${paymentPlan.id}`
+                });
+
+                console.log('✅ ASAAS subscription created:', subscription.id);
+
+                // Update student with ASAAS subscription ID
+                await storage.updateStudent(student.id, { asaasSubscriptionId: subscription.id });
+              }
+            }
           }
         } catch (error) {
           console.error('❌ Error creating ASAAS customer:', error);

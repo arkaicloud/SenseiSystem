@@ -230,13 +230,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Enhanced CTA */}
-          <div className="mt-12 text-center">
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg">
-              <CheckCircle className="h-4 w-4" />
-              <span>Mais de 1000+ escolas confiam no SenseiSystem</span>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

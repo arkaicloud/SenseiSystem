@@ -1,0 +1,169 @@
+Plano de Desenvolvimento – Integração ASAAS no SenseiSystem
+📦 Objetivo:
+Automatizar todo o processo de pagamento recorrente para escolas (tenants), com:
+
+Cadastro de cliente no ASAAS
+
+Geração de cobrança mensal com vencimento
+
+Retorno automático de status via Webhook
+
+Bloqueio e notificações automáticas em caso de inadimplência
+
+Painel de gestão de cobranças e histórico
+
+🔹 Sprint 1 – Preparação da base
+✅ Estrutura de dados:
+Adicionar os seguintes campos na tabela tenants:
+
+ts
+Copiar
+Editar
+asaasCustomerId: text
+asaasApiKey: text (ou salvo criptografado, via env)
+Criar tabela school_payments:
+
+ts
+Copiar
+Editar
+id: uuid
+tenant_id: uuid
+asaas_payment_id: text
+status: enum('pending', 'paid', 'overdue', 'cancelled', ...)
+due_date: date
+value: number
+paid_at: date (nullable)
+created_at, updated_at
+🔹 Sprint 2 – Cadastro de Cliente no ASAAS
+✅ Ações:
+Ao aprovar um novo tenant no sistema:
+
+Criar cliente automaticamente na API ASAAS
+
+Armazenar asaasCustomerId no banco
+
+🧪 Exemplo de chamada:
+http
+Copiar
+Editar
+POST https://www.asaas.com/api/v3/customers
+Headers: Authorization: Bearer {apiKey}
+Body:
+{
+  "name": "Academia XYZ",
+  "email": "admin@academia.com.br",
+  "cpfCnpj": "00000000000000",
+  "phone": "11999999999"
+}
+🔹 Sprint 3 – Criação da cobrança mensal automática
+✅ Ações:
+Após cadastro do cliente ou todo início de mês:
+
+Criar cobrança via API ASAAS
+
+Vencimento: sempre no dia 01 (ou configurável)
+
+Valor: conforme plano definido no tenant
+
+📤 Exemplo:
+http
+Copiar
+Editar
+POST https://www.asaas.com/api/v3/payments
+Body:
+{
+  "customer": "{{asaasCustomerId}}",
+  "billingType": "PIX",
+  "value": 199.90,
+  "dueDate": "2025-09-01",
+  "description": "Mensalidade SenseiSystem",
+  "externalReference": "{{tenant_id}}"
+}
+Salvar o asaas_payment_id no banco
+
+🔹 Sprint 4 – Webhook: Receber status de pagamento
+✅ Ações:
+Criar endpoint no sistema:
+
+ts
+Copiar
+Editar
+POST /webhooks/asaas
+Validar e processar os eventos:
+
+payment.received → marcar como "paid"
+
+payment.overdue → marcar como "overdue"
+
+payment.deleted → remover
+
+payment.confirmed → confirmar pagamento manual
+
+Atualizar school_payments e status financeiro do tenant
+
+📌 Documentação oficial dos webhooks
+
+🔹 Sprint 5 – Automações com inadimplência
+✅ Ações:
+Job diário para verificar pagamentos vencidos há mais de X dias (ex: 10 dias)
+
+Bloquear o tenant (tenant.ativo = false)
+
+Disparar:
+
+Email automático
+
+Mensagem no WhatsApp (via integração futura ou n8n)
+
+📤 Mensagem:
+
+txt
+Copiar
+Editar
+Olá, identificamos um atraso no pagamento da mensalidade da sua escola.
+Seu acesso foi temporariamente suspenso. Para regularizar, acesse o painel ou fale conosco.
+🔹 Sprint 6 – Painel de Gestão de Pagamentos
+✅ Ações:
+Rota /admin/financeiro (painel Superadmin)
+
+Listar todos os tenants com status financeiro
+
+Filtros: "ativos", "em atraso", "cancelados", "pagos"
+
+Acesso ao histórico de pagamentos por escola
+
+Possibilidade de reenviar cobrança manualmente
+
+Rota /meu-plano (acesso da escola):
+
+Ver pagamentos passados
+
+Ver valor do plano e próxima cobrança
+
+Atualizar dados (em integração futura)
+
+🧪 Checklist de Integração ASAAS
+Item	Status
+Criação automática de cliente ASAAS	🚧 A fazer
+Cobrança mensal automática	🚧 A fazer
+Tabela school_payments criada	✅ Simples
+Webhook ativo	🚧 A fazer
+Bloqueio de acesso após X dias	🚧 A fazer
+Notificação automática	🚧 A fazer
+Painel de gestão do Superadmin	🚧 A fazer
+Histórico por tenant	🚧 A fazer
+
+📦 Prompt Replit – Integração ASAAS (pronto para colar)
+plaintext
+Copiar
+Editar
+Implemente a integração com o ASAAS neste projeto SaaS (SenseiSystem) com as seguintes etapas:
+
+1. Ao aprovar um cliente (tenant), crie um cliente na API do ASAAS e salve o `asaasCustomerId`.
+2. Todo mês, crie uma cobrança automática com valor e vencimento definido.
+3. Armazene os pagamentos na tabela `school_payments`.
+4. Crie um webhook `/webhooks/asaas` para processar os status de pagamento.
+5. Se houver atraso > 10 dias, bloqueie o tenant e envie aviso por email/WhatsApp.
+6. Crie um painel de controle de pagamentos para o Superadmin com histórico e status dos tenants.
+
+Use o dashboard já criado com Shadcn/UI para exibir os cards de status financeiro. A API

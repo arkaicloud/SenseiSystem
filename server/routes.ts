@@ -1562,19 +1562,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedPayment = await storage.updateStudentPayment(payment.id, paymentData);
 
-      // Log activity
+      // Log activity with better error handling
       const requestUser = (req as any).user;
-      const student = await storage.getStudent(payment.studentId);
-      const user = await storage.getUser(student?.userId || 0);
-      await storage.createActivityLog({
-        userId: requestUser.id,
-        activity: `${requestUser.firstName} ${requestUser.lastName} updated payment for ${user?.firstName} ${user?.lastName}`,
-        entityType: 'student-payment',
-        entityId: payment.id
-      });
+      try {
+        const student = await storage.getStudent(payment.studentId);
+        const user = student ? await storage.getUser(student.userId) : null;
+        
+        await storage.createActivityLog({
+          userId: requestUser.id,
+          activity: `${requestUser.firstName} ${requestUser.lastName} updated payment for ${user?.firstName || 'Unknown'} ${user?.lastName || 'User'}`,
+          entityType: 'student-payment',
+          entityId: payment.id
+        });
+      } catch (logError) {
+        console.error("Error creating activity log:", logError);
+        // Continue with the response even if logging fails
+      }
 
       res.json({ payment: updatedPayment });
     } catch (error) {
+      console.error("Error updating student payment:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid payment data", errors: error.errors });
       }
@@ -2018,8 +2025,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all students with their attendance data
       const students = await storage.getStudentsWithUsers();
       
+      if (!students || students.length === 0) {
+        return res.json({ students: [] });
+      }
+      
       for (const student of students) {
         try {
+          // Skip if student doesn't have user data
+          if (!student.user) {
+            console.warn(`Student ${student.id} has no user data, skipping`);
+            continue;
+          }
+
           // Calculate attendance rate for this student
           const studentAttendances = await storage.getAttendanceByStudent(student.id);
           const totalClasses = await storage.getClasses();
@@ -2050,10 +2067,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               id: student.id,
               user: {
                 id: student.user.id,
-                firstName: student.user.firstName,
-                lastName: student.user.lastName,
-                email: student.user.email,
-                phone: student.user.phone
+                firstName: student.user.firstName || 'Unknown',
+                lastName: student.user.lastName || '',
+                email: student.user.email || '',
+                phone: student.user.phone || ''
               },
               beltLevel: student.beltLevel,
               stripes: student.stripes,
@@ -2067,6 +2084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (studentError) {
           console.error(`Error processing student ${student.id}:`, studentError);
+          // Continue processing other students
         }
       }
       

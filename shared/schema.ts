@@ -57,6 +57,9 @@ export const students = pgTable("students", {
   // ASAAS integration fields
   asaasCustomerId: text("asaas_customer_id"), // ID do cliente no ASAAS
   asaasSubscriptionId: text("asaas_subscription_id"), // ID da assinatura no ASAAS
+  // Payment preferences
+  paymentPlanId: integer("payment_plan_id").references(() => paymentPlans.id),
+  preferredDueDate: integer("preferred_due_date").default(5), // Dia preferido do mês para vencimento (1-28)
 });
 
 // School Configuration table (tenant information)

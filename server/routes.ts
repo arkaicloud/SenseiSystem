@@ -487,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Activate the user
       const updatedUser = await storage.updateUser(user.id, { active: true });
 
-      // If it's a student, create a student payment (now required)
+      // If it's a student, create a student payment and ASAAS integration
       if (user.role === 'student' && planId) {
         const student = await storage.getStudentByUserId(user.id);
         if (student) {
@@ -505,6 +505,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
               dueDate: dueDate,
               status: 'pending'
             });
+
+            // Create ASAAS customer and subscription after approval
+            if (student.financialResponsibleName && student.financialResponsibleEmail) {
+              try {
+                const config = await storage.getSchoolConfig();
+                if (config?.asaasApiKey) {
+                  const { AsaasService } = await import("./services/asaasService");
+                  const asaasService = new AsaasService(config.asaasApiKey, true); // Use sandbox
+
+                  console.log('🔄 Creating ASAAS customer for approved student:', user.firstName, user.lastName);
+                  
+                  // Create ASAAS customer
+                  const asaasCustomer = await asaasService.createCustomer({
+                    name: student.financialResponsibleName,
+                    email: student.financialResponsibleEmail,
+                    cpfCnpj: student.financialResponsibleCpf?.replace(/\D/g, ''), // Remove formatting
+                    phone: student.financialResponsiblePhone?.replace(/\D/g, ''), // Remove formatting
+                    externalReference: `student_${student.id}` // Link to our student
+                  });
+
+                  console.log('✅ ASAAS customer created:', asaasCustomer.id);
+
+                  // Update student with ASAAS customer ID
+                  await storage.updateStudent(student.id, { asaasCustomerId: asaasCustomer.id });
+
+                  // Create subscription if payment plan and due date are available
+                  if (student.preferredDueDate) {
+                    console.log('🔄 Creating ASAAS subscription for approved student:', user.firstName, user.lastName);
+                    
+                    // Calculate next due date based on preferred day
+                    const selectedDay = student.preferredDueDate;
+                    const nextDueDate = new Date(today.getFullYear(), today.getMonth(), selectedDay);
+                    
+                    // If the selected day has passed this month, move to next month
+                    if (nextDueDate <= today) {
+                      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+                    }
+
+                    const subscription = await asaasService.createSubscription({
+                      customer: asaasCustomer.id,
+                      billingType: "BOLETO",
+                      value: plan.amount / 100, // Convert from cents to reais
+                      nextDueDate: nextDueDate.toISOString().split('T')[0], // YYYY-MM-DD format
+                      cycle: "MONTHLY",
+                      description: `Mensalidade - ${plan.name} - ${user.firstName} ${user.lastName}`,
+                      externalReference: `student_${student.id}_plan_${plan.id}`
+                    });
+
+                    console.log('✅ ASAAS subscription created:', subscription.id);
+
+                    // Update student with ASAAS subscription ID
+                    await storage.updateStudent(student.id, { asaasSubscriptionId: subscription.id });
+                  }
+                }
+              } catch (error) {
+                console.error('❌ Error creating ASAAS customer/subscription:', error);
+                // Continue with approval even if ASAAS fails - log the error but don't fail the approval
+              }
+            }
           } else {
             return res.status(404).json({ message: "Payment plan not found" });
           }
@@ -649,75 +708,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialResponsiblePhone: studentData.financialResponsiblePhone || null,
         financialResponsibleCpf: studentData.financialResponsibleCpf || null,
         financialResponsibleRelationship: studentData.financialResponsibleRelationship || null,
-        asaasCustomerId: null // Will be filled after ASAAS customer creation
+        asaasCustomerId: null, // Will be filled after ASAAS customer creation
+        paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
+        preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5
       });
 
       // Criar o registro do aluno
       const student = await storage.createStudent(studentInfo);
 
-      // Criar cliente no ASAAS se os dados do responsável financeiro estão disponíveis
-      let asaasCustomerId = null;
-      if (studentData.financialResponsibleName && studentData.financialResponsibleEmail) {
-        try {
-          const config = await storage.getSchoolConfig();
-          if (config?.asaasApiKey) {
-            const { AsaasService } = await import("./services/asaasService");
-            const asaasService = new AsaasService(config.asaasApiKey, true); // Use sandbox
-
-            console.log('🔄 Creating ASAAS customer for student:', studentData.firstName, studentData.lastName);
-            
-            const asaasCustomer = await asaasService.createCustomer({
-              name: studentData.financialResponsibleName,
-              email: studentData.financialResponsibleEmail,
-              cpfCnpj: studentData.financialResponsibleCpf?.replace(/\D/g, ''), // Remove formatting
-              phone: studentData.financialResponsiblePhone?.replace(/\D/g, ''), // Remove formatting
-              externalReference: `student_${student.id}` // Link to our student
-            });
-
-            asaasCustomerId = asaasCustomer.id;
-            console.log('✅ ASAAS customer created:', asaasCustomerId);
-
-            // Update student with ASAAS customer ID
-            await storage.updateStudent(student.id, { asaasCustomerId });
-
-            // Create first payment/subscription if payment plan is selected
-            if (studentData.paymentPlanId && studentData.dueDate) {
-              const paymentPlan = await storage.getPaymentPlan(parseInt(studentData.paymentPlanId));
-              if (paymentPlan) {
-                console.log('🔄 Creating ASAAS subscription for student:', studentData.firstName, studentData.lastName);
-                
-                // Calculate next due date based on selected day
-                const today = new Date();
-                const selectedDay = parseInt(studentData.dueDate);
-                const nextDueDate = new Date(today.getFullYear(), today.getMonth(), selectedDay);
-                
-                // If the selected day has passed this month, move to next month
-                if (nextDueDate <= today) {
-                  nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-                }
-
-                const subscription = await asaasService.createSubscription({
-                  customer: asaasCustomerId,
-                  billingType: "BOLETO",
-                  value: paymentPlan.amount / 100, // Convert from cents to reais
-                  nextDueDate: nextDueDate.toISOString().split('T')[0], // YYYY-MM-DD format
-                  cycle: "MONTHLY",
-                  description: `Mensalidade - ${paymentPlan.name} - ${studentData.firstName} ${studentData.lastName}`,
-                  externalReference: `student_${student.id}_plan_${paymentPlan.id}`
-                });
-
-                console.log('✅ ASAAS subscription created:', subscription.id);
-
-                // Update student with ASAAS subscription ID
-                await storage.updateStudent(student.id, { asaasSubscriptionId: subscription.id });
-              }
-            }
-          }
-        } catch (error) {
-          console.error('❌ Error creating ASAAS customer:', error);
-          // Don't fail student creation if ASAAS fails, just log the error
-        }
-      }
+      // ASAAS integration will be done after user approval, not during registration
 
       // Se um plano de pagamento foi selecionado, criar o pagamento
       if (studentData.paymentPlanId) {

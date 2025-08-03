@@ -4,12 +4,22 @@ import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarMenuItem } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { Award } from 'lucide-react';
 
 // Icons from Font Awesome (using className approach)
 export const Sidebar = () => {
   const { t } = useTranslations();
   const { user, logout } = useAuth();
   const [location] = useLocation();
+  
+  // Fetch school configuration for tenant-specific branding
+  const { data: schoolConfigResponse } = useQuery<{ config: any }>({
+    queryKey: ["/api/school-config"],
+  });
+
+  // Safely extract config from response
+  const schoolConfig = schoolConfigResponse?.config || null;
   
   const menuItems: SidebarMenuItem[] = [
     { 
@@ -67,8 +77,34 @@ export const Sidebar = () => {
 
   return (
     <div className="flex flex-col w-64 bg-gray-800 border-r border-gray-700">
-      <div className="h-16 flex items-center px-4 border-b border-gray-700">
-        <h1 className="text-xl font-bold text-white">Jiujitsu Manager</h1>
+      <div className="h-16 flex items-center px-3 border-b border-gray-700">
+        <div className="flex items-center space-x-3 w-full">
+          {schoolConfig?.logoUrl ? (
+            <div className="flex-shrink-0">
+              <img 
+                src={schoolConfig.logoUrl} 
+                alt={schoolConfig.schoolName || "Logo da Academia"} 
+                className="h-10 w-auto max-w-[100px] md:max-w-[120px] object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              <div className="hidden items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-sm">
+                <Award className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-sm">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-sm md:text-base font-bold text-white truncate">
+              {schoolConfig?.schoolName || "SenseiSystem"}
+            </h1>
+          </div>
+        </div>
       </div>
       
       <div className="flex flex-col flex-grow py-4">

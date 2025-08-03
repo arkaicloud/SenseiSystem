@@ -1,191 +1,164 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Phone, Mail, MessageSquare, Calendar, Users, TrendingDown } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BeltWithLabel } from "@/components/ui/belt";
-
-interface StudentAtRisk {
-  id: number;
-  user: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-  };
-  beltLevel: string;
-  stripes: number;
-  attendanceRate: number;
-  lastAttendance: string | null;
-  daysSinceLastAttendance: number;
-  riskLevel: 'low' | 'medium' | 'high' | 'critical';
-  totalClasses: number;
-  attendedClasses: number;
-}
 
 const StudentsAtRisk: React.FC = () => {
   const { toast } = useToast();
-  const [selectedStudent, setSelectedStudent] = useState<StudentAtRisk | null>(null);
-  const [actionType, setActionType] = useState<string>("");
-  const [actionDialog, setActionDialog] = useState(false);
-  const [riskThreshold, setRiskThreshold] = useState(60); // 60% frequência mínima
+  const { t } = useTranslation();
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [observation, setObservation] = useState("");
+  const [frequencyThreshold, setFrequencyThreshold] = useState(60);
 
-  // Buscar alunos em risco
-  const { data: studentsAtRiskData, isLoading } = useQuery({
-    queryKey: ['/api/students/at-risk', riskThreshold],
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
+  const { data: studentsData, isLoading, refetch } = useQuery({
+    queryKey: ['/api/students/at-risk', frequencyThreshold],
+    queryFn: () => apiRequest('GET', `/api/students/at-risk?threshold=${frequencyThreshold}`)
   });
 
-  // Buscar configurações de risco
-  const { data: riskSettings } = useQuery({
+  const { data: settingsData } = useQuery({
     queryKey: ['/api/risk-settings'],
   });
 
-  // Mutation para executar ações
-  const actionMutation = useMutation({
-    mutationFn: async (data: {
-      studentId: number;
-      actionType: string;
-      notes?: string;
-      scheduledDate?: string;
-    }) => {
-      const response = await apiRequest('POST', '/api/students/risk-actions', data);
-      return response.json();
-    },
+  const { mutate: saveObservation, isPending: isSaving } = useMutation({
+    mutationFn: ({ studentId, notes }: { studentId: number; notes: string }) => 
+      apiRequest('PUT', `/api/students/${studentId}/notes`, { notes }),
     onSuccess: () => {
-      toast({
-        title: "Ação registrada",
-        description: "A ação foi registrada com sucesso.",
-      });
-      setActionDialog(false);
-      setSelectedStudent(null);
       queryClient.invalidateQueries({ queryKey: ['/api/students/at-risk'] });
+      setSelectedStudent(null);
+      setObservation("");
+      toast({
+        title: "Sucesso",
+        description: "Observação salva com sucesso!",
+      });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao salvar observação",
         variant: "destructive",
       });
     },
   });
 
-  const studentsAtRisk = studentsAtRiskData?.students || [];
+  const students = (studentsData as any)?.students || [];
+  
+  // Calculate risk statistics
+  const totalAtRisk = students.length;
+  const criticalRisk = students.filter((s: any) => s.riskLevel === 'critical').length;
+  const highRisk = students.filter((s: any) => s.riskLevel === 'high').length;
+  const averageFrequency = students.length > 0 
+    ? Math.round(students.reduce((sum: number, s: any) => sum + s.attendanceRate, 0) / students.length)
+    : 0;
 
-  const getRiskBadge = (riskLevel: string) => {
-    const variants = {
-      low: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      medium: "bg-orange-100 text-orange-800 border-orange-200", 
-      high: "bg-red-100 text-red-800 border-red-200",
-      critical: "bg-red-600 text-white border-red-700"
-    };
-    
-    const labels = {
-      low: "Baixo Risco",
-      medium: "Risco Médio",
-      high: "Alto Risco", 
-      critical: "Risco Crítico"
-    };
+  const handleSaveObservation = () => {
+    if (!selectedStudent || !observation.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, digite uma observação",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    return (
-      <Badge className={variants[riskLevel as keyof typeof variants]}>
-        {labels[riskLevel as keyof typeof labels]}
-      </Badge>
-    );
-  };
-
-  const handleQuickAction = (student: StudentAtRisk, action: string) => {
-    setSelectedStudent(student);
-    setActionType(action);
-    setActionDialog(true);
-  };
-
-  const handleSubmitAction = () => {
-    if (!selectedStudent || !actionType) return;
-
-    const formData = new FormData(document.getElementById('action-form') as HTMLFormElement);
-    
-    actionMutation.mutate({
+    saveObservation({
       studentId: selectedStudent.id,
-      actionType,
-      notes: formData.get('notes') as string,
-      scheduledDate: formData.get('scheduledDate') as string,
+      notes: observation
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Analisando frequência dos alunos...</p>
-        </div>
-      </div>
-    );
-  }
+  const getRiskColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'critical':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'high':
+        return 'text-orange-600 bg-orange-50 border-orange-200';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getRiskLabel = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'critical':
+        return 'Risco Crítico';
+      case 'high':
+        return 'Alto Risco';
+      case 'medium':
+        return 'Risco Moderado';
+      default:
+        return 'Baixo Risco';
+    }
+  };
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary flex items-center gap-2">
-            <AlertTriangle className="h-7 w-7" />
+          <h1 className="font-montserrat font-bold text-2xl text-blue-600 flex items-center">
+            <span className="material-icons mr-2 text-orange-500">warning</span>
             Alunos em Risco
           </h1>
           <p className="text-gray-600">Identifique e aja proativamente para reter alunos</p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Frequência mínima:</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <label htmlFor="frequency" className="text-sm font-medium text-gray-700">
+              Frequência mínima:
+            </label>
             <Input
+              id="frequency"
               type="number"
-              value={riskThreshold}
-              onChange={(e) => setRiskThreshold(Number(e.target.value))}
+              value={frequencyThreshold}
+              onChange={(e) => setFrequencyThreshold(Number(e.target.value))}
               className="w-20"
               min="0"
               max="100"
             />
-            <span className="text-sm text-gray-600">%</span>
+            <span className="text-sm text-gray-500">%</span>
           </div>
+          <Button onClick={() => refetch()} variant="outline" size="sm">
+            <span className="material-icons mr-1 text-sm">refresh</span>
+            Atualizar
+          </Button>
         </div>
       </div>
 
-      {/* Estatísticas Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <TrendingDown className="h-5 w-5 text-red-600" />
+            <div className="flex items-center">
+              <div className="p-2 bg-red-50 rounded-lg mr-3">
+                <span className="material-icons text-red-500">trending_down</span>
               </div>
               <div>
+                <p className="text-2xl font-bold text-red-600">{totalAtRisk}</p>
                 <p className="text-sm text-gray-600">Total em Risco</p>
-                <p className="text-2xl font-bold text-red-600">{studentsAtRisk.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+            <div className="flex items-center">
+              <div className="p-2 bg-red-50 rounded-lg mr-3">
+                <span className="material-icons text-red-600">report_problem</span>
               </div>
               <div>
+                <p className="text-2xl font-bold text-red-600">{criticalRisk}</p>
                 <p className="text-sm text-gray-600">Risco Crítico</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {studentsAtRisk.filter(s => s.riskLevel === 'critical').length}
-                </p>
               </div>
             </div>
           </CardContent>
@@ -193,15 +166,13 @@ const StudentsAtRisk: React.FC = () => {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Users className="h-5 w-5 text-orange-600" />
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-50 rounded-lg mr-3">
+                <span className="material-icons text-orange-500">priority_high</span>
               </div>
               <div>
+                <p className="text-2xl font-bold text-orange-600">{highRisk}</p>
                 <p className="text-sm text-gray-600">Alto Risco</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {studentsAtRisk.filter(s => s.riskLevel === 'high').length}
-                </p>
               </div>
             </div>
           </CardContent>
@@ -209,185 +180,183 @@ const StudentsAtRisk: React.FC = () => {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-yellow-600" />
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-50 rounded-lg mr-3">
+                <span className="material-icons text-yellow-600">calendar_today</span>
               </div>
               <div>
+                <p className="text-2xl font-bold text-yellow-600">{averageFrequency}%</p>
                 <p className="text-sm text-gray-600">Frequência Média</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {studentsAtRisk.length > 0 
-                    ? Math.round(studentsAtRisk.reduce((acc, s) => acc + s.attendanceRate, 0) / studentsAtRisk.length) 
-                    : 0}%
-                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Lista de Alunos em Risco */}
+      {/* Students List */}
       <Card>
         <CardHeader>
           <CardTitle>Alunos Identificados</CardTitle>
         </CardHeader>
         <CardContent>
-          {studentsAtRisk.length === 0 ? (
+          {isLoading ? (
             <div className="text-center py-8">
-              <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhum aluno em risco identificado</p>
-              <p className="text-sm text-gray-500">Todos os alunos estão com frequência adequada!</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Carregando alunos em risco...</p>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-12">
+              <span className="material-icons text-6xl text-gray-300 mb-4">sentiment_very_satisfied</span>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum aluno em risco identificado</h3>
+              <p className="text-gray-500">Todos os alunos estão com frequência adequada!</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {studentsAtRisk.map((student) => (
+              {students.map((student: any) => (
                 <div
                   key={student.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${getRiskColor(student.riskLevel)}`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {student.user.firstName} {student.user.lastName}
-                          </h3>
-                          <p className="text-sm text-gray-600">{student.user.email}</p>
-                        </div>
-                        <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
-                        {getRiskBadge(student.riskLevel)}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      {/* Avatar */}
+                      <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
+                        </span>
                       </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Frequência:</span>
-                          <span className="ml-1 font-medium text-red-600">
-                            {student.attendanceRate}%
-                          </span>
+
+                      {/* Student Info */}
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {student.user.firstName} {student.user.lastName}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span>📧 {student.user.email}</span>
+                          <span>📱 {student.user.phone || 'Sem telefone'}</span>
+                          {student.user.emergencyContact && (
+                            <span>🚨 {student.user.emergencyContact}</span>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-gray-500">Última presença:</span>
-                          <span className="ml-1 font-medium">
-                            {student.daysSinceLastAttendance > 0 
-                              ? `${student.daysSinceLastAttendance} dias atrás`
-                              : 'Hoje'
-                            }
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Aulas:</span>
-                          <span className="ml-1 font-medium">
-                            {student.attendedClasses}/{student.totalClasses}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Telefone:</span>
-                          <span className="ml-1 font-medium">
-                            {student.user.phone || 'Não informado'}
+                        <div className="flex items-center space-x-2 mt-1">
+                          <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getRiskColor(student.riskLevel)}`}>
+                            {getRiskLabel(student.riskLevel)}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuickAction(student, 'call')}
-                      >
-                        <Phone className="h-4 w-4 mr-1" />
-                        Ligar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuickAction(student, 'email')}
-                      >
-                        <Mail className="h-4 w-4 mr-1" />
-                        Email
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuickAction(student, 'whatsapp')}
-                      >
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        WhatsApp
-                      </Button>
+                    {/* Statistics */}
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-gray-900">
+                        {student.attendanceRate}%
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {student.daysSinceLastAttendance} dias sem aula
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {student.attendedClasses}/{student.totalClasses} aulas
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStudent(student);
+                              setObservation(student.notes || '');
+                            }}
+                          >
+                            <span className="material-icons mr-1 text-sm">note_add</span>
+                            Observação
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[600px]">
+                          <DialogHeader>
+                            <DialogTitle>
+                              Adicionar Observação - {selectedStudent?.user.firstName} {selectedStudent?.user.lastName}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            {/* Student Contact Info */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="font-medium text-gray-900 mb-2">Dados de Contato</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <div><strong>Email:</strong> {selectedStudent?.user.email}</div>
+                                <div><strong>Telefone:</strong> {selectedStudent?.user.phone || 'Não informado'}</div>
+                                <div className="md:col-span-2">
+                                  <strong>Contato de Emergência:</strong> {selectedStudent?.user.emergencyContact || 'Não informado'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Risk Info */}
+                            <div className="bg-orange-50 p-4 rounded-lg">
+                              <h4 className="font-medium text-gray-900 mb-2">Situação de Risco</h4>
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div><strong>Frequência:</strong> {selectedStudent?.attendanceRate}%</div>
+                                <div><strong>Último comparecimento:</strong> {selectedStudent?.daysSinceLastAttendance} dias atrás</div>
+                                <div><strong>Aulas assistidas:</strong> {selectedStudent?.attendedClasses}</div>
+                                <div><strong>Nível de risco:</strong> {getRiskLabel(selectedStudent?.riskLevel || 'low')}</div>
+                              </div>
+                            </div>
+
+                            {/* Observation Input */}
+                            <div>
+                              <label htmlFor="observation" className="block text-sm font-medium text-gray-700 mb-2">
+                                Observação sobre o aluno
+                              </label>
+                              <Textarea
+                                id="observation"
+                                placeholder="Digite sua observação sobre a situação do aluno, ações tomadas, contatos realizados, etc..."
+                                value={observation}
+                                onChange={(e) => setObservation(e.target.value)}
+                                rows={4}
+                                className="w-full"
+                              />
+                            </div>
+
+                            {/* Previous Notes */}
+                            {selectedStudent?.notes && (
+                              <div className="bg-blue-50 p-4 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">Observações Anteriores</h4>
+                                <p className="text-sm text-gray-700">{selectedStudent.notes}</p>
+                              </div>
+                            )}
+
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" onClick={() => setSelectedStudent(null)}>
+                                Cancelar
+                              </Button>
+                              <Button onClick={handleSaveObservation} disabled={isSaving}>
+                                {isSaving ? "Salvando..." : "Salvar Observação"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
+
+                  {/* Show current notes if any */}
+                  {student.notes && (
+                    <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border-l-4 border-blue-400">
+                      <p className="text-sm text-gray-700">
+                        <strong>Observação:</strong> {student.notes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Dialog de Ações */}
-      <Dialog open={actionDialog} onOpenChange={setActionDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Ação para {selectedStudent?.user.firstName} {selectedStudent?.user.lastName}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <form id="action-form" className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Tipo de Ação</label>
-              <Select value={actionType} onValueChange={setActionType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo de ação" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="call">Ligação Telefônica</SelectItem>
-                  <SelectItem value="email">Envio de Email</SelectItem>
-                  <SelectItem value="whatsapp">Mensagem WhatsApp</SelectItem>
-                  <SelectItem value="visit">Visita Presencial</SelectItem>
-                  <SelectItem value="discount">Oferecer Desconto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Observações</label>
-              <Textarea
-                name="notes"
-                placeholder="Descreva a ação realizada ou planejada..."
-                rows={3}
-              />
-            </div>
-
-            {actionType === 'call' && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Agendar para</label>
-                <Input
-                  type="datetime-local"
-                  name="scheduledDate"
-                />
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setActionDialog(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSubmitAction}
-                disabled={actionMutation.isPending}
-              >
-                {actionMutation.isPending ? 'Salvando...' : 'Salvar Ação'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+    </div>
   );
 };
 

@@ -2028,13 +2028,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Risk Management Routes =====
-  app.get("/api/students/at-risk", isAuthenticated, isInstructor, async (req, res) => {
+  app.get("/api/students/at-risk", isAuthenticated, async (req, res) => {
     try {
       const threshold = parseInt(req.query.threshold as string) || 60;
-      const studentsAtRisk = [];
+      const studentsAtRisk: any[] = [];
       
       // Get all students with their attendance data
-      const students = await storage.getStudentsWithUsers();
+      const students = await storage.getStudents();
       
       if (!students || students.length === 0) {
         return res.json({ students: [] });
@@ -2057,7 +2057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Calculate days since last attendance
           const lastAttendance = studentAttendances.length > 0 ?
-            studentAttendances.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
+            studentAttendances.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
           
           const daysSinceLastAttendance = lastAttendance ? 
             Math.floor((Date.now() - new Date(lastAttendance.date).getTime()) / (1000 * 60 * 60 * 24)) : 999;
@@ -2081,10 +2081,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 firstName: student.user.firstName || 'Unknown',
                 lastName: student.user.lastName || '',
                 email: student.user.email || '',
-                phone: student.user.phone || ''
+                phone: student.user.phone || '',
+                emergencyContact: student.user.emergencyContact || ''
               },
               beltLevel: student.beltLevel,
               stripes: student.stripes,
+              notes: student.notes || '',
               attendanceRate,
               lastAttendance: lastAttendance ? lastAttendance.date : null,
               daysSinceLastAttendance,
@@ -2111,24 +2113,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ students: studentsAtRisk });
     } catch (error) {
       console.error("Erro ao buscar alunos em risco:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.post("/api/students/risk-actions", isAuthenticated, isInstructor, async (req, res) => {
+  // Update student notes/observations
+  app.put("/api/students/:id/notes", isAuthenticated, async (req, res) => {
     try {
+      const { id } = req.params;
+      const { notes } = req.body;
+      
+      if (!notes || typeof notes !== 'string') {
+        return res.status(400).json({ message: "Observação é obrigatória" });
+      }
+
+      const updated = await storage.updateStudent(Number(id), { notes });
+      
+      if (!updated) {
+        return res.status(404).json({ message: "Aluno não encontrado" });
+      }
+      
+      // Log the action
+      const user = (req as any).user;
+      if (user) {
+        await storage.createActivityLog({
+          userId: user.id,
+          activity: `${user.firstName} ${user.lastName} adicionou observação para aluno em risco`,
+          entityType: 'student',
+          entityId: Number(id),
+          timestamp: new Date()
+        });
+      }
+      
+      res.json({ student: updated });
+    } catch (error) {
+      console.error("Erro ao atualizar observações do aluno:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/students/risk-actions", isAuthenticated, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const actionData = {
         studentId: req.body.studentId,
         actionType: req.body.actionType,
         notes: req.body.notes || null,
         scheduledDate: req.body.scheduledDate ? new Date(req.body.scheduledDate) : null,
-        createdBy: req.user.id
+        createdBy: user.id
       };
       
       // Log the action
       await storage.createActivityLog({
-        userId: req.user.id,
-        activity: `${req.user.firstName} ${req.user.lastName} registrou ação de retenção: ${actionData.actionType}`,
+        userId: user.id,
+        activity: `${user.firstName} ${user.lastName} registrou ação de retenção: ${actionData.actionType}`,
         entityType: 'risk_action',
         entityId: actionData.studentId,
         timestamp: new Date()
@@ -2137,11 +2179,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({ action: actionData });
     } catch (error) {
       console.error("Erro ao criar ação de risco:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/risk-settings", isAuthenticated, isInstructor, async (req, res) => {
+  app.get("/api/risk-settings", isAuthenticated, async (req, res) => {
     try {
       const settings = { 
         frequencyThreshold: 60, 
@@ -2151,7 +2193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ settings });
     } catch (error) {
       console.error("Erro ao buscar configurações de risco:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

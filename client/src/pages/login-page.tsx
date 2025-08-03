@@ -175,14 +175,13 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <p className="text-sm text-gray-600 font-medium">
-                Junte-se às <span className="font-bold text-gray-900">1000+ escolas</span> que confiam no SenseiSystem
+                Junte-se às <span className="font-bold text-gray-900">escolas</span> que confiam no SenseiSystem
               </p>
               <p className="text-xs text-gray-500">Plataforma líder em gestão para artes marciais</p>
             </div>
           </div>
         </div>
       </div>
-
       {/* Right Side - Features Showcase */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 items-center justify-center p-8 relative overflow-hidden">
         {/* Background Pattern */}

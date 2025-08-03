@@ -55,7 +55,7 @@ export default function AsaasPayments() {
   // Mutation para atualizar configuração ASAAS
   const updateAsaasConfig = useMutation({
     mutationFn: async (data: typeof asaasConfig) => {
-      return await apiRequest("/api/school/asaas-config", "PATCH", data);
+      return await apiRequest("/api/school-config", "PATCH", data);
     },
     onSuccess: () => {
       toast({

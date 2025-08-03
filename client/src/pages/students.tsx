@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { BeltWithLabel } from "@/components/ui/belt";
 import StudentForm from "@/components/students/StudentForm";
@@ -16,9 +17,11 @@ const Students: React.FC = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [beltFilter, setBeltFilter] = useState("all");
+  const [financialFilter, setFinancialFilter] = useState("all");
 
   // Fetch students data
   const { data, isLoading } = useQuery({
@@ -99,12 +102,35 @@ const Students: React.FC = () => {
 
   const students = (data as any)?.students || [];
 
-  const filteredStudents = students.filter((student: any) => {
-    const name = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();
-    const email = student.user.email.toLowerCase();
-    const query = searchQuery.toLowerCase();
-    return name.includes(query) || email.includes(query);
-  });
+  const getFilteredStudents = (tabFilter: string) => {
+    return students.filter((student: any) => {
+      const name = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();
+      const email = student.user.email.toLowerCase();
+      const query = searchTerm.toLowerCase();
+      
+      // Filtro de busca por nome/email
+      const matchesSearch = !query || name.includes(query) || email.includes(query);
+      
+      // Filtro de status baseado na aba
+      let matchesStatus = true;
+      if (tabFilter === "active") {
+        matchesStatus = student.user.active;
+      } else if (tabFilter === "inactive") {
+        matchesStatus = !student.user.active;
+      }
+      
+      // Filtro de faixa
+      const matchesBelt = beltFilter === "all" || student.beltLevel === beltFilter;
+      
+      // Filtro financeiro (simulado)
+      const financialStatus = Math.random() > 0.7 ? "overdue" : Math.random() > 0.5 ? "pending" : "upToDate";
+      const matchesFinancial = financialFilter === "all" || financialStatus === financialFilter;
+      
+      return matchesSearch && matchesStatus && matchesBelt && matchesFinancial;
+    });
+  };
+
+  const filteredStudents = getFilteredStudents(activeTab);
 
   const handleAddStudent = (data: any) => {
     addStudent(data);
@@ -177,20 +203,382 @@ const Students: React.FC = () => {
           </Dialog>
         </div>
       </div>
+      {/* Filtros Adicionais */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <Select value={beltFilter} onValueChange={setBeltFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filtrar por faixa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as faixas</SelectItem>
+            <SelectItem value="white">Faixa Branca</SelectItem>
+            <SelectItem value="blue">Faixa Azul</SelectItem>
+            <SelectItem value="purple">Faixa Roxa</SelectItem>
+            <SelectItem value="brown">Faixa Marrom</SelectItem>
+            <SelectItem value="black">Faixa Preta</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={financialFilter} onValueChange={setFinancialFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Situação financeira" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas situações</SelectItem>
+            <SelectItem value="upToDate">Em dia</SelectItem>
+            <SelectItem value="pending">Pendente</SelectItem>
+            <SelectItem value="overdue">Atrasado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="bg-white rounded-lg shadow p-4">
-        <Tabs defaultValue="all">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="all">Todos os Alunos</TabsTrigger>
-            <TabsTrigger value="active">Ativos</TabsTrigger>
-            <TabsTrigger value="inactive">Inativos</TabsTrigger>
+            <TabsTrigger value="all">Todos os Alunos ({students.length})</TabsTrigger>
+            <TabsTrigger value="active">Ativos ({students.filter((s: any) => s.user.active).length})</TabsTrigger>
+            <TabsTrigger value="inactive">Inativos ({students.filter((s: any) => !s.user.active).length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all">
             {isLoading ? (
               <div className="text-center py-8">Carregando alunos...</div>
-            ) : filteredStudents.length === 0 ? (
+            ) : getFilteredStudents("all").length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchQuery ? "Nenhum aluno encontrado para sua busca" : "Nenhum aluno encontrado"}
+                {searchTerm ? "Nenhum aluno encontrado para sua busca" : "Nenhum aluno encontrado"}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getFilteredStudents("all").map((student: any) => (
+                      <tr key={student.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium text-gray-700">
+                                  {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {student.user.firstName} {student.user.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">{student.user.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <BeltWithLabel beltLevel={student.beltLevel} stripes={student.stripes} />
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">
+                          <div>Rua A, 123</div>
+                          <div className="text-xs text-gray-400">São Paulo, SP</div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">
+                          {(() => {
+                            const joinDate = new Date(student.user.createdAt || Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+                            const now = new Date();
+                            const diffMs = now.getTime() - joinDate.getTime();
+                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                            
+                            if (diffMinutes < 60) {
+                              return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
+                            } else if (diffHours < 24) {
+                              return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
+                            } else if (diffDays === 1) {
+                              return 'Ontem';
+                            } else {
+                              return joinDate.toLocaleDateString('pt-BR');
+                            }
+                          })()}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">Mensal - R$ 150</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            Math.random() > 0.3 ? 'bg-green-100 text-green-800' : Math.random() > 0.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
+                            }`}></div>
+                            {Math.random() > 0.3 ? 'Em dia' : Math.random() > 0.5 ? 'Pendente' : 'Atrasado'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-gray-600">
+                            {student.user.firstName} {student.user.lastName}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              student.user.active ? 'bg-green-400' : 'bg-red-400'
+                            }`}></div>
+                            {student.user.active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Ver perfil completo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-blue-500 text-sm">visibility</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Editar aluno"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-gray-500 text-sm">edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
+                              disabled={isTogglingStatus}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStudentStatus({
+                                  studentId: student.id,
+                                  userId: student.user.id,
+                                  newStatus: !student.user.active
+                                });
+                              }}
+                            >
+                              {student.user.active ? (
+                                <span className="material-icons text-red-500 text-sm">block</span>
+                              ) : (
+                                <span className="material-icons text-green-500 text-sm">check_circle</span>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Mais ações"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Menu de ações
+                              }}
+                            >
+                              <span className="material-icons text-gray-400 text-sm">more_vert</span>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="active">
+            {isLoading ? (
+              <div className="text-center py-8">Carregando alunos...</div>
+            ) : getFilteredStudents("active").length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhum aluno ativo encontrado
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getFilteredStudents("active").map((student: any) => (
+                      <tr key={student.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium text-gray-700">
+                                  {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {student.user.firstName} {student.user.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">{student.user.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <BeltWithLabel beltLevel={student.beltLevel} stripes={student.stripes} />
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">
+                          <div>Rua A, 123</div>
+                          <div className="text-xs text-gray-400">São Paulo, SP</div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">
+                          {(() => {
+                            const joinDate = new Date(student.user.createdAt || Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+                            const now = new Date();
+                            const diffMs = now.getTime() - joinDate.getTime();
+                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                            
+                            if (diffMinutes < 60) {
+                              return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
+                            } else if (diffHours < 24) {
+                              return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
+                            } else if (diffDays === 1) {
+                              return 'Ontem';
+                            } else {
+                              return joinDate.toLocaleDateString('pt-BR');
+                            }
+                          })()}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">Mensal - R$ 150</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            Math.random() > 0.3 ? 'bg-green-100 text-green-800' : Math.random() > 0.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
+                            }`}></div>
+                            {Math.random() > 0.3 ? 'Em dia' : Math.random() > 0.5 ? 'Pendente' : 'Atrasado'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-gray-600">
+                            {student.user.firstName} {student.user.lastName}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              student.user.active ? 'bg-green-400' : 'bg-red-400'
+                            }`}></div>
+                            {student.user.active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Ver perfil completo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-blue-500 text-sm">visibility</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Editar aluno"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-gray-500 text-sm">edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
+                              disabled={isTogglingStatus}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStudentStatus({
+                                  studentId: student.id,
+                                  userId: student.user.id,
+                                  newStatus: !student.user.active
+                                });
+                              }}
+                            >
+                              {student.user.active ? (
+                                <span className="material-icons text-red-500 text-sm">block</span>
+                              ) : (
+                                <span className="material-icons text-green-500 text-sm">check_circle</span>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Mais ações"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Menu de ações
+                              }}
+                            >
+                              <span className="material-icons text-gray-400 text-sm">more_vert</span>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="inactive">
+            {isLoading ? (
+              <div className="text-center py-8">Carregando alunos...</div>
+            ) : getFilteredStudents("inactive").length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhum aluno inativo encontrado
               </div>
             ) : (
               <div className="overflow-x-auto">

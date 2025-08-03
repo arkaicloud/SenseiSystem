@@ -1,0 +1,73 @@
+Perfeito, Leo! Para integrar o Sensei System com o Asaas de forma sólida e escalável, você precisa preparar algumas informações de configuração, tanto para o painel do usuário quanto para a parte técnica (backend/API).
+
+Abaixo está o que você precisa estruturar e orientar seu desenvolvedor ou integrar no backend.
+
+✅ 1. Dados que devem ser cadastráveis na tela de “Configurações > Da Escola”
+Crie uma seção chamada “Integração com Asaas” com os seguintes campos:
+
+Campo	Tipo	Observação
+Ambiente	Select (Homologação / Produção)	Para alternar entre testes e produção
+API Key (Token)	Campo de texto (input)	Obtido no painel do Asaas
+ID da Conta	Campo de texto (opcional)	Se for necessário para multitenancy com API Key única
+Nome da empresa	Auto preenchido pela API, se quiser exibir	
+Webhook configurado?	Status ou botão de teste	Pode mostrar “Configurado” ou “Pendente”
+
+🧠 2. O que o sistema precisa fazer (back-end)
+a. Gerar cobrança (conta a receber)
+Via endpoint: POST /v3/payments
+Referência: Documentação oficial
+
+Campos mínimos:
+
+customer (ID do cliente no Asaas)
+
+billingType (PIX, BOLETO, CREDIT_CARD)
+
+value
+
+dueDate
+
+description
+
+b. Criar cliente no Asaas
+Antes da cobrança, crie o aluno/responsável:
+POST /v3/customers
+Campos: nome, CPF/CNPJ, email, telefone etc.
+
+c. Receber notificações de pagamento
+Você precisa registrar seu Webhook via:
+POST /v3/webhook
+
+Para receber notificações:
+
+Pagamento confirmado
+
+Vencimento próximo
+
+Boleto gerado
+
+Estorno etc.
+
+Recomendado usar webhook para atualizar os status dos pagamentos no Sensei System.
+
+d. Consultar status da cobrança
+Via GET /v3/payments/:id
+Para confirmar status de pagamento.
+
+🛡️ Segurança e boas práticas
+Armazene o token da API de forma segura (criptografado no banco ou em variável de ambiente)
+
+Use ambiente de homologação (https://sandbox.asaas.com/api/v3) para testes
+
+Implemente logs para chamadas e respostas da API
+
+🎯 Exemplo visual no Sensei System (Configurações)
+Configurações da Integração com o Asaas
+
+markdown
+Copiar
+Editar
+[ ] Ativar integração com Asaas
+Ambiente: (Produção / Homologação)
+Token da API: ______________________
+Webhook configurado: ✅ Sim   [ Testar Conexão ]

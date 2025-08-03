@@ -1558,7 +1558,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Payment not found" });
       }
 
-      const paymentData = req.body;
+      const paymentData = { ...req.body };
+      
+      // Convert date strings to Date objects
+      if (paymentData.dueDate && typeof paymentData.dueDate === 'string') {
+        paymentData.dueDate = new Date(paymentData.dueDate);
+      }
+      if (paymentData.paidDate && typeof paymentData.paidDate === 'string') {
+        paymentData.paidDate = new Date(paymentData.paidDate);
+      }
+      if (paymentData.overdueAt && typeof paymentData.overdueAt === 'string') {
+        paymentData.overdueAt = new Date(paymentData.overdueAt);
+      }
 
       const updatedPayment = await storage.updateStudentPayment(payment.id, paymentData);
 

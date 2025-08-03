@@ -1905,21 +1905,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
+  app.patch("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
       // Clean and validate the data manually to avoid schema issues
-      const cleanData = {
-        schoolName: String(req.body.schoolName || ""),
-        logoUrl: req.body.logoUrl ? String(req.body.logoUrl) : null,
-        address: req.body.address ? String(req.body.address) : null,
-        phone: req.body.phone ? String(req.body.phone) : null,
-        email: req.body.email ? String(req.body.email) : null,
-        website: req.body.website ? String(req.body.website) : null,
-        congratsMessage: req.body.congratsMessage ? String(req.body.congratsMessage) : null
-      };
+      const cleanData: any = {};
+      
+      // School basic info
+      if (req.body.schoolName !== undefined) cleanData.schoolName = String(req.body.schoolName || "");
+      if (req.body.logoUrl !== undefined) cleanData.logoUrl = req.body.logoUrl ? String(req.body.logoUrl) : null;
+      if (req.body.address !== undefined) cleanData.address = req.body.address ? String(req.body.address) : null;
+      if (req.body.phone !== undefined) cleanData.phone = req.body.phone ? String(req.body.phone) : null;
+      if (req.body.email !== undefined) cleanData.email = req.body.email ? String(req.body.email) : null;
+      if (req.body.website !== undefined) cleanData.website = req.body.website ? String(req.body.website) : null;
+      if (req.body.congratsMessage !== undefined) cleanData.congratsMessage = req.body.congratsMessage ? String(req.body.congratsMessage) : null;
+      
+      // ASAAS configuration
+      if (req.body.asaasApiKey !== undefined) cleanData.asaasApiKey = req.body.asaasApiKey ? String(req.body.asaasApiKey) : null;
+      if (req.body.asaasCustomerId !== undefined) cleanData.asaasCustomerId = req.body.asaasCustomerId ? String(req.body.asaasCustomerId) : null;
+      if (req.body.planValue !== undefined) cleanData.planValue = Number(req.body.planValue) || 19990;
+      if (req.body.planType !== undefined) cleanData.planType = String(req.body.planType || "monthly");
+      if (req.body.active !== undefined) cleanData.active = Boolean(req.body.active);
+      if (req.body.trialEndDate !== undefined) cleanData.trialEndDate = req.body.trialEndDate ? new Date(req.body.trialEndDate) : null;
 
-      // Basic validation
-      if (!cleanData.schoolName || cleanData.schoolName.trim() === "") {
+      // Basic validation - only if schoolName is being updated
+      if (cleanData.schoolName !== undefined && (!cleanData.schoolName || cleanData.schoolName.trim() === "")) {
         return res.status(400).json({ message: "Nome da escola é obrigatório" });
       }
 
@@ -2330,35 +2339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Atualizar configuração ASAAS
-  app.patch("/api/school/asaas-config", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { asaasApiKey, planValue, planType } = req.body;
-      
-      const config = await storage.updateSchoolConfig({
-        asaasApiKey,
-        planValue: planValue ? Number(planValue) : undefined,
-        planType
-      });
 
-      // Log activity
-      const requestUser = (req as any).user;
-      await storage.createActivityLog({
-        userId: requestUser.id,
-        activity: `Atualizou configurações do ASAAS`,
-        entityType: 'school-config',
-        entityId: config.id
-      });
-
-      res.json({ 
-        success: true, 
-        message: "Configurações ASAAS atualizadas com sucesso" 
-      });
-    } catch (error) {
-      console.error("Error updating ASAAS config:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;

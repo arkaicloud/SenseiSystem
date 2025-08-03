@@ -1376,7 +1376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Payment Plan Routes =====
-  app.get("/api/payment-plans", isAuthenticated, async (req, res) => {
+  app.get("/api/payment-plans", async (req, res) => {
     try {
       const plans = await storage.getPaymentPlans();
       res.json({ plans });

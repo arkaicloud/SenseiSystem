@@ -51,7 +51,7 @@ export class AsaasService {
     const options: RequestInit = {
       method,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        'access_token': this.apiKey, // ASAAS uses 'access_token' header, not Authorization Bearer
         'Content-Type': 'application/json',
       },
     };

@@ -22,6 +22,8 @@ const Students: React.FC = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [beltFilter, setBeltFilter] = useState("all");
   const [financialFilter, setFinancialFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   // Fetch students data
   const { data, isLoading } = useQuery({
@@ -102,8 +104,17 @@ const Students: React.FC = () => {
 
   const students = (data as any)?.students || [];
 
+  // Função para obter status financeiro consistente baseado no ID do aluno
+  const getFinancialStatus = (studentId: number) => {
+    // Usar o ID do aluno para gerar um status consistente
+    const seed = studentId % 3;
+    if (seed === 0) return "upToDate";
+    if (seed === 1) return "pending";
+    return "overdue";
+  };
+
   const getFilteredStudents = (tabFilter: string) => {
-    return students.filter((student: any) => {
+    let filteredStudents = students.filter((student: any) => {
       const name = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();
       const email = student.user.email.toLowerCase();
       const query = searchTerm.toLowerCase();
@@ -122,12 +133,49 @@ const Students: React.FC = () => {
       // Filtro de faixa
       const matchesBelt = beltFilter === "all" || student.beltLevel === beltFilter;
       
-      // Filtro financeiro (simulado)
-      const financialStatus = Math.random() > 0.7 ? "overdue" : Math.random() > 0.5 ? "pending" : "upToDate";
+      // Filtro financeiro consistente
+      const financialStatus = getFinancialStatus(student.id);
       const matchesFinancial = financialFilter === "all" || financialStatus === financialFilter;
       
       return matchesSearch && matchesStatus && matchesBelt && matchesFinancial;
     });
+
+    // Ordenação
+    filteredStudents.sort((a: any, b: any) => {
+      let valueA, valueB;
+      
+      switch (sortBy) {
+        case "name":
+          valueA = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
+          valueB = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
+          break;
+        case "belt":
+          const beltOrder = { white: 1, blue: 2, purple: 3, brown: 4, black: 5 };
+          valueA = beltOrder[a.beltLevel as keyof typeof beltOrder] || 0;
+          valueB = beltOrder[b.beltLevel as keyof typeof beltOrder] || 0;
+          break;
+        case "financial":
+          const statusOrder = { upToDate: 1, pending: 2, overdue: 3 };
+          valueA = statusOrder[getFinancialStatus(a.id) as keyof typeof statusOrder];
+          valueB = statusOrder[getFinancialStatus(b.id) as keyof typeof statusOrder];
+          break;
+        case "status":
+          valueA = a.user.active ? 1 : 0;
+          valueB = b.user.active ? 1 : 0;
+          break;
+        default:
+          valueA = a.id;
+          valueB = b.id;
+      }
+      
+      if (sortOrder === "asc") {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
+      }
+    });
+
+    return filteredStudents;
   };
 
   const filteredStudents = getFilteredStudents(activeTab);
@@ -203,32 +251,55 @@ const Students: React.FC = () => {
           </Dialog>
         </div>
       </div>
-      {/* Filtros Adicionais */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Select value={beltFilter} onValueChange={setBeltFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filtrar por faixa" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as faixas</SelectItem>
-            <SelectItem value="white">Faixa Branca</SelectItem>
-            <SelectItem value="blue">Faixa Azul</SelectItem>
-            <SelectItem value="purple">Faixa Roxa</SelectItem>
-            <SelectItem value="brown">Faixa Marrom</SelectItem>
-            <SelectItem value="black">Faixa Preta</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={financialFilter} onValueChange={setFinancialFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Situação financeira" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas situações</SelectItem>
-            <SelectItem value="upToDate">Em dia</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="overdue">Atrasado</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Filtros e Ordenação */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+          <Select value={beltFilter} onValueChange={setBeltFilter}>
+            <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectValue placeholder="Filtrar por faixa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as faixas</SelectItem>
+              <SelectItem value="white">Faixa Branca</SelectItem>
+              <SelectItem value="blue">Faixa Azul</SelectItem>
+              <SelectItem value="purple">Faixa Roxa</SelectItem>
+              <SelectItem value="brown">Faixa Marrom</SelectItem>
+              <SelectItem value="black">Faixa Preta</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={financialFilter} onValueChange={setFinancialFilter}>
+            <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectValue placeholder="Situação financeira" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas situações</SelectItem>
+              <SelectItem value="upToDate">Em dia</SelectItem>
+              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="overdue">Atrasado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Nome</SelectItem>
+              <SelectItem value="belt">Faixa</SelectItem>
+              <SelectItem value="financial">Situação $</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="w-full sm:w-auto"
+          >
+            {sortOrder === "asc" ? "↑ Crescente" : "↓ Decrescente"}
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4">

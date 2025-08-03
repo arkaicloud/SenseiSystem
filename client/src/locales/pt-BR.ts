@@ -102,12 +102,17 @@ export default {
     purpleBeltToBrown: 'Faixa Roxa → Faixa Marrom',
     brownBeltToBlack: 'Faixa Marrom → Faixa Preta',
     table: {
-      user: 'Usuário',
-      project: 'Projeto',
+      user: 'Nome do Aluno',
+      project: 'Faixa / Graduação',
       address: 'Endereço',
-      date: 'Data',
+      date: 'Última Atividade',
       phone: 'Telefone',
       actions: 'Ações',
+      plan: 'Plano',
+      financialStatus: 'Situação $',
+      responsible: 'Responsável',
+      enrollment: 'Matrícula',
+      checkins: 'Check-ins',
       inProgress: 'Em Progresso',
       complete: 'Completo',
       pending: 'Pendente',
@@ -116,7 +121,10 @@ export default {
       minutesAgo: 'minutos atrás',
       hourAgo: 'hora atrás',
       hoursAgo: 'horas atrás',
-      yesterday: 'Ontem'
+      yesterday: 'Ontem',
+      upToDate: 'Em dia',
+      overdue: 'Atrasado',
+      noPayment: 'Sem cobrança'
     }
   },
   class: {

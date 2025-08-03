@@ -40,6 +40,16 @@
 4. **Frequência**: Controle de presença
 5. **Configurações**: Escola personalizável
 
+### ✅ TABELA DE ALUNOS ATUALIZADA (03/08/2025):
+- **Título corrigido**: "Alunos" + "Gerencie os alunos da escola"
+- **Novos cabeçalhos**: Nome do Aluno | Faixa/Graduação | Endereço | Última Atividade | Plano | Situação $ | Responsável | Status | Ações
+- **Colunas adicionais**: Plano de pagamento, situação financeira, responsável
+- **Tooltips**: Última atividade com datas formatadas
+- **Botões de ação**: Ver perfil, editar, menu de opções
+- **Status visual**: Cores para situação financeira (verde/amarelo/vermelho)
+- **Busca traduzida**: "Buscar aluno..." 
+- **Botão traduzido**: "+ Novo Aluno"
+
 ## 1. Telas Principais para Testar
 
 ### 1.1 Dashboard (/)

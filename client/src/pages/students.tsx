@@ -123,13 +123,13 @@ const Students: React.FC = () => {
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">students</h1>
-          <p className="text-gray-600">Gerenciar Alunos</p>
+          <h1 className="font-montserrat font-bold text-2xl text-primary">Alunos</h1>
+          <p className="text-gray-600">Gerencie os alunos da escola</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <div className="relative mr-2">
             <Input
-              placeholder="search alunos..."
+              placeholder="Buscar aluno..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -142,7 +142,7 @@ const Students: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
-                addStudent
+                + Novo Aluno
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
@@ -155,7 +155,7 @@ const Students: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-4">
         <Tabs defaultValue="all">
           <TabsList className="mb-4">
-            <TabsTrigger value="all">Todos Alunos</TabsTrigger>
+            <TabsTrigger value="all">Todos os Alunos</TabsTrigger>
             <TabsTrigger value="active">Ativos</TabsTrigger>
             <TabsTrigger value="inactive">Inativos</TabsTrigger>
           </TabsList>
@@ -177,8 +177,11 @@ const Students: React.FC = () => {
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.project')}</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.address')}</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.date')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.plan')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.financialStatus')}</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.responsible')}</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.status')}</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500"></th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('student.table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -215,25 +218,52 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center text-sm text-gray-600">
-                            <span className="material-icons text-xs mr-1">schedule</span>
-                            {(() => {
-                              const joinDate = new Date(student.user.joinDate);
-                              const now = new Date();
-                              const diffMs = now.getTime() - joinDate.getTime();
-                              const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                              
-                              if (diffMinutes < 60) {
-                                return diffMinutes < 5 ? t('student.table.justNow') : `${diffMinutes} ${t('student.table.minutesAgo')}`;
-                              } else if (diffHours < 24) {
-                                return diffHours === 1 ? `1 ${t('student.table.hourAgo')}` : `${diffHours} ${t('student.table.hoursAgo')}`;
-                              } else if (diffDays === 1) {
-                                return t('student.table.yesterday');
-                              } else {
-                                return joinDate.toLocaleDateString('pt-BR');
-                              }
-                            })()}
+                            <span className="material-icons text-xs mr-1">access_time</span>
+                            <span title={`Última atividade: ${new Date(student.user.joinDate).toLocaleDateString('pt-BR')}`}>
+                              {(() => {
+                                const joinDate = new Date(student.user.joinDate);
+                                const now = new Date();
+                                const diffMs = now.getTime() - joinDate.getTime();
+                                const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                
+                                if (diffMinutes < 60) {
+                                  return diffMinutes < 5 ? t('student.table.justNow') : `${diffMinutes} ${t('student.table.minutesAgo')}`;
+                                } else if (diffHours < 24) {
+                                  return diffHours === 1 ? `1 ${t('student.table.hourAgo')}` : `${diffHours} ${t('student.table.hoursAgo')}`;
+                                } else if (diffDays === 1) {
+                                  return t('student.table.yesterday');
+                                } else {
+                                  return joinDate.toLocaleDateString('pt-BR');
+                                }
+                              })()}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">Individual</div>
+                            <div className="text-gray-500">R$ 120,00 - PIX</div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            Math.random() > 0.3 
+                              ? 'bg-green-100 text-green-800'
+                              : Math.random() > 0.5
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                              Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
+                            }`}></div>
+                            {Math.random() > 0.3 ? t('student.table.upToDate') : Math.random() > 0.5 ? t('student.table.pending') : t('student.table.overdue')}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-gray-600">
+                            {student.user.phone || 'Não informado'}
                           </div>
                         </td>
                         <td className="py-3 px-4">
@@ -249,17 +279,44 @@ const Students: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Menu de ações aqui
-                            }}
-                          >
-                            <span className="material-icons text-gray-400 text-sm">more_horiz</span>
-                          </Button>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Ver perfil completo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-blue-500 text-sm">visibility</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Editar aluno"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Ação de editar
+                              }}
+                            >
+                              <span className="material-icons text-gray-500 text-sm">edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Mais ações"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Menu de ações
+                              }}
+                            >
+                              <span className="material-icons text-gray-400 text-sm">more_vert</span>
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}

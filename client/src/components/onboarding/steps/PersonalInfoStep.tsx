@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator";
 import { ArrowRight, User, Phone, Users, Calendar, CreditCard } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 import AddressForm from "@/components/ui/address-form";
 
 const personalInfoSchema = z.object({
@@ -32,6 +33,9 @@ const personalInfoSchema = z.object({
   financialResponsibleRelationship: z.enum(["self", "parent", "guardian", "spouse"], {
     errorMap: () => ({ message: "Selecione o grau de parentesco" })
   }),
+  // Payment plan and due date
+  paymentPlanId: z.string().min(1, "Selecione um plano de pagamento"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
 });
 
 export type PersonalInfoData = z.infer<typeof personalInfoSchema>;
@@ -42,6 +46,13 @@ interface PersonalInfoStepProps {
 }
 
 export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfoStepProps) {
+  // Fetch payment plans
+  const { data: paymentPlansData } = useQuery<{ plans: Array<{ id: number; name: string; amount: number; description: string }> }>({
+    queryKey: ["/api/payment-plans"],
+  });
+
+  const paymentPlans = paymentPlansData?.plans || [];
+
   const form = useForm<PersonalInfoData>({
     resolver: zodResolver(personalInfoSchema),
     defaultValues: {
@@ -65,6 +76,9 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
       financialResponsiblePhone: "",
       financialResponsibleCpf: "",
       financialResponsibleRelationship: "self",
+      // Payment defaults
+      paymentPlanId: "",
+      dueDate: "",
       ...defaultValues,
     },
   });
@@ -355,6 +369,60 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                         }}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-4 mt-6">
+              <h5 className="font-medium">Plano de Pagamento</h5>
+              
+              <FormField
+                control={form.control}
+                name="paymentPlanId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Plano de Mensalidade *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o plano de pagamento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {paymentPlans.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.id.toString()}>
+                            {plan.name} - R$ {(plan.amount / 100).toFixed(2).replace('.', ',')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Vencimento Preferida *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o dia do vencimento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                          <SelectItem key={day} value={day.toString()}>
+                            Todo dia {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

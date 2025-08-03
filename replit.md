@@ -193,3 +193,11 @@ The application follows a monorepo structure with shared TypeScript definitions,
 - **Smart Data Handling**: Financial responsibility data flows from onboarding form to ASAAS customer creation
 - **Error Resilience**: Student creation continues even if ASAAS customer creation fails (logged but non-blocking)
 - **Connection Testing**: Added test connection functionality in ASAAS admin interface
+
+### August 3, 2025 - Complete ASAAS Billing Automation with Payment Plans and Due Dates
+- **Payment Plan Integration**: Added payment plan selection directly in student onboarding form
+- **Due Date Collection**: Students can select preferred monthly due date (1-28) during registration
+- **Automatic Subscription Creation**: System creates ASAAS monthly subscriptions based on selected plan and due date
+- **Subscription Tracking**: Added asaasSubscriptionId field to students table for subscription management
+- **Smart Date Calculation**: System calculates next due date based on selected day, moving to next month if needed
+- **Complete Billing Flow**: Student registration now handles customer creation, subscription setup, and billing automation

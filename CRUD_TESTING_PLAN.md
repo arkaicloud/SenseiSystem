@@ -49,6 +49,8 @@
 - **Status visual**: Cores para situação financeira (verde/amarelo/vermelho)
 - **Busca traduzida**: "Buscar aluno..." 
 - **Botão traduzido**: "+ Novo Aluno"
+- **Funcionalidade Bloquear/Liberar**: Botão para ativar/desativar aluno (útil para inadimplência)
+- **Integração com pagamentos**: Preparado para Stripe/Asaas bloquear acesso por falta de pagamento
 
 ## 1. Telas Principais para Testar
 

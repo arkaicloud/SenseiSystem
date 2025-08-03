@@ -72,6 +72,31 @@ const Students: React.FC = () => {
     },
   });
 
+  // Toggle student status mutation (block/unblock)
+  const { mutate: toggleStudentStatus, isPending: isTogglingStatus } = useMutation({
+    mutationFn: async ({ studentId, userId, newStatus }: { studentId: number, userId: number, newStatus: boolean }) => {
+      // Update user status first
+      await apiRequest('PUT', `/api/users/${userId}`, { active: newStatus });
+      // Then update student record
+      const res = await apiRequest('PUT', `/api/students/${studentId}`, { active: newStatus });
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Sucesso",
+        description: variables.newStatus ? "Aluno liberado com sucesso" : "Aluno bloqueado com sucesso",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/students'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao alterar status do aluno: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const students = (data as any)?.students || [];
 
   const filteredStudents = students.filter((student: any) => {
@@ -299,10 +324,31 @@ const Students: React.FC = () => {
                               title="Editar aluno"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // Ação de editar
+                                setSelectedStudent(student);
                               }}
                             >
                               <span className="material-icons text-gray-500 text-sm">edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
+                              disabled={isTogglingStatus}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStudentStatus({
+                                  studentId: student.id,
+                                  userId: student.user.id,
+                                  newStatus: !student.user.active
+                                });
+                              }}
+                            >
+                              {student.user.active ? (
+                                <span className="material-icons text-red-500 text-sm">block</span>
+                              ) : (
+                                <span className="material-icons text-green-500 text-sm">check_circle</span>
+                              )}
                             </Button>
                             <Button
                               size="sm"

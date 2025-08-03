@@ -124,7 +124,11 @@ export default {
       yesterday: 'Ontem',
       upToDate: 'Em dia',
       overdue: 'Atrasado',
-      noPayment: 'Sem cobrança'
+      noPayment: 'Sem cobrança',
+      blockStudent: 'Bloquear aluno',
+      unblockStudent: 'Liberar aluno',
+      studentBlocked: 'Aluno bloqueado com sucesso',
+      studentUnblocked: 'Aluno liberado com sucesso'
     }
   },
   class: {

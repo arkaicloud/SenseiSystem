@@ -72,7 +72,7 @@ const Students: React.FC = () => {
     },
   });
 
-  const students = data?.students || [];
+  const students = (data as any)?.students || [];
 
   const filteredStudents = students.filter((student: any) => {
     const name = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();

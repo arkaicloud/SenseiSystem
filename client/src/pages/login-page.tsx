@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-['Inter',sans-serif] antialiased">
-      <div className="max-w-screen-lg mx-auto min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-y-8 lg:gap-x-12">
+      <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0">
         {/* Left Side - Login Form */}
         <div className="flex items-center justify-center px-6 py-10">
           <div className="max-w-md w-full space-y-6">
@@ -202,41 +202,71 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side - Features Showcase */}
-        <div className="flex items-center justify-center px-6 py-10 bg-gradient-to-br from-blue-50 to-indigo-50 lg:rounded-none rounded-t-3xl">
-          <div className="max-w-md w-full space-y-8">
+        <div className="relative flex items-center justify-center px-4 py-8 bg-gradient-to-br from-blue-50 to-indigo-50 lg:rounded-none rounded-t-3xl min-h-screen overflow-hidden">
+          <div className="w-full max-w-lg space-y-6 relative z-10">
+            {/* Decorative Elements - Better positioned */}
+            <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-indigo-200/20 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-12 -left-8 w-24 h-24 bg-gradient-to-br from-purple-200/20 to-blue-200/20 rounded-full blur-xl"></div>
+            <div className="absolute top-1/2 -right-8 w-16 h-16 bg-gradient-to-br from-indigo-200/30 to-purple-200/30 rounded-full blur-lg"></div>
+            
             {/* Header */}
-            <div className="text-center space-y-4">
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+            <div className="text-center space-y-6 mb-8">
+              <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">
                 Transforme sua escola<br />
                 <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   com tecnologia
                 </span>
               </h1>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed text-lg lg:text-xl max-w-md mx-auto">
                 A gestão moderna que seu dojo merece
               </p>
             </div>
 
             {/* Features List */}
-            <div className="space-y-4">
+            <div className="space-y-5 mb-8">
               {features.map((feature, index) => (
                 <div 
                   key={index} 
-                  className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md flex items-start gap-3 transition-all duration-200"
+                  className="bg-white/90 backdrop-blur-sm p-5 lg:p-6 rounded-2xl shadow-lg hover:shadow-xl flex items-start gap-4 lg:gap-5 transition-all duration-300 border border-white/40 hover:border-blue-200/50"
                 >
-                  <div className="bg-blue-100 text-blue-600 rounded-lg p-2 flex-shrink-0">
-                    <feature.icon className="h-5 w-5" />
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 rounded-xl p-3 lg:p-4 flex-shrink-0 shadow-sm">
+                    <feature.icon className="h-6 w-6 lg:h-7 lg:w-7" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg lg:text-xl">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
+                    <p className="text-gray-600 text-base lg:text-lg leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Additional Visual Elements */}
+            <div className="space-y-4 text-center">
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/70 backdrop-blur-sm rounded-full border border-white/40 shadow-lg">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-base text-gray-700 font-semibold">Sistema 100% online</span>
+              </div>
+              
+              <div className="flex justify-center items-center gap-6 mt-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">500+</div>
+                  <div className="text-sm text-gray-600">Academias</div>
+                </div>
+                <div className="w-px h-12 bg-gray-300"></div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">50k+</div>
+                  <div className="text-sm text-gray-600">Alunos</div>
+                </div>
+                <div className="w-px h-12 bg-gray-300"></div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">99.9%</div>
+                  <div className="text-sm text-gray-600">Uptime</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

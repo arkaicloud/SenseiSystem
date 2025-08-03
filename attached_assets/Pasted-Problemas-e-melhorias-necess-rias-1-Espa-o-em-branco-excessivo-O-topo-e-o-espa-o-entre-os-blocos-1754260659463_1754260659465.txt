@@ -1,0 +1,110 @@
+Problemas e melhorias necessárias
+🧱 1. Espaço em branco excessivo
+O topo e o espaço entre os blocos estão muito largos.
+
+Em monitores grandes, há desequilíbrio entre o form de login e o lado direito.
+
+Em mobile, há sobreposição e rolagem desnecessária.
+
+✅ Melhoria:
+
+Use max-w-screen-lg e gap-x-12 (desktop), gap-y-8 (mobile)
+
+Em telas < 768px, tornar vertical (login em cima, recursos embaixo)
+
+🎨 2. Melhoria visual dos cards da direita
+Estão bons, mas ainda podem parecer mais "SaaS Premium":
+
+Bordas mais arredondadas (rounded-xl)
+
+Sombra sutil (shadow-md com hover:shadow-lg)
+
+Reduzir tamanho do ícone (padding interno excessivo)
+
+✅ Melhoria:
+
+tailwind
+Copiar
+Editar
+bg-white p-4 flex gap-3 rounded-xl shadow-sm hover:shadow-md transition
+💬 3. Ajustes de textos e hierarquia
+Título atual:
+
+O futuro da gestão escolar
+Plataforma completa para transformar a administração da sua escola de artes marciais
+
+🔄 Sugestão mais fluida:
+
+txt
+Copiar
+Editar
+Transforme sua escola com tecnologia  
+A gestão moderna que seu dojo merece
+Cards:
+
+Controle de Presença: "Monitore a frequência dos alunos em tempo real."
+✅ Ok
+
+Progressão de Graduação: "Acompanhe o desenvolvimento de cada estudante."
+🔄 Sugestão:
+“Gerencie graduações e evolução técnica com facilidade.”
+
+Gestão de Turmas: "Organize horários e instrutores responsáveis."
+🔄 Sugestão:
+“Planeje horários, instrutores e capacidade de cada turma.”
+
+📱 4. Responsividade aprimorada
+✅ Sugestão de layout mobile:
+
+Stack em coluna (flex-col)
+
+Login ocupa topo (com padding menor)
+
+Cards aparecem abaixo, com gap-y-4
+
+Input ocupa 100% da largura com w-full
+
+🔧 Prompt Replit – Refatoração da Tela de Login (UI/UX Responsivo e Moderno)
+txt
+Copiar
+Editar
+Atualize a tela de login de um sistema SaaS chamado SenseiSystem (em React com Tailwind CSS), garantindo aparência moderna e responsiva.
+
+🎯 Objetivos:
+
+1. **Estrutura responsiva moderna**
+- Layout dividido em 2 colunas no desktop (`grid-cols-2`)
+- No mobile, layout vertical (login em cima, recursos abaixo)
+
+2. **Ajustes visuais**
+- Reduzir espaços em branco desnecessários (especialmente margens top e bottom)
+- Definir `max-w-screen-lg` para limitar largura máxima
+- Usar `gap-x-12` entre colunas, `gap-y-8` no mobile
+
+3. **Formulário de login**
+- Inputs com `w-full`, `rounded-md`, `shadow-sm`, `focus:ring`
+- Adicionar botão "Esqueceu sua senha?"
+- Abaixo do login: botão “Solicitar Acesso” com estilo secundário
+
+4. **Bloco de recursos do sistema (lado direito)**
+- Cards com ícone à esquerda + título + descrição
+- Estilo dos cards:
+  - `bg-white p-4 rounded-xl shadow-sm hover:shadow-md flex items-start gap-3 transition`
+  - Ícones menores, com `bg-blue-100 text-blue-600` e `rounded-lg p-2`
+
+5. **Textos revisados**
+- Título principal:
+  `Transforme sua escola com tecnologia`
+  `A gestão moderna que seu dojo merece`
+- Descrições:
+  - Controle de Presença: “Monitore a frequência dos alunos em tempo real.”
+  - Progressão de Graduação: “Gerencie graduações e evolução técnica com facilidade.”
+  - Gestão de Turmas: “Planeje horários, instrutores e capacidade de cada turma.”
+
+6. **Personalização do cliente**
+- No topo do formulário de login, exibir:
+  - Logotipo da escola (cliente)
+  - Nome da escola
+  - Texto: “Acesso exclusivo da [escola] no SenseiSystem”
+
+Utilize fonte Inter, espaçamento coerente (`px-6`, `py-10`), animações suaves nos botões e foco em estética SaaS premium.

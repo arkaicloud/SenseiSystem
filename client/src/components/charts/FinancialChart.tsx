@@ -45,24 +45,13 @@ export function FinancialChart() {
   })
 
   const filteredData = React.useMemo(() => {
-    if (!chartData || !Array.isArray(chartData) || chartData.length === 0) {
-      // Generate sample data for the last 30 days if no real data
-      const data = []
-      const today = new Date()
-      const daysToShow = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90
-      
-      for (let i = daysToShow - 1; i >= 0; i--) {
-        const date = new Date(today)
-        date.setDate(date.getDate() - i)
-        data.push({
-          date: date.toISOString().split('T')[0],
-          received: Math.floor(Math.random() * 500 + 100), // R$ 100-600
-          pending: Math.floor(Math.random() * 300 + 50),   // R$ 50-350
-        })
-      }
-      return data
+    // If we have real data from the API, use it
+    if (chartData && Array.isArray(chartData) && chartData.length > 0) {
+      return chartData;
     }
-    return chartData
+    
+    // Otherwise show empty chart instead of fake data
+    return [];
   }, [chartData, timeRange])
 
   if (isLoading) {
@@ -111,11 +100,19 @@ export function FinancialChart() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
+        {filteredData.length === 0 ? (
+          <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <p className="text-sm">Nenhum dado financeiro disponível</p>
+              <p className="text-xs mt-1">Os dados aparecerão quando houver pagamentos registrados</p>
+            </div>
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
+          >
+            <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillReceived" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -192,6 +189,7 @@ export function FinancialChart() {
             />
           </AreaChart>
         </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )

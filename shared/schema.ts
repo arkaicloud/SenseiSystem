@@ -33,6 +33,11 @@ export const users = pgTable("users", {
   joinDate: timestamp("join_date").defaultNow(),
   active: boolean("active").default(true),
   status: text("status").default('active'), // active, blocked, inactive
+  // Login streak tracking
+  currentStreak: integer("current_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  lastLoginDate: timestamp("last_login_date"),
+  totalLogins: integer("total_logins").default(0),
 });
 
 // Students table
@@ -387,4 +392,77 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
     fields: [activityLogs.userId],
     references: [users.id],
   }),
+}));
+
+// Login Streak Achievements table
+export const streakAchievements = pgTable("streak_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  achievementType: text("achievement_type").notNull(), // "streak", "total_logins", "comeback"
+  achievementName: text("achievement_name").notNull(),
+  achievementDescription: text("achievement_description").notNull(),
+  streakCount: integer("streak_count"),
+  iconName: text("icon_name").notNull(),
+  iconColor: text("icon_color").notNull(),
+  earnedDate: timestamp("earned_date").defaultNow(),
+  isDisplayed: boolean("is_displayed").default(true),
+});
+
+// Daily Login Records table
+export const dailyLoginRecords = pgTable("daily_login_records", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  loginDate: timestamp("login_date").notNull(),
+  loginCount: integer("login_count").default(1),
+  streakDay: integer("streak_day").notNull(),
+  bonusPoints: integer("bonus_points").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Streak achievements relations
+export const streakAchievementsRelations = relations(streakAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [streakAchievements.userId],
+    references: [users.id],
+  }),
+}));
+
+// Daily login records relations
+export const dailyLoginRecordsRelations = relations(dailyLoginRecords, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyLoginRecords.userId],
+    references: [users.id],
+  }),
+}));
+
+// TypeScript types for new tables
+export type StreakAchievement = typeof streakAchievements.$inferSelect;
+export type InsertStreakAchievement = typeof streakAchievements.$inferInsert;
+
+export type DailyLoginRecord = typeof dailyLoginRecords.$inferSelect;
+export type InsertDailyLoginRecord = typeof dailyLoginRecords.$inferInsert;
+
+// Streak achievement with relations
+export type StreakAchievementWithUser = StreakAchievement & {
+  user: User;
+};
+
+// Daily login record with relations  
+export type DailyLoginRecordWithUser = DailyLoginRecord & {
+  user: User;
+};
+
+// Updated user type with streak data
+export type UserWithStreakData = User & {
+  streakAchievements?: StreakAchievement[];
+  dailyLoginRecords?: DailyLoginRecord[];
+};
+
+// Update users relations to include new tables (replace the original)
+export const usersRelationsWithStreak = relations(users, ({ many }) => ({
+  students: many(students),
+  instructedClasses: many(classes, { relationName: "instructor" }),
+  activityLogs: many(activityLogs),
+  streakAchievements: many(streakAchievements),
+  dailyLoginRecords: many(dailyLoginRecords),
 }));

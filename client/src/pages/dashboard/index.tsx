@@ -65,14 +65,6 @@ export default function DashboardPage() {
     }
   };
   
-  // For student dashboard, render without Layout wrapper since it has its own design
-  if (user.role === 'student') {
-    return renderDashboard();
-  }
-
-  return (
-    <Layout title={getDashboardTitle()}>
-      {renderDashboard()}
-    </Layout>
-  );
+  // Render all dashboards without additional Layout wrapper since MainLayout already provides the structure
+  return renderDashboard();
 }

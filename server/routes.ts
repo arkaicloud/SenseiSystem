@@ -453,63 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== Attendance Confirmation Routes =====
 
-  // Confirmar presença do aluno
-  app.post("/api/attendance/confirm", isAuthenticated, async (req, res) => {
-    try {
-      const { classId, date, status = 'present' } = req.body;
-      const userId = req.user!.id;
-
-      // Buscar o estudante pelo userId
-      const student = await storage.getStudentByUserId(userId);
-      if (!student) {
-        return res.status(404).json({ message: "Registro de estudante não encontrado" });
-      }
-
-      // Verificar se a aula existe
-      const classExists = await storage.getClass(classId);
-      if (!classExists) {
-        return res.status(404).json({ message: "Aula não encontrada" });
-      }
-
-      // Verificar se já existe uma confirmação para hoje
-      const today = new Date(date);
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-
-      const existingAttendance = await storage.getAttendanceByClass(classId, startOfDay);
-      const userAttendance = existingAttendance.find(att => att.studentId === student.id);
-
-      if (userAttendance && userAttendance.status === 'present') {
-        return res.status(400).json({ message: "Presença já confirmada para esta aula hoje" });
-      }
-
-      // Criar nova confirmação de presença
-      const attendance = await storage.createAttendance({
-        studentId: student.id,
-        classId: classId,
-        date: today,
-        status: status,
-        checkedInBy: userId
-      });
-
-      // Log da atividade
-      await storage.createActivityLog({
-        userId: userId,
-        activity: `Confirmou presença na aula "${classExists.name}"`,
-        entityType: 'attendance',
-        entityId: attendance.id,
-        timestamp: new Date()
-      });
-
-      res.status(201).json({ 
-        message: "Presença confirmada com sucesso",
-        attendance 
-      });
-    } catch (error) {
-      console.error("Erro ao confirmar presença:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
+  // Endpoint removido - duplicado com o de baixo
 
   // Buscar presenças do usuário atual
   app.get("/api/attendance/user/:userId", isAuthenticated, async (req, res) => {
@@ -1274,7 +1218,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student profile not found" });
       }
 
-      const classDate = date ? new Date(date) : new Date();
+      // Garantir que a data seja válida
+      let classDate;
+      try {
+        classDate = date ? new Date(date) : new Date();
+        // Verificar se a data é válida
+        if (isNaN(classDate.getTime())) {
+          throw new Error('Invalid date');
+        }
+      } catch (error) {
+        console.error('Erro na data fornecida:', date);
+        classDate = new Date(); // Usar data atual se a fornecida for inválida
+      }
+      
       const classDateStr = classDate.toISOString().split('T')[0];
 
       // Verificar limite de alunos por aula

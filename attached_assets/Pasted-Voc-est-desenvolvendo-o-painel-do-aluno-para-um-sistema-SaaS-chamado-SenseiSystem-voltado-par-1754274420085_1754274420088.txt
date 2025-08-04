@@ -1,0 +1,56 @@
+Você está desenvolvendo o painel do aluno para um sistema SaaS chamado **SenseiSystem**, voltado para escolas de artes marciais como jiu-jitsu, judô e karatê. Cada escola é um cliente (multi-tenant), e os alunos acessam o sistema para acompanhar suas aulas, presenças, graduação e situação financeira.
+
+📘 Função da IA:
+Crie um painel do aluno funcional, moderno, responsivo e fácil de entender. A interface deve priorizar usabilidade e clareza, especialmente em dispositivos móveis.
+
+📌 Perfil do usuário: aluno (pode ou não ser responsável financeiro)
+
+---
+
+## ✅ Funcionalidades obrigatórias no painel:
+
+### 1. 👋 Saudação personalizada
+- Mostrar: “Olá, [nome do aluno]”
+- Exibir a **faixa atual** do aluno (ex: Faixa Azul), com ícone e data da última mudança
+- Sugestão: incluir frase motivacional opcional
+
+### 2. 📢 Avisos e eventos da escola
+- Exibir **eventos e comunicados** da escola (turmas, troca de faixa, aulões, prazos etc.)
+- Mostrar os 3 mais recentes, com título, data e descrição
+- Se não houver eventos, exibir uma mensagem amigável
+
+### 3. 📅 Aulas do dia + check-in
+- Listar as aulas de **hoje** do aluno
+- Para cada aula, mostrar: nome da turma, horário, professor
+- Incluir botão: “Confirmar Presença”
+  - Após o clique, marcar como “✅ Presença Confirmada”
+  - Registrar o check-in com data e hora (para chamada do professor)
+
+### 4. 📊 Presenças no mês
+- Mostrar total de aulas confirmadas neste mês
+- Exibir uma barra de progresso ou contador
+- Exemplo: “Você participou de 5 aulas em agosto”
+
+### 5. 💳 Situação financeira (se for responsável financeiro)
+- Verificar se o aluno é também o responsável financeiro (por CPF)
+- Mostrar faturas em aberto (via ASAAS ou backend)
+- Exibir valor, vencimento e botão/link de pagamento (Pix ou Boleto)
+
+---
+
+## 🎨 Design e Layout
+- Interface moderna e leve (estilo Vercel/Linear/SaaS)
+- Responsivo (mobile-first)
+- Cards com ícones, bordas arredondadas e sombras leves
+- Usar Tailwind CSS + React (preferencialmente)
+- Títulos com hierarquia clara
+- Uso de emojis ou ícones Lucide para ajudar na leitura
+
+---
+
+### 🧠 Tarefa da IA:
+Com base nesse contexto, **crie o painel completo do aluno**, com estrutura de componentes bem definidos e blocos separados para cada seção acima.
+
+Você pode usar HTML/JSX com Tailwind ou gerar o código baseado em React. O código deve ser modular e permitir expansão futura.
+
+Comece criando a estrutura e os dados mockados. Depois, separe os componentes visuais e aplique boas práticas de acessibilidade e clareza visual.

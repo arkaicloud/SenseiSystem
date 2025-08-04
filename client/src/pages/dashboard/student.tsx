@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -43,25 +43,28 @@ export default function StudentDashboard() {
   
   // Confirm attendance mutation
   const confirmAttendanceMutation = useMutation({
-    mutationFn: (classId: number) => 
-      apiRequest(`/api/classes/${classId}/confirm-attendance`, 'POST', { studentId: user?.id }),
+    mutationFn: (data: { classId: number, date: string }) => 
+      apiRequest('/api/attendance/confirm', 'POST', data),
     onSuccess: () => {
       toast({
-        title: "Presença confirmada!",
+        title: "✅ Presença confirmada!",
         description: "Sua presença foi confirmada com sucesso.",
       });
+      // Refetch today's classes to update status
+      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Erro",
-        description: "Não foi possível confirmar a presença.",
+        title: "❌ Erro",
+        description: error.message || "Não foi possível confirmar a presença.",
         variant: "destructive",
       });
     },
   });
   
   const handleConfirmAttendance = (classId: number) => {
-    confirmAttendanceMutation.mutate(classId);
+    const today = new Date().toISOString().split('T')[0];
+    confirmAttendanceMutation.mutate({ classId, date: today });
   };
   
   if (isStudentLoading) {

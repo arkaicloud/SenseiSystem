@@ -1,0 +1,88 @@
+// Painel do Aluno - SenseiSystem
+
+import React from 'react';
+
+export default function PainelAluno() {
+  const aluno = {
+    nome: 'João Silva',
+    faixa: 'Azul',
+    desde: '10/04/2024',
+    presencasMes: 5,
+    isResponsavelFinanceiro: true,
+  };
+
+  const eventos = [
+    { titulo: 'Troca de Faixas', data: '10/08', descricao: 'Cerimônia às 18h no tatame principal.' },
+    { titulo: 'Aulão Especial', data: '15/08', descricao: 'Com convidados faixa preta.' },
+    { titulo: 'Aviso Financeiro', data: '08/08', descricao: 'Vencimento da mensalidade.' },
+  ];
+
+  const aulasHoje = [
+    { turma: 'Turma Iniciantes', horario: '18:00', professor: 'Carlos Sensei', confirmado: false },
+    { turma: 'Turma Kids', horario: '19:00', professor: 'Ana Sensei', confirmado: true },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <h1 className="text-2xl font-semibold mb-1">Olá, {aluno.nome} 👋</h1>
+      <p className="text-sm text-gray-500 mb-6">🥋 Faixa atual: {aluno.faixa} — desde {aluno.desde}</p>
+
+      {/* Avisos/Eventos */}
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">📢 Avisos e Eventos</h2>
+        {eventos.length > 0 ? (
+          <div className="space-y-2">
+            {eventos.map((evento, i) => (
+              <div key={i} className="bg-blue-50 p-3 rounded-xl border border-blue-200">
+                <p className="font-medium">{evento.titulo} <span className="text-sm text-gray-500">({evento.data})</span></p>
+                <p className="text-sm text-gray-600">{evento.descricao}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="bg-blue-50 p-3 rounded-md text-center text-gray-500">Não há eventos programados no momento.</p>
+        )}
+      </section>
+
+      {/* Aulas do Dia */}
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">📅 Aulas de Hoje</h2>
+        <div className="space-y-2">
+          {aulasHoje.map((aula, i) => (
+            <div key={i} className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+              <div>
+                <p className="font-medium">{aula.turma} — {aula.horario}</p>
+                <p className="text-sm text-gray-500">Prof: {aula.professor}</p>
+              </div>
+              <div>
+                {aula.confirmado ? (
+                  <span className="text-green-600 font-medium">✅ Presença Confirmada</span>
+                ) : (
+                  <button className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">Confirmar</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Presenças/Mês */}
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">📊 Presenças em Agosto</h2>
+        <p className="text-gray-700">Você participou de <strong>{aluno.presencasMes}</strong> aulas neste mês.</p>
+      </section>
+
+      {/* Financeiro */}
+      {aluno.isResponsavelFinanceiro && (
+        <section className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">💳 Situação Financeira</h2>
+          <p className="text-sm text-gray-500 mb-1">Mensalidade de Agosto:</p>
+          <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 flex items-center justify-between">
+            <span className="text-yellow-800 font-medium">R$ 150,00 — Vencimento 08/08</span>
+            <a href="#" className="text-blue-600 hover:underline text-sm">Pagar agora</a>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

@@ -69,6 +69,7 @@ export interface IStorage {
   getAttendanceByClass(classId: number, date?: Date): Promise<Attendance[]>;
   getAttendanceByStudent(studentId: number): Promise<Attendance[]>;
   getAttendanceWithDetails(): Promise<AttendanceWithDetails[]>;
+  getStudentAttendanceCount(studentId: number, startDate: Date, endDate: Date): Promise<number>;
   createAttendance(attendance: InsertAttendance): Promise<Attendance>;
   updateAttendance(id: number, attendance: Partial<Attendance>): Promise<Attendance | undefined>;
   deleteAttendance(id: number): Promise<boolean>;
@@ -502,6 +503,19 @@ export class MemStorage implements IStorage {
     return Array.from(this.attendance.values()).filter(
       (attendance) => attendance.studentId === studentId,
     );
+  }
+
+  async getStudentAttendanceCount(studentId: number, startDate: Date, endDate: Date): Promise<number> {
+    const attendances = Array.from(this.attendance.values()).filter(
+      (attendance) => {
+        if (attendance.studentId !== studentId) return false;
+        
+        const attendanceDate = new Date(attendance.date);
+        return attendanceDate >= startDate && attendanceDate <= endDate;
+      }
+    );
+    
+    return attendances.length;
   }
 
   async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {

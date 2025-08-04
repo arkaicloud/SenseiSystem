@@ -1,0 +1,91 @@
+Recomendações de layout do Painel do Aluno (remodelado)
+🎯 Estrutura sugerida (ordem por prioridade visual):
+1. Saudação e faixa atual
+Topo da tela (largura total ou 2 colunas)
+
+txt
+Copiar
+Editar
+👋 Olá, João!  
+🥋 Faixa atual: Azul — desde 10/04/2024
+2. Avisos e Eventos da Escola
+Bloco fixo logo abaixo da saudação — sempre visível!
+
+📌 Posição sugerida:
+➡️ Em destaque acima das aulas do dia, como um “painel de comunicados”
+➡️ Mostrar os 2 ou 3 mais recentes (em formato card ou feed)
+
+✅ Exibição:
+
+txt
+Copiar
+Editar
+📢 Troca de Faixas - 10 de Agosto às 18h  
+🎉 Aulão especial com convidados dia 15/08  
+📬 Lembrete: mensalidade vence dia 08/08
+💡 Se não houver eventos: exibir suavemente:
+
+Nenhum evento ou aviso por enquanto. Fique atento às próximas novidades!
+
+3. Aulas do dia + Check-in
+Logo abaixo dos avisos
+
+Exibir lista das aulas do aluno HOJE
+
+Botão "Confirmar presença" (ativo até o horário da aula)
+
+4. Histórico rápido + Graduação
+Lateral ou abaixo das aulas:
+
+Aulas participadas este mês (ex: ✅ 5 aulas)
+
+Faixa atual com progresso até próxima graduação
+
+Frase motivacional do tipo:
+
+"Faltam 3 aulas para atingir o mínimo mensal!"
+
+5. Situação financeira (se for responsável financeiro)
+Bloco discreto com faturas e botão para pagamento ASAAS
+
+🧠 Prompt Replit – Remodelar Dashboard do Aluno no SenseiSystem
+txt
+Copiar
+Editar
+Remodele a tela do dashboard do aluno no sistema SenseiSystem (React + Tailwind), substituindo o layout atual (estilo admin) por um painel funcional, acolhedor e objetivo para o perfil de aluno.
+
+🎯 Estrutura recomendada:
+
+1. Saudação personalizada
+- "Olá, [NOME_DO_ALUNO]!"
+- Mostrar faixa atual com nome, cor e data
+
+2. Avisos e Eventos da Escola
+- Card ou box destacado no topo com lista dos últimos 2 ou 3 avisos
+- Fonte de dados: tabela `avisos` e `eventos`
+- Exibir título, descrição curta e data
+- Caso não haja avisos: "Nenhum aviso no momento"
+
+3. Aulas do Dia
+- Listar as aulas do aluno para hoje
+- Exibir: nome da turma, horário, professor
+- Botão "Confirmar presença" para cada uma (ativo até o horário da aula)
+- Após confirmação: ✅ Mostrar como confirmado
+
+4. Histórico de presença do mês
+- Mostrar total de presenças (ex: "5 aulas confirmadas em agosto")
+- Barra de progresso para acompanhar frequência
+
+5. Bloco financeiro (se o aluno for também responsável financeiro)
+- Mostrar status das faturas com link para pagamento ASAAS
+- Exibir nome da fatura, vencimento e valor
+
+🧱 Design:
+- Responsivo (mobile-first)
+- Cards com `rounded-xl`, `shadow-sm`, ícones e cores suaves
+- Usar emojis ou ícones para deixar o painel amigável
+- Layout tipo grid (em 1 ou 2 colunas dependendo da tela)
+
+💡 Extras:
+- Botão "Falar com a escola" (WhatsApp)
+- Mostrar a logo da escola no topo

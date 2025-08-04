@@ -60,6 +60,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====Student Profile Route=====
+  app.get("/api/student/profile/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const userIdNumber = parseInt(userId);
+      
+      if (isNaN(userIdNumber)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+      
+      const student = await storage.getStudentByUserId(userIdNumber);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      
+      res.json({ student });
+    } catch (error) {
+      console.error('Error fetching student profile:', error);
+      res.status(500).json({ error: 'Failed to fetch student profile' });
+    }
+  });
+
+  // =====Student Current Month Attendance Route=====
+  app.get("/api/student/attendance-current-month/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const userIdNumber = parseInt(userId);
+      
+      if (isNaN(userIdNumber)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+      
+      const student = await storage.getStudentByUserId(userIdNumber);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      
+      // Get current month attendance count
+      const currentDate = new Date();
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      const attendanceCount = await storage.getStudentAttendanceCount(student.id, firstDay, lastDay);
+      
+      res.json({ count: attendanceCount });
+    } catch (error) {
+      console.error('Error fetching student attendance:', error);
+      res.status(500).json({ error: 'Failed to fetch student attendance' });
+    }
+  });
+
+  // =====Class Attendance Confirmation Route=====
+  app.post("/api/classes/:classId/confirm-attendance", isAuthenticated, async (req, res) => {
+    try {
+      const { classId } = req.params;
+      const { studentId } = req.body;
+      
+      const classIdNumber = parseInt(classId);
+      const studentIdNumber = parseInt(studentId);
+      
+      if (isNaN(classIdNumber) || isNaN(studentIdNumber)) {
+        return res.status(400).json({ error: 'Invalid class or student ID' });
+      }
+      
+      // Check if student exists
+      const student = await storage.getStudentByUserId(studentIdNumber);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      
+      // Check if class exists
+      const classSession = await storage.getClass(classIdNumber);
+      if (!classSession) {
+        return res.status(404).json({ error: 'Class not found' });
+      }
+      
+      // Create attendance record
+      const attendanceData = {
+        studentId: student.id,
+        classId: classIdNumber,
+        date: new Date().toISOString(),
+        status: 'confirmed' as const,
+        checkedInAt: new Date()
+      };
+      
+      await storage.createAttendance(attendanceData);
+      
+      res.json({ success: true, message: 'Attendance confirmed successfully' });
+    } catch (error) {
+      console.error('Error confirming attendance:', error);
+      res.status(500).json({ error: 'Failed to confirm attendance' });
+    }
+  });
+
   // =====Financial Chart Data Route=====
   app.get("/api/financial-chart", isAuthenticated, async (req, res) => {
     try {

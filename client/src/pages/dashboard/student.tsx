@@ -2,319 +2,297 @@ import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
-import { StudentDashboardResponse, ClassSession } from '@/types';
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
-import { api } from '@/lib/api';
-import { queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
-import { Calendar, CreditCard, BookOpen } from 'lucide-react';
-import BeltIcon from '@/components/ui/belt-icon';
+import { Calendar, CreditCard, BookOpen, Users, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import StreakTracker from '@/components/streak/StreakTracker';
 import FinancialPanel from '@/components/student/FinancialPanel';
 import AttendanceHistory from '@/components/student/AttendanceHistory';
 
 export default function StudentDashboard() {
-  const { t, locale } = useTranslations();
+  const { t } = useTranslations();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("proximas-aulas");
   
-  // Get student dashboard data
-  const { data, isLoading } = useQuery<StudentDashboardResponse>({
-    queryKey: ['/api/dash/student'],
+  // Get student data
+  const { data: studentData, isLoading: isStudentLoading } = useQuery({
+    queryKey: ['/api/student/profile', user?.id],
+    queryFn: () => apiRequest(`/api/student/profile/${user?.id}`),
+    enabled: !!user?.id,
   });
   
-  // Check-in mutation
-  const checkinMutation = useMutation({
-    mutationFn: (classId: number) => {
-      if (!user?.student?.id) throw new Error('Student ID not found');
-      return api.classes.checkin(classId, user.student.id);
-    },
+  // Get today's classes
+  const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
+    queryKey: ['/api/classes/today'],
+    queryFn: () => apiRequest('/api/classes/today'),
+  });
+  
+  // Get school events
+  const { data: schoolEvents, isLoading: isEventsLoading } = useQuery({
+    queryKey: ['/api/school-events'],
+    queryFn: () => apiRequest('/api/school-events'),
+  });
+  
+  // Get attendance count for current month
+  const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
+    queryKey: ['/api/student/attendance-current-month', user?.id],
+    queryFn: () => apiRequest(`/api/student/attendance-current-month/${user?.id}`),
+    enabled: !!user?.id,
+  });
+  
+  // Confirm attendance mutation
+  const confirmAttendanceMutation = useMutation({
+    mutationFn: (classId: number) => 
+      apiRequest(`/api/classes/${classId}/confirm-attendance`, {
+        method: 'POST',
+        body: JSON.stringify({ studentId: user?.id }),
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/dash/student'] });
       toast({
-        title: 'Success',
-        description: 'Checked in to class successfully',
+        title: "Presença confirmada!",
+        description: "Sua presença foi confirmada com sucesso.",
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
-        title: 'Error',
-        description: `Failed to check in: ${error}`,
-        variant: 'destructive',
+        title: "Erro",
+        description: "Não foi possível confirmar a presença.",
+        variant: "destructive",
       });
-    }
+    },
   });
   
-  // Handle check-in
-  const handleCheckin = (classId: number) => {
-    checkinMutation.mutate(classId);
+  const handleConfirmAttendance = (classId: number) => {
+    confirmAttendanceMutation.mutate(classId);
   };
   
-  if (isLoading || !data) {
-    return <div className="text-center p-8">{t('common.loading')}</div>;
+  if (isStudentLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-white">Carregando...</div>
+      </div>
+    );
   }
   
-  const { attendanceStats, classes, currentPlan } = data;
+  // Get belt color mapping
+  const getBeltColor = (beltLevel: string) => {
+    const colors = {
+      white: '#FFFFFF',
+      blue: '#3B82F6',
+      purple: '#8B5CF6',
+      brown: '#8B4513',
+      black: '#000000',
+    };
+    return colors[beltLevel as keyof typeof colors] || '#FFFFFF';
+  };
   
-  // Filter upcoming classes (today and future)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Format belt display
+  const formatBelt = (beltLevel: string, stripes: number) => {
+    const beltNames = {
+      white: 'Branca',
+      blue: 'Azul',
+      purple: 'Roxa',
+      brown: 'Marrom',
+      black: 'Preta',
+    };
+    const stripesText = stripes > 0 ? ` (${stripes} ${stripes === 1 ? 'fita' : 'fitas'})` : '';
+    return `${beltNames[beltLevel as keyof typeof beltNames] || beltLevel}${stripesText}`;
+  };
   
-  const upcomingClasses = classes
-    .filter(cls => new Date(cls.date) >= today)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5);
-  
-  // Prepare attendance data for pie chart
-  const attendanceData = [
-    { name: 'Present', value: attendanceStats.present, color: '#10B981' },
-    { name: 'Absent', value: attendanceStats.absent, color: '#EF4444' }
-  ];
-  
-  // Calculate attendance percentage
-  const totalClasses = attendanceStats.present + attendanceStats.absent;
-  const attendancePercentage = totalClasses > 0 
-    ? Math.round((attendanceStats.present / totalClasses) * 100) 
-    : 0;
-  
+  const currentMonthName = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-      <div className="flex flex-col xl:flex-row gap-6">
-        {/* Student Info & Plan */}
-        <div className="w-full xl:w-1/3 space-y-6">
-          {/* Login Streak Tracker */}
-          <StreakTracker />
-          {/* Student Card */}
-          <Card className="bg-gray-800 border-gray-700 text-white">
-            <CardHeader>
-              <CardTitle>{t('student.studentInfo')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {user?.student && (
-                <>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center text-xl font-bold">
-                      {user.student.name.substring(0, 2).toUpperCase()}
-                    </div>
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      {/* Saudação e Faixa Atual */}
+      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+        <h1 className="text-2xl font-semibold text-white mb-2">
+          👋 Olá, {user?.firstName} {user?.lastName}!
+        </h1>
+        {studentData?.student && (
+          <div className="flex items-center space-x-2 text-gray-300">
+            <div 
+              className="w-4 h-4 rounded-full border-2 border-gray-400"
+              style={{ backgroundColor: getBeltColor(studentData.student.belt_level) }}
+            ></div>
+            <span>
+              🥋 Faixa atual: {formatBelt(studentData.student.belt_level, studentData.student.stripes)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Avisos e Eventos da Escola */}
+      <Card className="bg-gray-800 border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <span>📢</span>
+            <span>Avisos e Eventos</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isEventsLoading ? (
+            <div className="text-gray-400">Carregando eventos...</div>
+          ) : schoolEvents?.events?.length > 0 ? (
+            <div className="space-y-3">
+              {schoolEvents.events.slice(0, 3).map((evento: any, i: number) => (
+                <div key={i} className="bg-blue-900/20 p-4 rounded-xl border border-blue-700/30">
+                  <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-xl font-bold">{user.student.name}</h3>
-                      <p className="text-gray-400">{user.email}</p>
+                      <p className="font-medium text-white">{evento.title}</p>
+                      <p className="text-sm text-gray-400 mt-1">{evento.description}</p>
                     </div>
+                    <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                      {formatDate(evento.event_date)}
+                    </span>
                   </div>
-                  
-                  <div className="pt-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{t('student.belt')}</span>
-                      <div className="flex items-center">
-                        <BeltIcon belt={user.student.currentBelt} className="mr-2" />
-                        <span>{t(`student.${user.student.currentBelt}Belt`)} {user.student.currentGrade > 0 && `(${user.student.currentGrade}°)`}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{t('student.status')}</span>
-                      <span className={user.student.isActive ? 'text-green-500' : 'text-red-500'}>
-                        {user.student.isActive ? t('student.active') : t('student.inactive')}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between text-sm">
-                      <span>{t('student.joinDate')}</span>
-                      <span>{formatDate(user.student.joinDate, locale)}</span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Subscription Plan */}
-          <Card className="bg-gray-800 border-gray-700 text-white">
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-700/30 p-4 rounded-xl text-center text-gray-400">
+              Nenhum evento ou aviso no momento. Fique atento às próximas novidades!
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Navegação por Abas */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-800 border border-gray-700">
+          <TabsTrigger 
+            value="proximas-aulas" 
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+          >
+            📅 Próximas Aulas
+          </TabsTrigger>
+          <TabsTrigger 
+            value="financeiro" 
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+          >
+            💳 Financeiro
+          </TabsTrigger>
+          <TabsTrigger 
+            value="historico" 
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+          >
+            📊 Histórico
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Aulas de Hoje */}
+        <TabsContent value="proximas-aulas" className="space-y-4">
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>{t('common.plans')}</CardTitle>
+              <CardTitle className="text-white flex items-center space-x-2">
+                <Calendar className="w-5 h-5" />
+                <span>Aulas de Hoje</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {currentPlan ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-700 rounded-lg">
-                    <h3 className="text-lg font-bold mb-1">{currentPlan.plan.name}</h3>
-                    <p className="text-2xl font-bold text-primary mb-2">
-                      {formatCurrency(currentPlan.plan.price, locale)} <span className="text-sm text-gray-400">/month</span>
-                    </p>
-                    <div className="text-sm text-gray-300">
-                      <div className="flex justify-between mb-1">
-                        <span>{t('plan.startDate')}</span>
-                        <span>{formatDate(currentPlan.startDate, locale)}</span>
+              {isClassesLoading ? (
+                <div className="text-gray-400">Carregando aulas...</div>
+              ) : todayClasses?.classes?.length > 0 ? (
+                <div className="space-y-3">
+                  {todayClasses.classes.map((aula: any) => (
+                    <div key={aula.id} className="bg-gray-700 p-4 rounded-xl flex justify-between items-center">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-blue-600 p-2 rounded-lg">
+                          <Users className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">{aula.name}</p>
+                          <div className="flex items-center space-x-4 text-sm text-gray-400">
+                            <span className="flex items-center space-x-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{aula.startTime}</span>
+                            </span>
+                            <span className="flex items-center space-x-1">
+                              <Users className="w-3 h-3" />
+                              <span>{aula.instructorName || 'Sem instrutor'}</span>
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>{t('plan.endDate')}</span>
-                        <span>{formatDate(currentPlan.endDate, locale)}</span>
+                      <div>
+                        {aula.attendanceConfirmed ? (
+                          <span className="text-green-400 font-medium flex items-center space-x-1">
+                            <span>✅</span>
+                            <span>Presença Confirmada</span>
+                          </span>
+                        ) : (
+                          <Button
+                            onClick={() => handleConfirmAttendance(aula.id)}
+                            disabled={confirmAttendanceMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            {confirmAttendanceMutation.isPending ? 'Confirmando...' : 'Confirmar'}
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
-                  <p>No active subscription plan</p>
-                  <Button variant="outline" className="mt-4">
-                    {t('plan.assignPlan')}
-                  </Button>
+                <div className="bg-gray-700/30 p-4 rounded-xl text-center text-gray-400">
+                  Nenhuma aula agendada para hoje.
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
-        
-        {/* Attendance & Upcoming Classes */}
-        <div className="w-full xl:w-2/3 space-y-6">
-          
-          {/* Tabs for different sections */}
-          <Tabs defaultValue="classes" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="classes" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Próximas Aulas
-              </TabsTrigger>
-              <TabsTrigger value="financial" className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Financeiro
-              </TabsTrigger>
-              <TabsTrigger value="attendance" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Histórico de Presenças
-              </TabsTrigger>
-            </TabsList>
 
-            {/* Classes Tab */}
-            <TabsContent value="classes" className="space-y-6">
-          {/* Attendance Stats */}
-          <Card className="bg-gray-800 border-gray-700 text-white">
+          {/* Estatísticas do Mês */}
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>{t('common.attendance')}</CardTitle>
+              <CardTitle className="text-white flex items-center space-x-2">
+                <BookOpen className="w-5 h-5" />
+                <span>Presenças em {currentMonthName} {currentYear}</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row">
-                <div className="w-full md:w-1/2 h-64 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie 
-                        data={attendanceData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={2}
-                        dataKey="value"
-                        labelLine={false}
-                      >
-                        {attendanceData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="w-full md:w-1/2 flex flex-col justify-center space-y-4 mt-4 md:mt-0">
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm font-medium">Attendance Rate</span>
-                      <span className="text-sm font-medium">{attendancePercentage}%</span>
-                    </div>
-                    <Progress value={attendancePercentage} className="h-2" />
+              {isAttendanceLoading ? (
+                <div className="text-gray-400">Carregando estatísticas...</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-white">
+                    <span className="text-2xl font-bold text-blue-400">
+                      {attendanceData?.count || 0}
+                    </span>
+                    <span className="text-gray-400 ml-2">aulas participadas este mês</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 pt-4">
-                    <div className="bg-gray-700 p-3 rounded-lg text-center">
-                      <p className="text-sm text-gray-400">Present</p>
-                      <p className="text-2xl font-bold text-green-500">{attendanceStats.present}</p>
-                    </div>
-                    <div className="bg-gray-700 p-3 rounded-lg text-center">
-                      <p className="text-sm text-gray-400">Absent</p>
-                      <p className="text-2xl font-bold text-red-500">{attendanceStats.absent}</p>
-                    </div>
-                  </div>
+                  <Progress 
+                    value={Math.min((attendanceData?.count || 0) * 10, 100)} 
+                    className="h-2"
+                  />
+                  
+                  <p className="text-sm text-gray-400">
+                    {(attendanceData?.count || 0) >= 8 
+                      ? '🎉 Parabéns! Você atingiu a meta mensal!'
+                      : `Faltam ${8 - (attendanceData?.count || 0)} aulas para atingir a meta mensal!`
+                    }
+                  </p>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
-          
-          {/* Upcoming Classes */}
-          <Card className="bg-gray-800 border-gray-700 text-white">
-            <CardHeader>
-              <CardTitle>Upcoming Classes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-400">{t('class.title')}</TableHead>
-                    <TableHead className="text-gray-400">{t('class.date')}</TableHead>
-                    <TableHead className="text-gray-400">{t('class.startTime')}</TableHead>
-                    <TableHead className="text-gray-400 hidden md:table-cell">{t('class.beltLevel')}</TableHead>
-                    <TableHead className="text-right">{t('class.checkin')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingClasses.map((cls) => (
-                    <TableRow key={cls.id} className="border-gray-700">
-                      <TableCell className="font-medium">{cls.title}</TableCell>
-                      <TableCell>{formatDate(cls.date, locale)}</TableCell>
-                      <TableCell>{formatTime(cls.startTime)} - {formatTime(cls.endTime)}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-white text-black">
-                          {cls.beltLevel || t('class.allLevels')}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {cls.canCheckin ? (
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleCheckin(cls.id)}
-                            disabled={checkinMutation.isPending}
-                          >
-                            {checkinMutation.isPending ? t('common.loading') : t('class.checkin')}
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-gray-400">
-                            {cls.checkedIn ? 'Checked In' : 'Not Available'}
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {upcomingClasses.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-400 py-8">
-                        {t('class.noUpcoming')}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-            </TabsContent>
+        </TabsContent>
 
-            {/* Financial Tab */}
-            <TabsContent value="financial">
-              {user?.student?.id && <FinancialPanel studentId={user.student.id} />}
-            </TabsContent>
+        {/* Painel Financeiro */}
+        <TabsContent value="financeiro">
+          <FinancialPanel studentId={user?.id} />
+        </TabsContent>
 
-            {/* Attendance History Tab */}
-            <TabsContent value="attendance">
-              {user?.student?.id && <AttendanceHistory studentId={user.student.id} />}
-            </TabsContent>
-
-          </Tabs>
-        </div>
-      </div>
+        {/* Histórico de Presenças */}
+        <TabsContent value="historico">
+          <AttendanceHistory studentId={user?.id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

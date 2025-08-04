@@ -286,7 +286,7 @@ const RecentStudentsCard = ({ students, onNewStudent }: { students: RecentStuden
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-medium">Alunos Recentes</CardTitle>
-        <Button size="sm" onClick={onNewStudent}>
+        <Button size="sm" onClick={() => window.location.href = '/students?action=create'}>
           <Plus className="h-3 w-3 mr-1" />
           Novo Aluno
         </Button>
@@ -549,31 +549,19 @@ export default function AdminDashboard() {
 
   // Funções de ação para os botões do dashboard
   const handleViewClass = async (classId: number) => {
-    toast({
-      title: "Visualizar Aula",
-      description: `Abrindo detalhes da aula ${classId}`,
-    });
+    window.location.href = `/classes/${classId}`;
   };
 
   const handleTakeAttendance = async (classId: number) => {
-    toast({
-      title: "Fazer Chamada",
-      description: `Iniciando chamada para a aula ${classId}`,
-    });
+    window.location.href = `/attendance?classId=${classId}`;
   };
 
   const handleNewStudent = () => {
-    toast({
-      title: "Novo Aluno",
-      description: "Abrindo formulário de cadastro de aluno",
-    });
+    window.location.href = '/students?action=create';
   };
 
   const handleScheduleClass = () => {
-    toast({
-      title: "Agendar Aula",
-      description: "Abrindo formulário de agendamento",
-    });
+    window.location.href = '/classes?action=create';
   };
 
   // Mutation para gerar dados de teste

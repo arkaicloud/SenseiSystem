@@ -250,11 +250,16 @@ export function setupAuth(app: Express) {
           console.log('📝 Activity log created for login');
           
           // Update login streak
-          await storage.updateLoginStreak(user.id);
-          console.log('🔥 Login streak updated for user:', user.id);
+          try {
+            await storage.updateLoginStreak(user.id);
+            console.log('🔥 Login streak updated for user:', user.id);
+          } catch (streakError) {
+            console.error('⚠️ Failed to update login streak:', streakError);
+            // Don't fail the login for streak tracking failures
+          }
         } catch (logError) {
-          console.error('⚠️ Failed to create activity log or update streak:', logError);
-          // Don't fail the login for this
+          console.error('⚠️ Failed to create activity log:', logError);
+          // Don't fail the login for activity log failures
         }
         
         // Return user without password

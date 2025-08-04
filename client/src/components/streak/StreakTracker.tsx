@@ -165,35 +165,34 @@ const StreakTracker = () => {
           </div>
 
           {/* Recent Login History */}
-          {historyData?.records && historyData.records.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Últimos 7 dias</h4>
-              <div className="flex gap-1">
-                {Array.from({ length: 7 }).map((_, index) => {
-                  const date = new Date();
-                  date.setDate(date.getDate() - (6 - index));
-                  const record = historyData.records.find((r: DailyLoginRecord) => 
+          <div>
+            <h4 className="text-sm font-medium mb-2">Últimos 7 dias</h4>
+            <div className="flex gap-1">
+              {Array.from({ length: 7 }).map((_, index) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (6 - index));
+                const hasLogin = historyData?.records ? 
+                  historyData.records.some((r: any) => 
                     new Date(r.loginDate).toDateString() === date.toDateString()
-                  );
+                  ) : false;
                   
-                  return (
-                    <div
-                      key={index}
-                      className={cn(
-                        "flex-1 aspect-square rounded-md flex items-center justify-center text-xs",
-                        record 
-                          ? "bg-green-500 text-white" 
-                          : "bg-muted text-muted-foreground"
-                      )}
-                      title={`${date.toLocaleDateString()} ${record ? '✓' : '✗'}`}
-                    >
-                      {date.getDate()}
-                    </div>
-                  );
-                })}
-              </div>
+                return (
+                  <div
+                    key={index}
+                    className={cn(
+                      "flex-1 aspect-square rounded-md flex items-center justify-center text-xs",
+                      hasLogin 
+                        ? "bg-green-500 text-white" 
+                        : "bg-muted text-muted-foreground"
+                    )}
+                    title={`${date.toLocaleDateString()} ${hasLogin ? '✓' : '✗'}`}
+                  >
+                    {date.getDate()}
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
 
           {/* Achievements Button */}
           <Button 

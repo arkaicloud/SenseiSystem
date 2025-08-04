@@ -19,6 +19,12 @@ export class DashboardMetricsService {
   private cacheTimestamp: number = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+  // Method to clear cache (useful for testing)
+  clearCache() {
+    this.cache = null;
+    this.cacheTimestamp = 0;
+  }
+
   async getMetrics(): Promise<DashboardMetrics> {
     const now = Date.now();
     
@@ -37,6 +43,11 @@ export class DashboardMetricsService {
     return metrics;
   }
 
+  async refreshCache(): Promise<DashboardMetrics> {
+    this.clearCache();
+    return await this.getMetrics();
+  }
+
   private async calculateMetrics(): Promise<DashboardMetrics> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -48,7 +59,7 @@ export class DashboardMetricsService {
         .select({ count: count() })
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
-        .where(eq(users.status, 'approved'));
+        .where(eq(users.status, 'active'));
       
       const activeStudents = activeStudentsResult[0]?.count || 0;
 
@@ -87,7 +98,7 @@ export class DashboardMetricsService {
         })
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
-        .where(eq(users.status, 'approved'));
+        .where(eq(users.status, 'active'));
       
       const attendanceRate = Number(attendanceRateResult[0]?.avgRate || 0);
 
@@ -98,7 +109,7 @@ export class DashboardMetricsService {
         .innerJoin(users, eq(students.userId, users.id))
         .where(
           and(
-            eq(users.status, 'approved'),
+            eq(users.status, 'active'),
             lt(students.attendanceRate, 50)
           )
         );
@@ -154,7 +165,7 @@ export class DashboardMetricsService {
         })
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
-        .where(eq(users.status, 'approved'))
+        .where(eq(users.status, 'active'))
         .groupBy(students.beltLevel);
 
       const beltDistribution: { [key: string]: number } = {};
@@ -192,11 +203,9 @@ export class DashboardMetricsService {
     }
   }
 
-  // Method to force cache refresh
   async refreshCache(): Promise<DashboardMetrics> {
-    this.cache = null;
-    this.cacheTimestamp = 0;
-    return this.getMetrics();
+    this.clearCache();
+    return await this.getMetrics();
   }
 }
 

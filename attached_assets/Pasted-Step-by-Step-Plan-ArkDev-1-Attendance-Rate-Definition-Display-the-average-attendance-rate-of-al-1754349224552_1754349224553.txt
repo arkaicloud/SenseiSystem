@@ -1,0 +1,99 @@
+Step-by-Step Plan (ArkDev)
+1. Attendance Rate – Definition
+Display the average attendance rate of all active students in the academy (tenant).
+
+Conditions:
+
+Consider only users.active = true and users.status = 'active'
+
+Student must have at least 30 days since joinDate
+
+Use the field students.attendanceRate (already updated by a trigger)
+
+Formula:
+
+text
+Copiar
+Editar
+AVG(students.attendanceRate)
+2. Overdue Payments – Definition
+Display the number of overdue student payments in the current tenant.
+
+Conditions:
+
+Use the table student_payments
+
+Filter by status = 'overdue'
+
+Join with students → users → school_config to scope by tenant
+
+Consider only students with users.active = true
+
+Query logic:
+
+sql
+Copiar
+Editar
+SELECT COUNT(*)
+FROM student_payments sp
+JOIN students s ON sp.studentId = s.userId
+JOIN users u ON s.userId = u.id
+WHERE sp.status = 'overdue'
+  AND u.active = true
+  AND u.status = 'active'
+  AND u.tenantId = CURRENT_TENANT;
+3. Backend Route
+Create a new endpoint:
+
+swift
+Copiar
+Editar
+GET /api/admin/widgets/engagement
+Response JSON:
+
+json
+Copiar
+Editar
+{
+  "attendanceRate": 72.5,
+  "overduePayments": 4
+}
+4. Frontend Integration
+Use useEffect + setInterval to fetch the /api/admin/widgets/engagement endpoint every 5 minutes
+
+Display values in UI cards with color coding and icons
+
+Example:
+
+tsx
+Copiar
+Editar
+useEffect(() => {
+  const fetchWidgets = async () => {
+    const res = await fetch('/api/admin/widgets/engagement');
+    const data = await res.json();
+    setWidgets(data);
+  };
+
+  fetchWidgets();
+  const interval = setInterval(fetchWidgets, 5 * 60 * 1000);
+
+  return () => clearInterval(interval);
+}, []);
+5. Future Enhancements (Optional)
+Add drilldown modal with students who are overdue or have low attendance
+
+Visual chart of historical attendance over weeks/months
+
+Badge system for students with perfect attendance
+
+✅ Deliverables
+ Backend route /api/admin/widgets/engagement
+
+ Real-time filtered metrics (attendance & overdue count)
+
+ Frontend state and display
+
+ Multi-tenant data filtering
+
+ Updates every 5 minutes

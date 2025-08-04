@@ -424,6 +424,12 @@ export default function AdminDashboard() {
   // Estado para métricas em tempo real
   const [liveMetrics, setLiveMetrics] = useState<DashboardMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  
+  // Estado para métricas de engajamento
+  const [engagementMetrics, setEngagementMetrics] = useState<{
+    attendanceRate: number;
+    overduePayments: number;
+  } | null>(null);
 
   // Buscar métricas em tempo real do backend
   const fetchLiveMetrics = async () => {
@@ -441,13 +447,31 @@ export default function AdminDashboard() {
     }
   };
 
+  // Buscar métricas de engajamento
+  const fetchEngagementMetrics = async () => {
+    try {
+      const response = await fetch('/api/admin/widgets/engagement');
+      if (response.ok) {
+        const metrics = await response.json();
+        setEngagementMetrics(metrics);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar métricas de engajamento:', error);
+    }
+  };
+
   // Auto-refresh das métricas a cada 5 minutos
   useEffect(() => {
     fetchLiveMetrics(); // Buscar imediatamente
+    fetchEngagementMetrics(); // Buscar métricas de engajamento
     
-    const interval = setInterval(fetchLiveMetrics, 5 * 60 * 1000); // 5 minutos
+    const metricsInterval = setInterval(fetchLiveMetrics, 5 * 60 * 1000); // 5 minutos
+    const engagementInterval = setInterval(fetchEngagementMetrics, 5 * 60 * 1000); // 5 minutos
     
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(metricsInterval);
+      clearInterval(engagementInterval);
+    };
   }, []);
 
   // Buscar dados reais da API
@@ -773,7 +797,10 @@ export default function AdminDashboard() {
             <Target className="h-4 w-4 mr-2" />
             Gerar Dados QA
           </Button>
-          <Button variant="outline" onClick={fetchLiveMetrics} size="sm" disabled={metricsLoading}>
+          <Button variant="outline" onClick={() => {
+            fetchLiveMetrics();
+            fetchEngagementMetrics();
+          }} size="sm" disabled={metricsLoading}>
             <TrendingUp className="h-4 w-4 mr-2" />
             {metricsLoading ? 'Atualizando...' : 'Atualizar Métricas'}
           </Button>
@@ -800,10 +827,10 @@ export default function AdminDashboard() {
         />
         <KPICard
           title="Taxa de Presença"
-          value={`${activeMetrics.attendanceRate}%`}
+          value={`${engagementMetrics?.attendanceRate || activeMetrics.attendanceRate}%`}
           icon={UserCheck}
-          trend={activeMetrics.attendanceRate > 70 ? "up" : "down"}
-          trendValue={liveMetrics ? "Dados em tempo real" : "média mensal"}
+          trend={(engagementMetrics?.attendanceRate || activeMetrics.attendanceRate) > 70 ? "up" : "down"}
+          trendValue={engagementMetrics ? "Média de alunos ativos" : "média mensal"}
           color="green"
         />
         <KPICard
@@ -824,10 +851,10 @@ export default function AdminDashboard() {
         />
         <KPICard
           title="Inadimplência"
-          value={activeMetrics.overduePayments}
+          value={engagementMetrics?.overduePayments || activeMetrics.overduePayments}
           icon={AlertTriangle}
-          trend={activeMetrics.overduePayments === 0 ? "neutral" : "down"}
-          trendValue={liveMetrics ? "Pagamentos em atraso" : "mensalidades vencidas"}
+          trend={(engagementMetrics?.overduePayments || activeMetrics.overduePayments) === 0 ? "neutral" : "down"}
+          trendValue={engagementMetrics ? "Pagamentos em atraso" : "mensalidades vencidas"}
           color="orange"
         />
       </div>

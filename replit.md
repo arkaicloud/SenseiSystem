@@ -219,3 +219,13 @@ The application follows a monorepo structure with shared TypeScript definitions,
 - **Student API Endpoints**: Created `/api/student/financial/:studentId` and `/api/student/attendance-history/:studentId`
 - **Responsive Design**: All new components follow mobile-first design with proper breakpoints and modern UI
 - **Portuguese Localization**: All new interfaces implemented in Portuguese BR as requested
+
+### August 4, 2025 - Real-Time Engagement Metrics System Implementation
+- **Dashboard Metrics Fix**: Corrected user status filter from 'approved' to 'active' - now showing real 5 active students
+- **Engagement Metrics Service**: Created dedicated service for real-time attendance and overdue payment tracking
+- **New API Endpoint**: Implemented `/api/admin/widgets/engagement` with 5-minute caching and multi-tenant filtering
+- **Advanced Risk Classification**: Added critical risk (< 30%) vs high risk (30-60%) student categorization
+- **ASAAS Revenue Integration**: Prepared system for real monthly revenue data from ASAAS payment gateway
+- **30-Day Maturity Rule**: Students must have 30+ days since joinDate to be evaluated for risk metrics
+- **Real-Time Auto-Refresh**: Dashboard updates metrics every 5 minutes automatically with manual refresh option
+- **Portuguese Localization**: All engagement metrics labels and descriptions implemented in Portuguese BR

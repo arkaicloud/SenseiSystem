@@ -2967,36 +2967,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
       
-      // Get all attendance records for this class today
-      const attendances = await storage.getAllAttendances();
+      // Get all attendance records with details
+      const attendances = await storage.getAttendanceWithDetails();
       const todayConfirmedAttendances = attendances.filter(att => {
-        const attDate = new Date(att.date);
-        return att.classId === classIdNumber && 
+        const attDate = new Date(att.attendance.date);
+        return att.attendance.classId === classIdNumber && 
                attDate >= startOfDay && 
                attDate < endOfDay &&
-               att.status === 'present';
+               att.attendance.status === 'present';
       });
       
       // Get student details for each confirmed attendance
       const confirmedStudents = await Promise.all(
-        todayConfirmedAttendances.map(async (attendance) => {
-          const student = await storage.getStudent(attendance.studentId);
-          if (student) {
-            const user = await storage.getUser(student.userId);
-            if (user) {
-              return {
-                id: student.id,
-                userId: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                initials: `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase(),
-                beltLevel: student.beltLevel,
-                phone: user.phone,
-                email: user.email,
-                confirmationTime: attendance.date,
-                attendanceId: attendance.id,
-                alreadyMarked: false // Will be updated if already marked present by instructor
-              };
-            }
+        todayConfirmedAttendances.map(async (attRecord) => {
+          if (attRecord.student && attRecord.user) {
+            return {
+              id: attRecord.student.id,
+              userId: attRecord.user.id,
+              name: `${attRecord.user.firstName} ${attRecord.user.lastName}`,
+              initials: `${attRecord.user.firstName.charAt(0)}${attRecord.user.lastName.charAt(0)}`.toUpperCase(),
+              beltLevel: attRecord.student.beltLevel,
+              phone: attRecord.user.phone,
+              email: attRecord.user.email,
+              confirmationTime: attRecord.attendance.date,
+              attendanceId: attRecord.attendance.id,
+              alreadyMarked: false // Will be updated if already marked present by instructor
+            };
           }
           return null;
         })
@@ -3007,19 +3003,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if instructor has already marked attendance for any of these students
       const instructorAttendances = attendances.filter(att => {
-        const attDate = new Date(att.date);
-        return att.classId === classIdNumber && 
+        const attDate = new Date(att.attendance.date);
+        return att.attendance.classId === classIdNumber && 
                attDate >= startOfDay && 
                attDate < endOfDay &&
-               att.checkedInBy !== att.studentId; // Marked by instructor, not self-confirmed
+               att.attendance.checkedInBy !== att.attendance.studentId; // Marked by instructor, not self-confirmed
       });
       
       // Update student status based on instructor attendance
       validStudents.forEach(student => {
-        const instructorMarked = instructorAttendances.find(att => att.studentId === student.id);
+        const instructorMarked = instructorAttendances.find(att => att.attendance.studentId === student.id);
         if (instructorMarked) {
           student.alreadyMarked = true;
-          student.instructorStatus = instructorMarked.status;
+          student.instructorStatus = instructorMarked.attendance.status;
         }
       });
       

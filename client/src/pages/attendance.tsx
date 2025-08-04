@@ -133,11 +133,37 @@ const Attendance: React.FC = () => {
     return acc;
   }, {});
 
-  const handleTakeAttendance = (classItem: any) => {
-    setSelectedClass({
-      ...classItem,
-      date: selectedDate || new Date(),
-    });
+  const handleTakeAttendance = async (classItem: any) => {
+    try {
+      // Fetch students who confirmed attendance for this class
+      const response = await fetch(`/api/classes/${classItem.id}/confirmed-students`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedClass({
+          ...classItem,
+          date: selectedDate || new Date(),
+          confirmedStudents: data.confirmedStudents,
+          totalConfirmed: data.totalConfirmed
+        });
+      } else {
+        // Fallback to empty array if no confirmed students
+        setSelectedClass({
+          ...classItem,
+          date: selectedDate || new Date(),
+          confirmedStudents: [],
+          totalConfirmed: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching confirmed students:', error);
+      // Fallback to empty array on error
+      setSelectedClass({
+        ...classItem,
+        date: selectedDate || new Date(),
+        confirmedStudents: [],
+        totalConfirmed: 0
+      });
+    }
   };
 
   const handleSubmitAttendance = (data: any) => {
@@ -477,13 +503,7 @@ const Attendance: React.FC = () => {
                 startTime: formatTime(selectedClass.startTime).time + " " + formatTime(selectedClass.startTime).period,
                 instructor: selectedClass.instructor ? `${selectedClass.instructor.firstName} ${selectedClass.instructor.lastName}` : 'No instructor'
               }}
-              students={[
-                { id: 1, userId: 1, name: 'Alex Johnson', initials: 'AJ', beltLevel: 'white' },
-                { id: 2, userId: 2, name: 'Sarah Williams', initials: 'SW', beltLevel: 'blue' },
-                { id: 3, userId: 3, name: 'David Chen', initials: 'DC', beltLevel: 'purple' },
-                { id: 4, userId: 4, name: 'Maria Rodriguez', initials: 'MR', beltLevel: 'white' },
-                { id: 5, userId: 5, name: 'James Thompson', initials: 'JT', beltLevel: 'brown' }
-              ]}
+              students={selectedClass.confirmedStudents || []}
               onSubmit={handleSubmitAttendance}
               isLoading={isSubmittingAttendance}
               placeholder={t('search') + ' alunos...'}

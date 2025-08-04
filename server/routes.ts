@@ -60,7 +60,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // =====Student Profile Route=====
+  // =====Student Profile Route (For logged in student)=====
+  app.get("/api/student/profile", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      
+      // Only students can access this endpoint
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+      
+      res.json({
+        id: student.id,
+        beltLevel: student.beltLevel,
+        stripes: student.stripes,
+        createdAt: student.createdAt,
+        active: student.active,
+        paymentPlanId: student.paymentPlanId,
+        isFinancialResponsible: student.financialResponsibleCpf === requestUser.cpf
+      });
+    } catch (error) {
+      console.error('Error fetching student profile:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // =====Student Profile Route by ID (For admins/instructors)=====
   app.get("/api/student/profile/:userId", isAuthenticated, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -82,7 +112,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // =====Student Current Month Attendance Route=====
+  // =====Student Current Month Attendance Route (for logged in student)=====
+  app.get("/api/student/attendance-current-month", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      
+      // Only students can access this endpoint
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+      
+      // Get current month attendance count
+      const currentDate = new Date();
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      // Get attendance records for current month
+      const attendances = await storage.getAttendanceByStudent(student.id);
+      const currentMonthAttendances = attendances.filter(att => {
+        const attDate = new Date(att.date);
+        return attDate >= firstDay && attDate <= lastDay && att.status === 'present';
+      });
+      
+      // Calculate total available classes this month (rough estimate)
+      const daysInMonth = lastDay.getDate();
+      const weekdaysInMonth = Math.floor(daysInMonth * 5 / 7); // Rough estimate of weekdays
+      const availableClasses = Math.min(weekdaysInMonth, 20); // Cap at 20 classes per month
+      
+      res.json({
+        attendanceCount: currentMonthAttendances.length,
+        totalClasses: availableClasses,
+        attendanceRate: availableClasses > 0 ? Math.round((currentMonthAttendances.length / availableClasses) * 100) : 0
+      });
+    } catch (error) {
+      console.error('Error fetching student attendance:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // =====Student Current Month Attendance Route by ID (for admins/instructors)=====
   app.get("/api/student/attendance-current-month/:userId", isAuthenticated, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -102,9 +175,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
-      const attendanceCount = await storage.getStudentAttendanceCount(student.id, firstDay, lastDay);
+      const attendances = await storage.getAttendanceByStudent(student.id);
+      const currentMonthAttendances = attendances.filter(att => {
+        const attDate = new Date(att.date);
+        return attDate >= firstDay && attDate <= lastDay && att.status === 'present';
+      });
       
-      res.json({ count: attendanceCount });
+      res.json({ 
+        attendanceCount: currentMonthAttendances.length,
+        totalClasses: 20 // Default estimate
+      });
     } catch (error) {
       console.error('Error fetching student attendance:', error);
       res.status(500).json({ error: 'Failed to fetch student attendance' });
@@ -2575,7 +2655,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====Student Financial Panel Routes=====
-  // Endpoint para verificar se aluno é responsável financeiro e buscar dados
+  // Endpoint para buscar dados financeiros do aluno logado
+  app.get("/api/student/financial", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      
+      // Only students can access this endpoint
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Buscar dados do estudante
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ error: "Student profile not found" });
+      }
+      
+      // Verificar se o usuário é o responsável financeiro
+      const isFinancialResponsible = student.financialResponsibleCpf === requestUser.cpf;
+      
+      if (!isFinancialResponsible) {
+        return res.json({
+          isFinancialResponsible: false,
+          message: "Você não é o responsável financeiro"
+        });
+      }
+      
+      // Se for responsável financeiro, buscar dados de pagamento
+      let asaasData = null;
+      let localPayments = [];
+      
+      try {
+        // Buscar configuração do ASAAS
+        const config = await storage.getSchoolConfig();
+        if (config?.asaasApiKey && student.asaasCustomerId) {
+          const { AsaasService } = await import("./services/asaasService");
+          const asaasService = new AsaasService(config.asaasApiKey, true);
+          
+          // Buscar faturas do cliente no ASAAS
+          const invoices = await asaasService.getCustomerInvoices(student.asaasCustomerId);
+          asaasData = {
+            invoices,
+            customerId: student.asaasCustomerId
+          };
+        }
+        
+        // Buscar pagamentos locais como fallback
+        localPayments = await storage.getStudentPaymentsByStudent(student.id);
+        
+      } catch (error) {
+        console.error('Erro ao buscar dados financeiros:', error);
+        // Continue mesmo com erro no ASAAS, usar dados locais
+      }
+      
+      res.json({
+        isFinancialResponsible: true,
+        student: {
+          id: student.id,
+          name: `${requestUser.firstName} ${requestUser.lastName}`,
+          financialResponsibleCpf: student.financialResponsibleCpf
+        },
+        asaasData,
+        localPayments
+      });
+      
+    } catch (error) {
+      console.error('Erro ao buscar dados financeiros:', error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Endpoint para verificar se aluno é responsável financeiro e buscar dados (by ID)
   app.get("/api/student/financial/:studentId", isAuthenticated, async (req, res) => {
     try {
       const studentId = parseInt(req.params.studentId);
@@ -2638,7 +2788,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // =====Student Attendance History Routes=====
-  // Endpoint para buscar histórico de presenças do aluno
+  // Endpoint para buscar histórico de presenças do aluno logado
+  app.get("/api/student/attendance-history", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const { month, year } = req.query;
+      
+      // Only students can access this endpoint
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ error: "Student profile not found" });
+      }
+      
+      // Buscar todas as presenças do aluno
+      const attendances = await storage.getAttendanceByStudent(student.id);
+      
+      // Filtrar por mês/ano se fornecido
+      let filteredAttendances = attendances;
+      if (month && year) {
+        const targetMonth = parseInt(month as string);
+        const targetYear = parseInt(year as string);
+        
+        filteredAttendances = attendances.filter(att => {
+          const attDate = new Date(att.date);
+          return attDate.getMonth() + 1 === targetMonth && attDate.getFullYear() === targetYear;
+        });
+      }
+      
+      // Buscar detalhes das aulas para cada presença
+      const attendanceWithDetails = await Promise.all(
+        filteredAttendances.map(async (attendance) => {
+          const classData = await storage.getClass(attendance.classId);
+          return {
+            id: attendance.id,
+            date: attendance.date,
+            status: attendance.status,
+            class: classData ? {
+              id: classData.id,
+              name: classData.name,
+              startTime: classData.startTime,
+              instructorId: classData.instructorId
+            } : null
+          };
+        })
+      );
+      
+      // Calcular estatísticas do período
+      const totalClasses = attendanceWithDetails.length;
+      const presentCount = attendanceWithDetails.filter(att => att.status === 'present').length;
+      const attendanceRate = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+      
+      res.json({
+        attendances: attendanceWithDetails,
+        statistics: {
+          totalClasses,
+          presentCount,
+          absentCount: totalClasses - presentCount,
+          attendanceRate
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching attendance history:', error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Endpoint para buscar histórico de presenças do aluno (by ID for admins)
   app.get("/api/student/attendance-history/:studentId", isAuthenticated, async (req, res) => {
     try {
       const studentId = parseInt(req.params.studentId);

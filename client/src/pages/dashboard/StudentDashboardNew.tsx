@@ -61,24 +61,33 @@ export default function StudentDashboardNew() {
   
   // Get student data
   const { data: studentData, isLoading: isStudentLoading } = useQuery({
-    queryKey: ['/api/student/profile', user?.id],
-    enabled: !!user?.id,
+    queryKey: ['/api/student/profile'],
+    enabled: !!user?.id && user?.role === 'student',
   });
   
   // Get today's classes
   const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
     queryKey: ['/api/classes/today'],
+    enabled: !!user?.id && user?.role === 'student',
   });
   
   // Get school events
   const { data: schoolEvents, isLoading: isEventsLoading } = useQuery({
     queryKey: ['/api/school-events'],
+    enabled: !!user?.id && user?.role === 'student',
   });
   
   // Get attendance count for current month
   const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ['/api/student/attendance-current-month', user?.id],
-    enabled: !!user?.id,
+    queryKey: ['/api/student/attendance-current-month'],
+    enabled: !!user?.id && user?.role === 'student',
+  });
+
+  // Get financial data
+  const { data: financialData, isLoading: isFinancialLoading } = useQuery({
+    queryKey: ['/api/student/financial'],
+    enabled: !!user?.id && user?.role === 'student',
+    retry: false,
   });
   
   // Confirm attendance mutation
@@ -142,7 +151,7 @@ export default function StudentDashboardNew() {
       color: beltLevel,
       promotionDate: formatDate(new Date())
     },
-    isFinancialResponsible: true // This should come from studentData when available
+    isFinancialResponsible: financialData?.isFinancialResponsible || false
   };
 
   const notices = schoolEvents?.events?.map((event: any) => ({
@@ -161,7 +170,15 @@ export default function StudentDashboardNew() {
     currentMonth: monthName.split(' ')[0]
   };
 
-  const invoices: any[] = []; // This should come from financial data when available
+  // Prepare invoices from financial data
+  const invoices = financialData?.localPayments?.map((payment: any) => ({
+    id: payment.id.toString(),
+    amount: payment.amount,
+    dueDate: payment.dueDate ? formatDate(new Date(payment.dueDate)) : '',
+    description: payment.description || 'Mensalidade',
+    status: payment.status,
+    paymentUrl: payment.paymentUrl
+  })) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -227,7 +244,7 @@ export default function StudentDashboardNew() {
                 invoices={invoices}
                 isFinancialResponsible={student.isFinancialResponsible}
                 primaryColor={primaryColor}
-                isLoading={false}
+                isLoading={isFinancialLoading}
               />
             </div>
           </div>

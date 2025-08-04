@@ -22,12 +22,17 @@ interface TodayClassesProps {
 }
 
 export const TodayClasses = ({ classes, onCheckIn, primaryColor, isLoading }: TodayClassesProps) => {
-  const [checkedInClasses, setCheckedInClasses] = useState<Set<number>>(
-    new Set(classes.filter(c => c.attendanceConfirmed).map(c => c.id))
-  );
+  const [checkedInClasses, setCheckedInClasses] = useState<Set<number>>(() => {
+    const confirmedIds = classes.filter(c => c.attendanceConfirmed).map(c => c.id);
+    return new Set(confirmedIds);
+  });
 
   const handleCheckIn = (classId: number) => {
-    setCheckedInClasses(prev => new Set([...prev, classId]));
+    setCheckedInClasses(prev => {
+      const newSet = new Set(Array.from(prev));
+      newSet.add(classId);
+      return newSet;
+    });
     onCheckIn(classId);
   };
 

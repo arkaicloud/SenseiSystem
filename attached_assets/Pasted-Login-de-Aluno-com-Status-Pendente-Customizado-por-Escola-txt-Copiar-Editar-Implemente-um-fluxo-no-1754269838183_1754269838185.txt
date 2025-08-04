@@ -1,0 +1,64 @@
+Login de Aluno com Status Pendente (Customizado por Escola)
+txt
+Copiar
+Editar
+Implemente um fluxo no sistema SenseiSystem (React + Node.js + Tailwind + multitenancy) onde, ao se cadastrar, um aluno recebe status "pendente" e, mesmo podendo fazer login, é redirecionado automaticamente para uma página de “Aguardando aprovação”.
+
+🎯 Objetivo:
+Permitir que o aluno logue, mas impedir o acesso ao sistema até que a administração da escola aprove o cadastro e vincule um plano.
+
+🔧 Requisitos técnicos:
+
+1. **Banco de dados (ex: Prisma)**
+- Campo na entidade `Aluno` ou `User`: `status` com os valores possíveis: `"pendente"`, `"ativo"`, `"inativo"`
+
+2. **Lógica de login (Node ou API de autenticação)**
+- Se `status === 'pendente'`, permitir login normalmente
+- Mas redirecionar para a rota `/aguardando-aprovacao` após autenticação
+
+3. **Middleware de rotas protegidas**
+- Se o usuário estiver logado, mas `status !== 'ativo'`, bloquear o acesso às rotas internas
+- Middleware deve redirecionar para `/aguardando-aprovacao`
+
+4. **Página: `/aguardando-aprovacao.tsx`**
+- Layout limpo e informativo com:
+  - Logotipo da escola (dinâmico com base no `tenant`)
+  - Nome da escola (ex: Huios Jiu Jitsu)
+  - Nome do aluno (via sessão ou JWT)
+  - Mensagem customizada como:
+```jsx
+<h1>Olá, [NOME_DO_ALUNO]!</h1>
+<p>Seu cadastro foi recebido com sucesso pela <strong>[NOME_DA_ESCOLA]</strong>.</p>
+<p>Agora estamos analisando suas informações e em breve seu acesso será liberado.</p>
+<p className="text-gray-500">Assim que a escola vincular seu plano de pagamento, você será notificado por e-mail ou WhatsApp.</p>
+Botão com contato rápido (WhatsApp da escola):
+
+jsx
+Copiar
+Editar
+<a href={`https://wa.me/${telefoneDaEscola}`} target="_blank" className="btn-secundario">
+  Falar com a secretaria
+</a>
+Extra opcional
+
+Mostrar um status visual:
+
+jsx
+Copiar
+Editar
+🕒 Cadastro pendente
+✅ Plano será vinculado em breve
+🔒 Acesso será liberado após aprovação
+Segurança
+
+Se tentar acessar qualquer rota como /dashboard, /aulas ou /financeiro, redirecionar automaticamente para /aguardando-aprovacao até que o status seja "ativo"
+
+📦 Stack:
+
+React + Tailwind para a interface
+
+Prisma ou Sequelize no backend
+
+JWT ou session cookies para autenticação
+
+Multitenancy com base em subdomínio ou parâmetro de tenant

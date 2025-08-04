@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   zipCode: text("zip_code"),
   joinDate: timestamp("join_date").defaultNow(),
   active: boolean("active").default(true),
-  status: text("status").default('active'), // active, blocked, inactive
+  status: text("status").default('pending'), // pending, active, inactive, blocked
   // Login streak tracking
   currentStreak: integer("current_streak").default(0),
   longestStreak: integer("longest_streak").default(0),

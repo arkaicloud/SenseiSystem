@@ -27,6 +27,7 @@ import {
   Settings,
   Bell
 } from 'lucide-react';
+import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
 
 // Interface para métricas em tempo real
 interface DashboardMetrics {
@@ -865,8 +866,8 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 space-y-6">
           <TodayClassesCard classes={todayClasses} />
           
-          {/* Alunos Recentes */}
-          <RecentStudentsCard students={recentStudents} onNewStudent={handleNewStudent} />
+          {/* Total por Faixa */}
+          <BeltSummaryWidget />
         </div>
 
         {/* Coluna 2 - Financeiro e Ações */}

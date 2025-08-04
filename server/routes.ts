@@ -18,7 +18,9 @@ import {
   insertDashboardCustomizationSchema,
   insertRiskActionSchema,
   insertRiskSettingsSchema,
-  insertSchoolPaymentSchema
+  insertSchoolPaymentSchema,
+  insertBeltLevelSchema,
+  beltLevels
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 import { dashboardMetricsService } from "./services/dashboardMetrics";
@@ -58,6 +60,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('❌ Error fetching engagement metrics:', error);
       res.status(500).json({ message: "Failed to fetch engagement metrics" });
+    }
+  });
+
+  // =====Belt Statistics Route=====
+  app.get("/api/admin/stats/belts", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const beltStats = await db
+        .select({
+          beltLevel: students.beltLevel,
+          count: sql<number>`count(*)::int`
+        })
+        .from(students)
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(and(
+          eq(users.status, 'active'),
+          eq(users.active, true)
+        ))
+        .groupBy(students.beltLevel);
+
+      // Convert to expected format
+      const result: { [key: string]: number } = {
+        white: 0,
+        blue: 0,
+        purple: 0,
+        brown: 0,
+        black: 0
+      };
+
+      beltStats.forEach(stat => {
+        result[stat.beltLevel] = stat.count;
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('❌ Error fetching belt statistics:', error);
+      res.status(500).json({ message: "Failed to fetch belt statistics" });
+    }
+  });
+
+  // =====Belt Levels CRUD Routes=====
+  app.get("/api/admin/belts", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const belts = await db
+        .select()
+        .from(beltLevels)
+        .where(eq(beltLevels.active, true))
+        .orderBy(beltLevels.order);
+      
+      res.json({ belts });
+    } catch (error) {
+      console.error('❌ Error fetching belt levels:', error);
+      res.status(500).json({ message: "Failed to fetch belt levels" });
+    }
+  });
+
+  app.post("/api/admin/belts", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const validatedData = insertBeltLevelSchema.parse(req.body);
+      
+      const [newBelt] = await db
+        .insert(beltLevels)
+        .values({
+          ...validatedData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      res.json({ belt: newBelt });
+    } catch (error) {
+      console.error('❌ Error creating belt level:', error);
+      res.status(500).json({ message: "Failed to create belt level" });
+    }
+  });
+
+  app.put("/api/admin/belts/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertBeltLevelSchema.partial().parse(req.body);
+      
+      const [updatedBelt] = await db
+        .update(beltLevels)
+        .set({
+          ...validatedData,
+          updatedAt: new Date()
+        })
+        .where(eq(beltLevels.id, parseInt(id)))
+        .returning();
+      
+      if (!updatedBelt) {
+        return res.status(404).json({ message: "Belt level not found" });
+      }
+      
+      res.json({ belt: updatedBelt });
+    } catch (error) {
+      console.error('❌ Error updating belt level:', error);
+      res.status(500).json({ message: "Failed to update belt level" });
+    }
+  });
+
+  app.delete("/api/admin/belts/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Soft delete by setting active to false
+      const [deletedBelt] = await db
+        .update(beltLevels)
+        .set({ 
+          active: false,
+          updatedAt: new Date()
+        })
+        .where(eq(beltLevels.id, parseInt(id)))
+        .returning();
+      
+      if (!deletedBelt) {
+        return res.status(404).json({ message: "Belt level not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Error deleting belt level:', error);
+      res.status(500).json({ message: "Failed to delete belt level" });
     }
   });
 

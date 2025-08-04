@@ -78,6 +78,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken('authenticated'); // Session-based auth
       localStorage.setItem('token', 'authenticated');
       setIsLoading(false);
+      
+      // Check if user is pending and redirect to awaiting approval
+      if (data.user.status === 'pending') {
+        window.location.href = '/awaiting-approval';
+        return;
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Email ou senha incorretos');

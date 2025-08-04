@@ -98,21 +98,25 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Incorrect email or password" });
           }
           
-          // Check if user is active
-          if (!user.active) {
-            return done(null, false, { message: "Account is pending activation" });
+          // Check user status for access control
+          if (user.status === 'inactive' || user.status === 'blocked') {
+            return done(null, false, { message: "Conta inativa. Entre em contato com a administração." });
           }
           
-          // For students, check if they have a payment plan
-          if (user.role === 'student') {
+          // Allow pending users to login, but they'll be redirected to awaiting approval page
+          if (user.status === 'pending') {
+            user.isPending = true; // Flag to handle in frontend
+          }
+          
+          // For students with pending status, allow login but flag for redirection
+          if (user.role === 'student' && user.status === 'pending') {
             const student = await storage.getStudentByUserId(user.id);
             if (student) {
               const studentPayments = await storage.getStudentPaymentsByStudent(student.id);
               if (studentPayments.length === 0) {
-                return done(null, false, { message: "Usuário pendente. Entre em contato com a administração para vincular um plano de pagamento." });
+                // Allow login but set status as pending for frontend handling
+                user.isPending = true;
               }
-            } else {
-              return done(null, false, { message: "Perfil de estudante não encontrado. Entre em contato com a administração." });
             }
           }
 

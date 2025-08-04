@@ -21,10 +21,12 @@ import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import LoginPage from "@/pages/login-page";
 import OnboardingPage from "@/pages/onboarding-page";
+import AwaitingApprovalPage from "@/pages/awaiting-approval";
 import { AuthProvider } from "@/providers/auth-provider";
 import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ProtectedRoute } from "@/lib/protected-route";
+import { PendingRouteGuard } from "@/lib/pending-route-guard";
 
 function Router() {
   return (
@@ -97,6 +99,7 @@ function Router() {
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/awaiting-approval" component={AwaitingApprovalPage} />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />
@@ -113,9 +116,11 @@ function App() {
             <ThemeProvider>
               <div className="min-h-screen bg-background">
                 <Toaster />
-                <MainLayout>
-                  <Router />
-                </MainLayout>
+                <PendingRouteGuard>
+                  <MainLayout>
+                    <Router />
+                  </MainLayout>
+                </PendingRouteGuard>
               </div>
             </ThemeProvider>
           </TooltipProvider>

@@ -440,12 +440,12 @@ export default function AdminDashboard() {
       };
     }
 
-    const activeStudents = students.students.filter(s => s.status === 'active').length;
-    const studentsAtRisk = students.students.filter(s => s.attendanceRate && s.attendanceRate < 50).length;
+    const activeStudents = students.students.filter((s: any) => s.status === 'active').length;
+    const studentsAtRisk = students.students.filter((s: any) => s.attendanceRate && s.attendanceRate < 50).length;
     const monthlyClasses = classes.classes.length * 4; // Assumindo 4 semanas por mês
     
     // Calcular taxa de presença média
-    const totalAttendanceRate = students.students.reduce((sum, student) => 
+    const totalAttendanceRate = students.students.reduce((sum: number, student: any) => 
       sum + (student.attendanceRate || 0), 0
     );
     const averageAttendanceRate = activeStudents > 0 ? Math.round(totalAttendanceRate / activeStudents) : 0;
@@ -478,8 +478,8 @@ export default function AdminDashboard() {
     const currentDay = dayNames[today];
     
     return classes.classes
-      .filter(classItem => classItem.dayOfWeek === currentDay)
-      .map(classItem => ({
+      .filter((classItem: any) => classItem.dayOfWeek === currentDay)
+      .map((classItem: any) => ({
         id: classItem.id,
         name: classItem.name,
         time: classItem.time,
@@ -514,9 +514,9 @@ export default function AdminDashboard() {
     if (!students?.students) return [];
     
     return students.students
-      .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+      .sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
       .slice(0, 5)
-      .map(student => ({
+      .map((student: any) => ({
         id: student.id,
         name: student.name,
         belt: student.beltLevel || 'white',
@@ -535,7 +535,7 @@ export default function AdminDashboard() {
     const thisWeek = students.students
       .filter(() => Math.random() < 0.1) // 10% chance de ter aniversário esta semana
       .slice(0, 3)
-      .map((student, index) => ({
+      .map((student: any, index: number) => ({
         id: student.id,
         name: student.name,
         date: `${25 + index} de dez.`,

@@ -58,7 +58,7 @@ export const students = pgTable("students", {
   financialResponsibleEmail: text("financial_responsible_email"),
   financialResponsiblePhone: text("financial_responsible_phone"),
   financialResponsibleCpf: text("financial_responsible_cpf"),
-  financialResponsibleRelationship: text("financial_responsible_relationship"), // "self", "parent", "guardian", "spouse"
+  financialResponsibleRelation: text("financial_responsible_relation"), // "self", "parent", "guardian", "spouse"
   // ASAAS integration fields
   asaasCustomerId: text("asaas_customer_id"), // ID do cliente no ASAAS
   asaasSubscriptionId: text("asaas_subscription_id"), // ID da assinatura no ASAAS

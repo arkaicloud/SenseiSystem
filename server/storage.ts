@@ -122,6 +122,7 @@ export interface IStorage {
   updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings>;
 
   // Login Streak Tracking
+  updateLoginStreak(userId: number): Promise<void>;
   updateUserLoginStreak(userId: number): Promise<User | undefined>;
   getUserWithStreakData(userId: number): Promise<UserWithStreakData | undefined>;
   createStreakAchievement(achievement: InsertStreakAchievement): Promise<StreakAchievement>;
@@ -910,6 +911,116 @@ export class MemStorage implements IStorage {
     }
     return this.riskSettings;
   }
+
+  // Login Streak Tracking - MemStorage Implementation (stub methods)
+  async updateLoginStreak(userId: number): Promise<void> {
+    // Stub implementation for MemStorage
+    console.log(`MemStorage: updateLoginStreak called for user ${userId}`);
+  }
+
+  async updateUserLoginStreak(userId: number): Promise<User | undefined> {
+    // Stub implementation for MemStorage
+    const user = await this.getUser(userId);
+    if (user) {
+      user.currentStreak = (user.currentStreak || 0) + 1;
+      user.longestStreak = Math.max(user.longestStreak || 0, user.currentStreak);
+      user.lastLoginDate = new Date();
+      user.totalLogins = (user.totalLogins || 0) + 1;
+      this.users.set(userId, user);
+    }
+    return user;
+  }
+
+  async getUserWithStreakData(userId: number): Promise<UserWithStreakData | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    return {
+      ...user,
+      streakAchievements: [],
+      dailyLoginRecords: []
+    };
+  }
+
+  async createStreakAchievement(achievement: InsertStreakAchievement): Promise<StreakAchievement> {
+    const newAchievement: StreakAchievement = {
+      id: this.streakAchievementCurrentId++,
+      ...achievement,
+      earnedDate: new Date()
+    };
+    this.streakAchievements.set(newAchievement.id, newAchievement);
+    return newAchievement;
+  }
+
+  async getStreakAchievements(userId: number): Promise<StreakAchievement[]> {
+    return Array.from(this.streakAchievements.values())
+      .filter(a => a.userId === userId)
+      .sort((a, b) => b.earnedDate.getTime() - a.earnedDate.getTime());
+  }
+
+  async getUnreadAchievements(userId: number): Promise<StreakAchievement[]> {
+    return Array.from(this.streakAchievements.values())
+      .filter(a => a.userId === userId && a.isDisplayed)
+      .sort((a, b) => b.earnedDate.getTime() - a.earnedDate.getTime());
+  }
+
+  async markAchievementAsRead(achievementId: number): Promise<boolean> {
+    const achievement = this.streakAchievements.get(achievementId);
+    if (achievement) {
+      achievement.isDisplayed = false;
+      this.streakAchievements.set(achievementId, achievement);
+      return true;
+    }
+    return false;
+  }
+
+  async createDailyLoginRecord(record: InsertDailyLoginRecord): Promise<DailyLoginRecord> {
+    const newRecord: DailyLoginRecord = {
+      id: this.dailyLoginRecordCurrentId++,
+      ...record,
+      createdAt: new Date()
+    };
+    this.dailyLoginRecords.set(newRecord.id, newRecord);
+    return newRecord;
+  }
+
+  async getDailyLoginRecords(userId: number, days: number = 30): Promise<DailyLoginRecord[]> {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days);
+    
+    return Array.from(this.dailyLoginRecords.values())
+      .filter(r => r.userId === userId && r.loginDate >= fromDate)
+      .sort((a, b) => b.loginDate.getTime() - a.loginDate.getTime());
+  }
+
+  async getLoginStreakStats(userId: number): Promise<{
+    currentStreak: number;
+    longestStreak: number;
+    totalLogins: number;
+    lastLoginDate: Date | null;
+    recentAchievements: StreakAchievement[];
+  }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        totalLogins: 0,
+        lastLoginDate: null,
+        recentAchievements: []
+      };
+    }
+
+    const recentAchievements = await this.getStreakAchievements(userId);
+    
+    return {
+      currentStreak: user.currentStreak || 0,
+      longestStreak: user.longestStreak || 0,
+      totalLogins: user.totalLogins || 0,
+      lastLoginDate: user.lastLoginDate || null,
+      recentAchievements: recentAchievements.slice(0, 5)
+    };
+  }
 }
 
 import connectPgSimple from "connect-pg-simple";
@@ -1618,6 +1729,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Login Streak Tracking Methods
+  async updateLoginStreak(userId: number): Promise<void> {
+    await this.updateUserLoginStreak(userId);
+  }
+
   async updateUserLoginStreak(userId: number): Promise<User | undefined> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

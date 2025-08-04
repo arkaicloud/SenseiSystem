@@ -165,29 +165,26 @@ export default function AdminDashboard() {
   const recentStudents = (students && Array.isArray(students)) ? students.slice(0, 5) : [];
   
   return (
-    <>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <h1 className="text-2xl font-semibold text-white mb-4 md:mb-0">{t('dashboard.adminDashboard')}</h1>
-          <div className="flex space-x-2">
-            <Button 
-              className="px-4 py-2"
-              onClick={() => setIsAddStudentModalOpen(true)}
-            >
-              <i className="fas fa-plus mr-2"></i> {t('dashboard.newStudent')}
-            </Button>
-            <Button 
-              variant="outline" 
-              className="px-4 py-2"
-              onClick={() => setIsAddClassModalOpen(true)}
-            >
-              <i className="fas fa-calendar-plus mr-2"></i> {t('dashboard.scheduleClass')}
-            </Button>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div className="flex space-x-2">
+          <Button 
+            className="px-4 py-2"
+            onClick={() => setIsAddStudentModalOpen(true)}
+          >
+            <i className="fas fa-plus mr-2"></i> {t('dashboard.newStudent')}
+          </Button>
+          <Button 
+            variant="outline" 
+            className="px-4 py-2"
+            onClick={() => setIsAddClassModalOpen(true)}
+          >
+            <i className="fas fa-calendar-plus mr-2"></i> {t('dashboard.scheduleClass')}
+          </Button>
         </div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
+      <div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatsCard 
@@ -270,21 +267,21 @@ export default function AdminDashboard() {
             title={t('dashboard.upcomingPromotions')}
           />
         </div>
+        
+        {/* Add Student Modal */}
+        <AddStudentModal 
+          isOpen={isAddStudentModalOpen} 
+          onClose={() => setIsAddStudentModalOpen(false)}
+          onSubmit={handleAddStudent}
+        />
+        
+        {/* Add Class Modal */}
+        <AddClassModal 
+          isOpen={isAddClassModalOpen} 
+          onClose={() => setIsAddClassModalOpen(false)}
+          onSubmit={handleAddClass}
+        />
       </div>
-      
-      {/* Add Student Modal */}
-      <AddStudentModal 
-        isOpen={isAddStudentModalOpen} 
-        onClose={() => setIsAddStudentModalOpen(false)}
-        onSubmit={handleAddStudent}
-      />
-      
-      {/* Add Class Modal */}
-      <AddClassModal 
-        isOpen={isAddClassModalOpen} 
-        onClose={() => setIsAddClassModalOpen(false)}
-        onSubmit={handleAddClass}
-      />
-    </>
+    </div>
   );
 }

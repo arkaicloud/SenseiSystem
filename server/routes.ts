@@ -140,9 +140,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const attendanceData = {
         studentId: student.id,
         classId: classIdNumber,
-        date: new Date().toISOString(),
-        status: 'confirmed' as const,
-        checkedInAt: new Date()
+        date: new Date(),
+        status: 'present' as const,
+        checkedInBy: studentIdNumber
       };
       
       await storage.createAttendance(attendanceData);

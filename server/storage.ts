@@ -1279,6 +1279,17 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(attendance).where(eq(attendance.studentId, studentId));
   }
 
+  async getStudentAttendanceCount(studentId: number, startDate: Date, endDate: Date): Promise<number> {
+    const result = await db.select().from(attendance)
+      .where(and(
+        eq(attendance.studentId, studentId),
+        gte(attendance.date, startDate),
+        lte(attendance.date, endDate)
+      ));
+    
+    return result.length;
+  }
+
   async getAttendanceWithDetails(): Promise<AttendanceWithDetails[]> {
     // Vamos usar uma abordagem mais simples para evitar problemas com joins complexos
     const attendanceRecords = await db.select().from(attendance);

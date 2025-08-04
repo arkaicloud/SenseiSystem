@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import MainLayout from "@/components/layouts/MainLayout";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard/index";
 import Students from "@/pages/students";
 import PendingUsers from "@/pages/pending-users";
 import StudentsAtRisk from "@/pages/students-at-risk";

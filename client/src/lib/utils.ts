@@ -70,6 +70,33 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
+export function getBeltColor(beltLevel: string): string {
+  const beltColors = {
+    white: '#FFFFFF',
+    blue: '#0066CC',
+    purple: '#6B46C1',
+    brown: '#8B4513',
+    black: '#000000',
+  };
+  return beltColors[beltLevel as keyof typeof beltColors] || '#FFFFFF';
+}
+
+export function calculateTotalPercentage(distribution: Record<string, number>): Record<string, number> {
+  const total = Object.values(distribution).reduce((sum, count) => sum + count, 0);
+  
+  if (total === 0) {
+    return Object.keys(distribution).reduce((acc, key) => {
+      acc[key] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+  }
+  
+  return Object.entries(distribution).reduce((acc, [key, count]) => {
+    acc[key] = Math.round((count / total) * 100);
+    return acc;
+  }, {} as Record<string, number>);
+}
+
 export function formatDateShort(date: Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
     month: 'short',

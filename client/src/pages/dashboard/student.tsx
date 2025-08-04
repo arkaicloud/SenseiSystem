@@ -22,36 +22,29 @@ export default function StudentDashboard() {
   // Get student data
   const { data: studentData, isLoading: isStudentLoading } = useQuery({
     queryKey: ['/api/student/profile', user?.id],
-    queryFn: () => apiRequest(`/api/student/profile/${user?.id}`),
     enabled: !!user?.id,
   });
   
   // Get today's classes
   const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
     queryKey: ['/api/classes/today'],
-    queryFn: () => apiRequest('/api/classes/today'),
   });
   
   // Get school events
   const { data: schoolEvents, isLoading: isEventsLoading } = useQuery({
     queryKey: ['/api/school-events'],
-    queryFn: () => apiRequest('/api/school-events'),
   });
   
   // Get attendance count for current month
   const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
     queryKey: ['/api/student/attendance-current-month', user?.id],
-    queryFn: () => apiRequest(`/api/student/attendance-current-month/${user?.id}`),
     enabled: !!user?.id,
   });
   
   // Confirm attendance mutation
   const confirmAttendanceMutation = useMutation({
     mutationFn: (classId: number) => 
-      apiRequest(`/api/classes/${classId}/confirm-attendance`, {
-        method: 'POST',
-        body: JSON.stringify({ studentId: user?.id }),
-      }),
+      apiRequest(`/api/classes/${classId}/confirm-attendance`, 'POST', { studentId: user?.id }),
     onSuccess: () => {
       toast({
         title: "Presença confirmada!",
@@ -118,10 +111,10 @@ export default function StudentDashboard() {
           <div className="flex items-center space-x-2 text-gray-300">
             <div 
               className="w-4 h-4 rounded-full border-2 border-gray-400"
-              style={{ backgroundColor: getBeltColor(studentData.student.belt_level) }}
+              style={{ backgroundColor: getBeltColor(studentData.student.beltLevel) }}
             ></div>
             <span>
-              🥋 Faixa atual: {formatBelt(studentData.student.belt_level, studentData.student.stripes)}
+              🥋 Faixa atual: {formatBelt(studentData.student.beltLevel, studentData.student.stripes || 0)}
             </span>
           </div>
         )}
@@ -138,9 +131,9 @@ export default function StudentDashboard() {
         <CardContent>
           {isEventsLoading ? (
             <div className="text-gray-400">Carregando eventos...</div>
-          ) : schoolEvents?.events?.length > 0 ? (
+          ) : schoolEvents && Array.isArray(schoolEvents) && schoolEvents.length > 0 ? (
             <div className="space-y-3">
-              {schoolEvents.events.slice(0, 3).map((evento: any, i: number) => (
+              {schoolEvents.slice(0, 3).map((evento: any, i: number) => (
                 <div key={i} className="bg-blue-900/20 p-4 rounded-xl border border-blue-700/30">
                   <div className="flex justify-between items-start">
                     <div>

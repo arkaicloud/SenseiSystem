@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { LanguageContextType } from '../types/index';
-import ptBR from '../translations/pt-BR';
+import ptBR from '../locales/pt-BR';
 
 const translations = {
   'pt-BR': ptBR,

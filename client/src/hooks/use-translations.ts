@@ -11,5 +11,8 @@ export const useTranslations = () => {
   return context;
 };
 
-// Alias para compatibilidade
+// Hook alias
 export const useTranslation = useTranslations;
+
+// Default export for easier importing
+export default useTranslations;

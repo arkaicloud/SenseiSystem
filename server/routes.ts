@@ -794,11 +794,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Student Routes =====
-  app.get("/api/students", isAuthenticated, isInstructor, async (req, res) => {
+  app.get("/api/students", isAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 Fetching students with users...');
       const students = await storage.getStudentsWithUsers();
+      console.log('✅ Students found:', students.length);
       res.json({ students });
     } catch (error) {
+      console.error('❌ Error fetching students:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

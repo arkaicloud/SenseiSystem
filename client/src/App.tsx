@@ -19,6 +19,7 @@ import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
+import BeltManagement from "@/pages/admin/BeltManagement";
 import LoginPage from "@/pages/login-page";
 import OnboardingPage from "@/pages/onboarding-page";
 import AwaitingApprovalPage from "@/pages/awaiting-approval";
@@ -93,6 +94,11 @@ function Router() {
       <ProtectedRoute 
         path="/school-config" 
         component={() => <SchoolConfig />} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/belt-management" 
+        component={() => <BeltManagement />} 
         allowedRoles={["admin"]} 
       />
 

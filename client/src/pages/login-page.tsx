@@ -203,7 +203,7 @@ export default function LoginPage() {
 
         {/* Right Side - Features Showcase */}
         <div className="relative flex items-center justify-center px-4 py-8 bg-gradient-to-br from-blue-50 to-indigo-50 lg:rounded-none rounded-t-3xl min-h-screen overflow-hidden">
-          <div className="w-full max-w-lg space-y-6 relative z-10">
+          <div className="w-full max-w-lg space-y-6 relative z-10 pl-[7px] pr-[7px] pt-[0px] pb-[0px]">
             {/* Decorative Elements - Better positioned */}
             <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-indigo-200/20 rounded-full blur-2xl"></div>
             <div className="absolute -bottom-12 -left-8 w-24 h-24 bg-gradient-to-br from-purple-200/20 to-blue-200/20 rounded-full blur-xl"></div>

@@ -79,8 +79,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: student.id,
         beltLevel: student.beltLevel,
         stripes: student.stripes,
-        createdAt: student.createdAt,
-        active: student.active,
         paymentPlanId: student.paymentPlanId,
         isFinancialResponsible: student.financialResponsibleCpf === requestUser.cpf
       });
@@ -195,19 +193,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/classes/:classId/confirm-attendance", isAuthenticated, async (req, res) => {
     try {
       const { classId } = req.params;
-      const { studentId } = req.body;
+      const requestUser = (req as any).user;
       
       const classIdNumber = parseInt(classId);
-      const studentIdNumber = parseInt(studentId);
       
-      if (isNaN(classIdNumber) || isNaN(studentIdNumber)) {
-        return res.status(400).json({ error: 'Invalid class or student ID' });
+      if (isNaN(classIdNumber)) {
+        return res.status(400).json({ error: 'Invalid class ID' });
       }
       
-      // Check if student exists
-      const student = await storage.getStudentByUserId(studentIdNumber);
+      // Only students can confirm their own attendance
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Only students can confirm attendance' });
+      }
+      
+      // Get student data from the logged user
+      const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
-        return res.status(404).json({ error: 'Student not found' });
+        return res.status(404).json({ error: 'Student profile not found' });
       }
       
       // Check if class exists
@@ -216,15 +218,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Class not found' });
       }
       
+      // Check if attendance already exists for today
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      
+      const existingAttendances = await storage.getAttendanceByStudent(student.id);
+      const todayAttendance = existingAttendances.find(att => {
+        const attDate = new Date(att.date);
+        return att.classId === classIdNumber && 
+               attDate >= startOfDay && 
+               attDate < endOfDay;
+      });
+      
+      if (todayAttendance) {
+        return res.json({ success: true, message: 'Attendance already confirmed for this class today' });
+      }
+      
       // Create attendance record
       const attendanceData = {
         studentId: student.id,
         classId: classIdNumber,
         date: new Date(),
         status: 'present' as const,
-        checkedInBy: studentIdNumber
+        checkedInBy: requestUser.id
       };
       
+      console.log('Creating attendance record:', attendanceData);
       await storage.createAttendance(attendanceData);
       
       res.json({ success: true, message: 'Attendance confirmed successfully' });
@@ -2701,7 +2721,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Buscar pagamentos locais como fallback
-        localPayments = await storage.getStudentPaymentsByStudent(student.id);
+        const studentPayments = await storage.getStudentPaymentsByStudent(student.id);
+        localPayments = studentPayments;
         
       } catch (error) {
         console.error('Erro ao buscar dados financeiros:', error);

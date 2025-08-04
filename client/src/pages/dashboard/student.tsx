@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
@@ -10,10 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { Calendar, CreditCard, BookOpen } from 'lucide-react';
 import BeltIcon from '@/components/ui/belt-icon';
 import { useToast } from '@/hooks/use-toast';
 import StreakTracker from '@/components/streak/StreakTracker';
+import FinancialPanel from '@/components/student/FinancialPanel';
+import AttendanceHistory from '@/components/student/AttendanceHistory';
 
 export default function StudentDashboard() {
   const { t, locale } = useTranslations();
@@ -169,6 +173,26 @@ export default function StudentDashboard() {
         
         {/* Attendance & Upcoming Classes */}
         <div className="w-full xl:w-2/3 space-y-6">
+          
+          {/* Tabs for different sections */}
+          <Tabs defaultValue="classes" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="classes" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Próximas Aulas
+              </TabsTrigger>
+              <TabsTrigger value="financial" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Financeiro
+              </TabsTrigger>
+              <TabsTrigger value="attendance" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Histórico de Presenças
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Classes Tab */}
+            <TabsContent value="classes" className="space-y-6">
           {/* Attendance Stats */}
           <Card className="bg-gray-800 border-gray-700 text-white">
             <CardHeader>
@@ -249,21 +273,26 @@ export default function StudentDashboard() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleCheckin(cls.id)}
-                          disabled={checkinMutation.isPending}
-                        >
-                          {checkinMutation.isPending ? t('common.loading') : t('class.checkin')}
-                        </Button>
+                        {cls.canCheckin ? (
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleCheckin(cls.id)}
+                            disabled={checkinMutation.isPending}
+                          >
+                            {checkinMutation.isPending ? t('common.loading') : t('class.checkin')}
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-400">
+                            {cls.checkedIn ? 'Checked In' : 'Not Available'}
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
                   {upcomingClasses.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4 text-gray-400">
-                        No upcoming classes
+                      <TableCell colSpan={5} className="text-center text-gray-400 py-8">
+                        {t('class.noUpcoming')}
                       </TableCell>
                     </TableRow>
                   )}
@@ -271,6 +300,19 @@ export default function StudentDashboard() {
               </Table>
             </CardContent>
           </Card>
+            </TabsContent>
+
+            {/* Financial Tab */}
+            <TabsContent value="financial">
+              {user?.student?.id && <FinancialPanel studentId={user.student.id} />}
+            </TabsContent>
+
+            {/* Attendance History Tab */}
+            <TabsContent value="attendance">
+              {user?.student?.id && <AttendanceHistory studentId={user.student.id} />}
+            </TabsContent>
+
+          </Tabs>
         </div>
       </div>
     </div>

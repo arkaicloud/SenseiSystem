@@ -34,7 +34,12 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(loginData.username, loginData.password);
+    try {
+      await login(loginData.username, loginData.password);
+    } catch (error) {
+      // Error is already handled by the auth provider and set in the error state
+      console.error('Login failed:', error);
+    }
   };
 
   const handleRegisterClick = () => {

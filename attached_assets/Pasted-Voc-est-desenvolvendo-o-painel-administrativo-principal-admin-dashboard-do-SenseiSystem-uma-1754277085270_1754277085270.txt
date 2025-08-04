@@ -1,0 +1,81 @@
+Você está desenvolvendo o painel administrativo principal (admin dashboard) do **SenseiSystem**, uma plataforma SaaS de gestão para escolas de artes marciais (jiu-jitsu, judô, karatê e afins). Cada escola é um tenant (multi-tenant) e o administrador pode ser dono da escola, coordenador pedagógico ou gestor financeiro.
+
+📘 Objetivo:
+Criar um painel completo, organizado e funcional para os administradores das escolas acessarem rapidamente dados, ações e recursos críticos da operação diária da escola.
+
+---
+
+## ✅ Funcionalidades obrigatórias no Painel Admin:
+
+### 1. 📊 Visão Geral (cards com KPIs principais)
+- Total de alunos ativos
+- Aulas realizadas no mês
+- Taxa de presença média
+- Receita mensal
+- Alunos em risco (frequência baixa)
+- Alunos com mensalidade vencida
+
+### 2. 📅 Aulas do Dia
+- Lista das aulas de hoje, com turmas, horários e professores
+- Quantidade de alunos confirmados por aula (check-ins)
+- Acesso rápido à chamada e relatórios por aula
+
+### 3. 🧾 Financeiro
+- Faturas em aberto
+- Receita recebida no mês (API ASAAS ou sistema interno)
+- Percentual de inadimplência
+- Acesso à gestão de planos e mensalidades
+- Link rápido para configurar integração ASAAS
+
+### 4. 🧑‍🎓 Alunos
+- Lista rápida dos alunos mais recentes
+- Status: ativo, pendente, inativo
+- Acessos pendentes de aprovação
+- Alunos com frequência crítica (< 50%)
+
+### 5. 📣 Avisos e Eventos
+- Bloco de criação rápida de comunicados
+- Eventos programados (aulões, exames de faixa)
+- Botão “Novo Aviso” ou “Novo Evento”
+
+### 6. ⚙️ Configurações da Escola
+- Logo, nome, cores e identidade visual
+- Dias e horários padrão de aulas
+- Plano de graduação (cadastro de faixas)
+
+### 7. 👥 Equipe da Escola
+- Lista de professores e cargos
+- Horários atribuídos
+- Acesso ao perfil de cada professor
+
+---
+
+## 📱 Layout e Experiência
+- Design responsivo e profissional (estilo painel SaaS moderno)
+- Cards com métricas e ícones
+- Menu lateral com ícones (Lucide ou Tabler)
+- Interface clara com foco em produtividade
+- Destaques visuais para alertas importantes
+
+---
+
+## 🤖 Criatividade liberada para IA:
+
+💡 Use sua criatividade para propor funcionalidades extras que:
+- Ajudem a reter alunos
+- Melhorem a experiência dos professores
+- Automatizem tarefas repetitivas
+- Envolvam gamificação para engajamento dos administradores
+
+🔍 Exemplo: 
+- Widget de aniversariantes do mês
+- Painel de progresso da escola com metas (ex: "meta de 100 alunos até setembro")
+- Alertas automáticos para baixa frequência em turmas específicas
+- Recomendação de turmas com pouca ocupação para incentivo promocional
+
+---
+
+## ✅ Tarefa da IA:
+Com base nesse contexto, **crie o layout e a estrutura do Painel Admin do SenseiSystem**, dividindo os blocos visuais, cards e seções. Use HTML/JSX com Tailwind (ou stack equivalente), dados mockados e componentes organizados.
+
+Você pode incluir sugestões criativas para melhorar a operação da escola e automatizar a gestão. O painel deve ser escalável, elegante e intuitivo.

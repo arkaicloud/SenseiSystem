@@ -1,0 +1,82 @@
+Objetivo:
+Atualizar automaticamente o dashboard administrativo com dados reais do banco de dados em intervalos regulares (ideal para SaaS).
+
+✅ Etapas:
+1. Definir os dados a serem exibidos
+Com base na imagem, o dashboard exibe:
+
+Alunos Ativos
+
+Aulas Realizadas
+
+Taxa de Presença
+
+Receita Mensal
+
+Alunos em Risco (frequência < 50%)
+
+Inadimplência (mensalidades vencidas)
+
+2. Criar uma API interna (REST/GraphQL)
+Crie um endpoint no backend que retorne os dados do dashboard, por exemplo:
+
+bash
+Copiar
+Editar
+GET /api/dashboard
+Esse endpoint deve consultar as tabelas relevantes:
+
+alunos (ativos)
+
+aulas (realizadas e frequência)
+
+presencas ou chamadas
+
+pagamentos (mensalidades e inadimplência)
+
+3. Implementar lógica de cálculo
+No backend:
+
+Alunos Ativos: alunos com matrícula vigente e status ativo
+
+Aulas Realizadas: COUNT de aulas no mês atual
+
+Taxa de Presença: média de presenças por aluno ativo
+
+Receita Mensal: SUM dos pagamentos confirmados no mês atual
+
+Alunos em Risco: alunos com presença < 50% nas aulas disponíveis
+
+Inadimplência: alunos com mensalidades vencidas (data < hoje e status não pago)
+
+4. Agendar a atualização no frontend (React)
+Use o useEffect com setInterval:
+
+tsx
+Copiar
+Editar
+useEffect(() => {
+  const fetchDashboardData = async () => {
+    const res = await fetch('/api/dashboard');
+    const data = await res.json();
+    setDashboard(data);
+  };
+
+  fetchDashboardData(); // primeira chamada imediata
+
+  const interval = setInterval(fetchDashboardData, 5 * 60 * 1000); // a cada 5 minutos
+
+  return () => clearInterval(interval);
+}, []);
+5. Cache opcional no backend
+Para reduzir carga no banco, cache os dados com node-cache, Redis ou Prisma + timestamps, atualizando a cada 5 min.
+
+6. Atualização em tempo real (opcional)
+Se quiser mais responsividade, implemente WebSockets ou Server-Sent Events (SSE) para push em tempo real (recomendado só se houver alta movimentação no sistema).
+
+🔄 Frequência recomendada (para SaaS):
+Atualização automática a cada 5 minutos no frontend
+
+Requisições ao banco com cache ou TTL (Time To Live) no backend
+
+Evitar chamadas a cada renderização

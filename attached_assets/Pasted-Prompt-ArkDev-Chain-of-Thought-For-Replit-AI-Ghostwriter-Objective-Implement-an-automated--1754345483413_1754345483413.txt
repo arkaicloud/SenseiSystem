@@ -1,0 +1,92 @@
+Prompt ArkDev (Chain of Thought) – For Replit AI / Ghostwriter
+🎯 Objective:
+Implement an automated dashboard update system that fetches real-time metrics from the database and updates the admin dashboard every 5 minutes. This must follow SaaS best practices.
+
+🔢 Step-by-Step Plan (ArkDev)
+1. Define Metrics to Display
+The dashboard must show the following real-time KPIs:
+
+Active Students: count of students with active enrollment.
+
+Completed Classes: total classes held this month.
+
+Attendance Rate: percentage of attended classes by active students.
+
+Monthly Revenue: sum of payments received in the current month.
+
+Students at Risk: students with attendance rate < 50%.
+
+Overdue Payments: count of unpaid invoices past due date.
+
+2. Backend – Create a REST API
+Create a GET /api/dashboard route that returns all the above metrics in a single response.
+Use Prisma to fetch data from the database with minimal queries.
+
+Recommended response format:
+
+json
+Copiar
+Editar
+{
+  "activeStudents": 42,
+  "classesThisMonth": 16,
+  "attendanceRate": 75.5,
+  "monthlyRevenue": 3500.00,
+  "studentsAtRisk": 5,
+  "overduePayments": 3
+}
+3. Backend – Query Logic
+Active Students: WHERE enrollment_status = 'active'
+
+Completed Classes: WHERE date >= startOfMonth() AND date <= today()
+
+Attendance Rate: SUM(attended) / SUM(available)
+
+Monthly Revenue: SUM(payment.amount) WHERE date >= startOfMonth()
+
+Students at Risk: filter students with average attendance < 50%
+
+Overdue Payments: WHERE due_date < today AND status != 'paid'
+
+If possible, apply caching (e.g., node-cache or Redis) to refresh every 5 minutes and avoid frequent DB hits.
+
+4. Frontend – Fetch and Refresh Data
+In the React dashboard component:
+
+Use useEffect() + setInterval() to fetch the /api/dashboard every 5 minutes.
+
+Store the response in a state variable (dashboardData).
+
+Display the values dynamically in the UI.
+
+Example:
+
+tsx
+Copiar
+Editar
+useEffect(() => {
+  const fetchDashboard = async () => {
+    const res = await fetch('/api/dashboard');
+    const data = await res.json();
+    setDashboardData(data);
+  };
+
+  fetchDashboard(); // immediate fetch
+  const interval = setInterval(fetchDashboard, 5 * 60 * 1000); // every 5 min
+
+  return () => clearInterval(interval);
+}, []);
+5. Optional – Real-Time Push (WebSocket or SSE)
+For future optimization, consider using WebSockets or Server-Sent Events to push real-time updates to the dashboard without polling.
+
+6. SaaS Compliance
+Ensure the data fetched is scoped to the current tenant (school). If using multitenancy, filter queries accordingly by tenant_id or school_id.
+
+✅ Notes
+Follow best practices in code structure: controller, service, model layers (if applicable).
+
+Avoid exposing raw SQL or sensitive data.
+
+Ensure type safety in both backend and frontend (TypeScript recommended).
+
+Use environment variables for sensitive configurations (e.g., Redis).

@@ -2632,7 +2632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verificar se o usuário logado tem permissão para ver os dados financeiros
-      if (req.user?.role === 'student' && student.userId !== userId) {
+      if (req.user?.role === 'student' && student.userId !== req.user.id) {
         return res.status(403).json({ error: "Acesso negado" });
       }
       
@@ -2695,8 +2695,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Estudante não encontrado" });
       }
       
-      // Verificar permissões
-      if (req.user?.role === 'student' && student.userId !== userId) {
+      // Verificar permissões - estudantes só podem ver seus próprios dados
+      if (req.user?.role === 'student' && student.userId !== req.user.id) {
         return res.status(403).json({ error: "Acesso negado" });
       }
       

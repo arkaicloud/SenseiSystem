@@ -519,6 +519,7 @@ export default function AdminDashboard() {
     attendanceRate: dashboardStats.attendanceRate,
     monthlyRevenue: dashboardStats.monthlyRevenue,
     studentsAtRisk: dashboardStats.studentsAtRisk,
+    criticalRiskStudents: 0,
     overduePayments: dashboardStats.overduePayments,
     newStudentsThisMonth: 0,
     beltDistribution: {}
@@ -818,8 +819,8 @@ export default function AdminDashboard() {
           value={activeMetrics.studentsAtRisk}
           icon={AlertTriangle}
           trend={activeMetrics.studentsAtRisk === 0 ? "neutral" : "down"}
-          trendValue={liveMetrics ? "Frequência < 50%" : "frequência < 50%"}
-          color="red"
+          trendValue={liveMetrics ? `${activeMetrics.criticalRiskStudents} risco crítico` : "frequência < 60%"}
+          color={activeMetrics.criticalRiskStudents > 0 ? "red" : "orange"}
         />
         <KPICard
           title="Inadimplência"

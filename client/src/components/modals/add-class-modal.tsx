@@ -3,7 +3,7 @@ import { useTranslations } from '@/hooks/use-translations';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { insertClassSessionSchema } from '@shared/schema';
+import { insertClassSchema } from '@shared/schema';
 import { 
   Dialog, 
   DialogContent, 
@@ -38,37 +38,33 @@ export const AddClassModal = ({
   const { t } = useTranslations();
   
   // Extend the schema with custom validation
-  const formSchema = insertClassSessionSchema.extend({
-    title: z.string().min(1, { message: t('class.titleRequired') }),
-    date: z.string().min(1, { message: t('class.dateRequired') }),
+  const formSchema = insertClassSchema.extend({
+    name: z.string().min(1, { message: t('class.nameRequired') }),
     startTime: z.string().min(1, { message: t('class.startTimeRequired') }),
-    endTime: z.string().min(1, { message: t('class.endTimeRequired') }),
-    capacity: z.preprocess(
+    duration: z.preprocess(
+      (val) => parseInt(val as string, 10),
+      z.number().min(1, { message: t('class.durationRequired') })
+    ),
+    maxCapacity: z.preprocess(
       (val) => parseInt(val as string, 10),
       z.number().min(1, { message: t('class.capacityRequired') })
-    ),
+    ).optional(),
   });
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+      name: '',
+      description: '',
       startTime: '',
-      endTime: '',
-      beltLevel: 'all',
-      capacity: 20
+      duration: 60,
+      dayOfWeek: 1,
+      maxCapacity: 20
     }
   });
   
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    // Convert date string to Date object for the API
-    const apiData = {
-      ...data,
-      date: new Date(data.date).toISOString()
-    };
-    
-    onSubmit(apiData);
+    onSubmit(data);
     form.reset();
   };
 

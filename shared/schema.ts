@@ -11,6 +11,18 @@ export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'abs
 export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
 export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
 
+// Belt levels management table
+export const beltLevels = pgTable("belt_levels", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "Faixa Branca", "Faixa Azul", etc.
+  levelKey: text("level_key").notNull().unique(), // "white", "blue", etc. - matches beltLevelEnum
+  colorCode: text("color_code").notNull(), // "#FFFFFF", "#0000FF", etc.
+  order: integer("order").notNull(), // For sorting
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -443,6 +455,11 @@ export type InsertStreakAchievement = typeof streakAchievements.$inferInsert;
 
 export type DailyLoginRecord = typeof dailyLoginRecords.$inferSelect;
 export type InsertDailyLoginRecord = typeof dailyLoginRecords.$inferInsert;
+
+// Belt levels types
+export type BeltLevel = typeof beltLevels.$inferSelect;
+export type InsertBeltLevel = typeof beltLevels.$inferInsert;
+export const insertBeltLevelSchema = createInsertSchema(beltLevels).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Streak achievement with relations
 export type StreakAchievementWithUser = StreakAchievement & {

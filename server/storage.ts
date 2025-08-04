@@ -15,6 +15,7 @@ import {
   riskSettings, type RiskSettings, type InsertRiskSettings,
   streakAchievements, type StreakAchievement, type InsertStreakAchievement,
   dailyLoginRecords, type DailyLoginRecord, type InsertDailyLoginRecord,
+  beltLevels, type BeltLevel, type InsertBeltLevel,
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails,
   type UserWithStreakData
@@ -139,6 +140,14 @@ export interface IStorage {
     lastLoginDate: Date | null;
     recentAchievements: StreakAchievement[];
   }>;
+
+  // Belt Levels Management
+  getBeltLevels(): Promise<BeltLevel[]>;
+  getBeltLevel(id: number): Promise<BeltLevel | undefined>;
+  createBeltLevel(beltLevel: InsertBeltLevel): Promise<BeltLevel>;
+  updateBeltLevel(id: number, beltLevel: Partial<BeltLevel>): Promise<BeltLevel | undefined>;
+  deleteBeltLevel(id: number): Promise<boolean>;
+  getBeltStats(): Promise<{ [key: string]: number }>;
 }
 
 export class MemStorage implements IStorage {
@@ -1955,6 +1964,81 @@ export class DatabaseStorage implements IStorage {
         isDisplayed: true
       });
     }
+  }
+
+  // Belt Levels Management
+  async getBeltLevels(): Promise<BeltLevel[]> {
+    return await db.select().from(beltLevels)
+      .where(eq(beltLevels.active, true))
+      .orderBy(beltLevels.order);
+  }
+
+  async getBeltLevel(id: number): Promise<BeltLevel | undefined> {
+    const [beltLevel] = await db.select().from(beltLevels)
+      .where(and(eq(beltLevels.id, id), eq(beltLevels.active, true)));
+    return beltLevel;
+  }
+
+  async createBeltLevel(beltLevelData: InsertBeltLevel): Promise<BeltLevel> {
+    const [beltLevel] = await db.insert(beltLevels).values({
+      ...beltLevelData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return beltLevel;
+  }
+
+  async updateBeltLevel(id: number, beltLevelData: Partial<BeltLevel>): Promise<BeltLevel | undefined> {
+    const [updatedBeltLevel] = await db
+      .update(beltLevels)
+      .set({
+        ...beltLevelData,
+        updatedAt: new Date()
+      })
+      .where(eq(beltLevels.id, id))
+      .returning();
+    return updatedBeltLevel;
+  }
+
+  async deleteBeltLevel(id: number): Promise<boolean> {
+    const [deletedBeltLevel] = await db
+      .update(beltLevels)
+      .set({ 
+        active: false,
+        updatedAt: new Date()
+      })
+      .where(eq(beltLevels.id, id))
+      .returning();
+    return !!deletedBeltLevel;
+  }
+
+  async getBeltStats(): Promise<{ [key: string]: number }> {
+    const beltStats = await db
+      .select({
+        beltLevel: students.beltLevel,
+        count: sql<number>`count(*)::int`
+      })
+      .from(students)
+      .innerJoin(users, eq(students.userId, users.id))
+      .where(and(
+        eq(users.status, 'active'),
+        eq(users.active, true)
+      ))
+      .groupBy(students.beltLevel);
+
+    const result: { [key: string]: number } = {
+      white: 0,
+      blue: 0,
+      purple: 0,
+      brown: 0,
+      black: 0
+    };
+
+    beltStats.forEach(stat => {
+      result[stat.beltLevel] = stat.count;
+    });
+
+    return result;
   }
 }
 

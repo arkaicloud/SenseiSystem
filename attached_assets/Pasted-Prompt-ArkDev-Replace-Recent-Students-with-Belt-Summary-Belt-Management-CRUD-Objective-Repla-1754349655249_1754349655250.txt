@@ -1,0 +1,115 @@
+Prompt ArkDev – Replace Recent Students with Belt Summary + Belt Management CRUD
+🎯 Objective:
+Replace the current “Alunos Recentes” (Recent Students) section in the admin dashboard with a real-time summary of active students grouped by Jiu-Jitsu belt.
+Also, implement a CRUD interface to manage belt levels in the system.
+
+🔢 Step-by-Step Plan (ArkDev)
+1. Remove “Recent Students” Block
+Delete or disable the existing component that lists the most recently registered students
+
+Route: Admin Dashboard view
+
+2. Create New Widget: “Total por Faixa” (Belt Summary)
+Backend:
+Create a route:
+
+swift
+Copiar
+Editar
+GET /api/admin/stats/belts
+Query logic:
+Count of active students (users.active = true AND users.status = 'active')
+
+Group by students.beltLevel
+
+Sample response:
+json
+Copiar
+Editar
+{
+  "white": 12,
+  "blue": 7,
+  "purple": 3,
+  "brown": 1,
+  "black": 0
+}
+Frontend (in Portuguese):
+Display blocks like:
+
+yaml
+Copiar
+Editar
+🥋 Faixa Branca: 12 alunos
+🥋 Faixa Azul: 7 alunos
+🥋 Faixa Roxa: 3 alunos
+🥋 Faixa Marrom: 1 aluno
+🥋 Faixa Preta: 0 alunos
+Add icons and colors to visually differentiate each belt level.
+
+3. Create Belt Management CRUD (Cadastro de Faixas)
+Backend:
+Model: belt_levels or similar
+
+Fields:
+
+id
+
+name (e.g., "Faixa Azul")
+
+colorCode (e.g., "#3366FF")
+
+order (for sorting)
+
+Routes:
+GET /api/admin/belts
+
+POST /api/admin/belts
+
+PUT /api/admin/belts/:id
+
+DELETE /api/admin/belts/:id
+
+Frontend:
+Admin-only view
+
+Título: Cadastro de Faixas
+
+Lista com: Nome da Faixa, Cor, Ordem
+
+Botões: Adicionar, Editar, Excluir
+
+Cores padrão do Jiu-Jitsu:
+
+Faixa Branca → #FFFFFF
+
+Faixa Azul → #0000FF
+
+Faixa Roxa → #800080
+
+Faixa Marrom → #964B00
+
+Faixa Preta → #000000
+
+📐 UI/UX Guidelines
+Layout responsivo com Tailwind
+
+Agrupar estatísticas por ordem (order ascendente)
+
+Usar badge ou card para destacar o total de cada faixa
+
+Título do componente: “Total por Faixa”
+
+🛡️ Multitenancy and Filtering
+Always filter data by tenantId from the current authenticated user
+
+Only fetch students belonging to the same academy
+
+✅ Deliverables
+Entrega	Descrição
+[ ] Novo endpoint /api/admin/stats/belts	
+[ ] Componente de totalizador de faixas no painel	
+[ ] Tela de CRUD para Cadastro de Faixas	
+[ ] Exibição em português com cores reais das faixas	
+[ ] Filtro por tenantId em todas as queries	
+[ ] Interface acessível para administradores apenas	
+

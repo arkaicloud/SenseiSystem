@@ -2289,6 +2289,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Public School Info Route =====
+  app.get("/api/school/public-info", async (req, res) => {
+    try {
+      res.setHeader('Content-Type', 'application/json');
+      const config = await storage.getSchoolConfig();
+      
+      // Return only public information
+      const publicInfo = {
+        schoolName: config?.schoolName || "Academia de Jiu-Jitsu",
+        address: config?.address || null,
+        phone: config?.phone || null,
+        email: config?.email || null,
+        website: config?.website || null,
+        logoUrl: config?.logoUrl || null
+      };
+      
+      res.json(publicInfo);
+    } catch (error) {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.patch("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
       // Ensure proper JSON response headers

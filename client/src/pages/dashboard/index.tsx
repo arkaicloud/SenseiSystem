@@ -33,15 +33,20 @@ export default function DashboardPage() {
   
   // Render different dashboard based on user role
   const renderDashboard = () => {
+    console.log('Rendering dashboard for user role:', user.role);
     switch (user.role) {
       case 'admin':
       case 'manager':
+        console.log('Rendering AdminDashboard');
         return <AdminDashboard />;
       case 'instructor':
+        console.log('Rendering InstructorDashboard');
         return <InstructorDashboard />;
       case 'student':
+        console.log('Rendering StudentDashboard');
         return <StudentDashboard />;
       default:
+        console.log('Rendering default StudentDashboard');
         return <StudentDashboard />;
     }
   };

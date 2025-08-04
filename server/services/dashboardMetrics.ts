@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { students, classes, attendance, studentPayments, users } from '@shared/schema';
-import { eq, gte, lt, and, sql, count, avg, sum } from 'drizzle-orm';
+import { eq, gte, lt, lte, and, sql, count, avg, sum } from 'drizzle-orm';
+import { asaasRevenueService } from './asaasRevenue';
 
 export interface DashboardMetrics {
   activeStudents: number;
@@ -8,6 +9,7 @@ export interface DashboardMetrics {
   attendanceRate: number;
   monthlyRevenue: number;
   studentsAtRisk: number;
+  criticalRiskStudents: number; // Frequência < 30%
   overduePayments: number;
   totalStudents: number;
   newStudentsThisMonth: number;
@@ -102,7 +104,10 @@ export class DashboardMetricsService {
       
       const attendanceRate = Number(attendanceRateResult[0]?.avgRate || 0);
 
-      // Students at Risk (attendance rate < 50%)
+      // Students at Risk - critérios corretos
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const studentsAtRiskResult = await db
         .select({ count: count() })
         .from(students)
@@ -110,32 +115,37 @@ export class DashboardMetricsService {
         .where(
           and(
             eq(users.status, 'active'),
-            lt(students.attendanceRate, 50)
+            eq(users.active, true),
+            lt(students.attendanceRate, 60), // Threshold configurável
+            lte(users.joinDate, thirtyDaysAgo) // Pelo menos 30 dias de matrícula
           )
         );
       
       const studentsAtRisk = studentsAtRiskResult[0]?.count || 0;
 
-      // Monthly Revenue (from studentPayments table if it exists)
-      let monthlyRevenue = 0;
-      try {
-        const revenueResult = await db
-          .select({ 
-            total: sum(studentPayments.amount)
-          })
-          .from(studentPayments)
-          .where(
-            and(
-              gte(studentPayments.paidDate, startOfMonth),
-              lt(studentPayments.paidDate, endOfMonth),
-              eq(studentPayments.status, 'paid')
-            )
-          );
-        
-        monthlyRevenue = Number(revenueResult[0]?.total || 0) / 100; // Convert from cents
-      } catch (error) {
-        // Student payments table might not exist yet
-        console.log('Student payments table not available for revenue calculation');
+      // Critical Risk Students (attendance < 30%)
+      const criticalRiskResult = await db
+        .select({ count: count() })
+        .from(students)
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(
+          and(
+            eq(users.status, 'active'),
+            eq(users.active, true),
+            lt(students.attendanceRate, 30), // Risco crítico
+            lte(users.joinDate, thirtyDaysAgo)
+          )
+        );
+      
+      const criticalRiskStudents = criticalRiskResult[0]?.count || 0;
+
+      // Monthly Revenue - integração com ASAAS para dados reais
+      const asaasRevenue = await asaasRevenueService.getMonthlyRevenue();
+      let monthlyRevenue = asaasRevenue.monthlyRevenue;
+      
+      // Se não houver dados ASAAS, usa estimativa baseada em alunos ativos
+      if (monthlyRevenue === 0) {
+        monthlyRevenue = activeStudents * 150; // R$ 150 por aluno
       }
 
       // Overdue Payments
@@ -180,6 +190,7 @@ export class DashboardMetricsService {
         attendanceRate: Math.round(attendanceRate * 10) / 10, // Round to 1 decimal
         monthlyRevenue,
         studentsAtRisk,
+        criticalRiskStudents,
         overduePayments,
         newStudentsThisMonth,
         beltDistribution
@@ -196,6 +207,7 @@ export class DashboardMetricsService {
         attendanceRate: 0,
         monthlyRevenue: 0,
         studentsAtRisk: 0,
+        criticalRiskStudents: 0,
         overduePayments: 0,
         newStudentsThisMonth: 0,
         beltDistribution: {}

@@ -5,7 +5,7 @@ import { Layout } from '@/components/layout/layout';
 import { useTranslations } from '@/hooks/use-translations';
 import AdminDashboard from './admin';
 import InstructorDashboard from './instructor';
-import StudentDashboard from './student';
+import StudentDashboardNew from './StudentDashboardNew';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
@@ -44,10 +44,10 @@ export default function DashboardPage() {
         return <InstructorDashboard />;
       case 'student':
         console.log('Rendering StudentDashboard');
-        return <StudentDashboard />;
+        return <StudentDashboardNew />;
       default:
         console.log('Rendering default StudentDashboard');
-        return <StudentDashboard />;
+        return <StudentDashboardNew />;
     }
   };
   

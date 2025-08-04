@@ -2952,6 +2952,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====Get Students Who Confirmed Attendance for Class=====
+  app.get("/api/classes/:classId/confirmed-students", isAuthenticated, async (req, res) => {
+    try {
+      const { classId } = req.params;
+      const classIdNumber = parseInt(classId);
+      
+      if (isNaN(classIdNumber)) {
+        return res.status(400).json({ error: 'Invalid class ID' });
+      }
+      
+      // Get today's date range
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      
+      // Get all attendance records for this class today
+      const attendances = await storage.getAllAttendances();
+      const todayConfirmedAttendances = attendances.filter(att => {
+        const attDate = new Date(att.date);
+        return att.classId === classIdNumber && 
+               attDate >= startOfDay && 
+               attDate < endOfDay &&
+               att.status === 'present';
+      });
+      
+      // Get student details for each confirmed attendance
+      const confirmedStudents = await Promise.all(
+        todayConfirmedAttendances.map(async (attendance) => {
+          const student = await storage.getStudent(attendance.studentId);
+          if (student) {
+            const user = await storage.getUser(student.userId);
+            if (user) {
+              return {
+                id: student.id,
+                userId: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                initials: `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase(),
+                beltLevel: student.beltLevel,
+                phone: user.phone,
+                email: user.email,
+                confirmationTime: attendance.date,
+                attendanceId: attendance.id,
+                alreadyMarked: false // Will be updated if already marked present by instructor
+              };
+            }
+          }
+          return null;
+        })
+      );
+      
+      // Filter out null values and get instructor-marked attendance to check status
+      const validStudents = confirmedStudents.filter(s => s !== null);
+      
+      // Check if instructor has already marked attendance for any of these students
+      const instructorAttendances = attendances.filter(att => {
+        const attDate = new Date(att.date);
+        return att.classId === classIdNumber && 
+               attDate >= startOfDay && 
+               attDate < endOfDay &&
+               att.checkedInBy !== att.studentId; // Marked by instructor, not self-confirmed
+      });
+      
+      // Update student status based on instructor attendance
+      validStudents.forEach(student => {
+        const instructorMarked = instructorAttendances.find(att => att.studentId === student.id);
+        if (instructorMarked) {
+          student.alreadyMarked = true;
+          student.instructorStatus = instructorMarked.status;
+        }
+      });
+      
+      console.log(`Found ${validStudents.length} students who confirmed attendance for class ${classIdNumber}`);
+      
+      res.json({
+        classId: classIdNumber,
+        confirmedStudents: validStudents,
+        totalConfirmed: validStudents.length
+      });
+      
+    } catch (error) {
+      console.error('Error fetching confirmed students:', error);
+      res.status(500).json({ error: 'Failed to fetch confirmed students' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

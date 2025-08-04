@@ -107,19 +107,36 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
         </div>
       </div>
 
-      <div className="mb-3 md:mb-4 flex justify-between items-center">
-        <p className="text-sm text-gray-500">
-          {filteredStudents.length} students
-        </p>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="select-all" 
-            onCheckedChange={(checked) => toggleAllStudents(!!checked)} 
-          />
-          <label htmlFor="select-all" className="text-sm font-medium">
-            Select All
-          </label>
+      <div className="mb-3 md:mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center space-x-3">
+            <p className="text-sm text-gray-500">
+              {filteredStudents.length} alunos confirmaram presença
+            </p>
+            {filteredStudents.length > 0 && (
+              <div className="flex items-center space-x-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>Confirmados</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="select-all" 
+              onCheckedChange={(checked) => toggleAllStudents(!!checked)} 
+            />
+            <label htmlFor="select-all" className="text-sm font-medium">
+              Marcar Todos
+            </label>
+          </div>
         </div>
+        {filteredStudents.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <div className="mb-2">📋</div>
+            <p className="text-sm">Nenhum aluno confirmou presença para esta aula</p>
+            <p className="text-xs text-gray-400 mt-1">Os alunos que confirmaram presença aparecerão aqui</p>
+          </div>
+        )}
       </div>
 
       <Form {...form}>
@@ -142,14 +159,28 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                       <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-full bg-gray-200 flex items-center justify-center mr-2 md:mr-3">
                         <span className="font-medium text-xs md:text-sm">{student.initials}</span>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <FormLabel className={cn(
-                          "text-sm md:text-base font-medium text-gray-900",
+                          "text-sm md:text-base font-medium text-gray-900 cursor-pointer",
                           field.value && "line-through text-gray-400"
                         )}>
                           {student.name}
                         </FormLabel>
-                        <BeltWithLabel level={student.beltLevel} size="sm" />
+                        <div className="flex items-center space-x-2 mt-1">
+                          <BeltWithLabel level={student.beltLevel} size="sm" />
+                          {(student as any).confirmationTime && (
+                            <div className="flex items-center space-x-1 text-xs text-blue-600">
+                              <span>•</span>
+                              <span>Confirmou às {new Date((student as any).confirmationTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          )}
+                          {(student as any).alreadyMarked && (
+                            <div className="flex items-center space-x-1 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                              <span>✓</span>
+                              <span>Já marcado</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </FormItem>
@@ -164,7 +195,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
               className="bg-secondary hover:bg-secondary-dark text-sm md:text-base"
               disabled={isLoading}
             >
-              {isLoading ? "Saving..." : "Save Attendance"}
+              {isLoading ? "Salvando..." : "Salvar Presença"}
             </Button>
           </div>
         </form>

@@ -63,7 +63,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 font-['Inter',sans-serif] antialiased">
       <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0">
         {/* Left Side - Login Form */}
-        <div className="flex items-center justify-center px-6 py-10">
+        <div className="flex items-center justify-center px-6 py-10 pl-[25px] pr-[25px] pt-[0px] pb-[0px]">
           <div className="max-w-md w-full space-y-6">
             {/* School Branding */}
             <div className="text-center space-y-4">

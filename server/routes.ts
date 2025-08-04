@@ -803,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/students", isAuthenticated, isInstructor, async (req, res) => {
+  app.post("/api/students", isAuthenticated, async (req, res) => {
     try {
       const studentData = req.body;
 
@@ -845,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialResponsibleEmail: studentData.financialResponsibleEmail || null,
         financialResponsiblePhone: studentData.financialResponsiblePhone || null,
         financialResponsibleCpf: studentData.financialResponsibleCpf || null,
-        financialResponsibleRelationship: studentData.financialResponsibleRelationship || null,
+        financialResponsibleRelation: studentData.financialResponsibleRelation || null,
         asaasCustomerId: null, // Will be filled after ASAAS customer creation
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
         preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5

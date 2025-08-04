@@ -108,7 +108,7 @@ export default function LoginPage() {
               
               <div className="text-center">
                 <h2 className="text-xl font-bold text-gray-800">
-                  {schoolConfig?.schoolName || "Academia"}
+                  Seja Bem Vindos ao {schoolConfig?.schoolName || "Academia"}
                 </h2>
               </div>
             </div>

@@ -223,20 +223,20 @@ export default function LoginPage() {
             </div>
 
             {/* Features List */}
-            <div className="space-y-5 mb-8">
+            <div className="space-y-3 mb-6">
               {features.map((feature, index) => (
                 <div 
                   key={index} 
-                  className="bg-white/90 backdrop-blur-sm p-5 lg:p-6 rounded-2xl shadow-lg hover:shadow-xl flex items-start gap-4 lg:gap-5 transition-all duration-300 border border-white/40 hover:border-blue-200/50"
+                  className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm hover:shadow-md flex items-start gap-3 transition-all duration-200 border border-white/40 hover:border-blue-200/50"
                 >
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 rounded-xl p-3 lg:p-4 flex-shrink-0 shadow-sm">
-                    <feature.icon className="h-6 w-6 lg:h-7 lg:w-7" />
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 rounded-lg p-2 flex-shrink-0">
+                    <feature.icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 mb-2 text-lg lg:text-xl">
+                    <h3 className="font-semibold text-gray-900 mb-1 text-base">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 text-base lg:text-lg leading-relaxed">
+                    <p className="text-gray-600 text-sm leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -245,26 +245,26 @@ export default function LoginPage() {
             </div>
 
             {/* Additional Visual Elements */}
-            <div className="space-y-4 text-center">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/70 backdrop-blur-sm rounded-full border border-white/40 shadow-lg">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-base text-gray-700 font-semibold">Sistema 100% online</span>
+            <div className="space-y-3 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-white/40 shadow-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-700 font-medium">Sistema 100% online</span>
               </div>
               
-              <div className="flex justify-center items-center gap-6 mt-6">
+              <div className="flex justify-center items-center gap-4 mt-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">500+</div>
-                  <div className="text-sm text-gray-600">Academias</div>
+                  <div className="text-lg font-bold text-blue-600">500+</div>
+                  <div className="text-xs text-gray-600">Academias</div>
                 </div>
-                <div className="w-px h-12 bg-gray-300"></div>
+                <div className="w-px h-8 bg-gray-300"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">50k+</div>
-                  <div className="text-sm text-gray-600">Alunos</div>
+                  <div className="text-lg font-bold text-blue-600">50k+</div>
+                  <div className="text-xs text-gray-600">Alunos</div>
                 </div>
-                <div className="w-px h-12 bg-gray-300"></div>
+                <div className="w-px h-8 bg-gray-300"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">99.9%</div>
-                  <div className="text-sm text-gray-600">Uptime</div>
+                  <div className="text-lg font-bold text-blue-600">99.9%</div>
+                  <div className="text-xs text-gray-600">Uptime</div>
                 </div>
               </div>
             </div>

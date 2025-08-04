@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { formatCurrency } from '@/lib/utils';
@@ -27,6 +27,19 @@ import {
   Settings,
   Bell
 } from 'lucide-react';
+
+// Interface para métricas em tempo real
+interface DashboardMetrics {
+  activeStudents: number;
+  totalStudents: number;
+  classesThisMonth: number;
+  attendanceRate: number;
+  monthlyRevenue: number;
+  studentsAtRisk: number;
+  overduePayments: number;
+  newStudentsThisMonth: number;
+  beltDistribution: { [key: string]: number };
+}
 
 // Interfaces para os dados do dashboard
 interface DashboardStats {
@@ -407,6 +420,35 @@ export default function AdminDashboard() {
   const { t } = useTranslations();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Estado para métricas em tempo real
+  const [liveMetrics, setLiveMetrics] = useState<DashboardMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Buscar métricas em tempo real do backend
+  const fetchLiveMetrics = async () => {
+    try {
+      setMetricsLoading(true);
+      const response = await fetch('/api/dashboard/metrics');
+      if (response.ok) {
+        const metrics = await response.json();
+        setLiveMetrics(metrics);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar métricas em tempo real:', error);
+    } finally {
+      setMetricsLoading(false);
+    }
+  };
+
+  // Auto-refresh das métricas a cada 5 minutos
+  useEffect(() => {
+    fetchLiveMetrics(); // Buscar imediatamente
+    
+    const interval = setInterval(fetchLiveMetrics, 5 * 60 * 1000); // 5 minutos
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Buscar dados reais da API
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -468,6 +510,19 @@ export default function AdminDashboard() {
   };
 
   const dashboardStats = calculateStats();
+  
+  // Usar métricas em tempo real se disponíveis, senão usar dados calculados
+  const activeMetrics = liveMetrics || {
+    activeStudents: dashboardStats.activeStudents,
+    totalStudents: dashboardStats.activeStudents,
+    classesThisMonth: dashboardStats.monthlyClasses,
+    attendanceRate: dashboardStats.attendanceRate,
+    monthlyRevenue: dashboardStats.monthlyRevenue,
+    studentsAtRisk: dashboardStats.studentsAtRisk,
+    overduePayments: dashboardStats.overduePayments,
+    newStudentsThisMonth: 0,
+    beltDistribution: {}
+  };
 
   // Transformar dados reais de aulas em formato do dashboard
   const getTodayClasses = (): TodayClass[] => {
@@ -717,6 +772,10 @@ export default function AdminDashboard() {
             <Target className="h-4 w-4 mr-2" />
             Gerar Dados QA
           </Button>
+          <Button variant="outline" onClick={fetchLiveMetrics} size="sm" disabled={metricsLoading}>
+            <TrendingUp className="h-4 w-4 mr-2" />
+            {metricsLoading ? 'Atualizando...' : 'Atualizar Métricas'}
+          </Button>
         </div>
       </div>
 
@@ -724,50 +783,50 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
           title="Alunos Ativos"
-          value={dashboardStats.activeStudents}
+          value={activeMetrics.activeStudents}
           icon={Users}
           trend="up"
-          trendValue="+15% vs mês anterior"
+          trendValue={liveMetrics ? `+${activeMetrics.newStudentsThisMonth} este mês` : "+15% vs mês anterior"}
           color="blue"
         />
         <KPICard
           title="Aulas Realizadas"
-          value={dashboardStats.monthlyClasses}
+          value={activeMetrics.classesThisMonth}
           icon={Calendar}
           trend="up"
-          trendValue="+5% este mês"
+          trendValue={liveMetrics ? "Dados em tempo real" : "+5% este mês"}
           color="green"
         />
         <KPICard
           title="Taxa de Presença"
-          value={`${dashboardStats.attendanceRate}%`}
+          value={`${activeMetrics.attendanceRate}%`}
           icon={UserCheck}
-          trend="up"
-          trendValue="média mensal"
+          trend={activeMetrics.attendanceRate > 70 ? "up" : "down"}
+          trendValue={liveMetrics ? "Dados em tempo real" : "média mensal"}
           color="green"
         />
         <KPICard
           title="Receita Mensal"
-          value={formatCurrency(dashboardStats.monthlyRevenue)}
+          value={formatCurrency(activeMetrics.monthlyRevenue)}
           icon={DollarSign}
           trend="up"
-          trendValue="+10%"
+          trendValue={liveMetrics ? "Dados em tempo real" : "+10%"}
           color="green"
         />
         <KPICard
           title="Alunos em Risco"
-          value={dashboardStats.studentsAtRisk}
+          value={activeMetrics.studentsAtRisk}
           icon={AlertTriangle}
-          trend="down"
-          trendValue="frequência < 50%"
+          trend={activeMetrics.studentsAtRisk === 0 ? "neutral" : "down"}
+          trendValue={liveMetrics ? "Frequência < 50%" : "frequência < 50%"}
           color="red"
         />
         <KPICard
           title="Inadimplência"
-          value={dashboardStats.overduePayments}
+          value={activeMetrics.overduePayments}
           icon={AlertTriangle}
-          trend="neutral"
-          trendValue="mensalidades vencidas"
+          trend={activeMetrics.overduePayments === 0 ? "neutral" : "down"}
+          trendValue={liveMetrics ? "Pagamentos em atraso" : "mensalidades vencidas"}
           color="orange"
         />
       </div>

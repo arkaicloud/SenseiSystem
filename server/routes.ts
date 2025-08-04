@@ -21,10 +21,33 @@ import {
   insertSchoolPaymentSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
+import { dashboardMetricsService } from "./services/dashboardMetrics";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
+
+  // =====Dashboard Metrics Route=====
+  app.get("/api/dashboard/metrics", isAuthenticated, async (req, res) => {
+    try {
+      const metrics = await dashboardMetricsService.getMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error('❌ Error fetching dashboard metrics:', error);
+      res.status(500).json({ message: "Failed to fetch dashboard metrics" });
+    }
+  });
+
+  // Force refresh dashboard metrics (admin only)
+  app.post("/api/dashboard/metrics/refresh", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const metrics = await dashboardMetricsService.refreshCache();
+      res.json({ success: true, metrics });
+    } catch (error) {
+      console.error('❌ Error refreshing dashboard metrics:', error);
+      res.status(500).json({ message: "Failed to refresh dashboard metrics" });
+    }
+  });
 
   // =====Birthdays Route=====
   app.get("/api/birthdays/today", isAuthenticated, async (req, res) => {

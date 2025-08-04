@@ -92,14 +92,28 @@ export default function StudentDashboardNew() {
   
   // Confirm attendance mutation
   const confirmAttendanceMutation = useMutation({
-    mutationFn: (data: { classId: number, date: string }) => 
-      apiRequest('/api/attendance/confirm', 'POST', data),
+    mutationFn: async (classId: number) => {
+      const response = await fetch(`/api/classes/${classId}/confirm-attendance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to confirm attendance');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Presença confirmada!",
         description: "Sua presença foi confirmada com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
     },
     onError: (error: any) => {
       toast({
@@ -111,8 +125,7 @@ export default function StudentDashboardNew() {
   });
   
   const handleCheckIn = (classId: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    confirmAttendanceMutation.mutate({ classId, date: today });
+    confirmAttendanceMutation.mutate(classId);
   };
   
   if (isStudentLoading) {

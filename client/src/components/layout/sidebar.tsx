@@ -58,6 +58,13 @@ export const Sidebar = () => {
       roles: ['admin', 'manager']
     },
     { 
+      key: 'belt-management', 
+      label: 'Gerenciar Faixas', 
+      icon: 'fas fa-medal', 
+      href: '/belt-management',
+      roles: ['admin']
+    },
+    { 
       key: 'settings', 
       label: t('common.settings'), 
       icon: 'fas fa-cog', 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Award, Calendar, CreditCard, Loader2, Shield, Users, BarChart3, Bell } from "lucide-react";
+import { CheckCircle, Award, Calendar, CreditCard, Loader2, Shield, Users, BarChart3, Bell, MapPin, Phone, Mail, ExternalLink } from "lucide-react";
 import { useContext } from "react";
 import { LanguageContext } from "@/providers/i18n-provider";
 import { useQuery } from "@tanstack/react-query";
@@ -22,8 +22,21 @@ export default function LoginPage() {
     queryKey: ["/api/school-config"],
   });
 
+  // Fetch public school information
+  const { data: publicInfoResponse } = useQuery<{
+    schoolName: string;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    logoUrl: string | null;
+  }>({
+    queryKey: ["/api/school/public-info"],
+  });
+
   // Safely extract config from response
   const schoolConfig = schoolConfigResponse?.config || null;
+  const publicInfo = publicInfoResponse || null;
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -63,6 +76,110 @@ export default function LoginPage() {
       description: "Planeje horários, instrutores e capacidade de cada turma." 
     }
   ];
+
+  // Helper function to detect social media type from URL
+  const getSocialMediaInfo = (url: string) => {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('instagram.com')) {
+      return { type: 'Instagram', icon: '📷' };
+    }
+    if (lowerUrl.includes('facebook.com')) {
+      return { type: 'Facebook', icon: '👥' };
+    }
+    if (lowerUrl.includes('youtube.com')) {
+      return { type: 'YouTube', icon: '📹' };
+    }
+    if (lowerUrl.includes('tiktok.com')) {
+      return { type: 'TikTok', icon: '🎵' };
+    }
+    return { type: 'Website', icon: '🌐' };
+  };
+
+  // Helper function to format phone for WhatsApp
+  const formatPhoneForWhatsApp = (phone: string) => {
+    // Remove all non-digits
+    const numbers = phone.replace(/\D/g, '');
+    // If starts with 0, assume it's a country code that needs +55 (Brazil)
+    if (numbers.startsWith('0')) {
+      return `55${numbers.slice(1)}`;
+    }
+    // If doesn't start with country code, add Brazil code
+    if (!numbers.startsWith('55')) {
+      return `55${numbers}`;
+    }
+    return numbers;
+  };
+
+  // School Info Card Component
+  const SchoolInfoCard = () => {
+    if (!publicInfo) return null;
+
+    const { address, phone, email, website } = publicInfo;
+
+    // Don't show if no contact info available
+    if (!address && !phone && !email && !website) return null;
+
+    return (
+      <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-white/40 space-y-3">
+        <h3 className="font-semibold text-gray-900 text-center text-sm">
+          Informações da Escola
+        </h3>
+        
+        <div className="space-y-2 text-xs">
+          {address && (
+            <div className="flex items-start gap-2">
+              <MapPin className="h-3.5 w-3.5 text-gray-600 mt-0.5 flex-shrink-0" />
+              <span className="text-gray-700 leading-relaxed">{address}</span>
+            </div>
+          )}
+          
+          {phone && (
+            <div className="flex items-center gap-2">
+              <Phone className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+              <a 
+                href={`https://wa.me/${formatPhoneForWhatsApp(phone)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 hover:text-green-700 font-medium transition-colors"
+                title="Clique para abrir no WhatsApp"
+              >
+                {phone}
+              </a>
+            </div>
+          )}
+          
+          {email && (
+            <div className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+              <a 
+                href={`mailto:${email}`}
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                title="Clique para enviar email"
+              >
+                {email}
+              </a>
+            </div>
+          )}
+          
+          {website && (
+            <div className="flex items-center gap-2">
+              <ExternalLink className="h-3.5 w-3.5 text-purple-600 flex-shrink-0" />
+              <a 
+                href={website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-600 hover:text-purple-700 font-medium transition-colors flex items-center gap-1"
+                title={`Visite nosso ${getSocialMediaInfo(website).type}`}
+              >
+                <span>{getSocialMediaInfo(website).icon}</span>
+                <span>Visite nosso {getSocialMediaInfo(website).type}</span>
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-['Inter',sans-serif] antialiased">
@@ -246,6 +363,9 @@ export default function LoginPage() {
                 </div>
               ))}
             </div>
+
+            {/* School Information Card */}
+            <SchoolInfoCard />
 
             {/* Additional Visual Elements */}
             <div className="space-y-3 text-center">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { formatCurrency } from '@/lib/utils';
-import { DashboardStatsResponse, ClassSession } from '@/types';
+import { DashboardStatsResponse } from '@/types';
 import { queryClient } from '@/lib/queryClient';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -161,8 +161,8 @@ export default function AdminDashboard() {
     return <div className="text-center p-8">{t('common.loading')}</div>;
   }
   
-  const recentClasses = classes?.slice(0, 5) || [];
-  const recentStudents = students?.slice(0, 5) || [];
+  const recentClasses = (classes && Array.isArray(classes)) ? classes.slice(0, 5) : [];
+  const recentStudents = (students && Array.isArray(students)) ? students.slice(0, 5) : [];
   
   return (
     <>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
           
           <StatsCard 
             title={t('dashboard.monthlyRevenue')} 
-            value={formatCurrency(stats.monthlyRevenue, locale)} 
+            value={formatCurrency(stats.monthlyRevenue)} 
             icon="fas fa-dollar-sign" 
             iconBgColor="bg-purple-500 bg-opacity-20" 
             iconColor="text-purple-500"
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
           
           {/* Upcoming Promotions */}
           <PromotionList 
-            promotions={mockPromotions} 
+            promotions={[]} 
             title={t('dashboard.upcomingPromotions')}
           />
         </div>

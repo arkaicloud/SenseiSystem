@@ -101,12 +101,10 @@ export default function LoginPage() {
                 )}
               </div>
               
-              <div className="space-y-1">
-                <p className="text-sm text-gray-600 text-center">
-                  Acesso exclusivo da <br />
-                  <span className="font-semibold text-blue-600 text-base">{schoolConfig?.schoolName || "Huios Jiu Jitsu"}</span>
-                </p>
-                <p className="text-xs text-gray-500 text-center">no SenseiSystem</p>
+              <div className="text-center">
+                <h2 className="text-xl font-bold text-gray-800">
+                  {schoolConfig?.schoolName || "Academia"}
+                </h2>
               </div>
             </div>
 

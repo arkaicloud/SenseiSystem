@@ -1,0 +1,747 @@
+# SenseiSystem - Painel do Aluno
+
+Este é o código completo do painel do aluno para o SenseiSystem, um SaaS para escolas de artes marciais.
+
+## 📋 Estrutura dos Componentes
+
+### 1. StudentDashboard.tsx (Componente Principal)
+```tsx
+import { StudentGreeting } from "./StudentGreeting";
+import { SchoolNotices } from "./SchoolNotices";
+import { TodayClasses } from "./TodayClasses";
+import { MonthlyAttendance } from "./MonthlyAttendance";
+import { FinancialStatus } from "./FinancialStatus";
+
+interface StudentDashboardProps {
+  student: {
+    name: string;
+    currentBelt: {
+      name: string;
+      color: string;
+      promotionDate: string;
+    };
+    isFinancialResponsible: boolean;
+  };
+  notices: Array<{
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    type: "event" | "announcement" | "promotion" | "class";
+  }>;
+  todayClasses: Array<{
+    id: string;
+    className: string;
+    time: string;
+    instructor: string;
+    location: string;
+    checkedIn: boolean;
+  }>;
+  attendance: {
+    attendedClasses: number;
+    totalClasses: number;
+    currentMonth: string;
+  };
+  invoices: Array<{
+    id: string;
+    amount: number;
+    dueDate: string;
+    description: string;
+    status: "pending" | "overdue" | "paid";
+    paymentUrl?: string;
+  }>;
+}
+
+export const StudentDashboard = ({
+  student,
+  notices,
+  todayClasses,
+  attendance,
+  invoices
+}: StudentDashboardProps) => {
+  const handleCheckIn = (classId: string) => {
+    console.log(`Check-in realizado para a aula: ${classId}`);
+    // Aqui seria feita a chamada para a API
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-card border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-dojo-red-light rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">S</span>
+              </div>
+              <h1 className="text-xl font-bold text-foreground">SenseiSystem</h1>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Painel do Aluno
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="space-y-6">
+          {/* Greeting Section */}
+          <StudentGreeting 
+            studentName={student.name}
+            currentBelt={student.currentBelt}
+          />
+
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              <TodayClasses 
+                classes={todayClasses}
+                onCheckIn={handleCheckIn}
+              />
+              
+              <SchoolNotices notices={notices} />
+            </div>
+
+            {/* Right Column - Sidebar */}
+            <div className="space-y-6">
+              <MonthlyAttendance 
+                attendedClasses={attendance.attendedClasses}
+                totalClasses={attendance.totalClasses}
+                currentMonth={attendance.currentMonth}
+              />
+
+              <FinancialStatus 
+                invoices={invoices}
+                isFinancialResponsible={student.isFinancialResponsible}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+### 2. StudentGreeting.tsx
+```tsx
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Calendar } from "lucide-react";
+
+interface StudentGreetingProps {
+  studentName: string;
+  currentBelt: {
+    name: string;
+    color: string;
+    promotionDate: string;
+  };
+}
+
+export const StudentGreeting = ({ studentName, currentBelt }: StudentGreetingProps) => {
+  const getBeltColor = (color: string) => {
+    const colors: Record<string, string> = {
+      white: "bg-slate-100 text-slate-800 border-slate-300",
+      blue: "bg-blue-100 text-blue-800 border-blue-300",
+      purple: "bg-purple-100 text-purple-800 border-purple-300",
+      brown: "bg-belt-brown text-white border-belt-brown",
+      black: "bg-belt-black text-white border-belt-black",
+      red: "bg-dojo-red text-white border-dojo-red",
+    };
+    return colors[color.toLowerCase()] || "bg-gray-100 text-gray-800 border-gray-300";
+  };
+
+  return (
+    <Card className="bg-gradient-to-r from-primary via-dojo-red-light to-primary text-primary-foreground shadow-lg">
+      <CardContent className="p-6">
+        <div className="flex flex-col gap-4">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Olá, {studentName}! 👋</h1>
+            <p className="text-primary-foreground/80 text-sm">
+              Continue sua jornada nas artes marciais com dedicação e disciplina.
+            </p>
+          </div>
+          
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-6 h-6" />
+              <div>
+                <p className="text-sm text-primary-foreground/80">Faixa Atual</p>
+                <Badge variant="secondary" className={`${getBeltColor(currentBelt.color)} font-semibold`}>
+                  {currentBelt.name}
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-primary-foreground/80">
+              <Calendar className="w-4 h-4" />
+              <span>Desde {currentBelt.promotionDate}</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### 3. TodayClasses.tsx
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Clock, User, CheckCircle, Calendar } from "lucide-react";
+import { useState } from "react";
+
+interface ClassSession {
+  id: string;
+  className: string;
+  time: string;
+  instructor: string;
+  location: string;
+  checkedIn: boolean;
+}
+
+interface TodayClassesProps {
+  classes: ClassSession[];
+  onCheckIn: (classId: string) => void;
+}
+
+export const TodayClasses = ({ classes, onCheckIn }: TodayClassesProps) => {
+  const [checkedInClasses, setCheckedInClasses] = useState<Set<string>>(
+    new Set(classes.filter(c => c.checkedIn).map(c => c.id))
+  );
+
+  const handleCheckIn = (classId: string) => {
+    setCheckedInClasses(prev => new Set([...prev, classId]));
+    onCheckIn(classId);
+  };
+
+  const isCheckedIn = (classId: string) => checkedInClasses.has(classId);
+
+  if (classes.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Aulas de Hoje
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p>Nenhuma aula agendada para hoje</p>
+            <p className="text-sm">Aproveite para descansar e se preparar para as próximas aulas!</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-primary" />
+          Aulas de Hoje
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {classes.map((classSession) => (
+          <div key={classSession.id} className="border rounded-lg p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold">{classSession.className}</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {classSession.location}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{classSession.time}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    <span>{classSession.instructor}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-shrink-0">
+                {isCheckedIn(classSession.id) ? (
+                  <div className="flex items-center gap-2 text-success">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">Confirmado</span>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => handleCheckIn(classSession.id)}
+                    className="bg-gradient-to-r from-primary to-dojo-red-light hover:from-primary/90 hover:to-dojo-red-light/90"
+                  >
+                    Confirmar Presença
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### 4. MonthlyAttendance.tsx
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Calendar, TrendingUp } from "lucide-react";
+
+interface MonthlyAttendanceProps {
+  attendedClasses: number;
+  totalClasses: number;
+  currentMonth: string;
+}
+
+export const MonthlyAttendance = ({ 
+  attendedClasses, 
+  totalClasses, 
+  currentMonth 
+}: MonthlyAttendanceProps) => {
+  const attendancePercentage = totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
+  
+  const getMotivationalMessage = (percentage: number) => {
+    if (percentage >= 90) return "Excelente frequência! Continue assim! 🏆";
+    if (percentage >= 70) return "Boa frequência! Você está no caminho certo! 💪";
+    if (percentage >= 50) return "Continue se esforçando, cada aula conta! 📈";
+    return "Que tal aumentar sua frequência? Venha treinar mais! 🥋";
+  };
+
+  const getProgressColor = (percentage: number) => {
+    if (percentage >= 80) return "bg-success";
+    if (percentage >= 60) return "bg-warning";
+    return "bg-destructive";
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-primary" />
+          Frequência em {currentMonth}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="text-center">
+          <div className="text-3xl font-bold text-primary mb-1">
+            {attendedClasses}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            aulas participadas de {totalClasses} disponíveis
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Progresso</span>
+            <span className="font-medium">{Math.round(attendancePercentage)}%</span>
+          </div>
+          <Progress 
+            value={attendancePercentage} 
+            className="h-2"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+          <TrendingUp className="w-4 h-4 text-primary flex-shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            {getMotivationalMessage(attendancePercentage)}
+          </p>
+        </div>
+
+        {attendancePercentage < 50 && totalClasses > 0 && (
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">
+              Faltam {Math.ceil(totalClasses * 0.5) - attendedClasses} aulas para atingir 50% de frequência
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### 5. SchoolNotices.tsx
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Calendar, Users, Award } from "lucide-react";
+
+interface Notice {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: "event" | "announcement" | "promotion" | "class";
+}
+
+interface SchoolNoticesProps {
+  notices: Notice[];
+}
+
+export const SchoolNotices = ({ notices }: SchoolNoticesProps) => {
+  const getNoticeIcon = (type: string) => {
+    const icons = {
+      event: Users,
+      announcement: Bell,
+      promotion: Award,
+      class: Calendar,
+    };
+    const Icon = icons[type as keyof typeof icons] || Bell;
+    return <Icon className="w-4 h-4" />;
+  };
+
+  const getNoticeColor = (type: string) => {
+    const colors = {
+      event: "bg-blue-100 text-blue-800 border-blue-300",
+      announcement: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      promotion: "bg-belt-gold text-belt-brown border-belt-brown",
+      class: "bg-green-100 text-green-800 border-green-300",
+    };
+    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-300";
+  };
+
+  if (notices.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-primary" />
+            Avisos e Eventos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p>Nenhum aviso no momento</p>
+            <p className="text-sm">Fique atento às novidades da escola!</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="w-5 h-5 text-primary" />
+          Avisos e Eventos
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {notices.slice(0, 3).map((notice) => (
+          <div key={notice.id} className="border rounded-lg p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="mt-0.5">
+                  {getNoticeIcon(notice.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm mb-1">{notice.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {notice.description}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline" className={getNoticeColor(notice.type)}>
+                {notice.date}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### 6. FinancialStatus.tsx
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CreditCard, AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
+
+interface Invoice {
+  id: string;
+  amount: number;
+  dueDate: string;
+  description: string;
+  status: "pending" | "overdue" | "paid";
+  paymentUrl?: string;
+}
+
+interface FinancialStatusProps {
+  invoices: Invoice[];
+  isFinancialResponsible: boolean;
+}
+
+export const FinancialStatus = ({ invoices, isFinancialResponsible }: FinancialStatusProps) => {
+  if (!isFinancialResponsible) {
+    return null;
+  }
+
+  const pendingInvoices = invoices.filter(invoice => invoice.status !== "paid");
+  const overdue = pendingInvoices.filter(invoice => invoice.status === "overdue");
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <Badge className="bg-success text-white">Pago</Badge>;
+      case "overdue":
+        return <Badge variant="destructive">Vencido</Badge>;
+      case "pending":
+        return <Badge variant="outline" className="border-warning text-warning">Pendente</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
+  };
+
+  if (pendingInvoices.length === 0) {
+    return (
+      <Card className="border-success/20 bg-success/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-success">
+            <CheckCircle className="w-5 h-5" />
+            Situação Financeira
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">
+            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+            <p className="font-medium text-success mb-2">Parabéns!</p>
+            <p className="text-sm text-muted-foreground">
+              Todas as mensalidades estão em dia. Continue assim!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={overdue.length > 0 ? "border-destructive/20 bg-destructive/5" : ""}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-primary" />
+          Situação Financeira
+          {overdue.length > 0 && (
+            <AlertTriangle className="w-4 h-4 text-destructive" />
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {overdue.length > 0 && (
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <span className="font-medium text-destructive">
+                {overdue.length} fatura{overdue.length > 1 ? 's' : ''} em atraso
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Regularize sua situação para continuar participando das aulas.
+            </p>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {pendingInvoices.map((invoice) => (
+            <div key={invoice.id} className="border rounded-lg p-4">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div className="flex-1">
+                  <h3 className="font-medium mb-1">{invoice.description}</h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Vencimento: {formatDate(invoice.dueDate)}</span>
+                    <span className="font-semibold text-foreground">
+                      {formatCurrency(invoice.amount)}
+                    </span>
+                  </div>
+                </div>
+                {getStatusBadge(invoice.status)}
+              </div>
+
+              {invoice.paymentUrl && (
+                <Button 
+                  size="sm" 
+                  className="w-full bg-gradient-to-r from-primary to-dojo-red-light hover:from-primary/90 hover:to-dojo-red-light/90"
+                  onClick={() => window.open(invoice.paymentUrl, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Pagar Agora (Pix/Boleto)
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {pendingInvoices.length > 0 && (
+          <div className="text-center pt-2">
+            <p className="text-xs text-muted-foreground">
+              Dúvidas? Entre em contato com a secretaria da escola
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+## 🎨 Configuração de Cores (tailwind.config.ts)
+```ts
+extend: {
+  colors: {
+    // Cores do dojo
+    dojo: {
+      red: 'hsl(var(--dojo-red))',
+      'red-light': 'hsl(var(--dojo-red-light))'
+    },
+    // Cores das faixas
+    belt: {
+      gold: 'hsl(var(--belt-gold))',
+      brown: 'hsl(var(--belt-brown))',
+      black: 'hsl(var(--belt-black))'
+    },
+    // Cores de status
+    success: 'hsl(var(--success))',
+    warning: 'hsl(var(--warning))',
+  }
+}
+```
+
+## 🎨 Variáveis CSS (index.css)
+```css
+:root {
+  /* Cores do dojo */
+  --dojo-red: 0 78% 56%;
+  --dojo-red-light: 0 78% 66%;
+  
+  /* Cores das faixas */
+  --belt-gold: 43 96% 56%;
+  --belt-brown: 30 45% 25%;
+  --belt-black: 0 0% 9%;
+  
+  /* Cores de status */
+  --success: 142 76% 36%;
+  --warning: 38 92% 50%;
+}
+```
+
+## 📋 Exemplo de Uso
+```tsx
+import { StudentDashboard } from "./components/StudentDashboard";
+
+const App = () => {
+  const mockData = {
+    student: {
+      name: "Carlos Silva",
+      currentBelt: {
+        name: "Faixa Roxa",
+        color: "purple",
+        promotionDate: "15/03/2024"
+      },
+      isFinancialResponsible: true
+    },
+    notices: [
+      {
+        id: "1",
+        title: "Seminário de Jiu-Jitsu",
+        description: "Grande seminário técnico no próximo sábado.",
+        date: "Sáb, 10/08",
+        type: "event" as const
+      }
+    ],
+    todayClasses: [
+      {
+        id: "class-1",
+        className: "Jiu-Jitsu Avançado",
+        time: "19:00 - 20:30",
+        instructor: "Professor Marcus",
+        location: "Tatame 1",
+        checkedIn: false
+      }
+    ],
+    attendance: {
+      attendedClasses: 12,
+      totalClasses: 16,
+      currentMonth: "Agosto"
+    },
+    invoices: [
+      {
+        id: "inv-1",
+        amount: 150.00,
+        dueDate: "2024-08-10",
+        description: "Mensalidade - Agosto 2024",
+        status: "pending" as const,
+        paymentUrl: "https://exemplo.com/pagamento/123"
+      }
+    ]
+  };
+
+  return (
+    <StudentDashboard
+      student={mockData.student}
+      notices={mockData.notices}
+      todayClasses={mockData.todayClasses}
+      attendance={mockData.attendance}
+      invoices={mockData.invoices}
+    />
+  );
+};
+
+export default App;
+```
+
+## 📦 Dependências Necessárias
+- React
+- Tailwind CSS
+- lucide-react (ícones)
+- shadcn/ui (componentes)
+
+## 🔧 Funcionalidades
+- ✅ Saudação personalizada com faixa atual
+- ✅ Avisos e eventos da escola
+- ✅ Aulas do dia com check-in
+- ✅ Frequência mensal com progresso
+- ✅ Situação financeira com pagamentos
+- ✅ Design responsivo (mobile-first)
+- ✅ Estados vazios informativos
+- ✅ Tema personalizado para artes marciais
+
+## 🚀 Próximos Passos
+1. Integrar com sua API backend
+2. Adicionar autenticação
+3. Conectar com sistema de pagamentos (ASAAS, Stripe, etc.)
+4. Implementar notificações push
+5. Adicionar relatórios detalhados

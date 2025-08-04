@@ -115,6 +115,8 @@ export function setupAuth(app: Express) {
               return done(null, false, { message: "Perfil de estudante não encontrado. Entre em contato com a administração." });
             }
           }
+
+
           
           return done(null, user);
         } catch (err) {
@@ -246,8 +248,12 @@ export function setupAuth(app: Express) {
           });
           
           console.log('📝 Activity log created for login');
+          
+          // Update login streak
+          await storage.updateLoginStreak(user.id);
+          console.log('🔥 Login streak updated for user:', user.id);
         } catch (logError) {
-          console.error('⚠️ Failed to create activity log:', logError);
+          console.error('⚠️ Failed to create activity log or update streak:', logError);
           // Don't fail the login for this
         }
         

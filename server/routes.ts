@@ -2456,6 +2456,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Login Streak Tracking Routes =====
+  
+  // Get user's streak statistics
+  app.get("/api/streak/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const stats = await storage.getLoginStreakStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching streak stats:', error);
+      res.status(500).json({ error: 'Failed to fetch streak statistics' });
+    }
+  });
+
+  // Get user achievements
+  app.get("/api/streak/achievements", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const achievements = await storage.getStreakAchievements(userId);
+      res.json({ achievements });
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+      res.status(500).json({ error: 'Failed to fetch achievements' });
+    }
+  });
+
+  // Get unread achievements  
+  app.get("/api/streak/achievements/unread", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const unreadAchievements = await storage.getUnreadAchievements(userId);
+      res.json({ achievements: unreadAchievements });
+    } catch (error) {
+      console.error('Error fetching unread achievements:', error);
+      res.status(500).json({ error: 'Failed to fetch unread achievements' });
+    }
+  });
+
+  // Mark achievement as read
+  app.post("/api/streak/achievements/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const achievementId = parseInt(req.params.id);
+      const success = await storage.markAchievementAsRead(achievementId);
+      
+      if (success) {
+        res.json({ message: 'Achievement marked as read' });
+      } else {
+        res.status(404).json({ error: 'Achievement not found' });
+      }
+    } catch (error) {
+      console.error('Error marking achievement as read:', error);
+      res.status(500).json({ error: 'Failed to mark achievement as read' });
+    }
+  });
+
+  // Get daily login records
+  app.get("/api/streak/history", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const days = parseInt(req.query.days as string) || 30;
+      const records = await storage.getDailyLoginRecords(userId, days);
+      res.json({ records });
+    } catch (error) {
+      console.error('Error fetching login history:', error);
+      res.status(500).json({ error: 'Failed to fetch login history' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

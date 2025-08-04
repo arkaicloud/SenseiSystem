@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import BeltIcon from '@/components/ui/belt-icon';
 import { useToast } from '@/hooks/use-toast';
+import StreakTracker from '@/components/streak/StreakTracker';
 
 export default function StudentDashboard() {
   const { t, locale } = useTranslations();
@@ -83,6 +84,8 @@ export default function StudentDashboard() {
       <div className="flex flex-col xl:flex-row gap-6">
         {/* Student Info & Plan */}
         <div className="w-full xl:w-1/3 space-y-6">
+          {/* Login Streak Tracker */}
+          <StreakTracker />
           {/* Student Card */}
           <Card className="bg-gray-800 border-gray-700 text-white">
             <CardHeader>

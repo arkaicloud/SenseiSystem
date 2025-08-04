@@ -13,8 +13,11 @@ import {
   dashboardCustomizations, type DashboardCustomization, type InsertDashboardCustomization,
   riskActions, type RiskAction, type InsertRiskAction,
   riskSettings, type RiskSettings, type InsertRiskSettings,
+  streakAchievements, type StreakAchievement, type InsertStreakAchievement,
+  dailyLoginRecords, type DailyLoginRecord, type InsertDailyLoginRecord,
   type StudentWithUser, type ClassWithInstructor,
-  type AttendanceWithDetails, type StudentPaymentWithDetails
+  type AttendanceWithDetails, type StudentPaymentWithDetails,
+  type UserWithStreakData
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, or } from "drizzle-orm";
 
@@ -117,6 +120,23 @@ export interface IStorage {
   updateRiskAction(id: number, action: Partial<RiskAction>): Promise<RiskAction | undefined>;
   getRiskSettings(): Promise<RiskSettings | undefined>;
   updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings>;
+
+  // Login Streak Tracking
+  updateUserLoginStreak(userId: number): Promise<User | undefined>;
+  getUserWithStreakData(userId: number): Promise<UserWithStreakData | undefined>;
+  createStreakAchievement(achievement: InsertStreakAchievement): Promise<StreakAchievement>;
+  getStreakAchievements(userId: number): Promise<StreakAchievement[]>;
+  getUnreadAchievements(userId: number): Promise<StreakAchievement[]>;
+  markAchievementAsRead(achievementId: number): Promise<boolean>;
+  createDailyLoginRecord(record: InsertDailyLoginRecord): Promise<DailyLoginRecord>;
+  getDailyLoginRecords(userId: number, days?: number): Promise<DailyLoginRecord[]>;
+  getLoginStreakStats(userId: number): Promise<{
+    currentStreak: number;
+    longestStreak: number;
+    totalLogins: number;
+    lastLoginDate: Date | null;
+    recentAchievements: StreakAchievement[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -133,6 +153,8 @@ export class MemStorage implements IStorage {
   private dashboardCustomizations: Map<number, DashboardCustomization>;
   private riskActions: Map<number, RiskAction>;
   private riskSettings: RiskSettings | undefined;
+  private streakAchievements: Map<number, StreakAchievement>;
+  private dailyLoginRecords: Map<number, DailyLoginRecord>;
 
   private userCurrentId: number;
   private studentCurrentId: number;
@@ -145,6 +167,8 @@ export class MemStorage implements IStorage {
   private schoolPaymentCurrentId: number;
   private dashboardCustomizationCurrentId: number;
   private riskActionCurrentId: number;
+  private streakAchievementCurrentId: number;
+  private dailyLoginRecordCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -158,6 +182,8 @@ export class MemStorage implements IStorage {
     this.schoolPayments = new Map();
     this.dashboardCustomizations = new Map();
     this.riskActions = new Map();
+    this.streakAchievements = new Map();
+    this.dailyLoginRecords = new Map();
 
     this.userCurrentId = 1;
     this.studentCurrentId = 1;
@@ -170,6 +196,8 @@ export class MemStorage implements IStorage {
     this.schoolPaymentCurrentId = 1;
     this.dashboardCustomizationCurrentId = 1;
     this.riskActionCurrentId = 1;
+    this.streakAchievementCurrentId = 1;
+    this.dailyLoginRecordCurrentId = 1;
 
     this.seedData();
   }
@@ -1587,6 +1615,206 @@ export class DatabaseStorage implements IStorage {
   async deleteSchoolPayment(id: number): Promise<boolean> {
     const result = await db.delete(schoolPayments).where(eq(schoolPayments.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Login Streak Tracking Methods
+  async updateUserLoginStreak(userId: number): Promise<User | undefined> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    const lastLoginDate = user.lastLoginDate ? new Date(user.lastLoginDate) : null;
+    let newStreak = 1;
+    let streakBroken = false;
+
+    if (lastLoginDate) {
+      lastLoginDate.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === 0) {
+        // Same day login - don't update streak
+        return user;
+      } else if (daysDiff === 1) {
+        // Consecutive day - continue streak
+        newStreak = (user.currentStreak || 0) + 1;
+      } else {
+        // Streak broken
+        newStreak = 1;
+        streakBroken = true;
+      }
+    }
+
+    // Update user with new streak data
+    const updatedUser = await this.updateUser(userId, {
+      currentStreak: newStreak,
+      longestStreak: Math.max(user.longestStreak || 0, newStreak),
+      lastLoginDate: new Date(),
+      totalLogins: (user.totalLogins || 0) + 1
+    });
+
+    // Create daily login record
+    await this.createDailyLoginRecord({
+      userId,
+      loginDate: new Date(),
+      streakDay: newStreak,
+      bonusPoints: this.calculateBonusPoints(newStreak)
+    });
+
+    // Check for achievements
+    await this.checkAndCreateStreakAchievements(userId, newStreak, user.totalLogins || 0, streakBroken);
+
+    return updatedUser;
+  }
+
+  async getUserWithStreakData(userId: number): Promise<UserWithStreakData | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    const achievements = await this.getStreakAchievements(userId);
+    const recentLogins = await this.getDailyLoginRecords(userId, 30);
+
+    return {
+      ...user,
+      streakAchievements: achievements,
+      dailyLoginRecords: recentLogins
+    };
+  }
+
+  async createStreakAchievement(achievement: InsertStreakAchievement): Promise<StreakAchievement> {
+    const [newAchievement] = await db.insert(streakAchievements).values({
+      ...achievement,
+      earnedDate: new Date()
+    }).returning();
+    return newAchievement;
+  }
+
+  async getStreakAchievements(userId: number): Promise<StreakAchievement[]> {
+    return await db.select().from(streakAchievements)
+      .where(eq(streakAchievements.userId, userId))
+      .orderBy(desc(streakAchievements.earnedDate));
+  }
+
+  async getUnreadAchievements(userId: number): Promise<StreakAchievement[]> {
+    return await db.select().from(streakAchievements)
+      .where(and(
+        eq(streakAchievements.userId, userId),
+        eq(streakAchievements.isDisplayed, true)
+      ))
+      .orderBy(desc(streakAchievements.earnedDate));
+  }
+
+  async markAchievementAsRead(achievementId: number): Promise<boolean> {
+    const result = await db.update(streakAchievements)
+      .set({ isDisplayed: false })
+      .where(eq(streakAchievements.id, achievementId));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async createDailyLoginRecord(record: InsertDailyLoginRecord): Promise<DailyLoginRecord> {
+    const [newRecord] = await db.insert(dailyLoginRecords).values({
+      ...record,
+      createdAt: new Date()
+    }).returning();
+    return newRecord;
+  }
+
+  async getDailyLoginRecords(userId: number, days: number = 30): Promise<DailyLoginRecord[]> {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days);
+
+    return await db.select().from(dailyLoginRecords)
+      .where(and(
+        eq(dailyLoginRecords.userId, userId),
+        gte(dailyLoginRecords.loginDate, fromDate)
+      ))
+      .orderBy(desc(dailyLoginRecords.loginDate));
+  }
+
+  async getLoginStreakStats(userId: number): Promise<{
+    currentStreak: number;
+    longestStreak: number;
+    totalLogins: number;
+    lastLoginDate: Date | null;
+    recentAchievements: StreakAchievement[];
+  }> {
+    const user = await this.getUser(userId);
+    const recentAchievements = await db.select().from(streakAchievements)
+      .where(eq(streakAchievements.userId, userId))
+      .orderBy(desc(streakAchievements.earnedDate))
+      .limit(5);
+
+    return {
+      currentStreak: user?.currentStreak || 0,
+      longestStreak: user?.longestStreak || 0,
+      totalLogins: user?.totalLogins || 0,
+      lastLoginDate: user?.lastLoginDate || null,
+      recentAchievements
+    };
+  }
+
+  // Helper methods for streak achievements
+  private calculateBonusPoints(streakDay: number): number {
+    if (streakDay >= 30) return 50;
+    if (streakDay >= 14) return 30;
+    if (streakDay >= 7) return 20;
+    if (streakDay >= 3) return 10;
+    return 5;
+  }
+
+  private async checkAndCreateStreakAchievements(userId: number, currentStreak: number, totalLogins: number, streakBroken: boolean): Promise<void> {
+    const existingAchievements = await this.getStreakAchievements(userId);
+    const achievementTypes = existingAchievements.map(a => `${a.achievementType}_${a.streakCount}`);
+
+    // Streak achievements
+    const streakMilestones = [3, 7, 14, 30, 60, 100, 365];
+    for (const milestone of streakMilestones) {
+      if (currentStreak >= milestone && !achievementTypes.includes(`streak_${milestone}`)) {
+        await this.createStreakAchievement({
+          userId,
+          achievementType: 'streak',
+          achievementName: `${milestone} Dias Consecutivos`,
+          achievementDescription: `Parabéns! Você fez login por ${milestone} dias consecutivos!`,
+          streakCount: milestone,
+          iconName: 'flame',
+          iconColor: milestone >= 30 ? '#f59e0b' : '#ef4444',
+          isDisplayed: true
+        });
+      }
+    }
+
+    // Total login achievements
+    const loginMilestones = [10, 25, 50, 100, 250, 500, 1000];
+    for (const milestone of loginMilestones) {
+      if (totalLogins >= milestone && !achievementTypes.includes(`total_logins_${milestone}`)) {
+        await this.createStreakAchievement({
+          userId,
+          achievementType: 'total_logins',
+          achievementName: `${milestone} Logins Totais`,
+          achievementDescription: `Impressionante! Você fez ${milestone} logins no sistema!`,
+          streakCount: milestone,
+          iconName: 'trophy',
+          iconColor: '#22c55e',
+          isDisplayed: true
+        });
+      }
+    }
+
+    // Comeback achievement (after streak broken)
+    if (streakBroken && currentStreak === 1) {
+      const comebackCount = existingAchievements.filter(a => a.achievementType === 'comeback').length;
+      await this.createStreakAchievement({
+        userId,
+        achievementType: 'comeback',
+        achievementName: 'De Volta ao Jogo',
+        achievementDescription: 'Nunca desista! Você voltou e começou uma nova sequência!',
+        streakCount: comebackCount + 1,
+        iconName: 'refresh-cw',
+        iconColor: '#3b82f6',
+        isDisplayed: true
+      });
+    }
   }
 }
 

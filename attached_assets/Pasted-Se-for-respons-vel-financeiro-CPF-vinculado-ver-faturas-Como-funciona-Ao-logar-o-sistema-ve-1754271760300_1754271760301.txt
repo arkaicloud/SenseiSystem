@@ -1,0 +1,75 @@
+Se for responsável financeiro (CPF vinculado): ver faturas
+Como funciona:
+
+Ao logar, o sistema verifica se o CPF do aluno está vinculado a algum ResponsávelFinanceiro
+
+Se sim, exibe um painel financeiro com:
+
+Faturas em aberto (mensalidades)
+
+Pagamentos realizados
+
+Link de pagamento ASAAS (boleto ou Pix)
+
+Status: pago / pendente / vencido
+
+Benefícios:
+
+Diminui inadimplência
+
+Dá mais autonomia ao responsável
+
+Reduz a dependência do atendimento da escola
+
+2. ✅ Histórico de Presenças / Aulas Participadas
+O que mostrar:
+
+Lista simples com data, nome da turma, professor, status: ✅ Presente / ❌ Ausente
+
+Filtro por mês (ou semana)
+
+Exibir total do mês: Você participou de 6 aulas em julho
+
+Dica visual:
+
+txt
+Copiar
+Editar
+📅 02/08 – Turma Iniciantes – Prof. Carlos – ✅ Presente  
+📅 04/08 – Turma Iniciantes – Prof. Carlos – ❌ Ausente
+Extras possíveis:
+
+Gráfico de barras por mês
+
+Medalhinhas ou frases motivacionais
+
+🔧 Prompt Replit – Painel do Aluno com Financeiro e Histórico de Presenças
+
+Adicione ao Painel do Aluno no SenseiSystem (React + Tailwind + Node.js/Prisma) as seguintes funcionalidades adicionais:
+
+🎯 1. Financeiro (se o aluno for responsável financeiro):
+- Verificar se o CPF do aluno está cadastrado na tabela `ResponsavelFinanceiro`
+- Se sim, exibir um painel com:
+  - Faturas em aberto (via API ASAAS)
+  - Valor, vencimento e status (pago, vencido, pendente)
+  - Botão/link para pagamento (boleto, Pix)
+  - Histórico de pagamentos
+
+⚙️ Backend:
+- Endpoint: `/api/financeiro/:cpf`
+- Buscar os dados da API do ASAAS filtrando por `customer.cpfCnpj`
+
+🎯 2. Histórico de Presenças:
+- Criar seção com listagem das últimas aulas que o aluno participou
+- Mostrar: data, horário, nome da turma, professor, status de presença
+- Exibir total do mês (ex: 6 aulas confirmadas em agosto)
+- Design responsivo, com ícones para ✅ presente e ❌ ausente
+
+📘 Extras:
+- Se o aluno não for responsável financeiro, esconder a seção
+- Permitir alternar entre "Próximas Aulas" e "Histórico de Aulas"
+- Mostrar uma mensagem se não houver presença registrada
+- Ao confirmar mudar o botão para aula confirmada 
+
+
+

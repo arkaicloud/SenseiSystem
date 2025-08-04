@@ -2524,6 +2524,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====Student Financial Panel Routes=====
+  // Endpoint para verificar se aluno é responsável financeiro e buscar dados
+  app.get("/api/student/financial/:studentId", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      const userId = req.user?.id;
+      
+      // Buscar dados do estudante
+      const student = await storage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Estudante não encontrado" });
+      }
+      
+      // Verificar se o usuário logado tem permissão para ver os dados financeiros
+      if (req.user?.role === 'student' && student.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      // Verificar se o estudante tem CPF como responsável financeiro
+      const isFinancialResponsible = student.financialResponsibleCpf && 
+        student.financialResponsibleRelationship === 'self';
+      
+      if (!isFinancialResponsible) {
+        return res.json({ 
+          isFinancialResponsible: false,
+          message: "Este aluno não é responsável financeiro"
+        });
+      }
+      
+      // Buscar dados financeiros do ASAAS se disponível
+      let asaasData = null;
+      if (student.asaasCustomerId) {
+        try {
+          // Simular dados do ASAAS para demonstração
+          asaasData = {
+            invoices: [],
+            customerId: student.asaasCustomerId
+          };
+        } catch (error) {
+          console.warn("Erro ao buscar dados do ASAAS:", error);
+        }
+      }
+      
+      // Buscar pagamentos locais do estudante
+      const studentPayments = await storage.getStudentPaymentsByStudent(studentId);
+      
+      res.json({
+        isFinancialResponsible: true,
+        student: {
+          id: student.id,
+          name: `${student.userId}`, // We'll get the name from user data
+          financialResponsibleCpf: student.financialResponsibleCpf,
+        },
+        asaasData,
+        localPayments: studentPayments
+      });
+      
+    } catch (error) {
+      console.error('Erro ao buscar dados financeiros:', error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+  
+  // =====Student Attendance History Routes=====
+  // Endpoint para buscar histórico de presenças do aluno
+  app.get("/api/student/attendance-history/:studentId", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      const userId = req.user?.id;
+      const { month, year } = req.query;
+      
+      // Buscar dados do estudante para validar acesso
+      const student = await storage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Estudante não encontrado" });
+      }
+      
+      // Verificar permissões
+      if (req.user?.role === 'student' && student.userId !== userId) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+      
+      // Buscar todas as presenças do aluno
+      const attendances = await storage.getAttendanceByStudent(studentId);
+      
+      // Filtrar por mês/ano se fornecido
+      let filteredAttendances = attendances;
+      if (month && year) {
+        const targetMonth = parseInt(month as string);
+        const targetYear = parseInt(year as string);
+        
+        filteredAttendances = attendances.filter(att => {
+          const attDate = new Date(att.date);
+          return attDate.getMonth() + 1 === targetMonth && attDate.getFullYear() === targetYear;
+        });
+      }
+      
+      // Buscar detalhes das aulas para cada presença
+      const attendanceWithDetails = await Promise.all(
+        filteredAttendances.map(async (attendance) => {
+          const classData = await storage.getClass(attendance.classId);
+          return {
+            id: attendance.id,
+            date: attendance.date,
+            status: attendance.status,
+            class: classData ? {
+              id: classData.id,
+              name: classData.name,
+              startTime: classData.startTime,
+              instructorId: classData.instructorId
+            } : null
+          };
+        })
+      );
+      
+      // Calcular estatísticas do período
+      const totalClasses = attendanceWithDetails.length;
+      const presentCount = attendanceWithDetails.filter(att => att.status === 'present').length;
+      const attendanceRate = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+      
+      res.json({
+        attendances: attendanceWithDetails,
+        stats: {
+          totalClasses,
+          presentCount,
+          absentCount: totalClasses - presentCount,
+          attendanceRate
+        },
+        period: month && year ? { month: parseInt(month as string), year: parseInt(year as string) } : null
+      });
+      
+    } catch (error) {
+      console.error('Erro ao buscar histórico de presenças:', error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

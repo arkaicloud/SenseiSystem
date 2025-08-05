@@ -69,14 +69,25 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           {!documentCompleted ? (
             <div>
               <p className="text-sm text-muted-foreground mb-4">
-                Complete o questionário de saúde obrigatório abaixo:
+                Complete o questionário de saúde obrigatório:
               </p>
-              <div className="border rounded-lg overflow-hidden">
-                <DocusealForm
-                  src="https://sign.arkaicloud.com.br/d/VMPk9dCNbCHyoE"
-                  onComplete={handleDocumentComplete}
-                  className="w-full min-h-[500px]"
-                />
+              <div className="border rounded-lg p-6 bg-muted/20">
+                <div className="text-center space-y-4">
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <div>
+                    <h4 className="font-medium">Questionário de Saúde</h4>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Para prosseguir, confirme que você leu e concorda com os termos do questionário de saúde.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDocumentComplete}
+                    className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Concordo e Prosseguir
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

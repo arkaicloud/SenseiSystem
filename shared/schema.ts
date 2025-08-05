@@ -35,7 +35,10 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: userRoleEnum("role").notNull().default('student'),
   phone: text("phone"),
+  cpf: text("cpf"), // Campo CPF para o usuário
+  rg: text("rg"), // Campo RG para o usuário
   emergencyContact: text("emergency_contact"),
+  emergencyPhone: text("emergency_phone"), // Campo para telefone de emergência
   birthDate: timestamp("birth_date"),
   street: text("street"),
   number: text("number"),

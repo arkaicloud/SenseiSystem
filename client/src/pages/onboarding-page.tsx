@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { CheckCircle, User, Heart, FileText, ArrowLeft } from "lucide-react";
 import PersonalInfoStep, { type PersonalInfoData } from "@/components/onboarding/steps/PersonalInfoStep";
 import HealthFormStep, { type HealthFormData } from "@/components/onboarding/steps/HealthFormStep";
@@ -19,11 +20,44 @@ type OnboardingData = PersonalInfoData & HealthFormData & {
   confirmPassword: string;
 };
 
+// Chave para o localStorage
+const ONBOARDING_CACHE_KEY = "senseisystem_onboarding_cache";
+const ONBOARDING_STEP_KEY = "senseisystem_onboarding_step";
+
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>({});
+  // Função para carregar dados do cache
+  const loadCachedData = (): Partial<OnboardingData> => {
+    try {
+      const cached = localStorage.getItem(ONBOARDING_CACHE_KEY);
+      if (cached) {
+        const parsedData = JSON.parse(cached);
+        console.log('📥 Dados carregados do cache:', parsedData);
+        return parsedData;
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar cache:', error);
+    }
+    return {};
+  };
+
+  // Função para carregar step do cache
+  const loadCachedStep = (): number => {
+    try {
+      const cached = localStorage.getItem(ONBOARDING_STEP_KEY);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar step:', error);
+    }
+    return 1;
+  };
+
+  const [currentStep, setCurrentStep] = useState(loadCachedStep());
+  const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>(loadCachedData());
   const [success, setSuccess] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string>("");
   const { toast } = useToast();
 
   // Student registration mutation
@@ -32,6 +66,8 @@ export default function OnboardingPage() {
       return await apiRequest('POST', '/api/register-student', data);
     },
     onSuccess: () => {
+      // Limpar cache após sucesso
+      clearCache();
       setSuccess(true);
       toast({
         title: "Cadastro Realizado com Sucesso!",
@@ -39,13 +75,45 @@ export default function OnboardingPage() {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro no Cadastro",
-        description: `Falha ao processar sua matrícula: ${error.message || error}`,
-        variant: "destructive",
-      });
+      const errorMessage = error.message || error.toString();
+      setRegistrationError(errorMessage);
+      
+      // Toast mais específico para email em uso
+      if (errorMessage.includes("Email already in use")) {
+        toast({
+          title: "Email já cadastrado",
+          description: "Este email já está em uso. Tente com outro email ou faça login.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro no Cadastro",
+          description: `Falha ao processar sua matrícula: ${errorMessage}`,
+          variant: "destructive",
+        });
+      }
     },
   });
+
+  // Salvar dados no localStorage sempre que houver mudança
+  useEffect(() => {
+    try {
+      localStorage.setItem(ONBOARDING_CACHE_KEY, JSON.stringify(onboardingData));
+      console.log('💾 Dados salvos no cache');
+    } catch (error) {
+      console.warn('⚠️ Erro ao salvar cache:', error);
+    }
+  }, [onboardingData]);
+
+  // Salvar step no localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(ONBOARDING_STEP_KEY, JSON.stringify(currentStep));
+      console.log('💾 Step salvo no cache:', currentStep);
+    } catch (error) {
+      console.warn('⚠️ Erro ao salvar step:', error);
+    }
+  }, [currentStep]);
 
   // Detectar se é mobile
   useEffect(() => {
@@ -59,14 +127,37 @@ export default function OnboardingPage() {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
+  // Função para limpar cache
+  const clearCache = () => {
+    try {
+      localStorage.removeItem(ONBOARDING_CACHE_KEY);
+      localStorage.removeItem(ONBOARDING_STEP_KEY);
+      console.log('🗑️ Cache limpo após cadastro concluído');
+    } catch (error) {
+      console.warn('⚠️ Erro ao limpar cache:', error);
+    }
+  };
+
+  // Função para resetar email em caso de erro
+  const resetEmailField = () => {
+    setOnboardingData(prev => ({
+      ...prev,
+      email: ""
+    }));
+    setCurrentStep(1);
+    setRegistrationError("");
+  };
+
   const handlePersonalInfoSubmit = (data: any) => {
     setOnboardingData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
+    setRegistrationError(""); // Limpar erro anterior
   };
 
   const handleHealthFormSubmit = (data: any) => {
     setOnboardingData(prev => ({ ...prev, ...data }));
     setCurrentStep(3);
+    setRegistrationError(""); // Limpar erro anterior
   };
 
   const handleDocumentsSubmit = (data: any) => {
@@ -176,9 +267,32 @@ export default function OnboardingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card className="border-0 shadow-lg">
             <CardContent className="pt-6 sm:pt-8 pb-4 sm:pb-6">
-              {error && (
+              {/* Erro de registro */}
+              {registrationError && (
                 <Alert variant="destructive" className="mb-6">
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>
+                    {registrationError}
+                    {registrationError.includes("Email already in use") && (
+                      <div className="mt-3 flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={resetEmailField}
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          Alterar Email
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => window.location.href = '/'}
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          Fazer Login
+                        </Button>
+                      </div>
+                    )}
+                  </AlertDescription>
                 </Alert>
               )}
 

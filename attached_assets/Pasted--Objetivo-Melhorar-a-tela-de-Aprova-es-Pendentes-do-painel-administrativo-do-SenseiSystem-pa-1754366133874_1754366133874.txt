@@ -1,0 +1,99 @@
+🎯 Objetivo:
+Melhorar a tela de “Aprovações Pendentes” do painel administrativo do SenseiSystem, para permitir:
+
+- Visualizar todos os alunos pendentes de forma organizada
+- Filtrar e pesquisar rapidamente por status
+- Expandir ou colapsar informações de cada aluno
+- Atribuir ou editar plano de pagamento diretamente
+- Aprovar com disparo automático da criação de cliente e cobrança no ASAAS
+
+---
+
+## 🧱 Estrutura recomendada da nova interface
+
+### 🔍 1. Filtros e Pesquisa no topo
+- Campo de busca por nome ou e-mail
+- Filtros por:
+  - ✅ Com dados completos
+  - ❌ Dados incompletos
+  - ⏳ Aguardando Plano
+  - 🔒 Menores de idade (para triagem com responsável)
+- Botão: "Somente alunos com cobrança pronta"
+
+---
+
+### 📄 2. Lista colapsável (modo compacto)
+- Mostre cartões com:
+  - Nome, data de cadastro
+  - Indicador de status: ✅ Dados OK | ⚠️ Incompleto
+  - Ícone de seta para expandir (dropdown ou modal lateral)
+
+---
+
+### 📂 3. Ao clicar no aluno (expandir detalhes):
+- Mostrar:
+  - Dados pessoais (e-mail, telefone)
+  - Responsável financeiro: nome + CPF (se menor)
+  - Plano de pagamento (dropdown editável)
+  - Observações (ex: “Aguardando confirmação do responsável”)
+
+---
+
+### 🧠 Ações no detalhe:
+- ✅ Botão “Aprovar e Criar Cobrança”
+  - Cria o `customer` no ASAAS (se necessário)
+  - Cria `payment` com valor e vencimento
+  - Salva `asaasCustomerId`, `asaasPaymentId`, `link` no banco
+  - Atualiza `aluno.status = 'ativo'`
+  - Atualiza `contas_receber`
+
+- ❌ Botão “Rejeitar”
+  - Exige motivo
+  - Salva como `status = rejeitado`
+
+- 🧾 Botão: “Editar Plano”
+  - Modal com planos disponíveis e vencimento
+
+---
+
+### 🔐 Segurança e validação:
+- Bloquear botão de aprovação se:
+  - ❌ Não houver plano
+  - ❌ CPF do responsável estiver ausente
+  - ❌ Responsável menor de idade sem vínculo
+
+- Se tudo OK → botão fica verde com tooltip "Pronto para cobrança"
+
+---
+
+### ✅ Backend / Fluxo de dados (API)
+- GET `/api/alunos/pendentes` com filtros e paginação
+- POST `/api/aluno/:id/aprovar`
+  - Verifica dados obrigatórios
+  - Cria cliente ASAAS se necessário
+  - Cria cobrança e salva título
+  - Retorna status e link de pagamento
+
+---
+
+### 💡 Extras criativos sugeridos:
+
+| Função | Descrição |
+|--------|-----------|
+| 🕵️‍♂️ Validação automática | Sistema pode checar e alertar: “Faltam dados financeiros para este aluno” |
+| 📤 Exportar CSV | Exportar lista de alunos pendentes |
+| 🕘 Cronologia | Mostrar tempo desde cadastro para priorizar |
+| 📌 Favoritar alunos para aprovação em lote |
+
+---
+
+## 🧠 Pedido à IA:
+Com base nesse contexto, crie:
+
+- O novo componente visual da tela com lista colapsável + filtros
+- Componente de detalhe do aluno (expandido)
+- Botões de ação para aprovação, rejeição, edição de plano
+- Integração com API do ASAAS na aprovação
+- Validações e UX clara para administradores
+
+Stack: React + Tailwind + Node.js + Prisma + Axios + ASAAS API

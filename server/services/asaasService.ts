@@ -1,38 +1,11 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import { storage } from '../storage';
+import axios, { AxiosInstance } from 'axios';
 
-// Types for ASAAS API
-interface AsaasCustomer {
-  id: string;
+// ASAAS API Types - Seguindo ARKAIDEV checklist
+export interface CreateCustomerRequest {
   name: string;
-  cpfCnpj: string;
-  email?: string;
-  mobilePhone?: string;
-  postalCode?: string;
-  addressNumber?: string;
-  addressComplement?: string;
-}
-
-interface AsaasPayment {
-  id: string;
-  customer: string;
-  billingType: 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER';
-  value: number;
-  netValue?: number;
-  dueDate: string;
-  description?: string;
-  externalReference?: string;
-  status: string;
-  invoiceUrl?: string;
-  bankSlipUrl?: string;
-  pixQrCode?: string;
-  pixCopyAndPaste?: string;
-}
-
-interface CreateCustomerRequest {
-  name: string;
-  email?: string;
+  email: string;
   phone?: string;
+  mobilePhone?: string;
   cpfCnpj: string;
   postalCode?: string;
   address?: string;
@@ -44,82 +17,125 @@ interface CreateCustomerRequest {
   observations?: string;
 }
 
-interface CreatePaymentRequest {
+export interface AsaasCustomer {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  mobilePhone?: string;
+  cpfCnpj: string;
+  postalCode?: string;
+  address?: string;
+  addressNumber?: string;
+  complement?: string;
+  province?: string;
+  externalReference?: string;
+  notificationDisabled: boolean;
+  observations?: string;
+}
+
+export interface CreatePaymentRequest {
   customer: string;
-  billingType: 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER';
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'DEBIT_CARD' | 'TRANSFER';
   value: number;
-  dueDate: string;
+  dueDate: string; // YYYY-MM-DD
   description?: string;
   externalReference?: string;
   notificationEnabled?: boolean;
 }
 
+export interface AsaasPayment {
+  id: string;
+  customer: string;
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'DEBIT_CARD' | 'TRANSFER';
+  status: string;
+  value: number;
+  netValue?: number;
+  dueDate: string;
+  description?: string;
+  externalReference?: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCode?: string;
+  pixCopyAndPaste?: string;
+}
+
+/**
+ * ASAAS Service - Implementado seguindo ARKAIDEV checklist
+ * URL Sandbox: https://sandbox.asaas.com/api/v3
+ * Header: Authorization: Bearer <API_KEY>
+ */
 export class AsaasService {
   private client: AxiosInstance;
-  private apiKey: string | null = null;
+  private readonly apiKey: string;
 
   constructor() {
+    this.apiKey = process.env.ASAAS_API_KEY || '';
+    
+    if (!this.apiKey) {
+      throw new Error('ASAAS_API_KEY environment variable is required');
+    }
+
+    console.log('🔑 ASAAS API Key loaded from environment (length:', this.apiKey.length, ')');
+    console.log('🔧 ASAAS Service initialized with Sandbox URL');
+
+    // Configuração exata conforme ARKAIDEV checklist
     this.client = axios.create({
       baseURL: 'https://sandbox.asaas.com/api/v3',
-      timeout: 30000,
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json'
       },
+      timeout: 30000
     });
 
-    // Add request interceptor to include API key
-    this.client.interceptors.request.use(async (config) => {
-      if (!this.apiKey) {
-        await this.loadApiKey();
-      }
-      
-      if (this.apiKey) {
-        config.headers.Authorization = `Bearer ${this.apiKey}`;
-      }
-      
+    // Log de requisições para debug
+    this.client.interceptors.request.use((config) => {
+      console.log('📤 ASAAS Request:', config.method?.toUpperCase(), config.url);
       return config;
     });
 
-    // Add response interceptor for error handling
     this.client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        console.error('ASAAS API Error:', {
+      (response) => {
+        console.log('📥 ASAAS Response OK:', response.status, response.config.url);
+        return response;
+      },
+      (error) => {
+        console.error('❌ ASAAS API Error:', {
           status: error.response?.status,
           data: error.response?.data,
-          message: error.message,
+          message: error.message
         });
-        throw error;
+        return Promise.reject(error);
       }
     );
   }
 
-  private async loadApiKey(): Promise<void> {
+  /**
+   * Teste de conexão seguindo ARKAIDEV checklist
+   */
+  async testConnection(): Promise<{ success: boolean; message: string; data?: any }> {
     try {
-      // First try environment variable
-      if (process.env.ASAAS_API_KEY) {
-        this.apiKey = process.env.ASAAS_API_KEY;
-        console.log('✅ ASAAS API Key loaded from environment');
-        return;
-      }
-
-      // Fallback to database config
-      const config = await storage.getSchoolConfig();
-      if (config?.asaasApiKey) {
-        this.apiKey = config.asaasApiKey;
-        console.log('✅ ASAAS API Key loaded from database');
-        return;
-      }
+      console.log('🧪 Testing ASAAS connection with /me endpoint...');
+      const response = await this.client.get('/me');
       
-      throw new Error('ASAAS API Key not configured in environment or database');
-    } catch (error) {
-      console.error('❌ Failed to load ASAAS API key:', error);
-      throw new Error('ASAAS integration not properly configured');
+      return {
+        success: true,
+        message: 'Conexão OK ✅',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('🔥 ASAAS Connection Test Failed:', error.response?.data || error.message);
+      
+      return {
+        success: false,
+        message: `Erro ASAAS ❌ - Status: ${error.response?.status || 'Unknown'} - ${error.response?.data?.errors?.[0]?.description || error.message}`
+      };
     }
   }
 
   /**
-   * Criar cliente no ASAAS com dados completos
+   * Criar cliente no ASAAS
    */
   async createCustomer(studentData: any): Promise<AsaasCustomer> {
     try {
@@ -253,25 +269,10 @@ export class AsaasService {
    */
   async isConfigured(): Promise<boolean> {
     try {
-      await this.loadApiKey();
-      return !!this.apiKey;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Testar conexão com ASAAS
-   */
-  async testConnection(): Promise<boolean> {
-    try {
-      await this.client.get('/customers?limit=1');
-      return true;
-    } catch {
+      const testResult = await this.testConnection();
+      return testResult.success;
+    } catch (error) {
       return false;
     }
   }
 }
-
-// Singleton instance
-export const asaasService = new AsaasService();

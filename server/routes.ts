@@ -3536,7 +3536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         zipCode: studentData.zipCode || null,
         complement: studentData.complement || null,
         neighborhood: studentData.neighborhood || null,
-        birthDate: studentData.birthDate ? new Date(studentData.birthDate) : null,
+        birthDate: studentData.birthDate || null,
         joinDate: new Date()
       });
 

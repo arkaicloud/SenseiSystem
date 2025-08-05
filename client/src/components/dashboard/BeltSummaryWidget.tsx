@@ -5,56 +5,35 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from '@/hooks/use-translations';
 
-interface BeltStats {
-  white: number;
-  blue: number;
-  purple: number;
-  brown: number;
-  black: number;
+interface BeltStat {
+  levelKey: string;
+  name: string;
+  color: string;
+  count: number;
+  order: number;
 }
 
-const beltConfig = {
-  white: {
-    name: 'Faixa Branca',
-    color: '#FFFFFF',
-    borderColor: '#000000',
-    textColor: '#000000',
-    emoji: '🥋'
-  },
-  blue: {
-    name: 'Faixa Azul',
-    color: '#0000FF',
-    borderColor: '#0000FF',
-    textColor: '#FFFFFF',
-    emoji: '🥋'
-  },
-  purple: {
-    name: 'Faixa Roxa',
-    color: '#800080',
-    borderColor: '#800080',
-    textColor: '#FFFFFF',
-    emoji: '🥋'
-  },
-  brown: {
-    name: 'Faixa Marrom',
-    color: '#964B00',
-    borderColor: '#964B00',
-    textColor: '#FFFFFF',
-    emoji: '🥋'
-  },
-  black: {
-    name: 'Faixa Preta',
-    color: '#000000',
-    borderColor: '#000000',
-    textColor: '#FFFFFF',
-    emoji: '🥇'
-  }
+// Helper function to determine text color based on background color
+const getTextColor = (hexColor: string): string => {
+  // Remove # if present
+  const color = hexColor.replace('#', '');
+  
+  // Convert to RGB
+  const r = parseInt(color.substr(0, 2), 16);
+  const g = parseInt(color.substr(2, 2), 16);
+  const b = parseInt(color.substr(4, 2), 16);
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return white for dark colors, black for light colors
+  return luminance > 0.5 ? '#000000' : '#FFFFFF';
 };
 
 export function BeltSummaryWidget() {
   const { t } = useTranslations();
 
-  const { data: beltStats, isLoading, error } = useQuery<BeltStats>({
+  const { data: beltStats, isLoading, error } = useQuery<BeltStat[]>({
     queryKey: ['/api/admin/stats/belts'],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
@@ -89,7 +68,7 @@ export function BeltSummaryWidget() {
     );
   }
 
-  const totalStudents = Object.values(beltStats || {}).reduce((sum, count) => sum + count, 0);
+  const totalStudents = beltStats ? beltStats.reduce((sum, belt) => sum + belt.count, 0) : 0;
 
   return (
     <Card>
@@ -102,37 +81,37 @@ export function BeltSummaryWidget() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {Object.entries(beltConfig).map(([beltKey, config]) => {
-          const count = beltStats?.[beltKey as keyof BeltStats] || 0;
-          const percentage = totalStudents > 0 ? (count / totalStudents * 100).toFixed(1) : '0';
+        {beltStats && beltStats.map((belt) => {
+          const percentage = totalStudents > 0 ? (belt.count / totalStudents * 100).toFixed(1) : '0';
+          const textColor = getTextColor(belt.color);
           
           return (
             <div 
-              key={beltKey}
+              key={belt.levelKey}
               className="flex items-center justify-between p-3 rounded-lg border transition-all hover:shadow-sm"
               style={{ 
-                backgroundColor: config.color + '15', // Add 15% opacity
-                borderColor: config.borderColor + '30' // Add 30% opacity to border
+                backgroundColor: belt.color + '15', // Add 15% opacity
+                borderColor: belt.color + '30' // Add 30% opacity to border
               }}
             >
               <div className="flex items-center gap-3">
                 <div 
                   className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold"
                   style={{ 
-                    backgroundColor: config.color,
-                    borderColor: config.borderColor,
-                    color: config.textColor
+                    backgroundColor: belt.color,
+                    borderColor: belt.color,
+                    color: textColor
                   }}
                 >
-                  {config.emoji}
+                  🥋
                 </div>
-                <span className="font-medium text-sm">{config.name}</span>
+                <span className="font-medium text-sm">{belt.name}</span>
               </div>
               
               <div className="flex items-center gap-2">
                 <div className="text-right">
                   <div className="font-bold text-lg">
-                    {count}
+                    {belt.count}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {percentage}%
@@ -141,8 +120,8 @@ export function BeltSummaryWidget() {
                 <div 
                   className="w-3 h-8 rounded-sm"
                   style={{ 
-                    backgroundColor: config.color,
-                    opacity: count > 0 ? 0.8 : 0.2
+                    backgroundColor: belt.color,
+                    opacity: belt.count > 0 ? 0.8 : 0.2
                   }}
                 />
               </div>

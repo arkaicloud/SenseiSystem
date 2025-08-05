@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, students } from "@shared/schema";
+import { users, students, beltLevels } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { 
@@ -67,6 +67,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =====Belt Statistics Route=====
   app.get("/api/admin/stats/belts", isAuthenticated, isAdmin, async (req, res) => {
     try {
+      // First get all available belts from the database
+      const allBelts = await db
+        .select({
+          levelKey: beltLevels.levelKey,
+          name: beltLevels.name,
+          color: beltLevels.colorCode,
+          order: beltLevels.order
+        })
+        .from(beltLevels)
+        .where(eq(beltLevels.active, true))
+        .orderBy(beltLevels.order);
+
+      // Then get the student count for each belt
       const beltStats = await db
         .select({
           beltLevel: students.beltLevel,
@@ -80,18 +93,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ))
         .groupBy(students.beltLevel);
 
-      // Convert to expected format
-      const result: { [key: string]: number } = {
-        white: 0,
-        blue: 0,
-        purple: 0,
-        brown: 0,
-        black: 0
-      };
-
+      // Create a map of belt counts
+      const countMap: { [key: string]: number } = {};
       beltStats.forEach(stat => {
-        result[stat.beltLevel] = stat.count;
+        countMap[stat.beltLevel] = stat.count;
       });
+
+      // Create result with all belts, including zero counts
+      const result = allBelts.map(belt => ({
+        levelKey: belt.levelKey,
+        name: belt.name,
+        color: belt.color,
+        count: countMap[belt.levelKey] || 0,
+        order: belt.order
+      }));
 
       res.json(result);
     } catch (error) {

@@ -20,7 +20,8 @@ import {
   insertRiskSettingsSchema,
   insertSchoolPaymentSchema,
   insertBeltLevelSchema,
-  beltLevels
+  beltLevels,
+  belts
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 import { dashboardMetricsService } from "./services/dashboardMetrics";

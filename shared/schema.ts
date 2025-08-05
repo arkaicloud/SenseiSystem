@@ -86,6 +86,9 @@ export const schoolConfig = pgTable("school_config", {
   schoolName: text("school_name").notNull().default("Academia de Jiu-Jitsu"),
   congratsMessage: text("congrats_message").notNull().default("🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!"),
   logoUrl: text("logo_url"),
+  logoLightUrl: text("logo_light_url"), // Logo for light theme
+  logoDarkUrl: text("logo_dark_url"),   // Logo for dark theme
+  logoTheme: text("logo_theme").default('default'), // 'default', 'light', 'dark', 'custom'
   address: text("address"),
   phone: text("phone"),
   email: text("email"),

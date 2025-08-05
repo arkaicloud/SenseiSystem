@@ -241,27 +241,86 @@ export default function LoginPage() {
               <div className="text-center mb-8">
                 {/* Logo or School Name */}
                 <div className="mb-4">
-                  {schoolConfig?.config?.logoUrl && 
-                   schoolConfig.config.logoUrl !== 'default' && 
-                   schoolConfig.config.logoUrl !== 'light' && 
-                   schoolConfig.config.logoUrl !== 'dark' ? (
-                    // Show custom logo
-                    <div className="mb-2">
-                      <img 
-                        src={schoolConfig.config.logoUrl} 
-                        alt="Logo da Escola"
-                        className="h-16 w-auto mx-auto object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    // Show school name in highlighted style (default SenseiSystem behavior)
-                    <h1 className="text-2xl font-bold text-red-600 dark:text-red-500 border-2 border-red-600 dark:border-red-500 px-4 py-2 inline-block rounded">
-                      {schoolConfig?.config?.schoolName?.toUpperCase() || "SENSEI SYSTEM"}
-                    </h1>
-                  )}
+                  {(() => {
+                    // Check for theme-specific logos first
+                    const lightLogo = schoolConfig?.config?.logoLightUrl;
+                    const darkLogo = schoolConfig?.config?.logoDarkUrl;
+                    const generalLogo = schoolConfig?.config?.logoUrl;
+                    
+                    // If we have theme-specific logos, use them
+                    if (lightLogo || darkLogo) {
+                      return (
+                        <div className="mb-2">
+                          {/* Light theme logo */}
+                          {lightLogo && (
+                            <img 
+                              src={lightLogo} 
+                              alt="Logo da Escola"
+                              className="h-16 w-auto mx-auto object-contain dark:hidden"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          {/* Dark theme logo */}
+                          {darkLogo && (
+                            <img 
+                              src={darkLogo} 
+                              alt="Logo da Escola"
+                              className="h-16 w-auto mx-auto object-contain hidden dark:block"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          {/* Fallback if only one theme logo exists */}
+                          {!lightLogo && darkLogo && (
+                            <img 
+                              src={darkLogo} 
+                              alt="Logo da Escola"
+                              className="h-16 w-auto mx-auto object-contain dark:hidden"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          {!darkLogo && lightLogo && (
+                            <img 
+                              src={lightLogo} 
+                              alt="Logo da Escola"
+                              className="h-16 w-auto mx-auto object-contain hidden dark:block"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    }
+                    
+                    // If we have a general logo (not default), use it
+                    if (generalLogo && generalLogo !== 'default') {
+                      return (
+                        <div className="mb-2">
+                          <img 
+                            src={generalLogo} 
+                            alt="Logo da Escola"
+                            className="h-16 w-auto mx-auto object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+                    
+                    // Default: Show school name in highlighted style
+                    return (
+                      <h1 className="text-2xl font-bold text-red-600 dark:text-red-500 border-2 border-red-600 dark:border-red-500 px-4 py-2 inline-block rounded">
+                        {schoolConfig?.config?.schoolName?.toUpperCase() || "SENSEI SYSTEM"}
+                      </h1>
+                    );
+                  })()}
                 </div>
                 <p className="text-slate-600 dark:text-slate-400">
                   {schoolConfig?.config?.welcomeMessage || "Seja bem-vindo"}

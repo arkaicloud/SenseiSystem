@@ -174,19 +174,43 @@ export default function SchoolConfigPage() {
                               </div>
                             )}
                             
-                            {/* Opções de logo */}
-                            <div className="flex flex-col gap-4">
+                            {/* Upload de arquivo */}
+                            <div className="space-y-4">
+                              <div className="text-sm font-medium text-gray-700">Opções de Logo:</div>
                               
-
-                              {/* Upload de arquivo */}
-                              <div className="border-t pt-3">
+                              {/* Logo Padrão */}
+                              <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="logoOption"
+                                  value="default"
+                                  checked={!field.value || field.value === 'default'}
+                                  onChange={() => field.onChange('default')}
+                                  className="text-blue-600"
+                                />
+                                <span className="text-sm text-gray-600">Usar Logo Padrão SenseiSystem</span>
+                              </label>
+                              
+                              {/* Upload de Logo Personalizado */}
+                              <div className="space-y-2">
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="logoOption"
+                                    value="custom"
+                                    checked={field.value && field.value !== 'default' && field.value.startsWith('data:')}
+                                    onChange={() => {}}
+                                    className="text-blue-600"
+                                  />
+                                  <span className="text-sm text-gray-600">Upload Logo Personalizado</span>
+                                </label>
+                                
                                 <input
                                   type="file"
                                   accept="image/*"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                      // Verificar tamanho (máximo 2MB)
                                       if (file.size > 2 * 1024 * 1024) {
                                         toast({
                                           title: "Arquivo muito grande",
@@ -195,62 +219,20 @@ export default function SchoolConfigPage() {
                                         });
                                         return;
                                       }
-                                      
-                                      // Converter para base64
                                       const reader = new FileReader();
                                       reader.onload = (event) => {
                                         const base64 = event.target?.result as string;
                                         field.onChange(base64);
                                         toast({
-                                          title: "Imagem carregada",
+                                          title: "Logo carregado",
                                           description: "Logo personalizado aplicado com sucesso",
                                         });
                                       };
                                       reader.readAsDataURL(file);
                                     }
                                   }}
-                                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                  className="ml-6 text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
-                                
-                                {/* Opções de tema do logo */}
-                                <div className="mt-4 space-y-2">
-                                  <div className="text-sm font-medium text-gray-700">Opções de Logo:</div>
-                                  <div className="space-y-2">
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                      <input
-                                        type="radio"
-                                        name="logoTheme"
-                                        value="default"
-                                        checked={!field.value || field.value === 'default'}
-                                        onChange={() => field.onChange('default')}
-                                        className="text-blue-600"
-                                      />
-                                      <span className="text-sm text-gray-600">Usar Logo Padrão SenseiSystem</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                      <input
-                                        type="radio"
-                                        name="logoTheme"
-                                        value="light"
-                                        checked={field.value === 'light'}
-                                        onChange={() => field.onChange('light')}
-                                        className="text-blue-600"
-                                      />
-                                      <span className="text-sm text-gray-600">Logo Tema Claro</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                      <input
-                                        type="radio"
-                                        name="logoTheme"
-                                        value="dark"
-                                        checked={field.value === 'dark'}
-                                        onChange={() => field.onChange('dark')}
-                                        className="text-blue-600"
-                                      />
-                                      <span className="text-sm text-gray-600">Logo Tema Escuro</span>
-                                    </label>
-                                  </div>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -258,9 +240,132 @@ export default function SchoolConfigPage() {
                         <FormMessage />
                         <div className="text-sm text-gray-500 space-y-1">
                           <p>• <strong>Logo Padrão:</strong> Usa o nome da escola em destaque no login</p>
-                          <p>• <strong>Tema Claro:</strong> Logo otimizado para fundo claro</p>
-                          <p>• <strong>Tema Escuro:</strong> Logo otimizado para fundo escuro</p>
-                          <p>• Faça upload de uma imagem personalizada se necessário</p>
+                          <p>• <strong>Tema Claro:</strong> Faça upload de um logo otimizado para fundos claros</p>
+                          <p>• <strong>Tema Escuro:</strong> Faça upload de um logo otimizado para fundos escuros</p>
+                          <p>• <strong>Logo Personalizado:</strong> Um logo único que funciona em qualquer tema</p>
+                          <p>• Tamanho máximo: 2MB • Formatos: PNG, JPG, JPEG</p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Logo Tema Claro */}
+                  <FormField
+                    control={form.control}
+                    name="logoLightUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo Tema Claro</FormLabel>
+                        <FormControl>
+                          <div className="space-y-4">
+                            {/* Preview do logo claro */}
+                            {field.value && (
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium text-gray-700">Preview Logo Claro:</p>
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                                  <img 
+                                    src={field.value} 
+                                    alt="Logo claro preview" 
+                                    className="max-w-full max-h-full object-contain rounded-lg"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 2 * 1024 * 1024) {
+                                    toast({
+                                      title: "Arquivo muito grande",
+                                      description: "Por favor, selecione uma imagem menor que 2MB",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    const base64 = event.target?.result as string;
+                                    field.onChange(base64);
+                                    toast({
+                                      title: "Logo tema claro carregado",
+                                      description: "Logo para tema claro aplicado com sucesso",
+                                    });
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                        <div className="text-sm text-gray-500">
+                          Logo otimizado para fundos claros (tema claro)
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Logo Tema Escuro */}
+                  <FormField
+                    control={form.control}
+                    name="logoDarkUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo Tema Escuro</FormLabel>
+                        <FormControl>
+                          <div className="space-y-4">
+                            {/* Preview do logo escuro */}
+                            {field.value && (
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium text-gray-700">Preview Logo Escuro:</p>
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-slate-900">
+                                  <img 
+                                    src={field.value} 
+                                    alt="Logo escuro preview" 
+                                    className="max-w-full max-h-full object-contain rounded-lg"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 2 * 1024 * 1024) {
+                                    toast({
+                                      title: "Arquivo muito grande",
+                                      description: "Por favor, selecione uma imagem menor que 2MB",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    const base64 = event.target?.result as string;
+                                    field.onChange(base64);
+                                    toast({
+                                      title: "Logo tema escuro carregado",
+                                      description: "Logo para tema escuro aplicado com sucesso",
+                                    });
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                        <div className="text-sm text-gray-500">
+                          Logo otimizado para fundos escuros (tema escuro)
                         </div>
                       </FormItem>
                     )}

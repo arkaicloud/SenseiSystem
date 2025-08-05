@@ -1,0 +1,53 @@
+Analisando o código atual, vou testar a criação de um aluno através do fluxo de onboarding. Primeiro, vou identificar os problemas que estão impedindo o funcionamento correto e corrigi-los.
+
+🔍 Análise do Problema Atual
+Vejo que há um erro no endpoint /api/students/at-risk retornando status 500, e também problemas de inicialização do i18n. Vou corrigir esses problemas e testar o fluxo completo de onboarding.
+
+🛠️ Correções Necessárias
+1. Corrigir o endpoint de alunos em risco
+server/routes.ts
+Fix students at-risk endpoint Fix students at-risk endpoint Fix student registration endpoint
+2. Corrigir o sistema de inicialização do i18n
+client/src/main.tsx
+Fix i18n initialization
+3. Corrigir o endpoint de registro de estudante no servidor
+4. Instalar dependência do i18next
+npm install react-i18next i18next
+🧪 Como Testar o Onboarding Completo
+Agora você pode testar o fluxo de onboarding seguindo estes passos:
+
+Acesse a página de onboarding: http://localhost:5000/onboarding-page
+
+Preencha os dados na Etapa 1 - Informações Pessoais:
+
+Nome: João
+Sobrenome: Silva
+Data de Nascimento: 1990-01-15
+Email: joao.silva@exemplo.com
+Telefone: (11) 99999-9999
+CPF: 123.456.789-00
+RG: 12.345.678-9
+Contato de Emergência: Maria Silva
+Telefone de Emergência: (11) 88888-8888
+Responsável Financeiro: Eu mesmo(a)
+Plano de Pagamento: Selecionar um dos planos disponíveis
+Data de Vencimento: 5
+CEP: 01310-100 (para autocompletar o endereço)
+Número: 123
+Complemento: Apto 45
+Etapa 2 - Saúde e Graduação:
+
+Complete o questionário de saúde DocuSeal
+Selecione graduação: Faixa Branca
+Graus: 0 graus
+Etapa 3 - Documentos:
+
+O sistema mostrará os documentos necessários
+Clique em "Finalizar Matrícula"
+O sistema agora deve:
+
+Criar o usuário na tabela users com status active: false
+Criar o registro do estudante na tabela students
+Associar os dados financeiros e de responsável
+Retornar sucesso e redirecionar para a tela de confirmação
+Após essas correções, teste o fluxo completo e me informe se há algum erro ou se o processo está funcionando corretamente!

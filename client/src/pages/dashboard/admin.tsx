@@ -30,6 +30,7 @@ import {
 import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
 import BeltSummaryAdultWidget from '@/components/dashboard/BeltSummaryAdultWidget';
 import BeltSummaryChildWidget from '@/components/dashboard/BeltSummaryChildWidget';
+import { FinancialCard } from '@/components/dashboard/FinancialCard';
 
 // Interface para métricas em tempo real
 interface DashboardMetrics {
@@ -222,59 +223,7 @@ const TodayClassesCard = ({ classes }: { classes: TodayClass[] }) => {
   );
 };
 
-// Componente Financeiro
-const FinancialCard = ({ data }: { data: FinancialData }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-medium">Visão Financeira</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Recebido no Mês</p>
-            <p className="text-lg font-semibold text-green-600">
-              {formatCurrency(data.receivedThisMonth)}
-            </p>
-            <p className="text-xs text-green-600">↗ +8.2%</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Em Aberto</p>
-            <p className="text-lg font-semibold text-orange-600">
-              {formatCurrency(data.pendingInvoices)}
-            </p>
-            <p className="text-xs text-muted-foreground">12 faturas</p>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Taxa de Inadimplência</span>
-            <span className="text-sm font-medium">{data.defaultRate}%</span>
-          </div>
-          <Progress value={data.defaultRate} className="h-2" />
-        </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-4">
-          <Button size="sm" variant="outline" className="text-xs">
-            <Settings className="h-3 w-3 mr-1" />
-            Config ASAAS
-          </Button>
-          <Button size="sm" variant="outline" className="text-xs">
-            <FileText className="h-3 w-3 mr-1" />
-            Cobranças
-          </Button>
-          <Button size="sm" variant="outline" className="text-xs">
-            <Eye className="h-3 w-3 mr-1" />
-            Relatório
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 // Componente de Alunos Recentes
 const RecentStudentsCard = ({ students, onNewStudent }: { students: RecentStudent[]; onNewStudent: () => void }) => {
@@ -875,7 +824,7 @@ export default function AdminDashboard() {
 
         {/* Coluna 2 - Financeiro e Ações */}
         <div className="space-y-6">
-          <FinancialCard data={financialData} />
+          <FinancialCard />
           <BirthdaysCard birthdays={birthdays} />
           <QuickActionsCard />
         </div>

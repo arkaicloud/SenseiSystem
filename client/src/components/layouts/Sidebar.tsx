@@ -7,7 +7,7 @@ import {
   Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, 
   Home, CheckSquare, MessageSquare, AlertTriangle, GraduationCap, 
   UserCheck, DollarSign, Building2, BarChart3, UserCog, ChevronDown,
-  FileText, Clock
+  FileText, Clock, Award
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -163,6 +163,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
           label: "Da Escola",
           icon: Building2,
           path: "/school-config",
+          roles: ["admin"],
+        },
+        {
+          id: "gerenciar-faixas",
+          label: "Gerenciar Faixas",
+          icon: Award,
+          path: "/belt-management",
           roles: ["admin"],
         },
       ],

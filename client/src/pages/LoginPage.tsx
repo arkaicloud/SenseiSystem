@@ -145,7 +145,7 @@ export default function LoginPage() {
         <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
           
           {/* Lado Esquerdo - Área de Apresentação */}
-          <div className="order-1 lg:order-1 text-white space-y-8 px-8">
+          <div className="order-2 lg:order-1 text-white space-y-8 px-8">
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                 Transforme sua escola com tecnologia

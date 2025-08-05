@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, ArrowRight, Heart, Shield } from "lucide-react";
+import { useBeltLevels } from "@/hooks/useBeltLevels";
 
 const physicalAssessmentSchema = z.object({
   // Health questionnaire fields - same as desktop
@@ -28,9 +29,12 @@ interface PhysicalAssessmentStepProps {
   onNext: (data: PhysicalAssessmentType) => void;
   onBack: () => void;
   defaultValues?: Partial<PhysicalAssessmentType>;
+  birthDate?: string | Date; // Add birthDate prop to filter belts by age
 }
 
-export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }: PhysicalAssessmentStepProps) {
+export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues, birthDate }: PhysicalAssessmentStepProps) {
+  const { beltOptions, ageCategory } = useBeltLevels(birthDate, true); // Use public endpoint
+  
   const form = useForm<PhysicalAssessmentType>({
     resolver: zodResolver(physicalAssessmentSchema),
     defaultValues: {

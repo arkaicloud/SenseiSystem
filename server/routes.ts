@@ -772,8 +772,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getUsers();
       // Only return inactive users
       const pendingUsers = users.filter(u => !u.active);
-      res.json({ users: pendingUsers.map(u => ({ ...u, password: undefined })) });
+      
+      // Include student data for each pending user
+      const usersWithStudentData = await Promise.all(
+        pendingUsers.map(async (user) => {
+          try {
+            const student = await storage.getStudentByUserId(user.id);
+            return {
+              ...user,
+              password: undefined,
+              student: student || null
+            };
+          } catch (error) {
+            console.warn(`Failed to get student data for user ${user.id}:`, error);
+            return {
+              ...user,
+              password: undefined,
+              student: null
+            };
+          }
+        })
+      );
+      
+      res.json({ users: usersWithStudentData });
     } catch (error) {
+      console.error("Error fetching pending users:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

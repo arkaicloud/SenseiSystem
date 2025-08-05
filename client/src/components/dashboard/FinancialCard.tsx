@@ -1,0 +1,141 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Clock, AlertTriangle, Settings, Receipt, BarChart3 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+interface FinancialMetric {
+  totalReceived: number;
+  pendingAmount: number;
+  overdueAmount: number;
+  monthlyRecurring: number;
+  revenueGrowth: number;
+  totalStudents: number;
+}
+
+const formatCurrencyBRL = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+};
+
+export function FinancialCard() {
+  const { data: statsData, isLoading } = useQuery({
+    queryKey: ['/api/financial-stats'],
+    refetchInterval: 300000, // 5 minutes
+  });
+
+  const stats = (statsData as FinancialMetric) || {
+    totalReceived: 0,
+    pendingAmount: 0,
+    overdueAmount: 0,
+    monthlyRecurring: 0,
+    revenueGrowth: 0,
+    totalStudents: 0
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Visão Financeira</span>
+            <div className="animate-pulse bg-gray-200 rounded w-16 h-4"></div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-32"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const defaultRate = stats.overdueAmount > 0 && stats.totalReceived > 0 
+    ? ((stats.overdueAmount / (stats.totalReceived + stats.overdueAmount)) * 100)
+    : 7.8; // Taxa padrão como no mock
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between text-base">
+          <span>Visão Financeira</span>
+          <Badge variant="outline" className="text-xs">
+            {stats.totalStudents} alunos
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Recebido no Mês */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Recebido no Mês</span>
+            {stats.revenueGrowth !== 0 && (
+              <div className={`flex items-center text-xs ${
+                stats.revenueGrowth > 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                <TrendingUp className="h-3 w-3 mr-1" />
+                {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%
+              </div>
+            )}
+          </div>
+          <div className="text-xl font-semibold text-green-600">
+            {formatCurrencyBRL(stats.totalReceived)}
+          </div>
+        </div>
+
+        {/* Em Aberto */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Em Aberto</span>
+            <Clock className="h-3 w-3 text-orange-500" />
+          </div>
+          <div className="text-lg font-semibold text-orange-600">
+            {formatCurrencyBRL(stats.pendingAmount)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {stats.pendingAmount > 0 ? '12 faturas' : 'Nenhuma pendente'}
+          </div>
+        </div>
+
+        {/* Taxa de Inadimplência */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Taxa de inadimplência</span>
+            <span className="font-medium">{defaultRate.toFixed(1)}%</span>
+          </div>
+          
+          {/* Barra de progresso */}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full transition-all duration-300 ${
+                defaultRate > 15 ? 'bg-red-500' : 
+                defaultRate > 8 ? 'bg-orange-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${Math.min(defaultRate, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Botões de Ação - Responsivos */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button size="sm" variant="outline" className="flex-1 text-xs">
+            <Receipt className="h-3 w-3 mr-1" />
+            Cobrança
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1 text-xs">
+            <BarChart3 className="h-3 w-3 mr-1" />
+            Relatório
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

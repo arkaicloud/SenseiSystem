@@ -3244,6 +3244,219 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ASAAS Integration Routes =====
+  
+  // Aprovar aluno e criar cobrança no ASAAS
+  app.post("/api/admin/student/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const studentId = parseInt(id);
+      
+      if (isNaN(studentId)) {
+        return res.status(400).json({ error: 'Invalid student ID' });
+      }
+
+      // Import asaasService dynamically
+      const { asaasService } = await import('./services/asaasService');
+      
+      // Buscar dados do aluno
+      const student = await storage.getStudentByUserId(studentId);
+      const user = await storage.getUser(studentId);
+      
+      if (!student || !user) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+
+      if (user.status === 'active') {
+        return res.status(400).json({ error: 'Student already approved' });
+      }
+
+      // Verificar se responsável financeiro tem dados necessários
+      if (!student.financialResponsibleCpf || !student.financialResponsibleName) {
+        return res.status(400).json({ 
+          error: 'Dados do responsável financeiro incompletos. CPF e nome são obrigatórios.' 
+        });
+      }
+
+      // Verificar se ASAAS está configurado
+      const isAsaasConfigured = await asaasService.isConfigured();
+      if (!isAsaasConfigured) {
+        return res.status(400).json({ 
+          error: 'Integração ASAAS não configurada. Configure a API Key nas configurações da escola.' 
+        });
+      }
+
+      // Dados do cliente para ASAAS
+      const customerData = {
+        name: student.financialResponsibleName,
+        cpfCnpj: student.financialResponsibleCpf.replace(/\D/g, ''), // Remove formatação
+        email: student.financialResponsibleEmail || user.email,
+        mobilePhone: student.financialResponsiblePhone || user.phone,
+        // Endereço se disponível
+        postalCode: user.zipCode?.replace(/\D/g, ''),
+        addressNumber: user.number,
+        addressComplement: user.complement
+      };
+
+      // Criar ou buscar cliente no ASAAS
+      const asaasCustomer = await asaasService.createOrGetCustomer(customerData);
+      
+      // Atualizar student com asaasCustomerId
+      await storage.updateStudent(student.id, {
+        asaasCustomerId: asaasCustomer.id
+      });
+
+      // Buscar plano de pagamento
+      const paymentPlan = student.paymentPlanId ? 
+        await storage.getPaymentPlan(student.paymentPlanId) : 
+        await storage.getPaymentPlans().then(plans => plans[0]); // Primeiro plano disponível
+
+      if (!paymentPlan) {
+        return res.status(400).json({ error: 'Nenhum plano de pagamento encontrado' });
+      }
+
+      // Calcular data de vencimento
+      const dueDate = new Date();
+      dueDate.setDate(student.preferredDueDate || 5); // Dia preferido ou dia 5
+      if (dueDate < new Date()) {
+        dueDate.setMonth(dueDate.getMonth() + 1); // Próximo mês se já passou
+      }
+
+      // Criar pagamento no ASAAS
+      const paymentData = {
+        customer: asaasCustomer.id,
+        billingType: 'BOLETO' as const,
+        value: paymentPlan.amount / 100, // Converter centavos para reais
+        dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD
+        description: `Mensalidade - ${user.firstName} ${user.lastName}`,
+        externalReference: `student_${student.id}_${new Date().getTime()}`
+      };
+
+      const asaasPayment = await asaasService.createPayment(paymentData);
+
+      // Criar conta a receber no sistema
+      const contaReceber = await storage.createContaReceber({
+        studentId: student.id,
+        asaasPaymentId: asaasPayment.id,
+        asaasCustomerId: asaasCustomer.id,
+        status: asaasPayment.status,
+        billingType: paymentData.billingType,
+        value: paymentPlan.amount, // Em centavos
+        netValue: asaasPayment.netValue ? Math.round(asaasPayment.netValue * 100) : null,
+        dueDate: dueDate,
+        description: paymentData.description,
+        externalReference: paymentData.externalReference,
+        invoiceUrl: asaasPayment.invoiceUrl,
+        bankSlipUrl: asaasPayment.bankSlipUrl,
+        pixQrCode: asaasPayment.pixQrCode,
+        pixCopyAndPaste: asaasPayment.pixCopyAndPaste
+      });
+
+      // Aprovar aluno
+      await storage.updateUser(studentId, { status: 'active' });
+
+      // Log da atividade
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} aprovou o aluno ${user.firstName} ${user.lastName} e criou cobrança no ASAAS`,
+        entityType: 'student',
+        entityId: student.id
+      });
+
+      res.json({
+        success: true,
+        message: 'Aluno aprovado e cobrança criada com sucesso',
+        student: { ...user, status: 'active' },
+        payment: {
+          id: contaReceber.id,
+          asaasPaymentId: asaasPayment.id,
+          value: paymentPlan.amount,
+          dueDate: dueDate,
+          bankSlipUrl: asaasPayment.bankSlipUrl,
+          invoiceUrl: asaasPayment.invoiceUrl
+        }
+      });
+
+    } catch (error) {
+      console.error('Error approving student:', error);
+      res.status(500).json({
+        error: 'Erro ao aprovar aluno e criar cobrança',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  });
+
+  // Buscar contas a receber de um aluno
+  app.get("/api/student/:id/payments", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const studentUserId = parseInt(id);
+      const requestUser = (req as any).user;
+      
+      // Verificar se é o próprio aluno ou um admin/instructor
+      if (requestUser.role === 'student' && requestUser.id !== studentUserId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const student = await storage.getStudentByUserId(studentUserId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+
+      const payments = await storage.getContasReceberByStudent(student.id);
+      res.json({ payments });
+
+    } catch (error) {
+      console.error('Error fetching student payments:', error);
+      res.status(500).json({ error: 'Failed to fetch payments' });
+    }
+  });
+
+  // Webhook do ASAAS para atualizar status de pagamentos
+  app.post("/api/webhook/asaas", async (req, res) => {
+    try {
+      const { event, payment } = req.body;
+      
+      if (!payment?.id) {
+        return res.status(400).json({ error: 'Invalid webhook data' });
+      }
+
+      // Buscar conta a receber pelo ID do ASAAS
+      const contaReceber = await storage.getContaReceberByAsaasId(payment.id);
+      
+      if (!contaReceber) {
+        console.log('Payment not found in system:', payment.id);
+        return res.status(200).json({ message: 'Payment not found, ignoring' });
+      }
+
+      // Atualizar status baseado no evento
+      const updateData: any = {
+        status: payment.status,
+        lastWebhookReceived: new Date(),
+        webhookEvents: [...(contaReceber.webhookEvents || []), event]
+      };
+
+      if (event === 'PAYMENT_RECEIVED' && payment.receivedDate) {
+        updateData.receivedDate = new Date(payment.receivedDate);
+        updateData.confirmedDate = new Date();
+      }
+
+      if (event === 'PAYMENT_OVERDUE') {
+        updateData.overdueDate = new Date();
+      }
+
+      await storage.updateContaReceber(contaReceber.id, updateData);
+
+      console.log(`Webhook processed: ${event} for payment ${payment.id}`);
+      res.status(200).json({ message: 'Webhook processed successfully' });
+
+    } catch (error) {
+      console.error('Error processing ASAAS webhook:', error);
+      res.status(500).json({ error: 'Failed to process webhook' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1011,7 +1011,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const user = await storage.getUser(Number(id));
+      const userId = Number(id);
+      const user = await storage.getUser(userId);
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -1023,15 +1024,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      // Validate input
-      const userData = req.body;
+      const updateData = req.body;
+      console.log('📝 Updating user data:', JSON.stringify(updateData, null, 2));
+
+      // Separate user data from student data
+      // Extract only fields that exist in the users table
+      const userFields = {
+        firstName: updateData.firstName,
+        lastName: updateData.lastName,
+        email: updateData.email,
+        phone: updateData.phone,
+        emergencyContact: updateData.emergencyContact,
+        birthDate: updateData.birthDate ? new Date(updateData.birthDate) : undefined,
+        street: updateData.street,
+        number: updateData.number,
+        complement: updateData.complement,
+        neighborhood: updateData.neighborhood,
+        city: updateData.city,
+        state: updateData.state,
+        zipCode: updateData.zipCode,
+      };
+
+      // Remove undefined values
+      const userUpdateData = Object.fromEntries(
+        Object.entries(userFields).filter(([_, value]) => value !== undefined)
+      );
+
+      // Student specific fields
+      const {
+        beltLevel,
+        lastPromotionDate,
+        financialResponsibleName,
+        financialResponsibleCpf,
+        financialResponsibleEmail,
+        financialResponsiblePhone,
+        financialResponsibleRelation,
+        paymentPlanId,
+        medicalObservations,
+        planObservations,
+      } = updateData;
 
       // Don't allow role changes unless admin
-      if (userData.role && userData.role !== user.role && requestUser.role !== 'admin') {
+      if (userUpdateData.role && userUpdateData.role !== user.role && requestUser.role !== 'admin') {
         return res.status(403).json({ message: "Cannot change role" });
       }
 
-      const updatedUser = await storage.updateUser(user.id, userData);
+      console.log('📤 User data to update:', JSON.stringify(userUpdateData, null, 2));
+
+      // Update user data
+      const updatedUser = await storage.updateUser(userId, userUpdateData);
+
+      // Update student data if user is a student
+      if (user.role === 'student') {
+        const student = await storage.getStudentByUserId(userId);
+        if (student) {
+          const studentUpdateData: Record<string, any> = {};
+          
+          // Only update fields that are actually provided and exist in schema
+          if (beltLevel !== undefined && beltLevel !== null) {
+            studentUpdateData.beltLevel = beltLevel;
+          }
+          if (lastPromotionDate !== undefined) {
+            studentUpdateData.lastPromotionDate = lastPromotionDate ? new Date(lastPromotionDate) : null;
+          }
+          if (financialResponsibleName !== undefined) {
+            studentUpdateData.financialResponsibleName = financialResponsibleName;
+          }
+          if (financialResponsibleCpf !== undefined) {
+            studentUpdateData.financialResponsibleCpf = financialResponsibleCpf;
+          }
+          if (financialResponsibleEmail !== undefined) {
+            studentUpdateData.financialResponsibleEmail = financialResponsibleEmail;
+          }
+          if (financialResponsiblePhone !== undefined) {
+            studentUpdateData.financialResponsiblePhone = financialResponsiblePhone;
+          }
+          if (financialResponsibleRelation !== undefined) {
+            studentUpdateData.financialResponsibleRelation = financialResponsibleRelation;
+          }
+          if (paymentPlanId !== undefined && paymentPlanId !== null) {
+            studentUpdateData.paymentPlanId = paymentPlanId;
+          }
+          if (medicalObservations !== undefined) {
+            studentUpdateData.medicalObservations = medicalObservations;
+          }
+          if (planObservations !== undefined) {
+            studentUpdateData.planObservations = planObservations;
+          }
+
+          // Only update if there's data to update
+          if (Object.keys(studentUpdateData).length > 0) {
+            await storage.updateStudent(student.id, studentUpdateData);
+            console.log('✅ Student data updated successfully:', Object.keys(studentUpdateData));
+          } else {
+            console.log('ℹ️ No student data to update');
+          }
+        }
+      }
 
       // Log activity
       await storage.createActivityLog({
@@ -1041,8 +1130,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: user.id
       });
 
-      res.json({ user: { ...updatedUser!, password: undefined } });
+      res.json({ 
+        user: { ...updatedUser!, password: undefined },
+        message: "Dados atualizados com sucesso"
+      });
     } catch (error) {
+      console.error('❌ Error updating user:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid user data", errors: error.errors });
       }

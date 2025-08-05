@@ -1,0 +1,57 @@
+🎯 Tarefa:
+Corrigir o comportamento do `Sidebar` do painel administrativo do SenseiSystem no mobile. Atualmente, ao abrir o menu lateral em resoluções menores (ex: 360px), o `Sidebar` se sobrepõe mal formatado sobre o conteúdo, com overflow, clipping e má estrutura de hierarquia visual.
+
+📘 Diagnóstico:
+- O `Sidebar` não está respeitando a hierarquia z-index nem aplicando backdrop
+- Está aparecendo fixo sem recuo lateral
+- Não há sombra ou efeito de desfoque ao fundo
+- Botão de fechar está ausente ou invisível
+- Menu ocupa espaço vertical além da altura útil da tela
+- Não há animação de entrada/saída
+
+---
+
+✅ Passo 1 — Corrigir estrutura com Tailwind
+- Envolver o `Sidebar` com um `<aside>` responsivo
+- Aplicar `fixed`, `top-0 left-0 h-screen w-[250px]` e `z-50`
+- Adicionar `bg-white shadow-xl transition-transform duration-300 ease-in-out`
+- Usar `translate-x-[-100%]` por padrão e `translate-x-0` quando `isSidebarOpen === true`
+
+✅ Passo 2 — Criar backdrop ao fundo
+- Ao abrir o menu, criar um `<div>` `fixed inset-0 bg-black bg-opacity-40 z-40` atrás do menu para escurecer o conteúdo
+
+✅ Passo 3 — Ajustar botão “hambúrguer”
+- Colocar o botão de abrir/fechar na `navbar` (`lg:hidden`)
+- Ao clicar, alternar `isSidebarOpen`
+
+✅ Passo 4 — Fechar ao clicar fora
+- Ao clicar no backdrop, setar `isSidebarOpen = false`
+
+✅ Passo 5 — Usar `overflow-y-auto` no `<aside>` para scroll vertical suave em telas pequenas
+
+---
+
+🧩 Extras opcionais:
+- Adicionar ícone de fechar (X) visível no topo do sidebar no mobile
+- Permitir animação de entrada `slide-in-left` com Framer Motion (se usado)
+- Adaptar tema dark mode com `dark:bg-zinc-900` e `dark:text-white`
+- Salvar estado do menu com `useLocalStorage` ou `context`
+
+---
+
+📦 Stack: React + TailwindCSS + opcionalmente Framer Motion
+
+---
+
+🛠️ Exemplo visual JSX simplificado:
+
+```jsx
+{isSidebarOpen && (
+  <div
+    onClick={() => setIsSidebarOpen(false)}
+    className=\"fixed inset-0 bg-black/40 z-40\"
+  />
+)}
+<aside
+  className={`fixed top-0 left-0 z-50 w-64 h-full bg-white shadow-xl transition-transform duration-300 ease-in-out
+    ${isSidebarOpen ? 'translate-x-0' : '-translat

@@ -103,7 +103,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       )}
 
       {/* Sidebar navigation */}
-      {user && <Sidebar isOpen={sidebarOpen} isMobile={isMobile} />}
+      {user && <Sidebar isOpen={sidebarOpen} isMobile={isMobile} onClose={() => setSidebarOpen(false)} />}
 
       {/* Main content */}
       <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden`}>

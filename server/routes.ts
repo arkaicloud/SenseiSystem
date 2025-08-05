@@ -19,9 +19,7 @@ import {
   insertRiskActionSchema,
   insertRiskSettingsSchema,
   insertSchoolPaymentSchema,
-  insertBeltLevelSchema,
-  beltLevels,
-  belts
+  insertBeltLevelSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
 import { dashboardMetricsService } from "./services/dashboardMetrics";
@@ -2505,8 +2503,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const student of students) {
         try {
-          // Skip if student doesn't have user data
-          if (!student.user) {
+          // Get user data for this student
+          const studentUser = await storage.getUser(student.userId);
+          if (!studentUser) {
             console.warn(`Student ${student.id} has no user data, skipping`);
             continue;
           }
@@ -2540,12 +2539,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             studentsAtRisk.push({
               id: student.id,
               user: {
-                id: student.user.id,
-                firstName: student.user.firstName || 'Unknown',
-                lastName: student.user.lastName || '',
-                email: student.user.email || '',
-                phone: student.user.phone || '',
-                emergencyContact: student.user.emergencyContact || ''
+                id: studentUser.id,
+                firstName: studentUser.firstName || 'Unknown',
+                lastName: studentUser.lastName || '',
+                email: studentUser.email || '',
+                phone: studentUser.phone || '',
+                emergencyContact: studentUser.emergencyContact || ''
               },
               beltLevel: student.beltLevel,
               stripes: student.stripes,

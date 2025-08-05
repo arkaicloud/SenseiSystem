@@ -72,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
         },
         {
           id: "alunos-risco",
-          label: "Alunos em Risco",
+          label: "Engajamento em Baixa",
           icon: AlertTriangle,
           path: "/students-at-risk",
           roles: ["admin", "instructor"],

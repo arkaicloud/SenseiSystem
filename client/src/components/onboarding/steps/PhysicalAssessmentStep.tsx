@@ -63,16 +63,16 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
   const watchHasInjuries = form.watch("hasInjuries");
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="flex justify-center mb-3">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <Activity className="w-6 h-6 text-blue-600" />
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <div className="flex justify-center mb-2">
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <Activity className="w-5 h-5 text-blue-600" />
           </div>
         </div>
-        <h3 className="text-xl font-semibold mb-2">Avaliação Física</h3>
-        <p className="text-sm text-muted-foreground px-4">
-          Informações importantes sobre sua saúde e condicionamento físico
+        <h3 className="text-lg font-semibold mb-1">Avaliação Física</h3>
+        <p className="text-sm text-muted-foreground px-2">
+          Informações sobre sua saúde e condicionamento físico
         </p>
       </div>
 

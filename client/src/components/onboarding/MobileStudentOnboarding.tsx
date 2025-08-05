@@ -127,9 +127,9 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col safe-area-inset">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10 shrink-0">
         <div className="flex items-center justify-between mb-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-1">
             <ArrowLeft className="w-5 h-5" />
@@ -148,16 +148,16 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 py-6">
-        <div className="max-w-md mx-auto">
+      <div className="flex-1 px-4 py-4 overflow-y-auto mobile-form-container">
+        <div className="max-w-md mx-auto pb-6">
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6">
+          <Card className="border-0 shadow-sm mobile-friendly-card">
+            <CardContent className="p-4 sm:p-6 mobile-friendly-form">
               {currentStep === 1 && (
                 <PersonalDataStep
                   onNext={handlePersonalData}

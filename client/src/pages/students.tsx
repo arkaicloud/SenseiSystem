@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import BeltFilter from '@/components/ui/BeltFilter';
 
 const Students: React.FC = () => {
   const { toast } = useToast();
@@ -254,19 +255,12 @@ const Students: React.FC = () => {
       {/* Filtros e Ordenação */}
       <div className="flex flex-col lg:flex-row gap-4 mb-4">
         <div className="flex flex-col sm:flex-row gap-2 flex-1">
-          <Select value={beltFilter} onValueChange={setBeltFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Filtrar por faixa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as faixas</SelectItem>
-              <SelectItem value="white">Faixa Branca</SelectItem>
-              <SelectItem value="blue">Faixa Azul</SelectItem>
-              <SelectItem value="purple">Faixa Roxa</SelectItem>
-              <SelectItem value="brown">Faixa Marrom</SelectItem>
-              <SelectItem value="black">Faixa Preta</SelectItem>
-            </SelectContent>
-          </Select>
+          <BeltFilter 
+            value={beltFilter}
+            onValueChange={setBeltFilter}
+            placeholder="Filtrar por faixa"
+            className="w-full sm:w-[160px]"
+          />
           <Select value={financialFilter} onValueChange={setFinancialFilter}>
             <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Situação financeira" />

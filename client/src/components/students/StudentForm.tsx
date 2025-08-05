@@ -24,10 +24,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeltWithLabel } from "@/components/ui/belt";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "@/hooks/use-translations";
+import BeltFilter from '@/components/ui/BeltFilter';
 
 // Extend the user schema for student creation
 const studentFormSchema = insertUserSchema.extend({
-  beltLevel: z.enum(["white", "blue", "purple", "brown", "black"]).default("white"),
+  beltLevel: z.string().default("white"),
   stripes: z.number().min(0).max(4).default(0),
   emergencyContact: z.string().optional(),
   notes: z.string().optional(),
@@ -309,30 +310,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nível da Faixa</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a faixa" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="white">
-                          <BeltWithLabel level="white" />
-                        </SelectItem>
-                        <SelectItem value="blue">
-                          <BeltWithLabel level="blue" />
-                        </SelectItem>
-                        <SelectItem value="purple">
-                          <BeltWithLabel level="purple" />
-                        </SelectItem>
-                        <SelectItem value="brown">
-                          <BeltWithLabel level="brown" />
-                        </SelectItem>
-                        <SelectItem value="black">
-                          <BeltWithLabel level="black" />
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <BeltFilter 
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Selecione a faixa"
+                        includeAll={false}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

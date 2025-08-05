@@ -153,6 +153,7 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
               onNext={handleHealthFormSubmit}
               onBack={() => setCurrentStep(1)}
               defaultValues={onboardingData}
+              birthDate={onboardingData.birthDate}
             />
           )}
 

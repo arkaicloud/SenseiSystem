@@ -2531,6 +2531,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint for belt levels (needed for onboarding)
+  app.get("/api/public/belts", async (req, res) => {
+    try {
+      res.setHeader('Content-Type', 'application/json');
+      
+      // Get all active belt levels
+      const belts = await db
+        .select({
+          id: beltLevels.id,
+          name: beltLevels.name,
+          levelKey: beltLevels.levelKey,
+          colorCode: beltLevels.colorCode,
+          category: beltLevels.category,
+          order: beltLevels.order,
+          active: beltLevels.active
+        })
+        .from(beltLevels)
+        .where(eq(beltLevels.active, true))
+        .orderBy(beltLevels.order);
+
+      res.json({ belts });
+    } catch (error) {
+      console.error('❌ Error fetching public belt levels:', error);
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ message: "Failed to fetch belt levels" });
+    }
+  });
+
   app.patch("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
       // Ensure proper JSON response headers

@@ -219,6 +219,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
                   onNext={handlePhysicalAssessment}
                   onBack={goBack}
                   defaultValues={formData as PhysicalAssessmentType}
+                  birthDate={formData.birthDate}
                 />
               )}
             </CardContent>

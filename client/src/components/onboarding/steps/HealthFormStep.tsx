@@ -36,10 +36,23 @@ interface HealthFormStepProps {
   onNext: (data: HealthFormData) => void;
   onBack: () => void;
   defaultValues?: Partial<HealthFormData>;
+  birthDate?: string | Date; // Add birthDate prop to filter belts by age
 }
 
-export default function HealthFormStep({ onNext, onBack, defaultValues }: HealthFormStepProps) {
-  const { beltOptions } = useBeltLevels();
+export default function HealthFormStep({ onNext, onBack, defaultValues, birthDate }: HealthFormStepProps) {
+  const { beltOptions, ageCategory } = useBeltLevels(birthDate, true); // Use public endpoint
+  
+  // Calculate age for display
+  const getAge = () => {
+    if (!birthDate) return null;
+    const birth = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
+    const today = new Date();
+    const age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    return monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate()) ? age - 1 : age;
+  };
+
+  const age = getAge();
   
   const form = useForm<HealthFormData>({
     resolver: zodResolver(healthFormSchema),
@@ -313,6 +326,11 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Graduação Atual</CardTitle>
+              {age && ageCategory && (
+                <div className="text-sm text-muted-foreground">
+                  Idade: {age} anos - Categoria: {ageCategory === 'adult' ? 'Adulto' : 'Infantil'}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -336,6 +354,11 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
                           ))}
                         </SelectContent>
                       </Select>
+                      {beltOptions.length === 0 && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          Carregando graduações...
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

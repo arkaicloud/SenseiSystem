@@ -89,7 +89,7 @@ export function BeltSummaryWidget() {
     );
   }
 
-  const totalStudents = Object.values(beltStats).reduce((sum, count) => sum + count, 0);
+  const totalStudents = Object.values(beltStats || {}).reduce((sum, count) => sum + count, 0);
 
   return (
     <Card>
@@ -103,7 +103,7 @@ export function BeltSummaryWidget() {
       </CardHeader>
       <CardContent className="space-y-3">
         {Object.entries(beltConfig).map(([beltKey, config]) => {
-          const count = beltStats[beltKey as keyof BeltStats];
+          const count = beltStats?.[beltKey as keyof BeltStats] || 0;
           const percentage = totalStudents > 0 ? (count / totalStudents * 100).toFixed(1) : '0';
           
           return (

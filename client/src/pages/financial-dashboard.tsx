@@ -1,30 +1,54 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  DollarSign, 
-  Clock, 
-  AlertTriangle, 
-  TrendingDown, 
-  FileText, 
-  Calendar,
-  RefreshCw,
-  ExternalLink,
-  Eye,
-  Search,
-  Filter,
+import {
+  DollarSign,
+  Clock,
+  AlertTriangle,
+  TrendingDown,
   TrendingUp,
+  FileText,
+  RefreshCw,
+  Search,
+  Calendar,
+  Filter,
+  Download,
+  Eye,
+  ExternalLink,
+  Plus,
+  Check,
+  X,
+  CreditCard,
+  BarChart3,
   Receipt,
-  Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,7 +59,7 @@ interface Payment {
   customerName: string;
   customerEmail: string;
   value: number;
-  status: 'RECEIVED' | 'PENDING' | 'OVERDUE' | 'CONFIRMED' | 'CANCELLED';
+  status: "RECEIVED" | "PENDING" | "OVERDUE" | "CONFIRMED" | "CANCELLED";
   dueDate: string;
   description: string;
   invoiceUrl?: string;
@@ -56,6 +80,8 @@ interface FinancialMetrics {
   totalReceived: number;
   totalPending: number;
   totalOverdue: number;
+  averageTicket: number; // Added for Ticket Médio
+  revenueVariation: number; // Added for Variação de Receita
 }
 
 interface FinancialData {
@@ -67,7 +93,7 @@ interface FinancialData {
 export default function FinancialDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Filter states
   const [paymentTypeFilter, setPaymentTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("dueDate");
@@ -77,7 +103,11 @@ export default function FinancialDashboard() {
   const [hideNegativePayments, setHideNegativePayments] = useState(false);
 
   // Fetch financial data
-  const { data: financialData, isLoading, error } = useQuery<FinancialData>({
+  const {
+    data: financialData,
+    isLoading,
+    error,
+  } = useQuery<FinancialData>({
     queryKey: ["/api/financial/payments"],
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
@@ -91,12 +121,12 @@ export default function FinancialDashboard() {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Erro ao atualizar dados financeiros");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -116,9 +146,9 @@ export default function FinancialDashboard() {
   });
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -129,34 +159,42 @@ export default function FinancialDashboard() {
   // Filter payments based on current filters
   const getFilteredPayments = () => {
     if (!financialData?.payments) return [];
-    
-    return financialData.payments.filter(payment => {
+
+    return financialData.payments.filter((payment) => {
       // Type filter
       if (paymentTypeFilter !== "all") {
         // In a real scenario, you'd check billing type or subscription type
         // For now, we'll assume all are monthly subscriptions
-        if (paymentTypeFilter === "subscriptions" && !payment.description?.includes("Mensalidade")) {
+        if (
+          paymentTypeFilter === "subscriptions" &&
+          !payment.description?.includes("Mensalidade")
+        ) {
           return false;
         }
-        if (paymentTypeFilter === "single" && payment.description?.includes("Mensalidade")) {
+        if (
+          paymentTypeFilter === "single" &&
+          payment.description?.includes("Mensalidade")
+        ) {
           return false;
         }
       }
-      
+
       // Search term filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
-        if (!payment.customerName?.toLowerCase().includes(searchLower) && 
-            !payment.description?.toLowerCase().includes(searchLower)) {
+        if (
+          !payment.customerName?.toLowerCase().includes(searchLower) &&
+          !payment.description?.toLowerCase().includes(searchLower)
+        ) {
           return false;
         }
       }
-      
+
       // Status filters
-      if (hideNegativePayments && payment.status === 'CANCELLED') {
+      if (hideNegativePayments && payment.status === "CANCELLED") {
         return false;
       }
-      
+
       return true;
     });
   };
@@ -169,13 +207,33 @@ export default function FinancialDashboard() {
     });
   };
 
-  const getStatusBadge = (status: Payment['status']) => {
+  const getStatusBadge = (status: Payment["status"]) => {
     const statusConfig = {
-      RECEIVED: { label: "Recebido", variant: "default" as const, className: "bg-green-100 text-green-800 hover:bg-green-100" },
-      CONFIRMED: { label: "Confirmado", variant: "default" as const, className: "bg-green-100 text-green-800 hover:bg-green-100" },
-      PENDING: { label: "Pendente", variant: "secondary" as const, className: "bg-orange-100 text-orange-800 hover:bg-orange-100" },
-      OVERDUE: { label: "Vencido", variant: "destructive" as const, className: "bg-red-100 text-red-800 hover:bg-red-100" },
-      CANCELLED: { label: "Cancelado", variant: "outline" as const, className: "bg-gray-100 text-gray-800 hover:bg-gray-100" },
+      RECEIVED: {
+        label: "Recebido",
+        variant: "default" as const,
+        className: "bg-green-100 text-green-800 hover:bg-green-100",
+      },
+      CONFIRMED: {
+        label: "Confirmado",
+        variant: "default" as const,
+        className: "bg-green-100 text-green-800 hover:bg-green-100",
+      },
+      PENDING: {
+        label: "Pendente",
+        variant: "secondary" as const,
+        className: "bg-orange-100 text-orange-800 hover:bg-orange-100",
+      },
+      OVERDUE: {
+        label: "Vencido",
+        variant: "destructive" as const,
+        className: "bg-red-100 text-red-800 hover:bg-red-100",
+      },
+      CANCELLED: {
+        label: "Cancelado",
+        variant: "outline" as const,
+        className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+      },
     };
 
     const config = statusConfig[status] || statusConfig.PENDING;
@@ -191,8 +249,12 @@ export default function FinancialDashboard() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Painel Financeiro</h1>
-            <p className="text-muted-foreground">Contas a receber e métricas financeiras</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Painel Financeiro
+            </h1>
+            <p className="text-muted-foreground">
+              Contas a receber e métricas financeiras
+            </p>
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
@@ -237,11 +299,19 @@ export default function FinancialDashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Erro ao carregar dados financeiros</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Erro ao carregar dados financeiros
+            </h2>
             <p className="text-muted-foreground mb-4">
               Não foi possível conectar com o sistema financeiro ASAAS
             </p>
-            <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] })}>
+            <Button
+              onClick={() =>
+                queryClient.invalidateQueries({
+                  queryKey: ["/api/financial/payments"],
+                })
+              }
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Tentar Novamente
             </Button>
@@ -259,71 +329,100 @@ export default function FinancialDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Painel Financeiro</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Painel Financeiro
+          </h1>
           <p className="text-muted-foreground">
-            Sistema integrado com ASAAS • {filteredPayments.length} de {payments.length} cobrança{payments.length !== 1 ? 's' : ''}
+            Sistema integrado com ASAAS • {filteredPayments.length} de{" "}
+            {payments.length} cobrança{payments.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button 
+        <Button
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
           variant="outline"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`}
+          />
           Atualizar
         </Button>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* Ticket Médio Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recebido no Mês</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-600" /> {/* New icon */}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(metrics?.receivedThisMonth || 0)}
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(metrics?.averageTicket || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Pagamentos confirmados
+              Valor médio por aluno com pagamento confirmado
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Variação de Receita Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Variação de Receita
+            </CardTitle>
+            {/* Icon and color logic for variation */}
+            {metrics?.revenueVariation === 0 ? (
+              <BarChart3 className="h-4 w-4 text-gray-600" />
+            ) : metrics.revenueVariation > 0 ? (
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-red-600" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div
+              className={`text-2xl font-bold ${
+                metrics?.revenueVariation === 0
+                  ? "text-gray-600"
+                  : metrics.revenueVariation > 0
+                    ? "text-green-600"
+                    : "text-red-600"
+              }`}
+            >
+              {metrics?.revenueVariation.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Comparado a{" "}
+              {format(new Date().setMonth(new Date().getMonth() - 1), "MMMM", {
+                locale: ptBR,
+              })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor em Aberto</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {formatCurrency(metrics?.pendingValue || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Aguardando pagamento
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pagamentos em Atraso</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pagamentos em Atraso
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {metrics?.overdueCount || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Cobranças vencidas
-            </p>
+            <p className="text-xs text-muted-foreground">Cobranças vencidas</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Inadimplência</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Taxa de Inadimplência
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
@@ -338,27 +437,31 @@ export default function FinancialDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cobranças no Mês</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Cobranças no Mês
+            </CardTitle>
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
               {metrics?.totalPaymentsThisMonth || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Total de cobranças
-            </p>
+            <p className="text-xs text-muted-foreground">Total de cobranças</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Próximo Vencimento</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Próximo Vencimento
+            </CardTitle>
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {metrics?.nextDueDate ? formatDate(metrics.nextDueDate.toString()) : "N/A"}
+              {metrics?.nextDueDate
+                ? formatDate(metrics.nextDueDate.toString())
+                : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground">
               Próxima data de vencimento
@@ -371,7 +474,9 @@ export default function FinancialDashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Total Recebido</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-700">
+              Total Recebido
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -383,7 +488,9 @@ export default function FinancialDashboard() {
 
         <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">Total Pendente</CardTitle>
+            <CardTitle className="text-sm font-medium text-orange-700">
+              Total Pendente
+            </CardTitle>
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
@@ -395,7 +502,9 @@ export default function FinancialDashboard() {
 
         <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-700">Total em Atraso</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-700">
+              Total em Atraso
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
@@ -432,8 +541,13 @@ export default function FinancialDashboard() {
 
             {/* Payment Type Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Filtrar por tipo de cobrança</label>
-              <Select value={paymentTypeFilter} onValueChange={setPaymentTypeFilter}>
+              <label className="text-sm font-medium">
+                Filtrar por tipo de cobrança
+              </label>
+              <Select
+                value={paymentTypeFilter}
+                onValueChange={setPaymentTypeFilter}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
@@ -455,8 +569,12 @@ export default function FinancialDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="dueDate">Data de vencimento</SelectItem>
-                  <SelectItem value="paymentDate">Data de recebimento</SelectItem>
-                  <SelectItem value="dateCreated">Data de criação da cobrança</SelectItem>
+                  <SelectItem value="paymentDate">
+                    Data de recebimento
+                  </SelectItem>
+                  <SelectItem value="dateCreated">
+                    Data de criação da cobrança
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -464,8 +582,8 @@ export default function FinancialDashboard() {
             {/* Clear Filters */}
             <div className="space-y-2">
               <label className="text-sm font-medium opacity-0">Actions</label>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchTerm("");
                   setPaymentTypeFilter("all");
@@ -488,8 +606,8 @@ export default function FinancialDashboard() {
             <h4 className="text-sm font-medium">Outras opções</h4>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="showCash" 
+                <Checkbox
+                  id="showCash"
                   checked={showCashPayments}
                   onCheckedChange={setShowCashPayments}
                 />
@@ -497,10 +615,10 @@ export default function FinancialDashboard() {
                   Mostrar cobranças recebidas em dinheiro
                 </label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="hideAdvanced" 
+                <Checkbox
+                  id="hideAdvanced"
                   checked={hideAdvancedPayments}
                   onCheckedChange={setHideAdvancedPayments}
                 />
@@ -508,10 +626,10 @@ export default function FinancialDashboard() {
                   Ocultar cobranças antecipadas
                 </label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="hideNegative" 
+                <Checkbox
+                  id="hideNegative"
                   checked={hideNegativePayments}
                   onCheckedChange={setHideNegativePayments}
                 />
@@ -533,16 +651,19 @@ export default function FinancialDashboard() {
               Cobranças
             </CardTitle>
             <CardDescription>
-              {filteredPayments.length} de {payments.length} cobranças • Sistema integrado com ASAAS
+              {filteredPayments.length} de {payments.length} cobranças • Sistema
+              integrado com ASAAS
             </CardDescription>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => refreshMutation.mutate()}
             disabled={refreshMutation.isPending}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`}
+            />
             Atualizar
           </Button>
         </CardHeader>
@@ -561,36 +682,49 @@ export default function FinancialDashboard() {
             <TableBody>
               {filteredPayments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {searchTerm || paymentTypeFilter !== "all" ? 
-                      "Nenhuma cobrança encontrada com os filtros aplicados" :
-                      "Nenhuma cobrança encontrada"
-                    }
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    {searchTerm || paymentTypeFilter !== "all"
+                      ? "Nenhuma cobrança encontrada com os filtros aplicados"
+                      : "Nenhuma cobrança encontrada"}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredPayments
-                  .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                  .sort(
+                    (a, b) =>
+                      new Date(a.dueDate).getTime() -
+                      new Date(b.dueDate).getTime(),
+                  )
                   .map((payment) => (
                     <TableRow key={payment.id} className="hover:bg-muted/50">
                       <TableCell>
                         <div>
-                          <div className="font-medium">{payment.customerName}</div>
-                          <div className="text-sm text-muted-foreground">{payment.customerEmail}</div>
+                          <div className="font-medium">
+                            {payment.customerName}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {payment.customerEmail}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
                         {formatCurrency(payment.value)}
                       </TableCell>
-                      <TableCell>
-                        {getStatusBadge(payment.status)}
-                      </TableCell>
+                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
                           {formatDate(payment.dueDate)}
-                          {payment.status === 'OVERDUE' && (
+                          {payment.status === "OVERDUE" && (
                             <div className="text-xs text-red-500">
-                              {Math.floor((Date.now() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24))} dias
+                              {Math.floor(
+                                (Date.now() -
+                                  new Date(payment.dueDate).getTime()) /
+                                  (1000 * 60 * 60 * 24),
+                              )}{" "}
+                              dias
                             </div>
                           )}
                         </div>
@@ -600,7 +734,8 @@ export default function FinancialDashboard() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' ? (
+                          {payment.status === "RECEIVED" ||
+                          payment.status === "CONFIRMED" ? (
                             <Badge variant="outline" className="text-green-600">
                               Pago
                             </Badge>
@@ -610,7 +745,9 @@ export default function FinancialDashboard() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => window.open(payment.invoiceUrl, '_blank')}
+                                  onClick={() =>
+                                    window.open(payment.invoiceUrl, "_blank")
+                                  }
                                 >
                                   <FileText className="h-3 w-3 mr-1" />
                                   Ver Boleto
@@ -620,7 +757,9 @@ export default function FinancialDashboard() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => copyToClipboard(payment.paymentLink!)}
+                                  onClick={() =>
+                                    copyToClipboard(payment.paymentLink!)
+                                  }
                                 >
                                   <Copy className="h-3 w-3 mr-1" />
                                   Link
@@ -632,7 +771,7 @@ export default function FinancialDashboard() {
                       </TableCell>
                     </TableRow>
                   ))
-                )}
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -11,6 +11,9 @@ interface FinancialMetric {
   monthlyRecurring: number;
   revenueGrowth: number;
   totalStudents: number;
+  averageTicket: number;
+  revenueVariation: number;
+  payingStudentsCount: number;
 }
 
 const formatCurrencyBRL = (value: number) => {
@@ -32,7 +35,10 @@ export function FinancialCard() {
     overdueAmount: 0,
     monthlyRecurring: 0,
     revenueGrowth: 0,
-    totalStudents: 0
+    totalStudents: 0,
+    averageTicket: 0,
+    revenueVariation: 0,
+    payingStudentsCount: 0
   };
 
   if (isLoading) {
@@ -73,35 +79,42 @@ export function FinancialCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Recebido no Mês */}
+        {/* Ticket Médio */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Recebido no Mês</span>
-            {stats.revenueGrowth !== 0 && (
-              <div className={`flex items-center text-xs ${
-                stats.revenueGrowth > 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                <TrendingUp className="h-3 w-3 mr-1" />
-                {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%
-              </div>
-            )}
+            <span>Ticket Médio</span>
+            <Badge variant="outline" className="text-xs">
+              {stats.payingStudentsCount || 0} pagantes
+            </Badge>
           </div>
-          <div className="text-xl font-semibold text-green-600">
-            {formatCurrencyBRL(stats.totalReceived)}
+          <div className="text-xl font-semibold text-blue-600">
+            {formatCurrencyBRL(stats.averageTicket || 0)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Valor médio por aluno com pagamento confirmado
           </div>
         </div>
 
-        {/* Em Aberto */}
+        {/* Variação de Receita */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Em Aberto</span>
-            <Clock className="h-3 w-3 text-orange-500" />
+            <span>Variação de Receita</span>
+            {(stats.revenueVariation || 0) > 0 ? (
+              <TrendingUp className="h-3 w-3 text-green-500" />
+            ) : (stats.revenueVariation || 0) < 0 ? (
+              <TrendingUp className="h-3 w-3 text-red-500 rotate-180" />
+            ) : (
+              <BarChart3 className="h-3 w-3 text-yellow-500" />
+            )}
           </div>
-          <div className="text-lg font-semibold text-orange-600">
-            {formatCurrencyBRL(stats.pendingAmount)}
+          <div className={`text-lg font-semibold ${
+            (stats.revenueVariation || 0) > 0 ? 'text-green-600' :
+            (stats.revenueVariation || 0) < 0 ? 'text-red-600' : 'text-yellow-600'
+          }`}>
+            {(stats.revenueVariation || 0) > 0 ? '+' : ''}{(stats.revenueVariation || 0).toFixed(1)}%
           </div>
           <div className="text-xs text-muted-foreground">
-            {stats.pendingAmount > 0 ? '12 faturas' : 'Nenhuma pendente'}
+            Comparado ao mês anterior
           </div>
         </div>
 

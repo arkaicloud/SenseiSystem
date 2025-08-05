@@ -1,0 +1,123 @@
+luxo de Cadastro + Login + Onboarding com Progresso Salvo
+txt
+Copiar
+Editar
+🎯 Tarefa:
+Implementar o fluxo de cadastro e login de novos alunos no SenseiSystem. Após o aluno clicar em “Matricule-se” no menu, ele será redirecionado para a tela de criação de conta e, após login bem-sucedido, será automaticamente direcionado para o fluxo de onboarding obrigatório, com salvamento de progresso etapa a etapa.
+
+---
+
+## 📍 Etapas do fluxo:
+
+### 1. Rota `/cadastro` (Matricule-se)
+Tela com 3 campos:
+- Nome completo
+- E-mail
+- Senha
+
+Validações:
+- Mínimo 8 caracteres
+- Pelo menos 1 número
+- Pelo menos 1 caractere especial
+- Feedback visual conforme digita
+
+Botão: `Criar conta`
+
+---
+
+### 2. Backend (API)
+- `POST /api/aluno/cadastrar` → cria conta com `status = "pendente"` e `onboardingCompleto = false`
+- Após sucesso, redirecionar para login automático ou `/login` com feedback
+
+---
+
+### 3. Rota `/login`
+- Campos: e-mail e senha
+- Autenticação JWT ou session
+- Após login:
+  - Se `onboardingCompleto = false` → redirecionar para `/onboarding`
+  - Se `onboardingCompleto = true` → redirecionar para `/dashboard`
+
+---
+
+### 4. Rota `/onboarding`
+Fluxo multi-etapas guiado com progresso salvo a cada tela:
+1. Dados Pessoais
+2. Contato e Endereço
+3. Responsável Financeiro
+4. Plano
+5. Questionário de Saúde
+6. Aceite de Contrato
+
+Cada etapa salva em:
+```ts
+PUT /api/aluno/update-onboarding (com step atualizado)
+Ao final, chamar:
+
+ts
+Copiar
+Editar
+POST /api/aluno/finalizar-onboarding → onboardingCompleto = true
+🧱 Banco de Dados (Prisma)
+Entidade Aluno:
+
+ts
+Copiar
+Editar
+- id
+- nome
+- email
+- senha
+- status: 'pendente' | 'ativo' | 'rejeitado'
+- onboardingCompleto: boolean
+- onboardingStep: number
+- createdAt
+Entidades relacionadas:
+
+responsavelFinanceiro
+
+parqRespostas
+
+plano
+
+documentos (upload opcional)
+
+🔐 Middleware de acesso
+Proteger todas as rotas do sistema:
+
+ts
+Copiar
+Editar
+if (user.role === 'aluno' && !user.onboardingCompleto) {
+  return redirect('/onboarding')
+}
+🧠 Comportamento inteligente:
+Auto-save de dados ao mudar de etapa
+
+Feedback com toast ao salvar
+
+Botão “Voltar” e “Continuar” em cada etapa
+
+Ao relogar, sistema retoma do último passo (onboardingStep)
+
+🎨 UI
+Usar Tailwind + React + shadcn/ui
+
+Layout claro, moderno e objetivo (como na imagem de referência)
+
+Mobile-first
+
+Barra de progresso no topo com steps
+
+✅ Pedido à IA:
+Crie:
+
+A tela /cadastro com validação visual de senha
+
+O fluxo de autenticação com redirecionamento condicional
+
+A rota /onboarding com componentes por etapa, salvamento de progresso e finalização
+
+Middleware de proteção que redireciona para o onboarding se incompleto
+
+APIs para salvar onboarding no backend

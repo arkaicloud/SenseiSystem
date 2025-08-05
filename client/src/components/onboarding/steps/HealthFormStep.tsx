@@ -71,21 +71,21 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
               <p className="text-sm text-muted-foreground mb-4">
                 Complete o questionário de saúde obrigatório:
               </p>
-              <div className="border rounded-lg p-6 bg-muted/20">
-                <div className="text-center space-y-4">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+              <div className="border rounded-lg p-4 sm:p-6 bg-muted/20">
+                <div className="text-center space-y-3 sm:space-y-4">
+                  <FileText className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
                   <div>
-                    <h4 className="font-medium">Questionário de Saúde</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <h4 className="font-medium text-sm sm:text-base">Questionário de Saúde</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                       Para prosseguir, confirme que você leu e concorda com os termos do questionário de saúde.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleDocumentComplete}
-                    className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                    className="bg-primary text-primary-foreground px-4 sm:px-6 py-2 sm:py-3 rounded-md hover:bg-primary/90 transition-colors text-sm sm:text-base font-medium min-h-[44px] w-full sm:w-auto"
                   >
-                    Concordo e Prosseguir
+                    Li e Concordo - Prosseguir
                   </button>
                 </div>
               </div>
@@ -179,18 +179,28 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
                 )}
               />
 
-              <div className="flex justify-between pt-6">
-                <Button type="button" variant="outline" onClick={onBack}>
+              <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
+                <Button type="button" variant="outline" onClick={onBack} className="min-h-[44px]">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Voltar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={!documentCompleted}
-                  className="min-w-[120px]"
+                  className={`min-w-[120px] min-h-[44px] ${!documentCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={!documentCompleted ? 'Complete o questionário de saúde primeiro' : ''}
                 >
-                  Continuar
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {!documentCompleted ? (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Complete o Questionário
+                    </>
+                  ) : (
+                    <>
+                      Continuar
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

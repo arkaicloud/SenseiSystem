@@ -34,6 +34,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
+import StudentEditDialog from "@/components/students/StudentEditDialog";
 
 interface PendingUser {
   id: number;
@@ -66,6 +67,7 @@ export default function PendingApprovalsImproved() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [expandedUsers, setExpandedUsers] = useState<Set<number>>(new Set());
   const [editingPlan, setEditingPlan] = useState<number | null>(null);
+  const [editingStudent, setEditingStudent] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -570,6 +572,15 @@ export default function PendingApprovalsImproved() {
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4">
                       <Button
+                        variant="outline"
+                        onClick={() => setEditingStudent(user.id)}
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar Dados Completos
+                      </Button>
+
+                      <Button
                         onClick={() => approveMutation.mutate(user.id)}
                         disabled={!validation.isValid || approveMutation.isPending}
                         className="bg-green-600 hover:bg-green-700"
@@ -606,6 +617,13 @@ export default function PendingApprovalsImproved() {
           })}
         </div>
       )}
+      
+      {/* Student Edit Dialog */}
+      <StudentEditDialog 
+        studentId={editingStudent}
+        open={!!editingStudent}
+        onOpenChange={(open) => !open && setEditingStudent(null)}
+      />
     </div>
   );
 }

@@ -1,0 +1,142 @@
+🎯 Tarefa:
+Desenvolver uma nova tela de **Edição Completa de Aluno** no sistema SenseiSystem (React + Tailwind), com estrutura organizada em abas/tabs, permitindo edição de todos os dados cadastrais de um aluno, além do vínculo com documentos, avaliação física e contrato de adesão.
+
+---
+
+## 🧱 Estrutura geral do formulário com abas:
+
+Tabs horizontais no topo com navegação entre seções:
+
+1. 🧑‍💼 **Dados Pessoais**
+2. 📞 **Contato**
+3. 🏠 **Endereço**
+4. 🩺 **Saúde e Graduação**
+5. 👨‍👩‍👧 **Responsável Financeiro**
+6. 💳 **Plano**
+7. 📄 **Documentos**
+8. 🧪 **Avaliação Física**
+9. 📝 **Contrato/Termos**
+
+---
+
+### ✅ 1. Dados Pessoais
+- Nome
+- Sobrenome
+- Data de nascimento
+- CPF e RG
+- Sexo (opcional)
+- Campo de senha (opcional, somente se for redefinir)
+
+---
+
+### ✅ 2. Contato
+- E-mail
+- Telefone celular
+- Contato de emergência:
+  - Nome
+  - Telefone
+
+---
+
+### ✅ 3. Endereço
+- CEP
+- Logradouro
+- Número
+- Complemento
+- Bairro
+- Cidade
+- Estado
+
+Sugestão: Autopreencher com API de CEP via ViaCEP ou BrasilAPI
+
+---
+
+### ✅ 4. Saúde e Graduação
+- Questionário de saúde PAR-Q (sim/não)
+- Campo de observações médicas
+- Graduação atual (faixa e grau)
+- Data da última troca de faixa
+
+---
+
+### ✅ 5. Responsável Financeiro
+- Grau de parentesco
+- Nome completo
+- CPF
+- E-mail
+- Telefone
+
+🔒 Se o aluno for maior de idade, permitir que ele seja o próprio responsável
+
+---
+
+### ✅ 6. Plano
+- Plano de mensalidade (dropdown com valor)
+- Data de vencimento preferida
+- Frequência semanal (1x, 2x, ilimitado)
+- Duração (mensal, anual, trimestral)
+- Observações do plano
+
+---
+
+### ✅ 7. Documentos (upload/download)
+- Upload de arquivos:
+  - RG, CPF, comprovante de residência
+  - Termo assinado, atestado médico
+- Pré-visualização (PDF, imagens)
+- Botão “Baixar todos” (ZIP opcional)
+- Mostrar status: Enviado, Pendente, Recusado
+
+---
+
+### ✅ 8. Avaliação Física
+- Data da avaliação
+- Altura, peso
+- IMC (auto cálculo)
+- Flexibilidade, força, resistência (campos numéricos)
+- Avaliador (professor)
+- Observações técnicas
+
+---
+
+### ✅ 9. Contrato/Termos
+- Visualizar contrato assinado
+- Exibir aceite digital (data, IP, responsável)
+- Botão “Reenviar termo”
+- Registro de aceite: sim/não + data
+- (Opcional) botão “Gerar PDF do contrato”
+
+---
+
+## ⚙️ Funcionalidades complementares
+
+- Validação de campos obrigatórios por aba
+- Botão "Salvar alterações" por aba ou global no final
+- Feedback visual após salvar (toast/sucesso)
+- Navegação entre abas com scroll automático para o topo
+- Responsividade total (mobile-friendly)
+- Botão “Visualizar como aluno” no topo direito
+
+---
+
+## 💡 IA pode sugerir:
+
+- Histórico de alterações por campo (log de edição)
+- Validação em tempo real de CPF duplicado
+- Detectar idade e aplicar lógica de responsável automático
+- Auto integração com ASAAS se plano for alterado após aprovação
+
+---
+
+📦 Stack sugerida:
+- Frontend: React + Tailwind + Shadcn/ui ou Radix
+- Backend: Node.js + Prisma + API REST ou tRPC
+- Upload de arquivos: Multer, S3 ou Supabase Storage
+- Armazenamento de termos: HTML congelado ou Markdown versionado
+
+---
+
+🧠 Tarefa da IA:
+Crie os componentes React para essa tela de edição de aluno com estrutura por abas, formulários validados, integração com APIs externas (CEP, ASAAS), e com suporte a documentos e avaliação física.
+
+Implemente também a base de dados no backend (se não existir) e API de atualização dos dados do aluno.

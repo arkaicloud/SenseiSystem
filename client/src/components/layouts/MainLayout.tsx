@@ -10,6 +10,7 @@ import type { SchoolConfig } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -117,6 +118,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Notification Bell */}
+              {user?.role === 'admin' && <NotificationBell />}
+              
               {/* Theme toggle button */}
               <Button
                 variant="ghost"
@@ -169,6 +173,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             
             <div className="flex items-center space-x-2">
+              {/* Notification Bell */}
+              {user?.role === 'admin' && <NotificationBell />}
+              
               {/* Theme toggle button */}
               <Button
                 variant="ghost"

@@ -503,48 +503,52 @@ export default function PendingApprovalsImproved() {
                     <div className="mt-6 space-y-3">
                       <h4 className="font-medium text-sm text-muted-foreground">Plano de Pagamento</h4>
                       <div className="flex items-center gap-3">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        {editingPlan === user.id ? (
-                          <div className="flex items-center gap-2">
-                            <Select 
-                              onValueChange={(value) => 
-                                updatePlanMutation.mutate({ 
-                                  userId: user.id, 
-                                  planId: parseInt(value) 
-                                })
-                              }
-                            >
-                              <SelectTrigger className="w-64">
-                                <SelectValue placeholder="Selecionar plano..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {paymentPlans?.plans.map(plan => (
-                                  <SelectItem key={plan.id} value={plan.id.toString()}>
-                                    {plan.name} - R$ {plan.amount}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setEditingPlan(null)}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingPlan(user.id)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
+                        <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1">
+                          {editingPlan === user.id ? (
+                            <div className="flex items-center gap-2">
+                              <Select 
+                                onValueChange={(value) => 
+                                  updatePlanMutation.mutate({ 
+                                    userId: user.id, 
+                                    planId: parseInt(value) 
+                                  })
+                                }
+                              >
+                                <SelectTrigger className="w-64">
+                                  <SelectValue placeholder="Selecionar plano..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {paymentPlans?.plans.map(plan => (
+                                    <SelectItem key={plan.id} value={plan.id.toString()}>
+                                      {plan.name} - R$ {plan.amount}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setEditingPlan(null)}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-sm">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingPlan(user.id)}
+                                title="Editar plano de pagamento"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 

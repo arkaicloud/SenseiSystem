@@ -1,8 +1,8 @@
 import React from "react";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "../../client/src/components/ui/label";
+import { Checkbox } from "../../client/src/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "../../client/src/components/ui/card";
+import { Badge } from "../../client/src/components/ui/badge";
 import { User, Heart, Users, FileText, Shield, Check, AlertTriangle } from "lucide-react";
 
 interface ReviewStepProps {
@@ -59,7 +59,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ data, updateData, isMinor }) =>
   };
 
   const getUploadedDocuments = () => {
-    const docs = [];
+    const docs: string[] = [];
     if (data.documents?.idDocument) docs.push("Documento de Identidade");
     if (data.documents?.proofOfAddress) docs.push("Comprovante de Residência");
     if (data.documents?.medicalClearance) docs.push("Atestado Médico");

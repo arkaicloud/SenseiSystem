@@ -1,8 +1,8 @@
 import React from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "../../client/src/components/ui/input";
+import { Label } from "../../client/src/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../client/src/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "../../client/src/components/ui/card";
 import { User, Mail, Phone, MapPin, Calendar, FileText } from "lucide-react";
 
 interface PersonalInfoStepProps {
@@ -110,6 +110,9 @@ const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({ data, updateData })
                 placeholder="seu@email.com"
                 required
               />
+              <p className="text-sm text-muted-foreground mt-1">
+                💡 Este e-mail será utilizado como seu login no sistema
+              </p>
             </div>
 
             <div className="space-y-2">

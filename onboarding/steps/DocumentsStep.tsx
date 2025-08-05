@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "../../client/src/components/ui/label";
+import { Button } from "../../client/src/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../client/src/components/ui/card";
 import { Upload, FileText, CheckCircle, AlertTriangle, X } from "lucide-react";
 
 interface DocumentsStepProps {

@@ -4002,56 +4002,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Only activate user if ASAAS integration succeeded
+          // Don't activate user immediately - keep them pending with status info
           if (asaasSuccess) {
-            const updatedUser = await storage.updateUser(userId, { 
-              active: true, 
-              status: 'active' 
-            });
-
-            if (!updatedUser) {
-              const errorMsg = 'erro ao ativar usuário';
-              results.errors.push(`Usuário ${userId}: ${errorMsg}`);
-              results.userResults.push({
-                userId,
-                userName: `${user.firstName} ${user.lastName}`,
-                status: 'error',
-                message: errorMsg
-              });
-              results.failed++;
-              continue;
-            }
-
-            // Create activity log for account activation
-            const requestUser = (req as any).user;
-            await storage.createActivityLog({
-              activity: `User account batch approved: ${user.firstName} ${user.lastName} (${user.role})`,
-              userId: requestUser.id,
-              entityType: "user",
-              entityId: user.id,
-              timestamp: new Date()
-            });
-
+            // User stays pending but marked as successfully processed
             results.userResults.push({
               userId,
               userName: `${user.firstName} ${user.lastName}`,
               status: 'success',
-              message: 'Aprovado com sucesso e integrado ao ASAAS'
+              message: 'Processado com sucesso - integração ASAAS completa. Aguardando confirmação final.'
             });
             results.successful++;
           } else if (asaasError) {
-            // User remains pending due to ASAAS error
+            // User stays pending with error status
             results.userResults.push({
               userId,
               userName: `${user.firstName} ${user.lastName}`,
               status: 'error',
-              message: 'Permanece pendente devido a erro ASAAS',
+              message: 'Erro na integração ASAAS - dados precisam ser corrigidos',
               asaasError: asaasError
             });
             results.errors.push(`Usuário ${userId}: ${asaasError}`);
             results.failed++;
           } else {
-            // User approved but no ASAAS integration attempted
+            // User approved but no ASAAS integration attempted - activate directly
             const updatedUser = await storage.updateUser(userId, { 
               active: true, 
               status: 'active' 

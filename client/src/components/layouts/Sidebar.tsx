@@ -155,12 +155,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       icon: Settings,
       children: [
         {
-          id: "meu-perfil",
-          label: "Meu Perfil",
-          icon: UserCog,
-          path: "/profile",
-        },
-        {
           id: "pessoais",
           label: "Pessoais",
           icon: User,

@@ -1,0 +1,90 @@
+Integração ASAAS com Dashboard Financeiro do SenseiSystem
+Objetivo:
+Integrar os dados do ASAAS com o módulo “Financeiro > Contas a Receber” e sincronizar os dados obtidos (via API GET) com o dashboard principal do Administrador.
+
+🔧 Ajustes Técnicos
+Rota de GET no Replit:
+Crie um endpoint no backend (Node.js, Express) para fazer o GET /payments no ASAAS e retornar as seguintes informações:
+
+Total recebido no mês
+
+Total em aberto
+
+Quantidade de faturas em atraso
+
+Valor total em atraso
+
+Taxa de inadimplência (%)
+
+Documentação:
+
+GET /payments
+
+Exemplo de requisição:
+
+js
+Copiar
+Editar
+const axios = require('axios');
+
+const getFinanceDataFromAsaas = async () => {
+  const response = await axios.get('https://sandbox.asaas.com/api/v3/payments', {
+    headers: {
+      'access_token': process.env.ASAAS_API_KEY
+    },
+    params: {
+      limit: 100, // ajuste conforme necessário
+      status: 'PENDING,OVERDUE,RECEIVED'
+    }
+  });
+
+  const payments = response.data.data;
+
+  const totalReceived = payments
+    .filter(p => p.status === 'RECEIVED')
+    .reduce((acc, curr) => acc + parseFloat(curr.value), 0);
+
+  const totalOpen = payments
+    .filter(p => p.status === 'PENDING' || p.status === 'OVERDUE')
+    .reduce((acc, curr) => acc + parseFloat(curr.value), 0);
+
+  const overdue = payments.filter(p => p.status === 'OVERDUE');
+  const overdueAmount = overdue.reduce((acc, curr) => acc + parseFloat(curr.value), 0);
+
+  const totalInvoices = payments.length;
+  const overdueInvoices = overdue.length;
+  const inadimplencia = ((overdueInvoices / totalInvoices) * 100).toFixed(1);
+
+  return {
+    totalReceived,
+    totalOpen,
+    overdueAmount,
+    inadimplencia,
+    overdueInvoices
+  };
+};
+🔁 Fluxo Automatizado
+✅ Ao acessar a rota /financeiro/contas-receber (ou outro menu financeiro), disparar o getFinanceDataFromAsaas().
+
+✅ Atualizar a store local/global (Recoil, Zustand ou Context API) com os dados recebidos.
+
+✅ Sincronizar o Dashboard do Administrador com:
+
+Receita Mensal
+
+Visão Financeira (Total Aberto)
+
+Taxa de Inadimplência (%)
+
+🧠 Sugestão de Melhoria Visual (UI/UX)
+💡 Adicione um botão no topo do card do financeiro: 🔁 Atualizar Dados (ASAAS) para forçar sincronização manual.
+
+💡 Coloque um badge verde ou vermelho com base na taxa de inadimplência.
+
+💡 Use tooltips nos KPIs para explicar de onde vêm os dados.
+
+📌 Considerações Finais
+Recomendado agendar um cron job para rodar 1x por dia via webhook no ASAAS ou em job do backend, e manter os dados sempre atualizados sem depender da abertura da tela.
+
+Pode aplicar cache local com TTL (ex: 5min) para reduzir chamadas excessivas.
+

@@ -3873,7 +3873,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const results = {
         successful: 0,
         failed: 0,
-        errors: [] as string[]
+        errors: [] as string[],
+        userResults: [] as Array<{
+          userId: number,
+          userName: string,
+          status: 'success' | 'error',
+          message: string,
+          asaasError?: string
+        }>
       };
 
       // Process each user approval
@@ -3882,29 +3889,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get user and student data
           const user = await storage.getUser(userId);
           if (!user || user.active) {
-            results.errors.push(`Usuário ${userId}: não encontrado ou já ativo`);
+            const errorMsg = `não encontrado ou já ativo`;
+            results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+            results.userResults.push({
+              userId,
+              userName: user ? `${user.firstName} ${user.lastName}` : 'Usuário não encontrado',
+              status: 'error',
+              message: errorMsg
+            });
             results.failed++;
             continue;
           }
 
           const student = await storage.getStudentByUserId(userId);
           if (!student || !student.paymentPlanId) {
-            results.errors.push(`Usuário ${userId}: dados do aluno ou plano de pagamento não encontrados`);
+            const errorMsg = `dados do aluno ou plano de pagamento não encontrados`;
+            results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+            results.userResults.push({
+              userId,
+              userName: `${user.firstName} ${user.lastName}`,
+              status: 'error',
+              message: errorMsg
+            });
             results.failed++;
             continue;
           }
 
-          // Activate user
-          const updatedUser = await storage.updateUser(userId, { 
-            active: true, 
-            status: 'active' 
-          });
-
-          if (!updatedUser) {
-            results.errors.push(`Usuário ${userId}: erro ao ativar`);
-            results.failed++;
-            continue;
-          }
+          // Don't activate user yet - wait for ASAAS confirmation
+          let asaasError: string | null = null;
+          let asaasSuccess = false;
 
           // Get payment plan
           const plan = await storage.getPaymentPlan(student.paymentPlanId);
@@ -3969,27 +3982,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   pixQrCode: payment.pixQrCode || null,
                   pixCopyAndPaste: payment.pixCopyAndPaste || null
                 });
-              } catch (asaasError) {
-                console.error(`❌ ASAAS error for user ${userId}:`, asaasError);
-                results.errors.push(`Usuário ${userId}: aprovado mas falha na integração ASAAS`);
+                asaasSuccess = true;
+              } catch (error) {
+                console.error(`❌ ASAAS error for user ${userId}:`, error);
+                const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na integração ASAAS';
+                asaasError = errorMessage;
+                
+                // Extract specific ASAAS error message
+                if (errorMessage.includes('O CPF/CNPJ informado é inválido')) {
+                  asaasError = 'O CPF/CNPJ informado é inválido';
+                } else if (errorMessage.includes('Email já cadastrado')) {
+                  asaasError = 'Email já cadastrado no ASAAS';
+                } else if (errorMessage.includes('Telefone inválido')) {
+                  asaasError = 'Número de telefone inválido';
+                } else if (errorMessage.includes('CEP inválido')) {
+                  asaasError = 'CEP inválido';
+                }
               }
             }
           }
 
-          // Create activity log for account activation
-          const requestUser = (req as any).user;
-          await storage.createActivityLog({
-            activity: `User account batch approved: ${user.firstName} ${user.lastName} (${user.role})`,
-            userId: requestUser.id,
-            entityType: "user",
-            entityId: user.id,
-            timestamp: new Date()
-          });
+          // Only activate user if ASAAS integration succeeded
+          if (asaasSuccess) {
+            const updatedUser = await storage.updateUser(userId, { 
+              active: true, 
+              status: 'active' 
+            });
 
-          results.successful++;
+            if (!updatedUser) {
+              const errorMsg = 'erro ao ativar usuário';
+              results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+              results.userResults.push({
+                userId,
+                userName: `${user.firstName} ${user.lastName}`,
+                status: 'error',
+                message: errorMsg
+              });
+              results.failed++;
+              continue;
+            }
+
+            // Create activity log for account activation
+            const requestUser = (req as any).user;
+            await storage.createActivityLog({
+              activity: `User account batch approved: ${user.firstName} ${user.lastName} (${user.role})`,
+              userId: requestUser.id,
+              entityType: "user",
+              entityId: user.id,
+              timestamp: new Date()
+            });
+
+            results.userResults.push({
+              userId,
+              userName: `${user.firstName} ${user.lastName}`,
+              status: 'success',
+              message: 'Aprovado com sucesso e integrado ao ASAAS'
+            });
+            results.successful++;
+          } else if (asaasError) {
+            // User remains pending due to ASAAS error
+            results.userResults.push({
+              userId,
+              userName: `${user.firstName} ${user.lastName}`,
+              status: 'error',
+              message: 'Permanece pendente devido a erro ASAAS',
+              asaasError: asaasError
+            });
+            results.errors.push(`Usuário ${userId}: ${asaasError}`);
+            results.failed++;
+          } else {
+            // User approved but no ASAAS integration attempted
+            const updatedUser = await storage.updateUser(userId, { 
+              active: true, 
+              status: 'active' 
+            });
+
+            if (!updatedUser) {
+              const errorMsg = 'erro ao ativar usuário';
+              results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+              results.userResults.push({
+                userId,
+                userName: `${user.firstName} ${user.lastName}`,
+                status: 'error',
+                message: errorMsg
+              });
+              results.failed++;
+              continue;
+            }
+
+            results.userResults.push({
+              userId,
+              userName: `${user.firstName} ${user.lastName}`,
+              status: 'success',
+              message: 'Aprovado com sucesso (sem integração ASAAS)'
+            });
+            results.successful++;
+          }
         } catch (error) {
           console.error(`❌ Error in batch approval for user ${userId}:`, error);
-          results.errors.push(`Usuário ${userId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+          const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+          results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+          
+          // Try to get user name for error reporting
+          let userName = 'Usuário desconhecido';
+          try {
+            const user = await storage.getUser(userId);
+            if (user) {
+              userName = `${user.firstName} ${user.lastName}`;
+            }
+          } catch (e) {
+            // Ignore error getting user name
+          }
+          
+          results.userResults.push({
+            userId,
+            userName,
+            status: 'error',
+            message: errorMsg
+          });
           results.failed++;
         }
       }
@@ -3998,7 +4108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `Aprovação em lote concluída: ${results.successful} sucessos, ${results.failed} falhas`,
         successful: results.successful,
         failed: results.failed,
-        errors: results.errors
+        errors: results.errors,
+        userResults: results.userResults
       });
     } catch (err) {
       console.error("Error in batch approval:", err);

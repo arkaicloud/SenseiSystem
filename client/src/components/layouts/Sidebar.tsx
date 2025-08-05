@@ -256,8 +256,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             onClick={() => toggleMenu(item.id)}
             className={cn(
               "w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-              level === 0 ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
-              (isMenuOpen || hasActiveChildItem) && "bg-sidebar-accent text-sidebar-accent-foreground"
+              level === 0 ? "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700",
+              (isMenuOpen || hasActiveChildItem) && "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
             )}
           >
             <div className="flex items-center">
@@ -291,8 +291,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
     const ItemContent = (
       <div className={cn(
         "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-        level === 0 ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
-        isItemActive && "bg-sidebar-primary text-sidebar-primary-foreground border-r-2 border-sidebar-primary"
+        level === 0 ? "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700",
+        isItemActive && "bg-blue-600 dark:bg-blue-500 text-white border-r-2 border-blue-600 dark:border-blue-500"
       )}>
         <item.icon className={cn("w-5 h-5 mr-3", level > 0 && "w-4 h-4 mr-2")} />
         <span className="flex-1">{item.label}</span>
@@ -326,7 +326,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
     <aside
       id="sidebar"
       className={cn(
-        "bg-sidebar-background border-r border-sidebar-border w-64 min-w-64 h-screen",
+        "bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 w-64 min-w-64 h-screen",
         isMobile 
           ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out shadow-2xl` 
           : "fixed top-0 left-0 z-40",
@@ -334,14 +334,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       )}
     >
       {/* Header */}
-      <div className="p-4 flex items-center justify-between border-b border-sidebar-border flex-shrink-0">
+      <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
         <div className="flex items-center">
-          <div className="bg-sidebar-primary p-2 rounded-lg mr-3">
-            <span className="text-sidebar-primary-foreground text-sm font-bold">
+          <div className="bg-blue-600 dark:bg-blue-500 p-2 rounded-lg mr-3">
+            <span className="text-white text-sm font-bold">
               {(schoolConfig as any)?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
             </span>
           </div>
-          <h1 className="font-semibold text-sidebar-foreground text-lg">
+          <h1 className="font-semibold text-slate-900 dark:text-white text-lg">
             {(schoolConfig as any)?.config?.schoolName || 'SenseiSystem'}
           </h1>
         </div>
@@ -352,7 +352,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -367,21 +367,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       </nav>
 
       {/* User info and footer - fixed at bottom */}
-      <div className="border-t border-sidebar-border flex-shrink-0">
+      <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
         <div className="p-4 flex items-center">
-          <div className="w-10 h-10 rounded-full bg-sidebar-primary flex items-center justify-center mr-3">
-            <span className="font-bold text-sidebar-primary-foreground text-sm">{userInitials}</span>
+          <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center mr-3">
+            <span className="font-bold text-white text-sm">{userInitials}</span>
           </div>
           <div className="flex-1">
-            <p className="font-medium text-sidebar-foreground text-sm">{user.firstName} {user.lastName}</p>
-            <p className="text-xs text-sidebar-foreground/60">{formatRole(user.role)}</p>
+            <p className="font-medium text-slate-900 dark:text-white text-sm">{user.firstName} {user.lastName}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">{formatRole(user.role)}</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
             disabled={isLoading}
-            className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -390,7 +390,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             )}
           </Button>
         </div>
-        <div className="px-4 pb-3 text-xs text-sidebar-foreground/40">
+        <div className="px-4 pb-3 text-xs text-slate-500 dark:text-slate-500">
           <p>SenseiSystem - Version 1.0.0</p>
         </div>
       </div>

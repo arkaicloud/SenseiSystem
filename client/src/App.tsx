@@ -10,6 +10,7 @@ import Students from "@/pages/students";
 import PendingUsers from "@/pages/pending-users";
 import StudentsAtRisk from "@/pages/students-at-risk";
 import AsaasPayments from "@/pages/asaas-payments";
+import FinancialDashboard from "@/pages/financial-dashboard";
 import Classes from "@/pages/classes";
 import Attendance from "@/pages/attendance";
 import Payments from "@/pages/payments";
@@ -58,6 +59,11 @@ function Router() {
       <ProtectedRoute 
         path="/asaas-payments" 
         component={() => <AsaasPayments />} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/financial" 
+        component={() => <FinancialDashboard />} 
         allowedRoles={["admin"]} 
       />
       <ProtectedRoute 

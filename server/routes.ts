@@ -2873,27 +2873,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Testar conexão com ASAAS
+  // Testar conexão com ASAAS - ARKAIDEV checklist
   app.post("/api/asaas/test-connection", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const config = await storage.getSchoolConfig();
-      if (!config?.asaasApiKey) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "API Key do ASAAS não configurada" 
-        });
-      }
-
+      console.log('🧪 Testing ASAAS connection - ARKAIDEV checklist');
       const { AsaasService } = await import("./services/asaasService");
-      const asaasService = new AsaasService(config.asaasApiKey, true); // Use sandbox
+      const asaasService = new AsaasService();
+      
+      // Test connection using the new testConnection method
       const result = await asaasService.testConnection();
-
+      
       res.json(result);
     } catch (error) {
-      console.error("Error testing ASAAS connection:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Erro interno do servidor" 
+      console.error("❌ ASAAS connection test error:", error);
+      res.json({
+        success: false,  
+        message: `Erro ao inicializar ASAAS Service: ${error instanceof Error ? error.message : "Unknown error"}`
       });
     }
   });

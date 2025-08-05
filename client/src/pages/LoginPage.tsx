@@ -61,8 +61,13 @@ export default function LoginPage() {
         description: `Bem-vindo, ${data.user.firstName}!`,
       });
       
-      // Redirect all users to /dashboard - the dashboard component will handle role-based rendering
-      setLocation("/dashboard");
+      // Store auth token and redirect
+      localStorage.setItem('token', 'authenticated');
+      
+      // Use setTimeout to allow toast to show before redirect
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
     },
     onError: (error: any) => {
       setError(error.message || "Erro ao fazer login");

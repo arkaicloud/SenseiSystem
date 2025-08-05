@@ -1,9 +1,9 @@
 import React from "react";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "../../client/src/components/ui/label";
+import { Textarea } from "../../client/src/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "../../client/src/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "../../client/src/components/ui/radio-group";
+import { Checkbox } from "../../client/src/components/ui/checkbox";
 import { Heart, AlertTriangle, FileText, Shield } from "lucide-react";
 
 interface HealthFormStepProps {

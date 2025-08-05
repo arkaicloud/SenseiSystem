@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "../client/src/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../client/src/components/ui/card";
+import { Progress } from "../client/src/components/ui/progress";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import PersonalInfoStep from "./steps/PersonalInfoStep";
 import HealthFormStep from "./steps/HealthFormStep";
@@ -9,7 +9,7 @@ import ResponsiblePartyStep from "./steps/ResponsiblePartyStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
 import { useQuery } from "@tanstack/react-query";
-import type { SchoolConfig } from "@shared/schema";
+import type { SchoolConfig } from "../shared/schema";
 
 interface OnboardingData {
   personalInfo: {

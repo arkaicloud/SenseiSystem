@@ -1,8 +1,8 @@
 import React from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "../../client/src/components/ui/input";
+import { Label } from "../../client/src/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../client/src/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "../../client/src/components/ui/card";
 import { Users, Phone, FileText, AlertCircle } from "lucide-react";
 
 interface ResponsiblePartyStepProps {

@@ -7,6 +7,10 @@ export interface AsaasRevenue {
   paidInvoices: number;
   pendingInvoices: number;
   overdueInvoices: number;
+  averageTicket: number;
+  revenueVariation: number;
+  previousMonthRevenue: number;
+  payingStudentsCount: number;
 }
 
 export class AsaasRevenueService {
@@ -69,15 +73,34 @@ export class AsaasRevenueService {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // Previous month dates
+      const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
       // Calculate from studentPayments table if available
       // This would be replaced with actual ASAAS API calls
+      const monthlyRevenue = 0;
+      const previousMonthRevenue = 0;
+      const payingStudentsCount = 0;
+      
+      // Calculate ticket médio
+      const averageTicket = payingStudentsCount > 0 ? monthlyRevenue / payingStudentsCount : 0;
+      
+      // Calculate variação de receita
+      const revenueVariation = previousMonthRevenue > 0 
+        ? ((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 
+        : 0;
       
       return {
-        monthlyRevenue: 0, // Will be calculated from ASAAS API
+        monthlyRevenue,
         paidInvoices: 0,
         pendingInvoices: 0,
-        overdueInvoices: 0
+        overdueInvoices: 0,
+        averageTicket,
+        revenueVariation,
+        previousMonthRevenue,
+        payingStudentsCount
       };
     } catch (error) {
       console.error('Error in fallback revenue calculation:', error);
@@ -85,7 +108,11 @@ export class AsaasRevenueService {
         monthlyRevenue: 0,
         paidInvoices: 0,
         pendingInvoices: 0,
-        overdueInvoices: 0
+        overdueInvoices: 0,
+        averageTicket: 0,
+        revenueVariation: 0,
+        previousMonthRevenue: 0,
+        payingStudentsCount: 0
       };
     }
   }

@@ -35,6 +35,28 @@ interface AsaasPaymentsResponse {
   data: AsaasPayment[];
 }
 
+interface FinancialMetrics {
+  receivedThisMonth: number;
+  pendingValue: number;
+  overdueCount: number;
+  defaultRate: number;
+  totalPaymentsThisMonth: number;
+  nextDueDate: Date | null;
+  totalReceived: number;
+  totalPending: number;
+  totalOverdue: number;
+  averageTicket: number;
+  revenueVariation: number;
+  previousMonthRevenue: number;
+  payingStudentsCount: number;
+}
+
+// Define AsaasPaymentWithCustomer to include customer data, though it's not strictly used in the modified calculateMetrics
+interface AsaasPaymentWithCustomer extends AsaasPayment {
+  customerData?: AsaasCustomer;
+}
+
+
 export class AsaasPaymentsService {
   private apiKey: string;
   private baseUrl: string;
@@ -42,7 +64,7 @@ export class AsaasPaymentsService {
   constructor() {
     this.apiKey = process.env.ASAAS_API_KEY || '';
     this.baseUrl = 'https://sandbox.asaas.com/api/v3';
-    
+
     if (!this.apiKey) {
       throw new Error('ASAAS_API_KEY not found in environment variables');
     }
@@ -59,7 +81,7 @@ export class AsaasPaymentsService {
   async getPayments(limit: number = 100, offset: number = 0): Promise<AsaasPaymentsResponse> {
     try {
       console.log('🔄 Fetching ASAAS payments...');
-      
+
       const response = await axios.get(`${this.baseUrl}/payments`, {
         headers: this.getHeaders(),
         params: {
@@ -102,7 +124,7 @@ export class AsaasPaymentsService {
         payments.map(async (payment) => {
           try {
             let customerData = customerCache.get(payment.customer);
-            
+
             if (!customerData) {
               customerData = await this.getCustomer(payment.customer);
               customerCache.set(payment.customer, customerData);
@@ -126,54 +148,98 @@ export class AsaasPaymentsService {
     }
   }
 
-  calculateMetrics(payments: AsaasPayment[]) {
+  calculateMetrics(payments: AsaasPaymentWithCustomer[]): FinancialMetrics {
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    // Filter payments for current month
-    const currentMonthPayments = payments.filter(payment => {
-      const paymentDate = new Date(payment.dateCreated);
-      return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
-    });
+    // Previous month dates
+    const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Calculate metrics
-    const receivedPayments = payments.filter(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
-    const pendingPayments = payments.filter(p => p.status === 'PENDING');
-    const overduePayments = payments.filter(p => p.status === 'OVERDUE');
-
-    const receivedThisMonth = receivedPayments
-      .filter(p => {
-        const paymentDate = new Date(p.paymentDate || p.clientPaymentDate || p.dateCreated);
-        return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
-      })
+    // Received this month
+    const receivedThisMonth = payments
+      .filter(p => p.status === 'RECEIVED' &&
+        p.paymentDate &&
+        new Date(p.paymentDate) >= startOfMonth &&
+        new Date(p.paymentDate) <= endOfMonth)
       .reduce((sum, p) => sum + p.value, 0);
 
+    // Received previous month
+    const previousMonthRevenue = payments
+      .filter(p => p.status === 'RECEIVED' &&
+        p.paymentDate &&
+        new Date(p.paymentDate) >= startOfPreviousMonth &&
+        new Date(p.paymentDate) <= endOfPreviousMonth)
+      .reduce((sum, p) => sum + p.value, 0);
+
+    // Count of paying students this month (unique customers)
+    const payingCustomersThisMonth = new Set(
+      payments
+        .filter(p => p.status === 'RECEIVED' &&
+          p.paymentDate &&
+          new Date(p.paymentDate) >= startOfMonth &&
+          new Date(p.paymentDate) <= endOfMonth)
+        .map(p => p.customer)
+    );
+    const payingStudentsCount = payingCustomersThisMonth.size;
+
+    // Calculate ticket médio
+    const averageTicket = payingStudentsCount > 0 ? receivedThisMonth / payingStudentsCount : 0;
+
+    // Calculate variação de receita
+    const revenueVariation = previousMonthRevenue > 0
+      ? ((receivedThisMonth - previousMonthRevenue) / previousMonthRevenue) * 100
+      : 0;
+
+    // Pending payments (not received, not overdue)
+    const pendingPayments = payments.filter(p =>
+      p.status === 'PENDING' &&
+      new Date(p.dueDate) >= now
+    );
     const pendingValue = pendingPayments.reduce((sum, p) => sum + p.value, 0);
-    const overdueValue = overduePayments.reduce((sum, p) => sum + p.value, 0);
 
-    const totalPayments = payments.length;
+    // Overdue payments
+    const overduePayments = payments.filter(p =>
+      p.status === 'PENDING' &&
+      new Date(p.dueDate) < now
+    );
     const overdueCount = overduePayments.length;
-    const defaultRate = totalPayments > 0 ? (overdueCount / totalPayments) * 100 : 0;
 
-    // Find next due date
-    const futureDueDates = payments
-      .filter(p => p.status === 'PENDING' && new Date(p.dueDate) > now)
-      .map(p => new Date(p.dueDate))
-      .sort((a, b) => a.getTime() - b.getTime());
+    // Default rate calculation
+    const totalReceived = payments.filter(p => p.status === 'RECEIVED').reduce((sum, p) => sum + p.value, 0);
+    const totalOverdue = overduePayments.reduce((sum, p) => sum + p.value, 0);
+    const defaultRate = (totalReceived + totalOverdue) > 0
+      ? (totalOverdue / (totalReceived + totalOverdue)) * 100
+      : 0;
 
-    const nextDueDate = futureDueDates.length > 0 ? futureDueDates[0] : null;
+    // Payments this month (all statuses)
+    const totalPaymentsThisMonth = payments.filter(p => {
+      const paymentDate = new Date(p.dateCreated);
+      return paymentDate >= startOfMonth && paymentDate <= endOfMonth;
+    }).length;
+
+    // Next due date
+    const upcomingPayments = payments
+      .filter(p => p.status === 'PENDING' && new Date(p.dueDate) >= now)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+    const nextDueDate = upcomingPayments.length > 0 ? new Date(upcomingPayments[0].dueDate) : null;
 
     return {
       receivedThisMonth,
       pendingValue,
       overdueCount,
       defaultRate,
-      totalPaymentsThisMonth: currentMonthPayments.length,
+      totalPaymentsThisMonth,
       nextDueDate,
-      totalReceived: receivedPayments.reduce((sum, p) => sum + p.value, 0),
+      totalReceived,
       totalPending: pendingValue,
-      totalOverdue: overdueValue,
+      totalOverdue: overduePayments.reduce((sum, p) => sum + p.value, 0),
+      averageTicket,
+      revenueVariation,
+      previousMonthRevenue,
+      payingStudentsCount
     };
   }
 }

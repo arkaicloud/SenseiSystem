@@ -4226,6 +4226,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalCount: 3
       };
       
+      // Add new fields to mock data
+      mockData.metrics.averageTicket = mockData.metrics.receivedThisMonth / Math.max(1, mockData.metrics.totalPaymentsThisMonth);
+      mockData.metrics.revenueVariation = 12.5; // Mock 12.5% increase
+      mockData.metrics.previousMonthRevenue = mockData.metrics.receivedThisMonth * 0.89; // Mock previous month
+      mockData.metrics.payingStudentsCount = Math.floor(mockData.metrics.totalPaymentsThisMonth * 0.8);
+      
       console.log('⚠️ Using mock financial data due to API error');
       res.json(mockData);
     }

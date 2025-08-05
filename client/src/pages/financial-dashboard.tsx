@@ -15,16 +15,20 @@ import {
   Clock, 
   AlertTriangle, 
   TrendingDown, 
-  FileText, 
-  Calendar,
-  RefreshCw,
-  ExternalLink,
-  Eye,
-  Search,
-  Filter,
   TrendingUp,
-  Receipt,
-  Copy
+  FileText, 
+  RefreshCw,
+  Search,
+  Calendar,
+  Filter,
+  Download,
+  Eye,
+  ExternalLink,
+  Plus,
+  Check,
+  X,
+  CreditCard,
+  BarChart3
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,6 +60,8 @@ interface FinancialMetrics {
   totalReceived: number;
   totalPending: number;
   totalOverdue: number;
+  averageTicket: number; // Added for Ticket Médio
+  revenueVariation: number; // Added for Variação de Receita
 }
 
 interface FinancialData {
@@ -67,7 +73,7 @@ interface FinancialData {
 export default function FinancialDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Filter states
   const [paymentTypeFilter, setPaymentTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("dueDate");
@@ -91,12 +97,12 @@ export default function FinancialDashboard() {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Erro ao atualizar dados financeiros");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -129,7 +135,7 @@ export default function FinancialDashboard() {
   // Filter payments based on current filters
   const getFilteredPayments = () => {
     if (!financialData?.payments) return [];
-    
+
     return financialData.payments.filter(payment => {
       // Type filter
       if (paymentTypeFilter !== "all") {
@@ -142,7 +148,7 @@ export default function FinancialDashboard() {
           return false;
         }
       }
-      
+
       // Search term filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -151,12 +157,12 @@ export default function FinancialDashboard() {
           return false;
         }
       }
-      
+
       // Status filters
       if (hideNegativePayments && payment.status === 'CANCELLED') {
         return false;
       }
-      
+
       return true;
     });
   };
@@ -276,32 +282,44 @@ export default function FinancialDashboard() {
 
       {/* Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* Ticket Médio Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recebido no Mês</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-600" /> {/* New icon */}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(metrics?.receivedThisMonth || 0)}
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(metrics?.averageTicket || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Pagamentos confirmados
+              Valor médio por aluno com pagamento confirmado
             </p>
           </CardContent>
         </Card>
 
+        {/* Variação de Receita Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor em Aberto</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-sm font-medium">Variação de Receita</CardTitle>
+            {/* Icon and color logic for variation */}
+            {metrics?.revenueVariation === 0 ? (
+              <BarChart3 className="h-4 w-4 text-gray-600" />
+            ) : metrics.revenueVariation > 0 ? (
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-red-600" />
+            )}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {formatCurrency(metrics?.pendingValue || 0)}
+            <div className={`text-2xl font-bold ${
+              metrics?.revenueVariation === 0 ? "text-gray-600" :
+              metrics.revenueVariation > 0 ? "text-green-600" : "text-red-600"
+            }`}>
+              {metrics?.revenueVariation.toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground">
-              Aguardando pagamento
+              Comparado a {{mêsAnterior}} {/* Placeholder for previous month name */}
             </p>
           </CardContent>
         </Card>
@@ -497,7 +515,7 @@ export default function FinancialDashboard() {
                   Mostrar cobranças recebidas em dinheiro
                 </label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="hideAdvanced" 
@@ -508,7 +526,7 @@ export default function FinancialDashboard() {
                   Ocultar cobranças antecipadas
                 </label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="hideNegative" 

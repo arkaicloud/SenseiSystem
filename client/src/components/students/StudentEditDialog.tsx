@@ -298,7 +298,7 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col bg-background border-border">
+      <DialogContent className="max-w-7xl w-[95vw] h-[90vh] flex flex-col bg-background border-border overflow-hidden">
         <DialogHeader className="sticky top-0 z-10 bg-background border-b border-border pb-4">
           <DialogTitle className="text-foreground flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -313,41 +313,45 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                <TabsList className="sticky top-0 z-10 grid w-full grid-cols-9 bg-muted h-16 p-2 mb-4 shadow-sm">
-                <TabsTrigger value="personal" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <User className="h-5 w-5" />
-                  <span className="text-xs">Dados Pessoais</span>
+                <TabsList className="sticky top-0 z-10 grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 bg-muted h-auto sm:h-16 p-1 sm:p-2 mb-4 shadow-sm gap-1 sm:gap-0">
+                <TabsTrigger value="personal" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <User className="h-3 w-3 sm:h-5 sm:w-5" />
+                  <span className="text-xs hidden sm:inline">Dados Pessoais</span>
+                  <span className="text-xs sm:hidden">Dados</span>
                 </TabsTrigger>
-                <TabsTrigger value="contact" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Phone className="h-5 w-5" />
+                <TabsTrigger value="contact" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Phone className="h-3 w-3 sm:h-5 sm:w-5" />
                   <span className="text-xs">Contato</span>
                 </TabsTrigger>
-                <TabsTrigger value="address" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <MapPin className="h-5 w-5" />
+                <TabsTrigger value="address" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <MapPin className="h-3 w-3 sm:h-5 sm:w-5" />
                   <span className="text-xs">Endereço</span>
                 </TabsTrigger>
-                <TabsTrigger value="health" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Heart className="h-5 w-5" />
-                  <span className="text-xs">Saúde e Graduação</span>
+                <TabsTrigger value="health" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-1 col-span-3">
+                  <Heart className="h-3 w-3 sm:h-5 sm:w-5" />
+                  <span className="text-xs hidden sm:inline">Saúde e Graduação</span>
+                  <span className="text-xs sm:hidden">Saúde</span>
                 </TabsTrigger>
-                <TabsTrigger value="financial" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Users className="h-5 w-5" />
-                  <span className="text-xs">Responsável Financeiro</span>
+                <TabsTrigger value="financial" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-1 col-span-3">
+                  <Users className="h-3 w-3 sm:h-5 sm:w-5" />
+                  <span className="text-xs hidden sm:inline">Responsável Financeiro</span>
+                  <span className="text-xs sm:hidden">Financeiro</span>
                 </TabsTrigger>
-                <TabsTrigger value="plan" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <CreditCard className="h-5 w-5" />
+                <TabsTrigger value="plan" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-1 col-span-3">
+                  <CreditCard className="h-3 w-3 sm:h-5 sm:w-5" />
                   <span className="text-xs">Plano</span>
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileText className="h-5 w-5" />
+                <TabsTrigger value="documents" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileText className="h-3 w-3 sm:h-5 sm:w-5" />
                   <span className="text-xs">Documentos</span>
                 </TabsTrigger>
-                <TabsTrigger value="physical" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Activity className="h-5 w-5" />
-                  <span className="text-xs">Avaliação Física</span>
+                <TabsTrigger value="physical" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Activity className="h-3 w-3 sm:h-5 sm:w-5" />
+                  <span className="text-xs hidden sm:inline">Avaliação Física</span>
+                  <span className="text-xs sm:hidden">Física</span>
                 </TabsTrigger>
-                <TabsTrigger value="contract" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileCheck className="h-5 w-5" />
+                <TabsTrigger value="contract" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileCheck className="h-3 w-3 sm:h-5 sm:w-5" />
                   <span className="text-xs">Termos</span>
                 </TabsTrigger>
               </TabsList>
@@ -581,9 +585,9 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
               {/* Tab 3: Endereço */}
               <TabsContent value="address" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-card-foreground flex items-center gap-2">
                       <MapPin className="h-5 w-5" />
                       Endereço
                     </CardTitle>
@@ -595,11 +599,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="zipCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">CEP</FormLabel>
+                            <FormLabel className="text-foreground">CEP</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="00000-000"
                               />
                             </FormControl>
@@ -613,11 +617,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="street"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Logradouro</FormLabel>
+                            <FormLabel className="text-foreground">Logradouro</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="Rua, Avenida, etc."
                               />
                             </FormControl>
@@ -633,11 +637,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="number"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Número</FormLabel>
+                            <FormLabel className="text-foreground">Número</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="123"
                               />
                             </FormControl>
@@ -651,11 +655,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="complement"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Complemento</FormLabel>
+                            <FormLabel className="text-foreground">Complemento</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="Apto, Casa, etc."
                               />
                             </FormControl>
@@ -671,11 +675,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="neighborhood"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Bairro</FormLabel>
+                            <FormLabel className="text-foreground">Bairro</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="Bairro"
                               />
                             </FormControl>
@@ -689,11 +693,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="city"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Cidade</FormLabel>
+                            <FormLabel className="text-foreground">Cidade</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="Cidade"
                               />
                             </FormControl>
@@ -707,11 +711,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="state"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Estado</FormLabel>
+                            <FormLabel className="text-foreground">Estado</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="SP"
                                 maxLength={2}
                               />
@@ -728,13 +732,13 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
               {/* Tab 4: Saúde e Graduação */}
               <TabsContent value="health" className="space-y-6 mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-gray-800 border-gray-700">
+                  <Card className="bg-card border-border">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center gap-2">
+                      <CardTitle className="text-card-foreground flex items-center gap-2">
                         <Heart className="h-5 w-5" />
                         Questionário de Saúde PAR-Q
                       </CardTitle>
-                      <CardDescription className="text-gray-400">
+                      <CardDescription className="text-muted-foreground">
                         Responda SIM ou NÃO para cada pergunta abaixo
                       </CardDescription>
                     </CardHeader>
@@ -759,7 +763,7 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                                 onCheckedChange={field.onChange}
                                 className="mt-1"
                               />
-                              <label className="text-sm text-gray-300">
+                              <label className="text-sm text-foreground">
                                 {index + 1}. {question}
                               </label>
                             </div>
@@ -772,11 +776,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="medicalObservations"
                         render={({ field }) => (
                           <FormItem className="mt-6">
-                            <FormLabel className="text-gray-300">Observações Médicas</FormLabel>
+                            <FormLabel className="text-foreground">Observações Médicas</FormLabel>
                             <FormControl>
                               <Textarea 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
+                                className="bg-input border-border text-foreground min-h-[100px]"
                                 placeholder="Descreva qualquer condição médica relevante, medicamentos em uso ou outras observações importantes..."
                               />
                             </FormControl>
@@ -787,9 +791,9 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gray-800 border-gray-700">
+                  <Card className="bg-card border-border">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center gap-2">
+                      <CardTitle className="text-card-foreground flex items-center gap-2">
                         <Award className="h-5 w-5" />
                         Graduação
                       </CardTitle>
@@ -800,14 +804,14 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="beltLevel"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Faixa Atual *</FormLabel>
+                            <FormLabel className="text-foreground">Faixa Atual *</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                                <SelectTrigger className="bg-input border-border text-foreground">
                                   <SelectValue placeholder="Selecionar faixa" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent className="bg-gray-700 border-gray-600">
+                              <SelectContent className="bg-popover border-border">
                                 <SelectItem value="white">Faixa Branca</SelectItem>
                                 <SelectItem value="blue">Faixa Azul</SelectItem>
                                 <SelectItem value="purple">Faixa Roxa</SelectItem>
@@ -825,12 +829,12 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="lastPromotionDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Última Troca de Faixa</FormLabel>
+                            <FormLabel className="text-foreground">Última Troca de Faixa</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="date"
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                               />
                             </FormControl>
                             <FormMessage />
@@ -844,13 +848,13 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
               {/* Tab 5: Responsável Financeiro */}
               <TabsContent value="financial" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-card-foreground flex items-center gap-2">
                       <Users className="h-5 w-5" />
                       Responsável Financeiro
                     </CardTitle>
-                    <CardDescription className="text-gray-400">
+                    <CardDescription className="text-muted-foreground">
                       Como o aluno é menor de idade, é obrigatório informar um responsável financeiro
                     </CardDescription>
                   </CardHeader>

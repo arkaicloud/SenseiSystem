@@ -3457,6 +3457,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Student Payment Routes =====
+  
+  // Get student payments by user ID
+  app.get("/api/student/:userId/payments", isAuthenticated, isSelfOrStaff, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Get student by user ID
+      const student = await storage.getStudentByUserId(Number(userId));
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Get all receivables for this student
+      const receivables = await storage.getContasReceberByStudentId(student.id);
+      
+      // Format payments for the frontend
+      const payments = receivables.map(receivable => ({
+        id: receivable.id,
+        asaasPaymentId: receivable.asaasPaymentId,
+        status: receivable.status,
+        billingType: receivable.billingType || 'BOLETO',
+        value: receivable.value,
+        netValue: receivable.netValue,
+        dueDate: receivable.dueDate,
+        description: receivable.description,
+        invoiceUrl: receivable.invoiceUrl,
+        bankSlipUrl: receivable.bankSlipUrl,
+        pixQrCode: receivable.pixQrCode,
+        pixCopyAndPaste: receivable.pixCopyAndPaste,
+        confirmedDate: receivable.confirmedDate,
+        receivedDate: receivable.receivedDate,
+        overdueDate: receivable.overdueDate,
+        createdAt: receivable.createdAt
+      }));
+
+      res.json({ payments });
+    } catch (error) {
+      console.error("Error fetching student payments:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

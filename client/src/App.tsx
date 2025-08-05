@@ -8,6 +8,7 @@ import MainLayout from "@/components/layouts/MainLayout";
 import Dashboard from "@/pages/dashboard/index";
 import Students from "@/pages/students";
 import PendingUsers from "@/pages/pending-users";
+import PendingApprovals from "@/components/admin/PendingApprovals";
 import StudentsAtRisk from "@/pages/students-at-risk";
 import AsaasPayments from "@/pages/asaas-payments";
 import Classes from "@/pages/classes";
@@ -43,6 +44,11 @@ function Router() {
       <ProtectedRoute 
         path="/pending-users" 
         component={() => <PendingUsers />} 
+        allowedRoles={["admin"]} 
+      />
+      <ProtectedRoute 
+        path="/admin/pending-approvals" 
+        component={() => <PendingApprovals />} 
         allowedRoles={["admin"]} 
       />
       <ProtectedRoute 

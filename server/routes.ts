@@ -3152,7 +3152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verificar se o estudante tem CPF como responsável financeiro
       const isFinancialResponsible = student.financialResponsibleCpf && 
-        student.financialResponsibleRelationship === 'self';
+        student.financialResponsibleRelation === 'self';
       
       if (!isFinancialResponsible) {
         return res.json({ 
@@ -3706,7 +3706,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: "student" as const,
         active: false, // Pending approval
         phone: studentData.phone || null,
+        cpf: studentData.cpf || null, // Adicionar CPF do usuário
+        rg: studentData.rg || null, // Adicionar RG do usuário
         emergencyContact: studentData.emergencyContact || null,
+        emergencyPhone: studentData.emergencyPhone || null, // Adicionar telefone de emergência
         street: studentData.street || null,
         number: studentData.number || null,
         city: studentData.city || null,

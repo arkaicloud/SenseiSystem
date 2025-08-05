@@ -44,24 +44,27 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
     setIsSubmitting(true);
 
     try {
-      await register(completeData.email, completeData.password, {
-        firstName: completeData.firstName,
-        lastName: completeData.lastName,
-        username: completeData.username,
+      // Create clean data object to avoid circular references
+      const cleanData = {
+        firstName: String(completeData.firstName),
+        lastName: String(completeData.lastName),
+        username: String(completeData.username),
         role: "student" as const,
-        phone: completeData.phone,
-        beltLevel: completeData.beltLevel,
-        stripes: completeData.stripes,
-        emergencyContact: completeData.emergencyContact || "",
-        birthDate: completeData.birthDate,
-        street: completeData.street,
-        number: completeData.number,
-        complement: completeData.complement || "",
-        neighborhood: completeData.neighborhood,
-        city: completeData.city,
-        state: completeData.state,
-        zipCode: completeData.zipCode,
-      });
+        phone: String(completeData.phone || ""),
+        beltLevel: String(completeData.beltLevel || "white"),
+        stripes: Number(completeData.stripes || 0),
+        emergencyContact: String(completeData.emergencyContact || ""),
+        birthDate: completeData.birthDate ? String(completeData.birthDate) : null,
+        street: String(completeData.street || ""),
+        number: String(completeData.number || ""),
+        complement: String(completeData.complement || ""),
+        neighborhood: String(completeData.neighborhood || ""),
+        city: String(completeData.city || ""),
+        state: String(completeData.state || ""),
+        zipCode: String(completeData.zipCode || ""),
+      };
+
+      await register(completeData.email, completeData.password, cleanData);
       setSuccess(true);
       setTimeout(() => onSuccess(), 2000);
     } catch (err) {

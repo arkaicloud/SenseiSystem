@@ -90,13 +90,13 @@ const StudentsAtRisk: React.FC = () => {
   const getRiskLabel = (riskLevel: string) => {
     switch (riskLevel) {
       case 'critical':
-        return 'Risco Crítico';
+        return 'Engajamento Crítico';
       case 'high':
-        return 'Alto Risco';
+        return 'Baixo Engajamento';
       case 'medium':
-        return 'Risco Moderado';
+        return 'Engajamento Moderado';
       default:
-        return 'Baixo Risco';
+        return 'Bom Engajamento';
     }
   };
 
@@ -107,9 +107,9 @@ const StudentsAtRisk: React.FC = () => {
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-blue-600 flex items-center">
             <span className="material-icons mr-2 text-orange-500">warning</span>
-            Alunos em Risco
+            Engajamento em Baixa
           </h1>
-          <p className="text-gray-600">Identifique e aja proativamente para reter alunos</p>
+          <p className="text-gray-600">Identifique e aja proativamente para melhorar o engajamento</p>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -144,7 +144,7 @@ const StudentsAtRisk: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-red-600">{totalAtRisk}</p>
-                <p className="text-sm text-gray-600">Total em Risco</p>
+                <p className="text-sm text-gray-600">Baixo Engajamento</p>
               </div>
             </div>
           </CardContent>
@@ -158,7 +158,7 @@ const StudentsAtRisk: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-red-600">{criticalRisk}</p>
-                <p className="text-sm text-gray-600">Risco Crítico</p>
+                <p className="text-sm text-gray-600">Engajamento Crítico</p>
               </div>
             </div>
           </CardContent>
@@ -172,7 +172,7 @@ const StudentsAtRisk: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-orange-600">{highRisk}</p>
-                <p className="text-sm text-gray-600">Alto Risco</p>
+                <p className="text-sm text-gray-600">Baixo Engajamento</p>
               </div>
             </div>
           </CardContent>
@@ -196,19 +196,19 @@ const StudentsAtRisk: React.FC = () => {
       {/* Students List */}
       <Card>
         <CardHeader>
-          <CardTitle>Alunos Identificados</CardTitle>
+          <CardTitle>Alunos com Baixo Engajamento</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando alunos em risco...</p>
+              <p className="mt-2 text-gray-600">Carregando alunos com baixo engajamento...</p>
             </div>
           ) : students.length === 0 ? (
             <div className="text-center py-12">
               <span className="material-icons text-6xl text-gray-300 mb-4">sentiment_very_satisfied</span>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum aluno em risco identificado</h3>
-              <p className="text-gray-500">Todos os alunos estão com frequência adequada!</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum aluno com baixo engajamento identificado</h3>
+              <p className="text-gray-500">Todos os alunos estão com engajamento adequado!</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -278,7 +278,7 @@ const StudentsAtRisk: React.FC = () => {
                         <DialogContent className="sm:max-w-[600px]">
                           <DialogHeader>
                             <DialogTitle>
-                              Adicionar Observação - {selectedStudent?.user.firstName} {selectedStudent?.user.lastName}
+                              Observação de Engajamento - {selectedStudent?.user.firstName} {selectedStudent?.user.lastName}
                             </DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
@@ -296,12 +296,12 @@ const StudentsAtRisk: React.FC = () => {
 
                             {/* Risk Info */}
                             <div className="bg-orange-50 p-4 rounded-lg">
-                              <h4 className="font-medium text-gray-900 mb-2">Situação de Risco</h4>
+                              <h4 className="font-medium text-gray-900 mb-2">Situação de Engajamento</h4>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div><strong>Frequência:</strong> {selectedStudent?.attendanceRate}%</div>
                                 <div><strong>Último comparecimento:</strong> {selectedStudent?.daysSinceLastAttendance} dias atrás</div>
                                 <div><strong>Aulas assistidas:</strong> {selectedStudent?.attendedClasses}</div>
-                                <div><strong>Nível de risco:</strong> {getRiskLabel(selectedStudent?.riskLevel || 'low')}</div>
+                                <div><strong>Nível de engajamento:</strong> {getRiskLabel(selectedStudent?.riskLevel || 'low')}</div>
                               </div>
                             </div>
 
@@ -312,7 +312,7 @@ const StudentsAtRisk: React.FC = () => {
                               </label>
                               <Textarea
                                 id="observation"
-                                placeholder="Digite sua observação sobre a situação do aluno, ações tomadas, contatos realizados, etc..."
+                                placeholder="Digite sua observação sobre o engajamento do aluno, ações tomadas, contatos realizados, etc..."
                                 value={observation}
                                 onChange={(e) => setObservation(e.target.value)}
                                 rows={4}

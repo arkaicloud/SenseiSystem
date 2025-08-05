@@ -1,0 +1,121 @@
+Desenvolva uma tela de Edição Completa de Aluno totalmente funcional no SenseiSystem (React + Tailwind + Supabase), transformando o protótipo existente em um sistema completo com backend integrado.
+
+🗄️ Backend/Database (Supabase)
+Tabelas necessárias:
+
+
+-- Tabela principal de alunos
+students (
+  id, first_name, last_name, birth_date, cpf, rg, gender, email, phone,
+  emergency_contact_name, emergency_contact_phone, created_at, updated_at
+)
+
+-- Endereços
+student_addresses (student_id, zip_code, street, number, complement, neighborhood, city, state)
+
+-- Saúde e graduação  
+student_health (student_id, parq_answers[], medical_observations)
+student_graduations (student_id, current_belt, current_degree, last_promotion_date)
+
+-- Responsáveis financeiros
+financial_responsibles (student_id, relationship, name, cpf, email, phone, is_self_responsible)
+
+-- Planos
+student_plans (student_id, type, value, due_date, frequency, duration, observations)
+
+-- Documentos
+student_documents (student_id, document_type, file_url, status, uploaded_at)
+
+-- Avaliações físicas
+physical_assessments (student_id, assessment_date, height, weight, bmi, flexibility, strength, endurance, evaluator, observations)
+
+-- Contratos
+student_contracts (student_id, signed, signed_date, signed_ip, signed_by, contract_html)
+Políticas RLS e autenticação necessárias
+
+🔧 Funcionalidades Backend
+API de CRUD completo para todas as seções
+Upload de documentos via Supabase Storage com validação de tipos
+Integração ViaCEP para busca automática de endereço
+Validação CPF duplicado em tempo real
+Cálculo automático de idade e IMC
+Logs de auditoria para todas as alterações
+Geração de PDF de contratos
+Sistema de notificações por email
+Backup automático de dados sensíveis
+📱 Funcionalidades Frontend
+Validações em tempo real:
+
+CPF/CNPJ com dígito verificador
+Email format + verificação de domínio
+Telefone com máscara brasileira
+CEP com busca automática de endereço
+Campos obrigatórios por aba
+Upload de documentos:
+
+Drag & drop de arquivos
+Preview de PDFs e imagens
+Compressão automática de imagens
+Validação de tamanho/tipo
+Progress bar de upload
+Download individual ou em ZIP
+Navegação inteligente:
+
+Auto-save em cada aba
+Validação antes de trocar aba
+Indicadores visuais de progresso
+Scroll automático para erros
+Atalhos de teclado
+Responsividade:
+
+Design mobile-first
+Abas colapsáveis em mobile
+Formulários adaptativos
+Touch-friendly
+⚡ Integrações Externas
+ViaCEP/BrasilAPI - Busca de endereço por CEP
+Receita Federal - Validação de CPF
+Email service - Notificações automáticas
+PDF Generator - Contratos e relatórios
+Cloud Storage - Backup de documentos
+🔐 Segurança e Compliance
+LGPD compliance com consentimento explícito
+Criptografia de dados sensíveis
+Logs de auditoria detalhados
+Controle de acesso por perfil de usuário
+Validação server-side de todos os dados
+Rate limiting nas APIs
+Sanitização de uploads
+📊 Analytics e Monitoramento
+Métricas de uso por aba
+Tempo de preenchimento do formulário
+Taxa de abandono por seção
+Erros mais comuns de validação
+Performance de upload de documentos
+🧪 Funcionalidades Avançadas
+Histórico de alterações com diff visual
+Aprovação de alterações por supervisor
+Importação em lote via CSV/Excel
+Exportação de dados completos
+Templates de contrato personalizáveis
+Assinatura digital de documentos
+Integração WhatsApp para notificações
+Reconhecimento OCR de documentos
+Backup automático em cloud
+API pública para integrações
+🎨 UX/UI Melhorado
+Design system consistente
+Micro-interações suaves
+Feedback visual imediato
+Estados de loading elegantes
+Modo offline com sincronização
+Acessibilidade WCAG 2.1
+Temas claro/escuro
+🚀 Performance
+Lazy loading de abas
+Code splitting por seção
+Cache inteligente de dados
+Compressão de imagens automática
+CDN para assets estáticos
+Service worker para cache offline
+Entrega: Sistema completo com todas as funcionalidades implementadas, testado, documentado e pronto para produção, incluindo manual de usuário e documentação técnica.

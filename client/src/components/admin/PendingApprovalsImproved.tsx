@@ -149,11 +149,20 @@ export default function PendingApprovalsImproved() {
   // Mutations
   const approveMutation = useMutation({
     mutationFn: async (userId: number) => {
+      // Get user data to retrieve the payment plan ID
+      const user = pendingUsers?.users?.find((u: PendingUser) => u.id === userId);
+      const planId = user?.student?.paymentPlanId;
+      
+      if (!planId) {
+        throw new Error("Plano de pagamento é obrigatório para aprovação");
+      }
+      
       const response = await fetch(`/api/users/${userId}/approve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ planId }),
       });
       
       if (!response.ok) {

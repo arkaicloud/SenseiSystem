@@ -205,8 +205,28 @@ export default function PendingApprovalsBatch() {
       });
       setSelectedUsers(newSelection);
 
-      // Refresh pending users to remove successful approvals
-      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      // Auto-reload after successful integrations
+      if (successfulUserIds.length > 0) {
+        setTimeout(() => {
+          // Clear all statuses for successful users to make them disappear
+          const updatedStatuses = new Map(userStatuses);
+          successfulUserIds.forEach((userId: number) => {
+            updatedStatuses.delete(userId);
+          });
+          setUserStatuses(updatedStatuses);
+          
+          // Refresh pending users to remove successful approvals
+          queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+          
+          toast({
+            title: "Lista Atualizada",
+            description: `${successfulUserIds.length} aluno(s) aprovado(s) removido(s) da lista`,
+          });
+        }, 3000); // Wait 3 seconds to show success messages, then reload
+      } else {
+        // If no successful users, just refresh immediately  
+        queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -243,11 +263,19 @@ export default function PendingApprovalsBatch() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       toast({
         title: "Sucesso!",
         description: "Aluno aprovado com sucesso e integração ASAAS realizada.",
       });
+      
+      // Auto-reload after 2 seconds to remove the approved student
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+        toast({
+          title: "Lista Atualizada",
+          description: "Aluno aprovado removido da lista",
+        });
+      }, 2000);
     },
     onError: (error: Error) => {
       toast({

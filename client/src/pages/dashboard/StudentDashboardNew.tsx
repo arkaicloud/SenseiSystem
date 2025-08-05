@@ -8,6 +8,7 @@ import { SchoolNotices } from '@/components/student/SchoolNotices';
 import { TodayClasses } from '@/components/student/TodayClasses';
 import { MonthlyAttendance } from '@/components/student/MonthlyAttendance';
 import { FinancialStatus } from '@/components/student/FinancialStatus';
+import { useBeltLevels } from '@/hooks/useBeltLevels';
 
 interface StudentDashboardProps {
   student: {
@@ -142,13 +143,9 @@ export default function StudentDashboardNew() {
   
   // Get belt information
   const beltLevel = studentData?.beltLevel || 'white';
-  const beltName = {
-    white: 'Faixa Branca',
-    blue: 'Faixa Azul',
-    purple: 'Faixa Roxa',
-    brown: 'Faixa Marrom',
-    black: 'Faixa Preta'
-  }[beltLevel] || 'Faixa Branca';
+  const { getBeltName, getBeltColor } = useBeltLevels();
+  const beltName = getBeltName(beltLevel);
+  const beltColorCode = getBeltColor(beltLevel);
   
   const studentName = user ? `${user.firstName} ${user.lastName}` : 'Aluno';
   const currentDate = new Date();

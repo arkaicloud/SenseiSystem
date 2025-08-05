@@ -1,8 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useBeltLevels } from '@/hooks/useBeltLevels';
 
 interface BeltBadgeProps {
-  beltLevel: "white" | "blue" | "purple" | "brown" | "black";
+  beltLevel: string;
   studentName: string;
   size?: "sm" | "md" | "lg";
 }
@@ -13,6 +14,7 @@ const BeltBadge: React.FC<BeltBadgeProps> = ({
   size = "md" 
 }) => {
   const { t } = useTranslation();
+  const { getBeltName, getBeltColor } = useBeltLevels();
   
   // Configurações de tamanho
   const sizes = {
@@ -36,37 +38,28 @@ const BeltBadge: React.FC<BeltBadgeProps> = ({
     }
   };
   
-  // Cores para cada faixa
-  const beltColors = {
-    white: {
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      text: "text-gray-800"
-    },
-    blue: {
-      bg: "bg-blue-500",
-      border: "border-blue-600",
-      text: "text-white"
-    },
-    purple: {
-      bg: "bg-purple-500",
-      border: "border-purple-600",
-      text: "text-white"
-    },
-    brown: {
-      bg: "bg-amber-700",
-      border: "border-amber-800",
-      text: "text-white"
-    },
-    black: {
-      bg: "bg-gray-900",
-      border: "border-black",
-      text: "text-white"
-    }
+  // Usar cores dinâmicas das faixas cadastradas
+  const getBeltStyle = (colorCode: string) => {
+    // Converter hex para RGB para determinar se a cor é clara ou escura
+    const hex = colorCode.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    const isLight = brightness > 150;
+    
+    return {
+      bg: `bg-[${colorCode}]`,
+      border: `border-[${colorCode}]`,
+      text: isLight ? "text-gray-800" : "text-white"
+    };
   };
 
   const currentSize = sizes[size];
-  const colors = beltColors[beltLevel];
+  const beltColorCode = getBeltColor(beltLevel);
+  const beltName = getBeltName(beltLevel);
+  const colors = getBeltStyle(beltColorCode);
   
   return (
     <div className="flex flex-col items-center justify-center">
@@ -84,9 +77,18 @@ const BeltBadge: React.FC<BeltBadgeProps> = ({
         </div>
         
         {/* Faixa */}
-        <div className={`${currentSize.belt} ${colors.bg} ${colors.border} border-2 rounded-sm flex items-center justify-center`}>
-          <span className={`${colors.text} font-bold ${currentSize.beltText}`}>
-            {t(beltLevel)}
+        <div 
+          className={`${currentSize.belt} border-2 rounded-sm flex items-center justify-center`}
+          style={{ 
+            backgroundColor: beltColorCode,
+            borderColor: beltColorCode
+          }}
+        >
+          <span 
+            className={`font-bold ${currentSize.beltText}`}
+            style={{ color: colors.text.includes('text-white') ? 'white' : '#1f2937' }}
+          >
+            {beltName}
           </span>
         </div>
       </div>

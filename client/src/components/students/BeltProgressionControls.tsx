@@ -6,32 +6,17 @@ import { Star, Plus, Minus, Award, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useBeltLevels } from '@/hooks/useBeltLevels';
 
 interface BeltProgressionControlsProps {
   studentId: number;
-  currentBelt: "white" | "blue" | "purple" | "brown" | "black";
+  currentBelt: string;
   currentStripes: number;
   studentName: string;
   onProgressUpdate?: () => void;
 }
 
-const beltColors = {
-  white: "bg-gray-100 border-gray-300 text-gray-800",
-  blue: "bg-blue-100 border-blue-300 text-blue-800",
-  purple: "bg-purple-100 border-purple-300 text-purple-800",
-  brown: "bg-amber-100 border-amber-300 text-amber-800",
-  black: "bg-gray-900 border-gray-700 text-white"
-};
-
-const beltNames = {
-  white: "Faixa Branca",
-  blue: "Faixa Azul", 
-  purple: "Faixa Roxa",
-  brown: "Faixa Marrom",
-  black: "Faixa Preta"
-};
-
-const beltOrder = ["white", "blue", "purple", "brown", "black"] as const;
+// Removed hardcoded belt data - now using dynamic belt levels
 
 const BeltProgressionControls: React.FC<BeltProgressionControlsProps> = ({
   studentId,
@@ -42,6 +27,13 @@ const BeltProgressionControls: React.FC<BeltProgressionControlsProps> = ({
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { 
+    getBeltName, 
+    getBeltColor, 
+    getNextBelt, 
+    getPreviousBelt,
+    beltOptions 
+  } = useBeltLevels();
 
   const updateProgressMutation = useMutation({
     mutationFn: async ({ beltLevel, stripes }: { beltLevel: string; stripes: number }) => {
@@ -90,21 +82,21 @@ const BeltProgressionControls: React.FC<BeltProgressionControlsProps> = ({
   };
 
   const promoteToNextBelt = () => {
-    const currentIndex = beltOrder.indexOf(currentBelt);
-    if (currentIndex < beltOrder.length - 1) {
-      const nextBelt = beltOrder[currentIndex + 1];
-      updateProgressMutation.mutate({ beltLevel: nextBelt, stripes: 0 });
+    const nextBelt = getNextBelt(currentBelt);
+    if (nextBelt) {
+      updateProgressMutation.mutate({ beltLevel: nextBelt.levelKey, stripes: 0 });
       
       // Mostrar celebração de conquista
       toast({
         title: "🏆 Parabéns!",
-        description: `${studentName} foi promovido para ${beltNames[nextBelt]}! Que Deus continue fortalecendo sua jornada. OSS!`,
+        description: `${studentName} foi promovido para ${nextBelt.name}! Que Deus continue fortalecendo sua jornada. OSS!`,
         duration: 5000,
       });
     }
   };
 
-  const canPromote = currentBelt !== "black" && currentStripes >= 4;
+  const nextBelt = getNextBelt(currentBelt);
+  const canPromote = nextBelt && currentStripes >= 4;
   const canAddStripe = currentStripes < 4;
   const canRemoveStripe = currentStripes > 0;
 
@@ -121,8 +113,14 @@ const BeltProgressionControls: React.FC<BeltProgressionControlsProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-600">Graduação Atual:</p>
-            <Badge className={`${beltColors[currentBelt]} text-sm font-medium`}>
-              {beltNames[currentBelt]}
+            <Badge 
+              className="text-sm font-medium"
+              style={{ 
+                backgroundColor: getBeltColor(currentBelt),
+                color: 'white'
+              }}
+            >
+              {getBeltName(currentBelt)}
             </Badge>
           </div>
           <div className="flex items-center gap-1">
@@ -174,7 +172,7 @@ const BeltProgressionControls: React.FC<BeltProgressionControlsProps> = ({
               disabled={updateProgressMutation.isPending}
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              Promover para {beltNames[beltOrder[beltOrder.indexOf(currentBelt) + 1]]}
+              Promover para {nextBelt?.name || 'Próxima Faixa'}
             </Button>
             <p className="text-xs text-center text-gray-600 mt-2">
               Aluno está pronto para a próxima graduação!
@@ -183,14 +181,14 @@ const BeltProgressionControls: React.FC<BeltProgressionControlsProps> = ({
         )}
 
         {/* Status da Próxima Graduação */}
-        {!canPromote && currentBelt !== "black" && (
+        {!canPromote && nextBelt && (
           <div className="text-center text-sm text-gray-600">
-            <p>Próxima graduação: {beltNames[beltOrder[beltOrder.indexOf(currentBelt) + 1]]}</p>
+            <p>Próxima graduação: {nextBelt.name}</p>
             <p>Faltam {4 - currentStripes} lista{4 - currentStripes > 1 ? 's' : ''}</p>
           </div>
         )}
 
-        {currentBelt === "black" && (
+        {!nextBelt && (
           <div className="text-center text-sm text-gray-600">
             <p className="font-medium">🏆 Graduação máxima alcançada!</p>
           </div>

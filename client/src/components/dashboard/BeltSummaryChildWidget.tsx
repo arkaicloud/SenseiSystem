@@ -69,8 +69,8 @@ export function BeltSummaryChildWidget() {
     );
   }
 
-  // Filter only child belts
-  const childBelts = beltStats.filter(belt => belt.category === 'child');
+  // Filter only child belts with students (hide empty belts for cleaner interface)
+  const childBelts = beltStats.filter(belt => belt.category === 'child' && belt.count > 0);
   const totalStudents = childBelts.reduce((sum, belt) => sum + belt.count, 0);
 
   return (
@@ -132,7 +132,7 @@ export function BeltSummaryChildWidget() {
           );
         })}
         
-        {totalStudents === 0 && (
+        {childBelts.length === 0 && (
           <div className="text-center py-4 text-muted-foreground text-sm">
             Nenhum aluno infantil encontrado
           </div>

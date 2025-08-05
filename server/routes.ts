@@ -934,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 await storage.createContaReceber({
                   studentId: student.id,
                   asaasPaymentId: payment.id,
-                  asaasCustomerId: asaasCustomer.id,
+                  asaasCustomerId: payment.customer,
                   status: payment.status,
                   billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
                   value: Math.round(payment.value * 100), // Convert back to cents
@@ -3982,7 +3982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 await storage.createContaReceber({
                   studentId: student.id,
                   asaasPaymentId: payment.id,
-                  asaasCustomerId: asaasCustomer.id,
+                  asaasCustomerId: payment.customer,
                   status: payment.status,
                   billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
                   value: Math.round(payment.value * 100), // Convert back to cents

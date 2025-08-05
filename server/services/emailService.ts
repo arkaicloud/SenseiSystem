@@ -7,7 +7,7 @@ export class EmailService {
 
   constructor() {
     // Configuração básica do nodemailer - pode ser personalizada pela escola
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,

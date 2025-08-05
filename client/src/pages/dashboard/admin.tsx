@@ -24,8 +24,7 @@ import {
   Plus,
   Eye,
   FileText,
-  Settings,
-  Bell
+  Settings
 } from 'lucide-react';
 import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
 import BeltSummaryAdultWidget from '@/components/dashboard/BeltSummaryAdultWidget';
@@ -330,44 +329,7 @@ const BirthdaysCard = ({ birthdays }: { birthdays: Birthday[] }) => {
   );
 };
 
-// Componente de Ações Rápidas
-const QuickActionsCard = () => {
-  const quickActions = [
-    { label: 'Novo Aviso', icon: Bell, color: 'blue' },
-    { label: 'Agendar Aula', icon: Calendar, color: 'green' },
-    { label: 'Exame de Faixa', icon: Star, color: 'orange' },
-    { label: 'Definir Meta', icon: Target, color: 'purple' },
-  ];
 
-  const colorClasses = {
-    blue: 'bg-blue-500 hover:bg-blue-600',
-    green: 'bg-green-500 hover:bg-green-600',
-    orange: 'bg-orange-500 hover:bg-orange-600',
-    purple: 'bg-purple-500 hover:bg-purple-600',
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-medium">Ações Rápidas</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
-          {quickActions.map((action, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className="h-16 flex flex-col items-center justify-center space-y-1 hover:shadow-md transition-shadow"
-            >
-              <action.icon className="h-5 w-5" />
-              <span className="text-xs">{action.label}</span>
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 export default function AdminDashboard() {
   const { t } = useTranslations();
@@ -828,7 +790,6 @@ export default function AdminDashboard() {
           <FinancialCard />
           <PendingApprovalsWidget />
           <BirthdaysCard birthdays={birthdays} />
-          <QuickActionsCard />
         </div>
       </div>
     </div>

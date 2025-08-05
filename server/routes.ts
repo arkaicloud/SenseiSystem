@@ -2353,6 +2353,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.phone !== undefined) cleanData.phone = req.body.phone ? String(req.body.phone) : null;
       if (req.body.email !== undefined) cleanData.email = req.body.email ? String(req.body.email) : null;
       if (req.body.website !== undefined) cleanData.website = req.body.website ? String(req.body.website) : null;
+      if (req.body.instagram !== undefined) cleanData.instagram = req.body.instagram ? String(req.body.instagram) : null;
+      if (req.body.facebook !== undefined) cleanData.facebook = req.body.facebook ? String(req.body.facebook) : null;
+      if (req.body.whatsapp !== undefined) cleanData.whatsapp = req.body.whatsapp ? String(req.body.whatsapp) : null;
+      if (req.body.youtube !== undefined) cleanData.youtube = req.body.youtube ? String(req.body.youtube) : null;
+      if (req.body.tiktok !== undefined) cleanData.tiktok = req.body.tiktok ? String(req.body.tiktok) : null;
+      if (req.body.logoLightUrl !== undefined) cleanData.logoLightUrl = req.body.logoLightUrl ? String(req.body.logoLightUrl) : null;
+      if (req.body.logoDarkUrl !== undefined) cleanData.logoDarkUrl = req.body.logoDarkUrl ? String(req.body.logoDarkUrl) : null;
+      if (req.body.welcomeMessage !== undefined) cleanData.welcomeMessage = req.body.welcomeMessage ? String(req.body.welcomeMessage) : null;
       if (req.body.congratsMessage !== undefined) cleanData.congratsMessage = req.body.congratsMessage ? String(req.body.congratsMessage) : null;
       
       // ASAAS configuration

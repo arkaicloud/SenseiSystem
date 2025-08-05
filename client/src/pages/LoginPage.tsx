@@ -239,10 +239,29 @@ export default function LoginPage() {
             <div className="mx-auto max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8">
               {/* Header */}
               <div className="text-center mb-8">
+                {/* Logo or School Name */}
                 <div className="mb-4">
-                  <h1 className="text-2xl font-bold text-red-600 dark:text-red-500 border-2 border-red-600 dark:border-red-500 px-4 py-2 inline-block rounded">
-                    {schoolConfig?.config?.schoolName?.toUpperCase() || "SENSEI SYSTEM"}
-                  </h1>
+                  {schoolConfig?.config?.logoUrl && 
+                   schoolConfig.config.logoUrl !== 'default' && 
+                   schoolConfig.config.logoUrl !== 'light' && 
+                   schoolConfig.config.logoUrl !== 'dark' ? (
+                    // Show custom logo
+                    <div className="mb-2">
+                      <img 
+                        src={schoolConfig.config.logoUrl} 
+                        alt="Logo da Escola"
+                        className="h-16 w-auto mx-auto object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    // Show school name in highlighted style (default SenseiSystem behavior)
+                    <h1 className="text-2xl font-bold text-red-600 dark:text-red-500 border-2 border-red-600 dark:border-red-500 px-4 py-2 inline-block rounded">
+                      {schoolConfig?.config?.schoolName?.toUpperCase() || "SENSEI SYSTEM"}
+                    </h1>
+                  )}
                 </div>
                 <p className="text-slate-600 dark:text-slate-400">
                   {schoolConfig?.config?.welcomeMessage || "Seja bem-vindo"}

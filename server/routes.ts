@@ -3499,6 +3499,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public student registration endpoint (for onboarding)
+  app.post("/api/register-student", async (req, res) => {
+    try {
+      const studentData = req.body;
+      
+      // Validate required fields
+      if (!studentData.firstName || !studentData.lastName || !studentData.email) {
+        return res.status(400).json({ message: "Nome, sobrenome e email são obrigatórios" });
+      }
+
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(studentData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Este email já está cadastrado" });
+      }
+
+      // Generate username from email if not provided
+      const username = studentData.username || studentData.email.split('@')[0].toLowerCase();
+
+      // Validate user data
+      const userData = insertUserSchema.parse({
+        firstName: studentData.firstName,
+        lastName: studentData.lastName,
+        username: username,
+        email: studentData.email,
+        password: studentData.password || 'temporaryPassword123',
+        role: "student",
+        active: false, // Pending approval
+        phone: studentData.phone || null,
+        emergencyContact: studentData.emergencyContact || null,
+        street: studentData.street || null,
+        number: studentData.number || null,
+        city: studentData.city || null,
+        state: studentData.state || null,
+        zipCode: studentData.zipCode || null,
+        complement: studentData.complement || null,
+        neighborhood: studentData.neighborhood || null,
+        birthDate: studentData.birthDate ? new Date(studentData.birthDate) : null,
+        joinDate: new Date()
+      });
+
+      // Create user first
+      const user = await storage.createUser(userData);
+
+      // Student specific data
+      const studentInfo = insertStudentSchema.parse({
+        userId: user.id,
+        beltLevel: studentData.beltLevel || "white",
+        stripes: studentData.stripes || 0,
+        lastPromotionDate: null,
+        attendanceRate: null,
+        notes: studentData.notes || null,
+        avatarColor: null,
+        avatarStyle: null,
+        avatarImage: null,
+        // Financial responsibility data
+        financialResponsibleName: studentData.financialResponsibleName || `${studentData.firstName} ${studentData.lastName}`,
+        financialResponsibleEmail: studentData.financialResponsibleEmail || studentData.email,
+        financialResponsiblePhone: studentData.financialResponsiblePhone || studentData.phone,
+        financialResponsibleCpf: studentData.financialResponsibleCpf || null,
+        financialResponsibleRelation: studentData.financialResponsibleRelation || "self",
+        asaasCustomerId: null,
+        paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
+        preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5
+      });
+
+      // Create student record
+      const student = await storage.createStudent(studentInfo);
+
+      console.log('✅ Student registration completed:', user.firstName, user.lastName, '- Pending approval');
+
+      res.json({ 
+        success: true,
+        message: "Cadastro realizado com sucesso! Sua solicitação está aguardando aprovação.",
+        student: {
+          id: student.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          status: "pending"
+        }
+      });
+    } catch (error) {
+      console.error("❌ Error in student registration:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

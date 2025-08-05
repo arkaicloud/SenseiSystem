@@ -1,0 +1,132 @@
+Painel Financeiro com Integração ASAAS
+Contexto:
+Você está desenvolvendo o sistema SenseiSystem, e precisa de um Painel Financeiro Administrativo robusto, visualmente atrativo e totalmente integrado à API do ASAAS (ambiente sandbox). O objetivo é exibir dados financeiros consolidados e em tempo real sobre os alunos e suas mensalidades.
+
+🎯 Objetivo
+Criar o painel "Financeiro > Contas a Receber" com:
+
+Resumo superior com indicadores-chave
+
+Gráfico analítico de recebimentos e inadimplência
+
+Tabela com todas as cobranças integradas do ASAAS
+
+Atualização automática via GET da API do ASAAS
+
+🔗 API ASAAS (sandbox)
+Use este endpoint para listar cobranças:
+
+bash
+Copiar
+Editar
+GET https://sandbox.asaas.com/api/v3/payments
+Authorization: Bearer SUA_API_KEY
+Query recomendada:
+
+bash
+Copiar
+Editar
+GET /payments?limit=100
+📥 Dados esperados do ASAAS:
+Cada payment retornado possui:
+
+json
+Copiar
+Editar
+{
+  "customer": "cus_123456789",
+  "value": 199.90,
+  "status": "RECEIVED" | "PENDING" | "OVERDUE",
+  "dueDate": "2025-08-15",
+  "description": "Mensalidade - Agosto",
+  "invoiceUrl": "https://asaas.com/invoice/...",
+  "paymentLink": "https://asaas.com/payment/...",
+  "customer.name": "Nome do Aluno"
+}
+🧩 Layout e Organização
+📌 Topo do Painel (cards):
+Exibir 6 cards com ícones, cores e dados da API:
+
+Recebido no Mês → value de RECEIVED
+
+Valor em Aberto → value de PENDING
+
+Pagamentos em Atraso → count de OVERDUE
+
+Taxa de Inadimplência → (qtd overdue / total) * 100
+
+Cobranças no Mês → total de payments
+
+Próximo Vencimento → menor dueDate futura
+
+Cores:
+
+Verde: RECEIVED
+
+Laranja: PENDING
+
+Vermelho: OVERDUE
+
+📈 Gráfico (opcional)
+Se quiser adicionar:
+
+Gráfico de barras: valores por status
+
+Gráfico de pizza: distribuição dos pagamentos
+
+📋 Tabela de Cobranças
+Tabela ordenada por data de vencimento, com colunas:
+
+Aluno	Valor	Status	Vencimento	Ação
+João da Silva	R$ 199,90	RECEBIDO	01/08/2025	Ver Boleto
+
+Botão "Ver Boleto" deve abrir o invoiceUrl se disponível. Se status for RECEIVED, pode mostrar como “Pago”.
+
+🔁 Lógica
+Ao abrir a tela, a função fetchAsaasPayments() busca as cobranças.
+
+Os dados retornados alimentam os cards e a tabela.
+
+Se possível, salvar cache local no BD para comparação e histórico.
+
+💡 Inspiração visual
+Usar visual moderno no estilo do dribbble.com/shots/14703446-Financial-Dashboard, com:
+
+Cores suaves
+
+Ícones animados
+
+Layout flexível e responsivo (mobile/tablet/desktop)
+
+Design semelhante ao painel financeiro de fintechs
+
+🛠️ Tecnologias recomendadas
+React + Tailwind (ou Shadcn/UI)
+
+Axios para chamadas HTTP
+
+Chart.js ou Recharts (opcional para gráficos)
+
+🧪 Testes
+Simular retorno com payload mockado caso a API esteja offline, como fallback. Exemplo:
+
+js
+Copiar
+Editar
+{
+  "student": "João da Silva",
+  "value": 199.90,
+  "status": "RECEIVED",
+  "dueDate": "2025-08-01"
+}
+✅ Resultado Esperado
+Um painel completo que permita ao ADM:
+
+Visualizar rapidamente a saúde financeira da escola
+
+Identificar inadimplentes
+
+Acessar os boletos com 1 clique
+
+Confiar nas métricas em tempo real
+

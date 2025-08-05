@@ -127,6 +127,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           roles: ["admin", "instructor"],
         },
         {
+          id: "financial-dashboard",
+          label: "Painel Financeiro",
+          icon: BarChart3,
+          path: "/financial",
+          roles: ["admin"],
+        },
+        {
           id: "asaas-payments",
           label: "Integração ASAAS",
           icon: CreditCard,

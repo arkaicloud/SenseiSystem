@@ -858,69 +858,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create ASAAS customer and subscription after approval
             if (student.financialResponsibleName && student.financialResponsibleEmail) {
               try {
-                const config = await storage.getSchoolConfig();
-                if (config?.asaasApiKey) {
-                  const { AsaasService } = await import("./services/asaasService");
-                  const asaasService = new AsaasService(); // Initialize without parameters
+                const { AsaasService } = await import("./services/asaasService");
+                const asaasService = new AsaasService();
 
-                  console.log('🔄 Creating ASAAS customer for approved student:', user.firstName, user.lastName);
-                  
-                  // Create ASAAS customer
-                  const asaasCustomer = await asaasService.createOrGetCustomer({
-                    name: student.financialResponsibleName,
-                    email: student.financialResponsibleEmail,
-                    cpfCnpj: student.financialResponsibleCpf?.replace(/\D/g, '') || '', // Remove formatting and ensure not null
-                    mobilePhone: student.financialResponsiblePhone?.replace(/\D/g, '') || undefined // Remove formatting
-                  });
+                console.log('🔄 Creating ASAAS customer for approved student:', user.firstName, user.lastName);
+                
+                // Prepare student data for ASAAS
+                const studentWithUserData = {
+                  ...student,
+                  first_name: user.firstName,
+                  last_name: user.lastName,
+                  user_id: user.id,
+                  street: user.street,
+                  number: user.number,
+                  complement: user.complement,
+                  neighborhood: user.neighborhood,
+                  zipCode: user.zipCode
+                };
+                
+                // Create ASAAS customer
+                const asaasCustomer = await asaasService.createCustomer(studentWithUserData);
 
-                  console.log('✅ ASAAS customer created:', asaasCustomer.id);
+                console.log('✅ ASAAS customer created:', asaasCustomer.id);
 
-                  // Update student with ASAAS customer ID
-                  await storage.updateStudent(student.id, { asaasCustomerId: asaasCustomer.id });
+                // Update student with ASAAS customer ID
+                await storage.updateStudent(student.id, { asaasCustomerId: asaasCustomer.id });
 
-                  // Create subscription if payment plan and due date are available
-                  if (student.preferredDueDate) {
-                    console.log('🔄 Creating ASAAS subscription for approved student:', user.firstName, user.lastName);
-                    
-                    // Calculate next due date based on preferred day
-                    const selectedDay = student.preferredDueDate;
-                    const nextDueDate = new Date(today.getFullYear(), today.getMonth(), selectedDay);
-                    
-                    // If the selected day has passed this month, move to next month
-                    if (nextDueDate <= today) {
-                      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-                    }
+                // Create payment for the student
+                console.log('🔄 Creating ASAAS payment for approved student:', user.firstName, user.lastName);
+                
+                const payment = await asaasService.createPaymentForStudent(
+                  asaasCustomer.id,
+                  studentWithUserData,
+                  plan
+                );
 
-                    const payment = await asaasService.createPayment({
-                      customer: asaasCustomer.id,
-                      billingType: "BOLETO",
-                      value: plan.amount / 100, // Convert from cents to reais
-                      dueDate: nextDueDate.toISOString().split('T')[0], // YYYY-MM-DD format
-                      description: `Mensalidade - ${plan.name} - ${user.firstName} ${user.lastName}`,
-                      externalReference: `student_${student.id}_plan_${plan.id}`
-                    });
+                console.log('✅ ASAAS payment created:', payment.id);
 
-                    console.log('✅ ASAAS payment created:', payment.id);
-
-                    // Save payment to database
-                    await storage.createContaReceber({
-                      studentId: student.id,
-                      asaasPaymentId: payment.id,
-                      asaasCustomerId: asaasCustomer.id,
-                      status: payment.status,
-                      billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
-                      value: Math.round(payment.value * 100), // Convert back to cents
-                      netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
-                      dueDate: new Date(payment.dueDate),
-                      description: payment.description || '',
-                      externalReference: payment.externalReference || null,
-                      invoiceUrl: payment.invoiceUrl || null,
-                      bankSlipUrl: payment.bankSlipUrl || null,
-                      pixQrCode: payment.pixQrCode || null,
-                      pixCopyAndPaste: payment.pixCopyAndPaste || null
-                    });
-                  }
-                }
+                // Save payment to database
+                await storage.createContaReceber({
+                  studentId: student.id,
+                  asaasPaymentId: payment.id,
+                  asaasCustomerId: asaasCustomer.id,
+                  status: payment.status,
+                  billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
+                  value: Math.round(payment.value * 100), // Convert back to cents
+                  netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
+                  dueDate: new Date(payment.dueDate),
+                  description: payment.description || '',
+                  externalReference: payment.externalReference || null,
+                  invoiceUrl: payment.invoiceUrl || null,
+                  bankSlipUrl: payment.bankSlipUrl || null,
+                  pixQrCode: payment.pixQrCode || null,
+                  pixCopyAndPaste: payment.pixCopyAndPaste || null
+                });
               } catch (error) {
                 console.error('❌ Error creating ASAAS customer/subscription:', error);
                 // Continue with approval even if ASAAS fails - log the error but don't fail the approval

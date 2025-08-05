@@ -31,12 +31,17 @@ interface AsaasPayment {
 
 interface CreateCustomerRequest {
   name: string;
-  cpfCnpj: string;
   email?: string;
-  mobilePhone?: string;
+  phone?: string;
+  cpfCnpj: string;
   postalCode?: string;
+  address?: string;
   addressNumber?: string;
-  addressComplement?: string;
+  complement?: string;
+  province?: string;
+  externalReference?: string;
+  notificationDisabled?: boolean;
+  observations?: string;
 }
 
 interface CreatePaymentRequest {
@@ -46,6 +51,7 @@ interface CreatePaymentRequest {
   dueDate: string;
   description?: string;
   externalReference?: string;
+  notificationEnabled?: boolean;
 }
 
 export class AsaasService {
@@ -54,7 +60,7 @@ export class AsaasService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: 'https://www.asaas.com/api/v3',
+      baseURL: 'https://sandbox.asaas.com/api/v3',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -113,24 +119,32 @@ export class AsaasService {
   }
 
   /**
-   * Criar ou buscar cliente no ASAAS
+   * Criar cliente no ASAAS com dados completos
    */
-  async createOrGetCustomer(customerData: CreateCustomerRequest): Promise<AsaasCustomer> {
+  async createCustomer(studentData: any): Promise<AsaasCustomer> {
     try {
-      // First try to find existing customer by CPF/CNPJ
-      const existingCustomer = await this.findCustomerByCpf(customerData.cpfCnpj);
-      if (existingCustomer) {
-        console.log('Customer already exists in ASAAS:', existingCustomer.id);
-        return existingCustomer;
-      }
+      const customerData: CreateCustomerRequest = {
+        name: studentData.financial_responsible_name,
+        email: studentData.financial_responsible_email,
+        phone: studentData.financial_responsible_phone,
+        cpfCnpj: studentData.financial_responsible_cpf?.replace(/\D/g, ''), // Remove formatting
+        postalCode: studentData.zipCode?.replace(/\D/g, ''), // Remove formatting  
+        address: studentData.street,
+        addressNumber: studentData.number,
+        complement: studentData.complement,
+        province: studentData.neighborhood,
+        externalReference: `ALUNO_${studentData.user_id}`,
+        notificationDisabled: false,
+        observations: `Responsável financeiro do aluno ${studentData.first_name} ${studentData.last_name}`
+      };
 
-      // Create new customer
+      console.log('🔄 Creating ASAAS customer:', customerData);
       const response = await this.client.post<AsaasCustomer>('/customers', customerData);
-      console.log('New customer created in ASAAS:', response.data.id);
+      console.log('✅ Customer created in ASAAS:', response.data.id);
       return response.data;
     } catch (error) {
-      console.error('Error creating/getting customer:', error);
-      throw new Error('Failed to create or get customer in ASAAS');
+      console.error('❌ Error creating customer:', error);
+      throw new Error('Failed to create customer in ASAAS');
     }
   }
 
@@ -151,6 +165,35 @@ export class AsaasService {
     } catch (error) {
       console.error('Error finding customer by CPF:', error);
       return null;
+    }
+  }
+
+  /**
+   * Criar cobrança completa no ASAAS
+   */
+  async createPaymentForStudent(customerId: string, studentData: any, planData: any): Promise<AsaasPayment> {
+    try {
+      // Calculate due date (next month)
+      const dueDate = new Date();
+      dueDate.setMonth(dueDate.getMonth() + 1);
+      
+      const paymentData: CreatePaymentRequest = {
+        customer: customerId,
+        billingType: 'BOLETO',
+        value: planData.price,
+        dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        description: `Mensalidade SenseiSystem - ${studentData.first_name} ${studentData.last_name}`,
+        externalReference: `COBRANCA_ALUNO_${studentData.user_id}`,
+        notificationEnabled: true
+      };
+
+      console.log('🔄 Creating ASAAS payment:', paymentData);
+      const response = await this.client.post<AsaasPayment>('/payments', paymentData);
+      console.log('✅ Payment created in ASAAS:', response.data.id);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error creating payment:', error);
+      throw new Error('Failed to create payment in ASAAS');
     }
   }
 

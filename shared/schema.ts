@@ -93,6 +93,11 @@ export const schoolConfig = pgTable("school_config", {
   phone: text("phone"),
   email: text("email"),
   website: text("website"),
+  instagram: text("instagram"),
+  facebook: text("facebook"),
+  whatsapp: text("whatsapp"),
+  youtube: text("youtube"),
+  tiktok: text("tiktok"),
   defaultTheme: text("default_theme").notNull().default("light"), // "light" or "dark"
   primaryColor: text("primary_color").notNull().default("#B85C38"), // Cor primária da escola
   secondaryColor: text("secondary_color").notNull().default("#D97659"), // Cor secundária da escola

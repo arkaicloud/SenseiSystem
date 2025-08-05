@@ -886,10 +886,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const { AsaasService } = await import("./services/asaasService");
                 const asaasService = new AsaasService();
 
-                console.log('🔄 Creating ASAAS customer for approved student:', user.firstName, user.lastName);
+                console.log('🎯 ARKAIDEV: Processando aprovação individual com anti-duplicata:', user.firstName, user.lastName);
                 
-                // Prepare student data for ASAAS
-                const studentWithUserData = {
+                // Prepare student data for ASAAS with responsavel data
+                const alunoData = {
                   ...student,
                   first_name: user.firstName,
                   last_name: user.lastName,
@@ -899,29 +899,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   complement: user.complement,
                   neighborhood: user.neighborhood,
                   zipCode: user.zipCode,
-                  // Map financial responsible data correctly
-                  financialResponsibleName: student.financialResponsibleName,
-                  financialResponsibleEmail: student.financialResponsibleEmail,
-                  financialResponsiblePhone: student.financialResponsiblePhone,
-                  financialResponsibleCpf: student.financialResponsibleCpf
+                  responsavel: {
+                    nome: student.financialResponsibleName,
+                    name: student.financialResponsibleName,
+                    email: student.financialResponsibleEmail,
+                    telefone: student.financialResponsiblePhone,
+                    phone: student.financialResponsiblePhone,
+                    cpf: student.financialResponsibleCpf,
+                    endereco: user.street,
+                    address: user.street,
+                    numero: user.number,
+                    addressNumber: user.number,
+                    complemento: user.complement,
+                    complement: user.complement,
+                    cep: user.zipCode,
+                    cidade: user.city || '',
+                    city: user.city || ''
+                  }
                 };
                 
-                // Create ASAAS customer
-                const asaasCustomer = await asaasService.createCustomer(studentWithUserData);
+                // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
+                console.log('🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...');
+                const payment = await asaasService.createOrSyncCobranca(alunoData, plan);
+                console.log(`✅ Processo concluído - Payment ID: ${payment.id}, Customer: ${payment.customer}`);
 
-                console.log('✅ ASAAS customer created:', asaasCustomer.id);
-
-                // Update student with ASAAS customer ID
-                await storage.updateStudent(student.id, { asaasCustomerId: asaasCustomer.id });
-
-                // Create payment for the student
-                console.log('🔄 Creating ASAAS payment for approved student:', user.firstName, user.lastName);
-                
-                const payment = await asaasService.createPaymentForStudent(
-                  asaasCustomer.id,
-                  studentWithUserData,
-                  plan
-                );
+                // Update student with ASAAS customer ID if not already set
+                if (!student.asaasCustomerId && payment.customer) {
+                  await storage.updateStudent(student.id, { asaasCustomerId: payment.customer });
+                }
 
                 console.log('✅ ASAAS payment created:', payment.id);
 
@@ -3929,10 +3934,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const { AsaasService } = await import("./services/asaasService");
                 const asaasService = new AsaasService();
 
-                console.log(`🔄 Creating ASAAS customer for batch approved student: ${user.firstName} ${user.lastName}`);
+                console.log(`🎯 ARKAIDEV: Processando aluno com verificação anti-duplicata: ${user.firstName} ${user.lastName}`);
                 
-                // Prepare student data for ASAAS
-                const studentWithUserData = {
+                // Prepare student data for ASAAS with responsavel data
+                const alunoData = {
                   ...student,
                   first_name: user.firstName,
                   last_name: user.lastName,
@@ -3942,27 +3947,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   complement: user.complement,
                   neighborhood: user.neighborhood,
                   zipCode: user.zipCode,
-                  financialResponsibleName: student.financialResponsibleName,
-                  financialResponsibleEmail: student.financialResponsibleEmail,
-                  financialResponsiblePhone: student.financialResponsiblePhone,
-                  financialResponsibleCpf: student.financialResponsibleCpf
+                  responsavel: {
+                    nome: student.financialResponsibleName,
+                    name: student.financialResponsibleName,
+                    email: student.financialResponsibleEmail,
+                    telefone: student.financialResponsiblePhone,
+                    phone: student.financialResponsiblePhone,
+                    cpf: student.financialResponsibleCpf,
+                    endereco: user.street,
+                    address: user.street,
+                    numero: user.number,
+                    addressNumber: user.number,
+                    complemento: user.complement,
+                    complement: user.complement,
+                    cep: user.zipCode,
+                    cidade: user.city || '',
+                    city: user.city || ''
+                  }
                 };
                 
-                // Create ASAAS customer
-                const asaasCustomer = await asaasService.createCustomer(studentWithUserData);
-                console.log(`✅ ASAAS customer created: ${asaasCustomer.id}`);
+                // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
+                console.log(`🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...`);
+                const payment = await asaasService.createOrSyncCobranca(alunoData, plan);
+                console.log(`✅ Processo concluído - Payment ID: ${payment.id}, Customer: ${payment.customer}`);
 
-                // Update student with ASAAS customer ID
-                await storage.updateStudent(student.id, { asaasCustomerId: asaasCustomer.id });
-
-                // Create payment for the student
-                console.log(`🔄 Creating ASAAS payment for batch approved student: ${user.firstName} ${user.lastName}`);
-                
-                const payment = await asaasService.createPaymentForStudent(
-                  asaasCustomer.id,
-                  studentWithUserData,
-                  plan
-                );
+                // Update student with ASAAS customer ID if not already set
+                if (!student.asaasCustomerId && payment.customer) {
+                  await storage.updateStudent(student.id, { asaasCustomerId: payment.customer });
+                }
 
                 console.log(`✅ ASAAS payment created: ${payment.id}`);
 
@@ -4228,6 +4240,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: 'Erro ao atualizar dados financeiros',
         error: error.message
+      });
+    }
+  });
+
+  // =====ARKAIDEV Enhancement: Manual ASAAS Sync Routes=====
+  
+  // Sync student with ASAAS (manual resync in case of lost link)
+  app.post("/api/students/:id/sync-asaas", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { AsaasService } = await import("./services/asaasService");
+      const asaasService = new AsaasService();
+      
+      console.log(`🔄 Manual ASAAS sync requested for student ID: ${id}`);
+      
+      // Get student and user data
+      const student = await storage.getStudent(Number(id));
+      if (!student) {
+        return res.status(404).json({ message: "Aluno não encontrado" });
+      }
+      
+      const user = await storage.getUser(student.userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      if (!student.financialResponsibleCpf && !student.financialResponsibleEmail) {
+        return res.status(400).json({ 
+          message: "CPF ou e-mail do responsável financeiro é necessário para sincronização" 
+        });
+      }
+      
+      // Try to sync existing ASAAS data
+      const cpfOrEmail = student.financialResponsibleCpf || student.financialResponsibleEmail;
+      const syncResult = await asaasService.syncExistingAsaasData(cpfOrEmail);
+      
+      if (!syncResult.customer) {
+        return res.json({
+          success: false,
+          message: "Nenhum cliente encontrado no ASAAS com esses dados",
+          customer: null,
+          payments: []
+        });
+      }
+      
+      // Update student with found customer ID
+      await storage.updateStudent(student.id, { 
+        asaasCustomerId: syncResult.customer.id 
+      });
+      
+      // Save or update payments found
+      let savedPayments = 0;
+      for (const payment of syncResult.payments) {
+        try {
+          // Check if payment already exists
+          const existingPayment = await storage.getContaReceberByAsaasId(payment.id);
+          if (!existingPayment) {
+            await storage.createContaReceber({
+              studentId: student.id,
+              asaasPaymentId: payment.id,
+              asaasCustomerId: syncResult.customer.id,
+              status: payment.status,
+              billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
+              value: Math.round(payment.value * 100),
+              netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
+              dueDate: new Date(payment.dueDate),
+              description: payment.description || '',
+              externalReference: payment.externalReference || null,
+              invoiceUrl: payment.invoiceUrl || null,
+              bankSlipUrl: payment.bankSlipUrl || null,
+              pixQrCode: payment.pixQrCode || null,
+              pixCopyAndPaste: payment.pixCopyAndPaste || null
+            });
+            savedPayments++;
+          }
+        } catch (error) {
+          console.error(`Erro ao salvar pagamento ${payment.id}:`, error);
+        }
+      }
+      
+      console.log(`✅ Sincronização concluída: Cliente ${syncResult.customer.id}, ${savedPayments} novos pagamentos salvos`);
+      
+      res.json({
+        success: true,
+        message: `Sincronização concluída com sucesso`,
+        customer: syncResult.customer,
+        payments: syncResult.payments,
+        savedPayments
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Erro na sincronização manual:', error);
+      res.status(500).json({
+        success: false,
+        message: `Erro na sincronização: ${error.message}`
+      });
+    }
+  });
+
+  // Check if customer exists in ASAAS (verification endpoint)
+  app.get("/api/asaas/check-customer", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { cpf, email } = req.query;
+      
+      if (!cpf && !email) {
+        return res.status(400).json({ 
+          message: "CPF ou e-mail é obrigatório" 
+        });
+      }
+      
+      const { AsaasService } = await import("./services/asaasService");
+      const asaasService = new AsaasService();
+      
+      console.log(`🔍 Verificando cliente ASAAS - CPF: ${cpf}, Email: ${email}`);
+      
+      const syncResult = await asaasService.syncExistingAsaasData(
+        (cpf as string) || (email as string)
+      );
+      
+      res.json({
+        exists: !!syncResult.customer,
+        customer: syncResult.customer,
+        payments: syncResult.payments,
+        paymentsCount: syncResult.payments.length
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Erro na verificação do cliente:', error);
+      res.status(500).json({
+        message: `Erro na verificação: ${error.message}`
       });
     }
   });

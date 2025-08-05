@@ -1,0 +1,132 @@
+Prompt ArkaiDev — Verificação + Vinculação ASAAS antes de criar cliente e cobrança
+Contexto:
+Na rotina de aprovação de aluno no SenseiSystem, após o preenchimento do onboarding e antes da criação automática de cliente/cobrança no ASAAS, é necessário implementar uma função inteligente que primeiro verifica se o cliente já existe no ASAAS (pelo CPF/CNPJ ou e-mail) e, caso positivo, apenas vincula os dados existentes ao cadastro interno, evitando duplicações.
+
+🎯 Objetivo
+Antes de:
+
+Criar um novo cliente ASAAS
+
+Gerar cobrança automática
+
+✅ Verificar se o responsável financeiro do aluno já existe no ASAAS
+✅ Se já existir, usar esse customerId e apenas gerar a cobrança
+✅ Se já houver cobrança gerada, apenas vincular essa cobrança ao banco interno
+
+🔁 Fluxo sugerido
+Função: getOrCreateAsaasCustomer(cpfOrEmail)
+
+Tenta encontrar o cliente no ASAAS:
+
+sql
+Copiar
+Editar
+GET /customers?cpfCnpj=12345678900
+ou
+GET /customers?email=exemplo@teste.com
+Se encontrar → retorna customer.id
+
+Se não encontrar, cria com POST /customers
+
+Função: getStudentPayment(customerId)
+
+Busca pagamentos associados ao cliente:
+
+bash
+Copiar
+Editar
+GET /payments?customer=cus_123abc
+Se houver pagamento em aberto, pago ou vencido, salva no sistema:
+
+asaasPaymentId
+
+invoiceUrl
+
+status
+
+vencimento
+
+Se não houver pagamento, chama createPayment(...)
+
+Vinculação no banco interno
+
+Salva:
+
+responsavel.asaasCustomerId
+
+contas_receber.asaasPaymentId
+
+contas_receber.status, link, vencimento, etc.
+
+🧱 Estrutura de Código sugerida
+Serviço ASAAS (asaasService.ts)
+ts
+Copiar
+Editar
+async function getOrCreateAsaasCustomer(responsavel) {
+  const cpf = responsavel.cpf.replace(/\D/g, '');
+
+  const search = await axios.get(`${ASAAS_BASE}/customers?cpfCnpj=${cpf}`, headers);
+
+  if (search.data?.data?.length > 0) {
+    return search.data.data[0].id;
+  }
+
+  const newCustomer = await axios.post(`${ASAAS_BASE}/customers`, {
+    name: responsavel.nome,
+    cpfCnpj: cpf,
+    email: responsavel.email,
+    mobilePhone: responsavel.telefone,
+    postalCode: responsavel.cep,
+    address: responsavel.endereco,
+    addressNumber: responsavel.numero
+  }, headers);
+
+  return newCustomer.data.id;
+}
+Função: Criar ou Vincular Cobrança
+ts
+Copiar
+Editar
+async function createOrSyncCobranca(aluno, plano) {
+  const customerId = await getOrCreateAsaasCustomer(aluno.responsavel);
+
+  // Buscar pagamentos existentes
+  const { data } = await axios.get(`${ASAAS_BASE}/payments?customer=${customerId}`, headers);
+  const pagamentos = data.data;
+
+  const pagamentoExistente = pagamentos.find(p => 
+    p.status !== 'RECEIVED' && p.value === plano.valor
+  );
+
+  if (pagamentoExistente) {
+    // Apenas vincula
+    await saveTituloNoBanco(pagamentoExistente);
+  } else {
+    // Cria nova cobrança
+    const nova = await axios.post(`${ASAAS_BASE}/payments`, {
+      customer: customerId,
+      billingType: "BOLETO",
+      value: plano.valor,
+      dueDate: plano.vencimento
+    }, headers);
+
+    await saveTituloNoBanco(nova.data);
+  }
+}
+💡 Extras sugeridos (inteligência adicional):
+Verificar se cliente ASAAS foi criado por outra escola (match por CPF + e-mail)
+
+Permitir "Reforçar vínculo ASAAS manualmente" no painel admin
+
+Criar botão “Sincronizar com ASAAS” no aluno, caso ocorra perda de vínculo
+
+✅ Pedido à IA (para aplicar no Replit):
+Crie as funções getOrCreateAsaasCustomer() e createOrSyncCobranca()
+
+Adicione verificação e fallback no fluxo de aprovação do aluno
+
+Garanta que nenhum cliente ou cobrança seja duplicada
+
+Armazene todos os vínculos corretamente no banco local
+

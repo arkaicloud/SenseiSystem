@@ -315,4 +315,186 @@ export class AsaasService {
       return false;
     }
   }
+
+  /**
+   * 🎯 ARKAIDEV ENHANCEMENT: Buscar ou criar cliente ASAAS evitando duplicatas
+   * Primeiro verifica se o cliente já existe (por CPF ou email)
+   * Se existir, retorna o customerId
+   * Se não existir, cria um novo cliente
+   */
+  async getOrCreateAsaasCustomer(responsavel: any): Promise<string> {
+    try {
+      const cpf = responsavel.cpf?.replace(/\D/g, '');
+      
+      console.log('🔍 Verificando se cliente já existe no ASAAS...');
+      console.log('📋 CPF para busca:', cpf);
+      
+      // 1. Buscar por CPF primeiro
+      if (cpf) {
+        const existingCustomerByCpf = await this.findCustomerByCpf(cpf);
+        if (existingCustomerByCpf) {
+          console.log('✅ Cliente encontrado no ASAAS por CPF:', existingCustomerByCpf.id);
+          return existingCustomerByCpf.id;
+        }
+      }
+      
+      // 2. Buscar por e-mail se CPF não encontrou
+      if (responsavel.email) {
+        const existingCustomerByEmail = await this.findCustomerByEmail(responsavel.email);
+        if (existingCustomerByEmail) {
+          console.log('✅ Cliente encontrado no ASAAS por e-mail:', existingCustomerByEmail.id);
+          return existingCustomerByEmail.id;
+        }
+      }
+      
+      // 3. Se não encontrou, criar novo cliente
+      console.log('🆕 Cliente não encontrado, criando novo no ASAAS...');
+      const newCustomer = await this.createCustomerFromResponsavel(responsavel);
+      console.log('✅ Novo cliente criado no ASAAS:', newCustomer.id);
+      return newCustomer.id;
+      
+    } catch (error: any) {
+      console.error('❌ Erro em getOrCreateAsaasCustomer:', error);
+      throw new Error(`Erro ao buscar/criar cliente ASAAS: ${error.message}`);
+    }
+  }
+
+  /**
+   * 🔍 Buscar cliente por e-mail
+   */
+  private async findCustomerByEmail(email: string): Promise<AsaasCustomer | null> {
+    try {
+      const response = await this.client.get('/customers', {
+        params: { email }
+      });
+      
+      if (response.data.data && response.data.data.length > 0) {
+        return response.data.data[0];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Erro ao buscar cliente por email:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 💰 ARKAIDEV ENHANCEMENT: Criar ou sincronizar cobrança evitando duplicatas
+   * Verifica se já existe cobrança para o cliente
+   * Se existir cobrança pendente/ativa, apenas vincula
+   * Se não existir, cria nova cobrança
+   */
+  async createOrSyncCobranca(aluno: any, plano: any): Promise<AsaasPayment> {
+    try {
+      console.log('🔄 Iniciando createOrSyncCobranca...');
+      
+      // 1. Obter ou criar cliente
+      const customerId = await this.getOrCreateAsaasCustomer(aluno.responsavel);
+      console.log('👤 Customer ID obtido:', customerId);
+      
+      // 2. Buscar pagamentos existentes do cliente
+      console.log('🔍 Buscando pagamentos existentes...');
+      const existingPayments = await this.getCustomerPayments(customerId);
+      console.log(`📊 Encontrados ${existingPayments.length} pagamentos para o cliente`);
+      
+      // 3. Verificar se existe cobrança ativa/pendente com o mesmo valor
+      const planValue = plano.amount / 100; // Converter centavos para reais
+      const activePendingPayment = existingPayments.find(payment => 
+        payment.value === planValue && 
+        ['PENDING', 'OVERDUE'].includes(payment.status)
+      );
+      
+      if (activePendingPayment) {
+        console.log('✅ Cobrança existente encontrada, vinculando:', activePendingPayment.id);
+        return activePendingPayment;
+      }
+      
+      // 4. Se não há cobrança ativa, criar nova
+      console.log('🆕 Criando nova cobrança...');
+      const newPayment = await this.createPaymentForStudent(customerId, aluno, plano);
+      console.log('✅ Nova cobrança criada:', newPayment.id);
+      return newPayment;
+      
+    } catch (error: any) {
+      console.error('❌ Erro em createOrSyncCobranca:', error);
+      throw new Error(`Erro ao criar/sincronizar cobrança: ${error.message}`);
+    }
+  }
+
+  /**
+   * 📋 Buscar pagamentos de um cliente
+   */
+  private async getCustomerPayments(customerId: string): Promise<AsaasPayment[]> {
+    try {
+      const response = await this.client.get('/payments', {
+        params: { 
+          customer: customerId,
+          limit: 100 // Buscar últimos 100 pagamentos
+        }
+      });
+      
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Erro ao buscar pagamentos do cliente:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 🏗️ Criar cliente a partir dos dados do responsável
+   */
+  private async createCustomerFromResponsavel(responsavel: any): Promise<AsaasCustomer> {
+    const customerData: CreateCustomerRequest = {
+      name: responsavel.nome || responsavel.name,
+      email: responsavel.email,
+      cpfCnpj: responsavel.cpf?.replace(/\D/g, '') || '',
+      mobilePhone: responsavel.telefone || responsavel.phone,
+      postalCode: responsavel.cep?.replace(/\D/g, '') || '',
+      address: responsavel.endereco || responsavel.address,
+      addressNumber: responsavel.numero || responsavel.addressNumber || '',
+      complement: responsavel.complemento || responsavel.complement || '',
+      province: responsavel.cidade || responsavel.city || '',
+      externalReference: `RESPONSAVEL_${Date.now()}`,
+      observations: `Responsável financeiro criado via SenseiSystem`
+    };
+
+    console.log('🔄 Criando cliente ASAAS:', customerData);
+    const response = await this.client.post<AsaasCustomer>('/customers', customerData);
+    console.log('✅ Cliente criado no ASAAS:', response.data.id);
+    return response.data;
+  }
+
+  /**
+   * 🔗 ARKAIDEV ENHANCEMENT: Sincronizar dados existentes do ASAAS
+   * Função para re-sincronizar dados caso ocorra perda de vínculo
+   */
+  async syncExistingAsaasData(cpfOrEmail: string): Promise<{ customer: AsaasCustomer | null, payments: AsaasPayment[] }> {
+    try {
+      console.log('🔄 Sincronizando dados existentes do ASAAS...');
+      
+      // Buscar cliente
+      let customer = null;
+      if (cpfOrEmail.includes('@')) {
+        customer = await this.findCustomerByEmail(cpfOrEmail);
+      } else {
+        customer = await this.findCustomerByCpf(cpfOrEmail.replace(/\D/g, ''));
+      }
+      
+      if (!customer) {
+        console.log('❌ Cliente não encontrado no ASAAS');
+        return { customer: null, payments: [] };
+      }
+      
+      // Buscar pagamentos do cliente
+      const payments = await this.getCustomerPayments(customer.id);
+      
+      console.log(`✅ Sincronização concluída: Cliente ${customer.id}, ${payments.length} pagamentos`);
+      return { customer, payments };
+      
+    } catch (error: any) {
+      console.error('❌ Erro na sincronização:', error);
+      throw new Error(`Erro ao sincronizar dados ASAAS: ${error.message}`);
+    }
+  }
 }

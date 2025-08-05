@@ -63,3 +63,17 @@ Preferred communication style: Simple, everyday language.
 - **date-fns**: Date manipulation.
 - **react-hook-form**: Form state management.
 - **wouter**: Lightweight React router.
+
+## Recent Changes
+
+### August 5, 2025 - IBJJF Official Belt System with Smart Display
+- **Belt Category System**: Added category field to beltLevels table with 'adult' and 'child' classifications
+- **IBJJF Adult Belts**: Implemented complete adult system (White, Blue, Purple, Brown, Black, Coral, Red/White, Red)
+- **IBJJF Kids Belts**: Implemented complete kids system (Grey/White through Green/Black with all variations)
+- **Categorized Dashboard Widgets**: Created separate "Faixas Adulto" and "Faixas Infantil" widgets
+- **Dynamic Belt Display**: All widgets now automatically show newly created belts from database
+- **Admin Dashboard Update**: Replaced single belt widget with two category-specific widgets
+- **Belt Management Interface**: Enhanced form to include category selection for new belt creation
+- **Official Color Codes**: Implemented authentic IBJJF belt colors for both adult and kids systems
+- **Smart Belt Display**: Widgets now show only belts with students for cleaner, professional interface
+- **Improved UX**: Reduced visual noise by hiding empty belts, better mobile experience and faster decision-making

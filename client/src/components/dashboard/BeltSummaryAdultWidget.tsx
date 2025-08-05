@@ -69,8 +69,8 @@ export function BeltSummaryAdultWidget() {
     );
   }
 
-  // Filter only adult belts
-  const adultBelts = beltStats.filter(belt => belt.category === 'adult');
+  // Filter only adult belts with students (hide empty belts for cleaner interface)
+  const adultBelts = beltStats.filter(belt => belt.category === 'adult' && belt.count > 0);
   const totalStudents = adultBelts.reduce((sum, belt) => sum + belt.count, 0);
 
   return (
@@ -132,7 +132,7 @@ export function BeltSummaryAdultWidget() {
           );
         })}
         
-        {totalStudents === 0 && (
+        {adultBelts.length === 0 && (
           <div className="text-center py-4 text-muted-foreground text-sm">
             Nenhum aluno adulto encontrado
           </div>

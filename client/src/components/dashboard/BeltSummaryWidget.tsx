@@ -82,7 +82,7 @@ export function BeltSummaryWidget() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {beltStats && beltStats.map((belt) => {
+        {beltStats && beltStats.filter(belt => belt.count > 0).map((belt) => {
           const percentage = totalStudents > 0 ? (belt.count / totalStudents * 100).toFixed(1) : '0';
           const textColor = getTextColor(belt.color);
           
@@ -130,7 +130,7 @@ export function BeltSummaryWidget() {
           );
         })}
         
-        {totalStudents === 0 && (
+        {(!beltStats || beltStats.filter(belt => belt.count > 0).length === 0) && (
           <div className="text-center py-4 text-muted-foreground text-sm">
             Nenhum aluno ativo encontrado
           </div>

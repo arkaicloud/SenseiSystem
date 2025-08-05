@@ -8,8 +8,8 @@ import HealthFormStep from "./steps/HealthFormStep";
 import ResponsiblePartyStep from "./steps/ResponsiblePartyStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
-import { useQuery } from "@tanstack/react-query";
-import type { SchoolConfig } from "../shared/schema";
+// import { useQuery } from "@tanstack/react-query";
+// import type { SchoolConfig } from "../shared/schema";
 
 interface OnboardingData {
   personalInfo: {
@@ -61,12 +61,11 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   onCancel,
   isLoading = false
 }) => {
-  // Carregar configurações da escola
-  const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
-    queryKey: ['/api/school-config'],
-  });
-  
-  const schoolConfig = schoolConfigData?.config;
+  // Configuração padrão da escola (sem dependência de API)
+  const schoolConfig = {
+    schoolName: "SenseiSystem Academia",
+    logoUrl: null
+  };
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<OnboardingData>({
     personalInfo: {
@@ -206,7 +205,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       {/* Header */}
       <div className="text-center space-y-4">
         {/* Logo da escola */}
-        {schoolConfig?.logoUrl && (
+        {schoolConfig.logoUrl && (
           <div className="flex justify-center">
             <img 
               src={schoolConfig.logoUrl} 
@@ -222,7 +221,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         {/* Nome da escola e mensagem de boas-vindas */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-primary">
-            Bem-vindo à {schoolConfig?.schoolName || 'Academia'}!
+            Bem-vindo à {schoolConfig.schoolName}!
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Complete seu cadastro em algumas etapas simples

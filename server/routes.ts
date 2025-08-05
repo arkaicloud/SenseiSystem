@@ -3861,6 +3861,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch approval endpoint
+  app.post('/api/users/batch-approve', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { userIds } = req.body;
+      
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).json({ message: "Lista de IDs de usuários é obrigatória" });
+      }
+
+      const results = {
+        successful: 0,
+        failed: 0,
+        errors: [] as string[]
+      };
+
+      // Process each user approval
+      for (const userId of userIds) {
+        try {
+          // Get user and student data
+          const user = await storage.getUser(userId);
+          if (!user || user.active) {
+            results.errors.push(`Usuário ${userId}: não encontrado ou já ativo`);
+            results.failed++;
+            continue;
+          }
+
+          const student = await storage.getStudentByUserId(userId);
+          if (!student || !student.paymentPlanId) {
+            results.errors.push(`Usuário ${userId}: dados do aluno ou plano de pagamento não encontrados`);
+            results.failed++;
+            continue;
+          }
+
+          // Activate user
+          const updatedUser = await storage.updateUser(userId, { 
+            active: true, 
+            status: 'active' 
+          });
+
+          if (!updatedUser) {
+            results.errors.push(`Usuário ${userId}: erro ao ativar`);
+            results.failed++;
+            continue;
+          }
+
+          // Get payment plan
+          const plan = await storage.getPaymentPlan(student.paymentPlanId);
+          if (plan) {
+            // Try ASAAS integration
+            if (student.financialResponsibleName && student.financialResponsibleEmail) {
+              try {
+                const { AsaasService } = await import("./services/asaasService");
+                const asaasService = new AsaasService();
+
+                console.log(`🔄 Creating ASAAS customer for batch approved student: ${user.firstName} ${user.lastName}`);
+                
+                // Prepare student data for ASAAS
+                const studentWithUserData = {
+                  ...student,
+                  first_name: user.firstName,
+                  last_name: user.lastName,
+                  user_id: user.id,
+                  street: user.street,
+                  number: user.number,
+                  complement: user.complement,
+                  neighborhood: user.neighborhood,
+                  zipCode: user.zipCode,
+                  financialResponsibleName: student.financialResponsibleName,
+                  financialResponsibleEmail: student.financialResponsibleEmail,
+                  financialResponsiblePhone: student.financialResponsiblePhone,
+                  financialResponsibleCpf: student.financialResponsibleCpf
+                };
+                
+                // Create ASAAS customer
+                const asaasCustomer = await asaasService.createCustomer(studentWithUserData);
+                console.log(`✅ ASAAS customer created: ${asaasCustomer.id}`);
+
+                // Update student with ASAAS customer ID
+                await storage.updateStudent(student.id, { asaasCustomerId: asaasCustomer.id });
+
+                // Create payment for the student
+                console.log(`🔄 Creating ASAAS payment for batch approved student: ${user.firstName} ${user.lastName}`);
+                
+                const payment = await asaasService.createPaymentForStudent(
+                  asaasCustomer.id,
+                  studentWithUserData,
+                  plan
+                );
+
+                console.log(`✅ ASAAS payment created: ${payment.id}`);
+
+                // Save payment to database
+                await storage.createContaReceber({
+                  studentId: student.id,
+                  asaasPaymentId: payment.id,
+                  asaasCustomerId: asaasCustomer.id,
+                  status: payment.status,
+                  billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
+                  value: Math.round(payment.value * 100), // Convert back to cents
+                  netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
+                  dueDate: new Date(payment.dueDate),
+                  description: payment.description || '',
+                  externalReference: payment.externalReference || null,
+                  invoiceUrl: payment.invoiceUrl || null,
+                  bankSlipUrl: payment.bankSlipUrl || null,
+                  pixQrCode: payment.pixQrCode || null,
+                  pixCopyAndPaste: payment.pixCopyAndPaste || null
+                });
+              } catch (asaasError) {
+                console.error(`❌ ASAAS error for user ${userId}:`, asaasError);
+                results.errors.push(`Usuário ${userId}: aprovado mas falha na integração ASAAS`);
+              }
+            }
+          }
+
+          // Create activity log for account activation
+          const requestUser = (req as any).user;
+          await storage.createActivityLog({
+            activity: `User account batch approved: ${user.firstName} ${user.lastName} (${user.role})`,
+            userId: requestUser.id,
+            entityType: "user",
+            entityId: user.id,
+            timestamp: new Date()
+          });
+
+          results.successful++;
+        } catch (error) {
+          console.error(`❌ Error in batch approval for user ${userId}:`, error);
+          results.errors.push(`Usuário ${userId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+          results.failed++;
+        }
+      }
+
+      res.json({
+        message: `Aprovação em lote concluída: ${results.successful} sucessos, ${results.failed} falhas`,
+        successful: results.successful,
+        failed: results.failed,
+        errors: results.errors
+      });
+    } catch (err) {
+      console.error("Error in batch approval:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

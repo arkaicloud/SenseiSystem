@@ -1,0 +1,560 @@
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  CreditCard, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Filter,
+  Calendar,
+  Edit,
+  Clock,
+  Download,
+  Users,
+  Loader2
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { apiRequest } from "@/lib/queryClient";
+import StudentEditDialog from "@/components/students/StudentEditDialog";
+
+interface PendingUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  joinDate: string;
+  student?: {
+    financialResponsibleName?: string;
+    financialResponsibleCpf?: string;
+    financialResponsibleEmail?: string;
+    financialResponsiblePhone?: string;
+    financialResponsibleRelation?: string;
+    paymentPlanId?: number;
+  };
+}
+
+interface PaymentPlan {
+  id: number;
+  name: string;
+  amount: number;
+  description?: string;
+}
+
+type FilterStatus = 'all' | 'complete' | 'incomplete' | 'no-plan' | 'minor';
+
+export default function PendingApprovalsBatch() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [expandedUsers, setExpandedUsers] = useState<Set<number>>(new Set());
+  const [editingPlan, setEditingPlan] = useState<number | null>(null);
+  const [editingStudent, setEditingStudent] = useState<number | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch pending users
+  const { data: pendingUsers, isLoading: usersLoading } = useQuery({
+    queryKey: ["/api/users/pending"],
+    refetchInterval: 30000,
+  });
+
+  // Fetch payment plans
+  const { data: paymentPlans } = useQuery<{ plans: PaymentPlan[] }>({
+    queryKey: ["/api/payment-plans"],
+  });
+
+  // Validation function
+  const validateStudentData = (user: PendingUser) => {
+    const issues: string[] = [];
+    
+    if (!user.student?.financialResponsibleName) {
+      issues.push("Nome do responsável financeiro não informado");
+    }
+    
+    if (!user.student?.financialResponsibleCpf) {
+      issues.push("CPF do responsável financeiro não informado");
+    }
+    
+    if (!user.student?.paymentPlanId) {
+      issues.push("Plano de pagamento não selecionado");
+    }
+
+    return {
+      isValid: issues.length === 0,
+      issues
+    };
+  };
+
+  // Filter and search logic
+  const filteredUsers = useMemo(() => {
+    if (!pendingUsers?.users) return [];
+
+    let filtered = pendingUsers.users.filter((user: PendingUser) => {
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+        const email = user.email.toLowerCase();
+        
+        if (!fullName.includes(searchLower) && !email.includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (filterStatus !== 'all') {
+        const validation = validateStudentData(user);
+        
+        switch (filterStatus) {
+          case 'complete':
+            return validation.isValid;
+          case 'incomplete':
+            return !validation.isValid;
+          case 'no-plan':
+            return !user.student?.paymentPlanId;
+          case 'minor':
+            return user.student?.financialResponsibleRelation !== 'self';
+        }
+      }
+
+      return true;
+    });
+
+    // Sort by join date (newest first)
+    return filtered.sort((a, b) => 
+      new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime()
+    );
+  }, [pendingUsers, searchTerm, filterStatus]);
+
+  // Batch approval mutation
+  const batchApproveMutation = useMutation({
+    mutationFn: async (userIds: number[]) => {
+      const response = await fetch("/api/users/batch-approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro na aprovação em lote");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      setSelectedUsers(new Set());
+      
+      const { successful, failed } = data;
+      
+      toast({
+        title: "Aprovação em lote concluída!",
+        description: `${successful} alunos aprovados com sucesso. ${failed > 0 ? `${failed} falharam.` : ''}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro na aprovação em lote",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Individual approval mutation
+  const approveMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const user = pendingUsers?.users?.find((u: PendingUser) => u.id === userId);
+      const planId = user?.student?.paymentPlanId;
+      
+      if (!planId) {
+        throw new Error("Plano de pagamento é obrigatório para aprovação");
+      }
+      
+      const response = await fetch(`/api/users/${userId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planId }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao aprovar aluno");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      toast({
+        title: "Sucesso!",
+        description: "Aluno aprovado com sucesso e integração ASAAS realizada.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Batch selection functions
+  const toggleUserSelection = (userId: number) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const selectAllUsers = () => {
+    const eligibleUsers = filteredUsers.filter(user => validateStudentData(user).isValid);
+    setSelectedUsers(new Set(eligibleUsers.map(user => user.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedUsers(new Set());
+  };
+
+  const handleBatchApproval = () => {
+    if (selectedUsers.size === 0) {
+      toast({
+        title: "Nenhum aluno selecionado",
+        description: "Selecione pelo menos um aluno para aprovação em lote.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    batchApproveMutation.mutate(Array.from(selectedUsers));
+  };
+
+  const toggleExpanded = (userId: number) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedUsers(newExpanded);
+  };
+
+  const getPaymentPlanName = (planId?: number) => {
+    if (!planId || !paymentPlans?.plans) return "Não definido";
+    const plan = paymentPlans.plans.find(p => p.id === planId);
+    return plan ? `${plan.name} - R$ ${(plan.amount / 100).toFixed(2)}` : "Não definido";
+  };
+
+  const getStatusBadge = (user: PendingUser) => {
+    const validation = validateStudentData(user);
+    
+    if (validation.isValid) {
+      return (
+        <Badge className="bg-green-100 text-green-800 border-green-200">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Pronto para aprovação
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          Dados incompletos
+        </Badge>
+      );
+    }
+  };
+
+  if (usersLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center">Carregando aprovações pendentes...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Aprovações Pendentes</h2>
+          <p className="text-muted-foreground">
+            {filteredUsers.length} de {pendingUsers?.users?.length || 0} aluno{filteredUsers.length !== 1 ? 's' : ''}
+          </p>
+          {selectedUsers.size > 0 && (
+            <p className="text-sm text-blue-600 font-medium">
+              {selectedUsers.size} aluno{selectedUsers.size !== 1 ? 's' : ''} selecionado{selectedUsers.size !== 1 ? 's' : ''} para aprovação
+            </p>
+          )}
+        </div>
+        
+        {/* Batch Actions */}
+        {selectedUsers.size > 0 && (
+          <div className="flex gap-2">
+            <Button
+              onClick={handleBatchApproval}
+              disabled={batchApproveMutation.isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {batchApproveMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Users className="h-4 w-4 mr-2" />
+              )}
+              Aprovar {selectedUsers.size} Aluno{selectedUsers.size !== 1 ? 's' : ''}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={clearSelection}
+            >
+              Limpar Seleção
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Batch Selection Bar */}
+      {filteredUsers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/50 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedUsers.size === filteredUsers.filter(user => validateStudentData(user).isValid).length && selectedUsers.size > 0}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  selectAllUsers();
+                } else {
+                  clearSelection();
+                }
+              }}
+            />
+            <span className="text-sm font-medium">Selecionar todos elegíveis</span>
+          </div>
+          
+          <div className="text-sm text-muted-foreground">
+            {filteredUsers.filter(user => validateStudentData(user).isValid).length} alunos prontos para aprovação
+          </div>
+        </div>
+      )}
+
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar por nome ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        
+        <Select value={filterStatus} onValueChange={(value: FilterStatus) => setFilterStatus(value)}>
+          <SelectTrigger className="w-full md:w-48">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="complete">Dados completos</SelectItem>
+            <SelectItem value="incomplete">Dados incompletos</SelectItem>
+            <SelectItem value="no-plan">Sem plano</SelectItem>
+            <SelectItem value="minor">Menores de idade</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Results */}
+      {filteredUsers.length === 0 ? (
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center text-muted-foreground">
+              {searchTerm || filterStatus !== 'all' 
+                ? "Nenhum aluno encontrado com os filtros aplicados"
+                : "Nenhuma aprovação pendente"
+              }
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredUsers.map((user: PendingUser) => {
+            const validation = validateStudentData(user);
+            const isExpanded = expandedUsers.has(user.id);
+            const isSelected = selectedUsers.has(user.id);
+            const daysSinceJoin = Math.floor(
+              (new Date().getTime() - new Date(user.joinDate).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            
+            return (
+              <Card 
+                key={user.id} 
+                className={`border-l-4 transition-all ${
+                  validation.isValid ? 'border-l-green-500' : 'border-l-yellow-500'
+                } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      {/* Selection Checkbox */}
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleUserSelection(user.id)}
+                        disabled={!validation.isValid}
+                        className="mt-1"
+                      />
+
+                      {/* User Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold">{user.firstName} {user.lastName}</h3>
+                          {getStatusBadge(user)}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            {user.email}
+                          </div>
+                          {user.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              {user.phone}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Cadastrado há {daysSinceJoin} dia{daysSinceJoin !== 1 ? 's' : ''}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" />
+                            {getPaymentPlanName(user.student?.paymentPlanId)}
+                          </div>
+                        </div>
+
+                        {/* Validation Issues */}
+                        {!validation.isValid && (
+                          <Alert className="mb-3">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription>
+                              <div className="font-medium mb-1">Pendências para aprovação:</div>
+                              <ul className="list-disc list-inside text-sm">
+                                {validation.issues.map((issue, index) => (
+                                  <li key={index}>{issue}</li>
+                                ))}
+                              </ul>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {/* Expanded Details */}
+                        {isExpanded && user.student && (
+                          <div className="border-t pt-4 mt-4">
+                            <h4 className="font-medium mb-3">Detalhes do Responsável Financeiro</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="font-medium">Nome:</span>
+                                <span className="ml-2">{user.student.financialResponsibleName || 'Não informado'}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium">CPF:</span>
+                                <span className="ml-2">{user.student.financialResponsibleCpf || 'Não informado'}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium">Email:</span>
+                                <span className="ml-2">{user.student.financialResponsibleEmail || 'Não informado'}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium">Telefone:</span>
+                                <span className="ml-2">{user.student.financialResponsiblePhone || 'Não informado'}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium">Relação:</span>
+                                <span className="ml-2">
+                                  {user.student.financialResponsibleRelation === 'self' ? 'Próprio aluno' : 
+                                   user.student.financialResponsibleRelation === 'parent' ? 'Pai/Mãe' :
+                                   user.student.financialResponsibleRelation === 'spouse' ? 'Cônjuge' :
+                                   user.student.financialResponsibleRelation || 'Não informado'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleExpanded(user.id)}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      {validation.isValid && (
+                        <Button
+                          size="sm"
+                          onClick={() => approveMutation.mutate(user.id)}
+                          disabled={approveMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {approveMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

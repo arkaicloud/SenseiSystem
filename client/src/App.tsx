@@ -22,8 +22,11 @@ import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import BeltManagement from "@/pages/admin/BeltManagement";
 import LoginPage from "@/pages/LoginPage";
+import WelcomePage from "@/pages/welcome-page";
 import OnboardingPage from "@/pages/onboarding-page";
 import AwaitingApprovalPage from "@/pages/awaiting-approval";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import { AuthProvider } from "@/providers/auth-provider";
 import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -36,87 +39,89 @@ function Router() {
       {/* Protected routes */}
       <ProtectedRoute path="/" component={() => <Dashboard />} />
       <ProtectedRoute path="/dashboard" component={() => <Dashboard />} />
-      <ProtectedRoute 
-        path="/students" 
-        component={() => <Students />} 
-        allowedRoles={["admin", "instructor"]} 
+      <ProtectedRoute
+        path="/students"
+        component={() => <Students />}
+        allowedRoles={["admin", "instructor"]}
       />
-      <ProtectedRoute 
-        path="/pending-users" 
-        component={() => <PendingUsers />} 
-        allowedRoles={["admin"]} 
+      <ProtectedRoute
+        path="/pending-users"
+        component={() => <PendingUsers />}
+        allowedRoles={["admin"]}
       />
-      <ProtectedRoute 
-        path="/admin/pending-approvals" 
-        component={() => <PendingUsers />} 
-        allowedRoles={["admin"]} 
+      <ProtectedRoute
+        path="/admin/pending-approvals"
+        component={() => <PendingUsers />}
+        allowedRoles={["admin"]}
       />
-      <ProtectedRoute 
-        path="/students-at-risk" 
-        component={() => <StudentsAtRisk />} 
-        allowedRoles={["admin", "instructor"]} 
+      <ProtectedRoute
+        path="/students-at-risk"
+        component={() => <StudentsAtRisk />}
+        allowedRoles={["admin", "instructor"]}
       />
-      <ProtectedRoute 
-        path="/asaas-payments" 
-        component={() => <AsaasPayments />} 
-        allowedRoles={["admin"]} 
+      <ProtectedRoute
+        path="/asaas-payments"
+        component={() => <AsaasPayments />}
+        allowedRoles={["admin"]}
       />
-      <ProtectedRoute 
-        path="/financial" 
-        component={() => <FinancialDashboard />} 
-        allowedRoles={["admin"]} 
+      <ProtectedRoute
+        path="/financial"
+        component={() => <FinancialDashboard />}
+        allowedRoles={["admin"]}
       />
-      <ProtectedRoute 
-        path="/attendance" 
-        component={() => <Attendance />} 
+      <ProtectedRoute
+        path="/attendance"
+        component={() => <Attendance />}
       />
-      <ProtectedRoute 
-        path="/classes" 
-        component={() => <Classes />} 
+      <ProtectedRoute
+        path="/classes"
+        component={() => <Classes />}
       />
-      <ProtectedRoute 
-        path="/payments" 
-        component={() => <Payments />} 
-        allowedRoles={["admin", "instructor"]} 
+      <ProtectedRoute
+        path="/payments"
+        component={() => <Payments />}
+        allowedRoles={["admin", "instructor"]}
       />
-      <ProtectedRoute 
-        path="/payment-plans" 
-        component={() => <PaymentPlans />} 
-        allowedRoles={["admin", "instructor"]} 
+      <ProtectedRoute
+        path="/payment-plans"
+        component={() => <PaymentPlans />}
+        allowedRoles={["admin", "instructor"]}
       />
-      <ProtectedRoute 
-        path="/communications" 
-        component={() => <Communications />} 
-        allowedRoles={["admin", "instructor"]} 
+      <ProtectedRoute
+        path="/communications"
+        component={() => <Communications />}
+        allowedRoles={["admin", "instructor"]}
       />
-      <ProtectedRoute 
-        path="/reports" 
-        component={() => <Reports />} 
-        allowedRoles={["admin", "instructor"]} 
+      <ProtectedRoute
+        path="/reports"
+        component={() => <Reports />}
+        allowedRoles={["admin", "instructor"]}
       />
-      <ProtectedRoute 
-        path="/profile" 
-        component={() => <Profile />} 
+      <ProtectedRoute
+        path="/profile"
+        component={() => <Profile />}
       />
-      <ProtectedRoute 
-        path="/settings" 
-        component={() => <Settings />} 
+      <ProtectedRoute
+        path="/settings"
+        component={() => <Settings />}
       />
-      <ProtectedRoute 
-        path="/school-config" 
-        component={() => <SchoolConfig />} 
-        allowedRoles={["admin"]} 
+      <ProtectedRoute
+        path="/school-config"
+        component={() => <SchoolConfig />}
+        allowedRoles={["admin"]}
       />
-      <ProtectedRoute 
-        path="/belt-management" 
-        component={() => <BeltManagement />} 
-        allowedRoles={["admin"]} 
+      <ProtectedRoute
+        path="/belt-management"
+        component={() => <BeltManagement />}
+        allowedRoles={["admin"]}
       />
 
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/awaiting-approval" component={AwaitingApprovalPage} />
+      <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/auth/reset-password" component={ResetPasswordPage} />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />

@@ -25,6 +25,8 @@ import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashP
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
+import { emailService } from "./services/emailService";
+import crypto from "crypto";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -2597,6 +2599,196 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('❌ Error fetching public belt levels:', error);
       res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ message: "Failed to fetch belt levels" });
+    }
+  });
+
+  // ===== Password Reset Routes =====
+  
+  // Forgot Password - Send reset email
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ 
+          message: "E-mail é obrigatório" 
+        });
+      }
+
+      // Always return success message to avoid email enumeration
+      const successMessage = "Se o e-mail informado estiver cadastrado, enviaremos instruções para redefinir sua senha.";
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        // Don't reveal that email doesn't exist
+        console.log(`⚠️ Password reset requested for non-existent email: ${email}`);
+        return res.json({ message: successMessage });
+      }
+
+      // Generate secure reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Store token in database
+      await storage.createPasswordResetToken({
+        userId: user.id,
+        token: resetToken,
+        expiresAt,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      // Send reset email
+      try {
+        await emailService.sendPasswordResetEmail(
+          user.email,
+          `${user.firstName} ${user.lastName}`,
+          resetToken
+        );
+        
+        console.log(`✅ Password reset email sent to: ${email}`);
+        
+        // Log activity
+        await storage.createActivityLog({
+          userId: user.id,
+          activity: `Password reset requested for ${user.email}`,
+          entityType: 'user',
+          entityId: user.id,
+          timestamp: new Date()
+        });
+        
+      } catch (emailError) {
+        console.error('❌ Failed to send reset email:', emailError);
+        // Don't reveal email sending failure to user
+      }
+
+      res.json({ message: successMessage });
+
+    } catch (error) {
+      console.error('❌ Error in forgot-password route:', error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
+  // Reset Password - Validate token and update password
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, newPassword, confirmPassword } = req.body;
+      
+      if (!token || !newPassword || !confirmPassword) {
+        return res.status(400).json({ 
+          message: "Token, nova senha e confirmação são obrigatórios" 
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ 
+          message: "Nova senha e confirmação não coincidem" 
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ 
+          message: "A nova senha deve ter pelo menos 8 caracteres" 
+        });
+      }
+
+      // Find and validate token
+      const resetToken = await storage.getPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.status(400).json({ 
+          message: "Token inválido, expirado ou já utilizado" 
+        });
+      }
+
+      // Get user
+      const user = await storage.getUser(resetToken.userId);
+      if (!user) {
+        return res.status(400).json({ 
+          message: "Usuário não encontrado" 
+        });
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update user password
+      await storage.updateUser(user.id, { password: hashedPassword });
+
+      // Mark token as used
+      await storage.markPasswordResetTokenAsUsed(resetToken.id);
+
+      // Log activity
+      await storage.createActivityLog({
+        userId: user.id,
+        activity: `Password successfully reset for ${user.email}`,
+        entityType: 'user',
+        entityId: user.id,
+        timestamp: new Date()
+      });
+
+      console.log(`✅ Password reset completed for user: ${user.email}`);
+
+      res.json({ 
+        message: "Senha atualizada com sucesso! Você já pode fazer login com sua nova senha." 
+      });
+
+    } catch (error) {
+      console.error('❌ Error in reset-password route:', error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
+  // Validate Reset Token (check if token is valid before showing reset form)
+  app.get("/api/auth/validate-reset-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      if (!token) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: "Token é obrigatório" 
+        });
+      }
+
+      // Check if token is valid
+      const resetToken = await storage.getPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.json({ 
+          valid: false, 
+          message: "Token inválido, expirado ou já utilizado" 
+        });
+      }
+
+      // Get user info (without sensitive data)
+      const user = await storage.getUser(resetToken.userId);
+      if (!user) {
+        return res.json({ 
+          valid: false, 
+          message: "Usuário não encontrado" 
+        });
+      }
+
+      res.json({ 
+        valid: true,
+        userEmail: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3'), // Mask email for security
+        userName: user.firstName
+      });
+
+    } catch (error) {
+      console.error('❌ Error validating reset token:', error);
+      res.status(500).json({ 
+        valid: false,
+        message: "Erro interno do servidor" 
+      });
     }
   });
 

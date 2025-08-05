@@ -1,32 +1,43 @@
-import { 
-  users, type User, type InsertUser,
-  students, type Student, type InsertStudent,
-  classes, type Class, type InsertClass,
-  attendance, type Attendance, type InsertAttendance,
-  attendanceChanges, type AttendanceChanges, type InsertAttendanceChanges,
-  paymentPlans, type PaymentPlan, type InsertPaymentPlan,
-  studentPayments, type StudentPayment, type InsertStudentPayment,
-  activityLogs, type ActivityLog, type InsertActivityLog,
-  schoolEvents, type SchoolEvent, type InsertSchoolEvent,
-  schoolConfig, type SchoolConfig, type InsertSchoolConfig,
-  schoolPayments, type SchoolPayment, type InsertSchoolPayment,
-  dashboardCustomizations, type DashboardCustomization, type InsertDashboardCustomization,
-  riskActions, type RiskAction, type InsertRiskAction,
-  riskSettings, type RiskSettings, type InsertRiskSettings,
-  streakAchievements, type StreakAchievement, type InsertStreakAchievement,
-  dailyLoginRecords, type DailyLoginRecord, type InsertDailyLoginRecord,
-  beltLevels, type BeltLevel, type InsertBeltLevel,
+import {
+  users,
+  students,
+  classes,
+  attendance,
+  paymentPlans,
+  studentPayments,
+  activityLogs,
+  schoolEvents,
+  dashboardCustomizations,
+  schoolConfig as schoolConfigTable,
+  schoolPayments,
+  beltLevels,
   contasReceber,
-  type StudentWithUser, type ClassWithInstructor,
-  type AttendanceWithDetails, type StudentPaymentWithDetails,
-  type UserWithStreakData
+  dailyLoginRecords,
+  streakAchievements,
+  passwordResetTokens,
+  type User,
+  type Student,
+  type Class,
+  type Attendance,
+  type PaymentPlan,
+  type StudentPayment,
+  type ActivityLog,
+  type SchoolEvent,
+  type DashboardCustomization,
+  type SchoolConfig,
+  type SchoolPayment,
+  type BeltLevel,
+  type ContaReceber,
+  type DailyLoginRecord,
+  type StreakAchievement,
+  insertStudentSchema,
 } from "@shared/schema";
-import { eq, and, gte, lte, desc, or } from "drizzle-orm";
+import { eq, and, gte, lte, desc, or, gt, isNull, lt, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Database connection test
   testDatabaseConnection?(): Promise<boolean>;
-  
+
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -159,6 +170,19 @@ export interface IStorage {
   createContaReceber(conta: any): Promise<any>;
   updateContaReceber(id: number, conta: Partial<any>): Promise<any>;
   deleteContaReceber(id: number): Promise<boolean>;
+
+  // Password reset token functions
+  createPasswordResetToken(data: {
+    userId: number;
+    token: string;
+    expiresAt: Date;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any>;
+  getPasswordResetToken(token: string): Promise<any | undefined>;
+  markPasswordResetTokenAsUsed(tokenId: number): Promise<any | undefined>;
+  deleteExpiredPasswordResetTokens(): Promise<any>;
+  deletePasswordResetTokensForUser(userId: number): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -529,12 +553,12 @@ export class MemStorage implements IStorage {
     const attendances = Array.from(this.attendance.values()).filter(
       (attendance) => {
         if (attendance.studentId !== studentId) return false;
-        
+
         const attendanceDate = new Date(attendance.date);
         return attendanceDate >= startDate && attendanceDate <= endDate;
       }
     );
-    
+
     return attendances.length;
   }
 
@@ -968,7 +992,7 @@ export class MemStorage implements IStorage {
   async getUserWithStreakData(userId: number): Promise<UserWithStreakData | undefined> {
     const user = await this.getUser(userId);
     if (!user) return undefined;
-    
+
     return {
       ...user,
       streakAchievements: [],
@@ -1021,7 +1045,7 @@ export class MemStorage implements IStorage {
   async getDailyLoginRecords(userId: number, days: number = 30): Promise<DailyLoginRecord[]> {
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - days);
-    
+
     return Array.from(this.dailyLoginRecords.values())
       .filter(r => r.userId === userId && r.loginDate >= fromDate)
       .sort((a, b) => b.loginDate.getTime() - a.loginDate.getTime());
@@ -1046,7 +1070,7 @@ export class MemStorage implements IStorage {
     }
 
     const recentAchievements = await this.getStreakAchievements(userId);
-    
+
     return {
       currentStreak: user.currentStreak || 0,
       longestStreak: user.longestStreak || 0,
@@ -1055,12 +1079,49 @@ export class MemStorage implements IStorage {
       recentAchievements: recentAchievements.slice(0, 5)
     };
   }
+
+  // Password reset token functions (MemStorage implementation)
+  async createPasswordResetToken(data: {
+    userId: number;
+    token: string;
+    expiresAt: Date;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any> {
+    // Not implemented for MemStorage, but required by interface
+    console.warn("MemStorage: createPasswordResetToken not implemented");
+    return null;
+  }
+
+  async getPasswordResetToken(token: string): Promise<any | undefined> {
+    // Not implemented for MemStorage, but required by interface
+    console.warn("MemStorage: getPasswordResetToken not implemented");
+    return undefined;
+  }
+
+  async markPasswordResetTokenAsUsed(tokenId: number): Promise<any | undefined> {
+    // Not implemented for MemStorage, but required by interface
+    console.warn("MemStorage: markPasswordResetTokenAsUsed not implemented");
+    return undefined;
+  }
+
+  async deleteExpiredPasswordResetTokens(): Promise<any> {
+    // Not implemented for MemStorage, but required by interface
+    console.warn("MemStorage: deleteExpiredPasswordResetTokens not implemented");
+    return null;
+  }
+
+  async deletePasswordResetTokensForUser(userId: number): Promise<any> {
+    // Not implemented for MemStorage, but required by interface
+    console.warn("MemStorage: deletePasswordResetTokensForUser not implemented");
+    return null;
+  }
 }
 
 import connectPgSimple from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, desc, sql, asc, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, asc, gte, lte, gt, isNull, lt } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import * as schema from "@shared/schema";
 
@@ -1141,7 +1202,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
-    return true;
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Students
@@ -1306,7 +1367,7 @@ export class DatabaseStorage implements IStorage {
         gte(attendance.date, startDate),
         lte(attendance.date, endDate)
       ));
-    
+
     return result.length;
   }
 
@@ -1599,7 +1660,7 @@ export class DatabaseStorage implements IStorage {
 
   // School Configuration
   async getSchoolConfig(): Promise<SchoolConfig | undefined> {
-    const [config] = await db.select().from(schoolConfig).limit(1);
+    const [config] = await db.select().from(schoolConfigTable).limit(1);
     return config;
   }
 
@@ -1610,18 +1671,18 @@ export class DatabaseStorage implements IStorage {
     if (existing) {
       // Update the existing config
       const [updatedConfig] = await db
-        .update(schoolConfig)
+        .update(schoolConfigTable)
         .set({
           ...configData,
           updatedAt: new Date()
         })
-        .where(eq(schoolConfig.id, existing.id))
+        .where(eq(schoolConfigTable.id, existing.id))
         .returning();
       return updatedConfig;
     } else {
       // Create a new config
       const [newConfig] = await db
-        .insert(schoolConfig)
+        .insert(schoolConfigTable)
         .values({
           schoolName: configData.schoolName || "Academia de Jiu-Jitsu",
           congratsMessage: configData.congratsMessage || "🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!",
@@ -1701,7 +1762,7 @@ export class DatabaseStorage implements IStorage {
   async updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings> {
     // First check if settings exist
     const existing = await this.getRiskSettings();
-    
+
     if (existing) {
       const [updated] = await db
         .update(riskSettings)
@@ -1781,7 +1842,7 @@ export class DatabaseStorage implements IStorage {
   async updateUserLoginStreak(userId: number): Promise<User | undefined> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const user = await this.getUser(userId);
     if (!user) return undefined;
 
@@ -1792,7 +1853,7 @@ export class DatabaseStorage implements IStorage {
     if (lastLoginDate) {
       lastLoginDate.setHours(0, 0, 0, 0);
       const daysDiff = Math.floor((today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       if (daysDiff === 0) {
         // Same day login - don't update streak
         return user;
@@ -2108,6 +2169,59 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(contasReceber)
       .where(eq(contasReceber.id, id));
     return result.rowCount > 0;
+  }
+
+  // Password reset token functions
+  async createPasswordResetToken(data: {
+    userId: number;
+    token: string;
+    expiresAt: Date;
+    ipAddress?: string;
+    userAgent?: string;
+  }) {
+    const [token] = await db
+      .insert(passwordResetTokens)
+      .values(data)
+      .returning();
+    return token;
+  }
+
+  async getPasswordResetToken(token: string) {
+    const [resetToken] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(and(
+        eq(passwordResetTokens.token, token),
+        gt(passwordResetTokens.expiresAt, new Date()),
+        isNull(passwordResetTokens.usedAt)
+      ));
+    return resetToken;
+  }
+
+  async markPasswordResetTokenAsUsed(tokenId: number) {
+    const [updatedToken] = await db
+      .update(passwordResetTokens)
+      .set({ 
+        usedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(passwordResetTokens.id, tokenId))
+      .returning();
+    return updatedToken;
+  }
+
+  async deleteExpiredPasswordResetTokens() {
+    const result = await db
+      .delete(passwordResetTokens)
+      .where(lt(passwordResetTokens.expiresAt, new Date()));
+    return result;
+  }
+
+  async deletePasswordResetTokensForUser(userId: number) {
+    const result = await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.userId, userId));
+    return result;
   }
 }
 

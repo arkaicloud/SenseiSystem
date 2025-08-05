@@ -1,5 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, varchar, uuid, pgEnum } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,6 +11,7 @@ export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'abs
 export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
 export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
 export const billingTypeEnum = pgEnum('billing_type', ['BOLETO', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'TRANSFER']);
+export const riskActionEnum = pgEnum('risk_action', ['call', 'email', 'whatsapp', 'visit', 'discount', 'other']);
 
 // Belt levels management table
 export const beltLevels = pgTable("belt_levels", {
@@ -161,9 +162,6 @@ export const contasReceber = pgTable("contas_receber", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Risk Actions enum
-export const riskActionEnum = pgEnum('risk_action', ['call', 'email', 'whatsapp', 'visit', 'discount', 'other']);
-
 // School Events table
 export const schoolEvents = pgTable("school_events", {
   id: serial("id").primaryKey(),
@@ -235,13 +233,26 @@ export const attendanceChanges = pgTable("attendance_changes", {
 });
 
 // Activity log table
-export const activityLogs = pgTable("activity_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  activity: text("activity").notNull(),
-  entityType: text("entity_type"), // e.g., 'student', 'class', 'payment'
-  entityId: integer("entity_id"),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
+export const activityLogs = pgTable('activity_logs', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id),
+  activity: varchar('activity', { length: 500 }).notNull(),
+  entityType: varchar('entity_type', { length: 50 }),
+  entityId: integer('entity_id'),
+  timestamp: timestamp('timestamp').defaultNow()
+});
+
+// Password reset tokens
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  usedAt: timestamp('used_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: varchar('user_agent', { length: 500 })
 });
 
 // Dashboard customization table
@@ -323,7 +334,12 @@ export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: 
 export const insertAttendanceChangesSchema = createInsertSchema(attendanceChanges).omit({ id: true, createdAt: true });
 export const insertPaymentPlanSchema = createInsertSchema(paymentPlans).omit({ id: true });
 export const insertStudentPaymentSchema = createInsertSchema(studentPayments).omit({ id: true });
-export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true });
+export const insertActivityLogSchema = createInsertSchema(activityLogs);
+export const selectActivityLogSchema = createSelectSchema(activityLogs);
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens);
+export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTokens);
+
 export const insertSchoolEventSchema = createInsertSchema(schoolEvents).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCustomizations).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertRiskActionSchema = createInsertSchema(riskActions).omit({ id: true, createdAt: true });
@@ -375,6 +391,10 @@ export type InsertRiskSettings = z.infer<typeof insertRiskSettingsSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+
 
 // Custom extended types for frontend use
 export type StudentWithUser = Student & {
@@ -453,6 +473,14 @@ export const studentPaymentsRelations = relations(studentPayments, ({ one }) => 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(users, {
     fields: [activityLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+// Password reset tokens relations
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.userId],
     references: [users.id],
   }),
 }));

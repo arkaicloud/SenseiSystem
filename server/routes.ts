@@ -3792,12 +3792,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avatarColor: studentData.avatarColor || null,
         avatarStyle: studentData.avatarStyle || null,
         avatarImage: studentData.avatarImage || null,
-        // Financial responsibility data
-        financialResponsibleName: studentData.financialResponsibleName || `${studentData.firstName} ${studentData.lastName}`,
-        financialResponsibleEmail: studentData.financialResponsibleEmail || studentData.email,
-        financialResponsiblePhone: studentData.financialResponsiblePhone || studentData.phone,
-        financialResponsibleCpf: studentData.financialResponsibleCpf || null,
-        financialResponsibleRelation: studentData.financialResponsibleRelation || "self",
+        // Financial responsibility data - handle "self" vs "other" logic
+        financialResponsibleName: studentData.financialResponsibleRelationship === "self" 
+          ? `${studentData.firstName} ${studentData.lastName}` 
+          : (studentData.financialResponsibleName || `${studentData.firstName} ${studentData.lastName}`),
+        financialResponsibleEmail: studentData.financialResponsibleRelationship === "self" 
+          ? studentData.email 
+          : (studentData.financialResponsibleEmail || studentData.email),
+        financialResponsiblePhone: studentData.financialResponsibleRelationship === "self" 
+          ? studentData.phone 
+          : (studentData.financialResponsiblePhone || studentData.phone),
+        financialResponsibleCpf: studentData.financialResponsibleRelationship === "self" 
+          ? studentData.cpf 
+          : (studentData.financialResponsibleCpf || null),
+        financialResponsibleRelation: studentData.financialResponsibleRelationship || "self",
         asaasCustomerId: null,
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
         preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5

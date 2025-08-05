@@ -142,6 +142,7 @@ export function BeltManagement() {
       name: '',
       levelKey: '',
       colorCode: '#000000',
+      category: 'adult',
       order: 1,
     },
   });
@@ -160,6 +161,7 @@ export function BeltManagement() {
       name: belt.name,
       levelKey: belt.levelKey,
       colorCode: belt.colorCode,
+      category: belt.category,
       order: belt.order,
     });
   };
@@ -251,6 +253,28 @@ export function BeltManagement() {
                       <FormLabel>Cor da Faixa</FormLabel>
                       <FormControl>
                         <Input type="color" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a categoria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="adult">Adulto</SelectItem>
+                            <SelectItem value="child">Infantil</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

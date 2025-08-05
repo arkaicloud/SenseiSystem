@@ -81,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           id: "pedidos-pendentes",
           label: "Pedidos Pendentes",
           icon: UserCheck,
-          path: "/pending-users",
+          path: "/admin/pending-approvals",
           roles: ["admin"],
         },
       ],

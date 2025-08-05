@@ -73,6 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           levelKey: beltLevels.levelKey,
           name: beltLevels.name,
           color: beltLevels.colorCode,
+          category: beltLevels.category,
           order: beltLevels.order
         })
         .from(beltLevels)
@@ -104,6 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         levelKey: belt.levelKey,
         name: belt.name,
         color: belt.color,
+        category: belt.category,
         count: countMap[belt.levelKey] || 0,
         order: belt.order
       }));

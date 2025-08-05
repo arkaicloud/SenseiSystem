@@ -31,7 +31,7 @@ const getTextColor = (hexColor: string): string => {
   return luminance > 0.5 ? '#000000' : '#FFFFFF';
 };
 
-export function BeltSummaryWidget() {
+export function BeltSummaryAdultWidget() {
   const { t } = useTranslations();
 
   const { data: beltStats, isLoading, error } = useQuery<BeltStat[]>({
@@ -43,7 +43,7 @@ export function BeltSummaryWidget() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Total por Faixa</CardTitle>
+          <CardTitle className="text-base font-semibold">Faixas Adulto</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -58,7 +58,7 @@ export function BeltSummaryWidget() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Total por Faixa</CardTitle>
+          <CardTitle className="text-base font-semibold">Faixas Adulto</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
@@ -69,20 +69,22 @@ export function BeltSummaryWidget() {
     );
   }
 
-  const totalStudents = beltStats ? beltStats.reduce((sum, belt) => sum + belt.count, 0) : 0;
+  // Filter only adult belts
+  const adultBelts = beltStats.filter(belt => belt.category === 'adult');
+  const totalStudents = adultBelts.reduce((sum, belt) => sum + belt.count, 0);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-semibold flex items-center gap-2">
-          🥋 Total por Faixa
+          👨 Faixas Adulto
           <Badge variant="secondary" className="text-xs">
             {totalStudents} alunos
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {beltStats && beltStats.map((belt) => {
+        {adultBelts.map((belt) => {
           const percentage = totalStudents > 0 ? (belt.count / totalStudents * 100).toFixed(1) : '0';
           const textColor = getTextColor(belt.color);
           
@@ -132,7 +134,7 @@ export function BeltSummaryWidget() {
         
         {totalStudents === 0 && (
           <div className="text-center py-4 text-muted-foreground text-sm">
-            Nenhum aluno ativo encontrado
+            Nenhum aluno adulto encontrado
           </div>
         )}
       </CardContent>
@@ -140,4 +142,4 @@ export function BeltSummaryWidget() {
   );
 }
 
-export default BeltSummaryWidget;
+export default BeltSummaryAdultWidget;

@@ -897,7 +897,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   number: user.number,
                   complement: user.complement,
                   neighborhood: user.neighborhood,
-                  zipCode: user.zipCode
+                  zipCode: user.zipCode,
+                  // Map financial responsible data correctly
+                  financialResponsibleName: student.financialResponsibleName,
+                  financialResponsibleEmail: student.financialResponsibleEmail,
+                  financialResponsiblePhone: student.financialResponsiblePhone,
+                  financialResponsibleCpf: student.financialResponsibleCpf
                 };
                 
                 // Create ASAAS customer

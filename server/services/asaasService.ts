@@ -158,11 +158,13 @@ export class AsaasService {
    */
   async createCustomer(studentData: any): Promise<AsaasCustomer> {
     try {
+      console.log('📋 Raw student data received:', JSON.stringify(studentData, null, 2));
+      
       const customerData: CreateCustomerRequest = {
-        name: studentData.financial_responsible_name,
-        email: studentData.financial_responsible_email,
-        phone: studentData.financial_responsible_phone,
-        cpfCnpj: studentData.financial_responsible_cpf?.replace(/\D/g, ''), // Remove formatting
+        name: studentData.financialResponsibleName || studentData.financial_responsible_name,
+        email: studentData.financialResponsibleEmail || studentData.financial_responsible_email,
+        phone: studentData.financialResponsiblePhone || studentData.financial_responsible_phone,
+        cpfCnpj: (studentData.financialResponsibleCpf || studentData.financial_responsible_cpf)?.replace(/\D/g, ''), // Remove formatting
         postalCode: studentData.zipCode?.replace(/\D/g, ''), // Remove formatting  
         address: studentData.street,
         addressNumber: studentData.number,
@@ -177,9 +179,18 @@ export class AsaasService {
       const response = await this.client.post<AsaasCustomer>('/customers', customerData);
       console.log('✅ Customer created in ASAAS:', response.data.id);
       return response.data;
-    } catch (error) {
-      console.error('❌ Error creating customer:', error);
-      throw new Error('Failed to create customer in ASAAS');
+    } catch (error: any) {
+      console.error('❌ Error creating customer - Full error:', JSON.stringify(error.response?.data, null, 2));
+      
+      // Log detailed error information
+      if (error.response?.data?.errors) {
+        console.error('🔥 ASAAS API Errors:', JSON.stringify(error.response.data.errors, null, 2));
+        error.response.data.errors.forEach((err: any, index: number) => {
+          console.error(`   ${index + 1}. ${err.code}: ${err.description}`);
+        });
+      }
+      
+      throw new Error(`Failed to create customer in ASAAS: ${error.response?.data?.errors?.[0]?.description || error.message}`);
     }
   }
 
@@ -215,20 +226,30 @@ export class AsaasService {
       const paymentData: CreatePaymentRequest = {
         customer: customerId,
         billingType: 'BOLETO',
-        value: planData.price,
+        value: planData.amount / 100, // Convert from cents to reais
         dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD format
         description: `Mensalidade SenseiSystem - ${studentData.first_name} ${studentData.last_name}`,
         externalReference: `COBRANCA_ALUNO_${studentData.user_id}`,
         notificationEnabled: true
       };
 
+      console.log('💰 Plan data:', JSON.stringify(planData, null, 2));
       console.log('🔄 Creating ASAAS payment:', paymentData);
       const response = await this.client.post<AsaasPayment>('/payments', paymentData);
       console.log('✅ Payment created in ASAAS:', response.data.id);
       return response.data;
-    } catch (error) {
-      console.error('❌ Error creating payment:', error);
-      throw new Error('Failed to create payment in ASAAS');
+    } catch (error: any) {
+      console.error('❌ Error creating payment - Full error:', JSON.stringify(error.response?.data, null, 2));
+      
+      // Log detailed error information
+      if (error.response?.data?.errors) {
+        console.error('🔥 ASAAS Payment Errors:', JSON.stringify(error.response.data.errors, null, 2));
+        error.response.data.errors.forEach((err: any, index: number) => {
+          console.error(`   ${index + 1}. ${err.code}: ${err.description}`);
+        });
+      }
+      
+      throw new Error(`Failed to create payment in ASAAS: ${error.response?.data?.errors?.[0]?.description || error.message}`);
     }
   }
 

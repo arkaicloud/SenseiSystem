@@ -61,11 +61,8 @@ export default function LoginPage() {
         description: `Bem-vindo, ${data.user.firstName}!`,
       });
       
-      if (data.user.role === 'admin' || data.user.role === 'instructor') {
-        setLocation("/admin/dashboard");
-      } else {
-        setLocation("/dashboard");
-      }
+      // Redirect all users to /dashboard - the dashboard component will handle role-based rendering
+      setLocation("/dashboard");
     },
     onError: (error: any) => {
       setError(error.message || "Erro ao fazer login");

@@ -36,7 +36,6 @@ export default function DashboardPage() {
     console.log('Rendering dashboard for user role:', user.role);
     switch (user.role) {
       case 'admin':
-      case 'manager':
         console.log('Rendering AdminDashboard');
         return <AdminDashboard />;
       case 'instructor':
@@ -54,7 +53,6 @@ export default function DashboardPage() {
   const getDashboardTitle = () => {
     switch (user.role) {
       case 'admin':
-      case 'manager':
         return t('dashboard.adminDashboard');
       case 'instructor':
         return t('dashboard.instructorDashboard');

@@ -1,0 +1,104 @@
+🎯 Tarefa:
+Implementar a integração com ASAAS dentro do fluxo de aprovação de aluno no SenseiSystem. Quando um aluno for aprovado no painel administrativo ("Aprovações Pendentes"), o sistema deve criar o cliente no ASAAS (se ainda não existir) e gerar automaticamente um título em aberto (cobrança) utilizando os dados do responsável financeiro.
+
+---
+
+## ​ Recursos da API ASAAS:
+
+### 1. Criar cliente (customer)
+- **Endpoint**: `POST /v3/customers`
+- **Payload mínimo**:
+  {
+    "name": "<nome_completo_responsavel>",
+    "cpfCnpj": "<cpf_ou_cnpj>",
+    "email": "<email>",
+    "mobilePhone": "<telefone ou celular>",
+    "postalCode": "<cep>",
+    "addressNumber": "<número>",
+    "addressComplement": "<opcional>"
+  }
+- **Retorno**: objeto com `id` → `asaasCustomerId` :contentReference[oaicite:1]{index=1}
+
+### 2. Criar pagamento (título/cobrança)
+- **Endpoint**: `POST /v3/payments`
+- **Payload básico (boleto ou Pix)**:
+  {
+    "customer": "<asaasCustomerId>",
+    "billingType": "BOLETO" ou "PIX",
+    "value": <valor_numérico>,
+    "dueDate": "YYYY-MM-DD"
+  }
+- Para Pix, retorna um `id` e depois pode-se chamar `GET /payments/{id}/pixQrCode` para obter o QR code e payload :contentReference[oaicite:2]{index=2}
+
+### 3. (Opcional) Pagamento por cartão de crédito
+- **Payload adicional**:
+  {
+    "billingType": "CREDIT_CARD",
+    "creditCard": { ...dados do cartão completo },
+    "creditCardHolderInfo": { ...campos duplicados do cliente }
+  }
+- Após criação retorna `invoiceUrl` e pagamento automático :contentReference[oaicite:3]{index=3}
+
+---
+
+## ​ Fluxo da lógica:
+
+1. Aluno cadastrado com `status = "pendente"`.
+2. No painel admin, ao clicar “Aprovar”, o backend executa:
+   - Se `responsavel.asaasCustomerId` vazio:
+     - Faz `POST /v3/customers` com dados do responsável.
+     - Armazena o `asaasCustomerId`.
+   - Depois faz `POST /v3/payments` para gerar cobrança com:
+     - `customer`: ID obtido.
+     - `billingType`: "BOLETO" (ou "PIX").
+     - `value`: valor do plano.
+     - `dueDate`: data definida no cadastro.
+     - (Opcional) `description`: `"Mensalidade - [Aluno Nome]"`.
+   - Recebe `id`, `bankSlipUrl` (para boleto), ou QR Code de Pix.
+   - Cria record em `contas_receber` com os dados retornados.
+   - Atualiza `aluno.status = "ativo"`.
+
+---
+
+## ​ Responsabilidades 
+
+### Painel Admin:
+- Tela “Aprovações Pendentes” com lista de alunos `status = "pendente"`.
+- Botão “Aprovar” dispara o fluxo e mostra feedback de sucesso ou erro.
+- Após criar ou atualizar títulos, os cards de KPIs atualizam (ex: receita mensal).
+
+### Painel do Aluno:
+- Se houver título em aberto:
+  - Mostrar bloco “Mensalidade em aberto”
+  - Valor, vencimento e botão “Ver Boleto” (link `bankSlipUrl`) ou QR code Pix.
+- Se título pago ou vencido, exibir status correspondente.
+
+---
+
+## ​ Segurança & boas práticas:
+- Integração com ASAAS via Axios com header `Authorization: Bearer {API_KEY}`.
+- Executar lógica de criação dentro de transação DB para consistência.
+- Tratamento de erros ASAAS (códigos `400`, duplicidade de customer).
+- Implementar idempotência (não criar cliente duplicado se CPF já estiver).
+- Se ASAAS enviar webhook de pagamento, atualizar `contas_receber` via ID da fatura.
+
+---
+
+## ​ Criatividade liberada:
+- Gatilho opcional para enviar link de pagamento por WhatsApp após aprovação.
+- Cron job para gerar titulos mensais recorrentes de alunos ativos.
+- Alertas no painel admin: alunos com títulos vencidos > 7 dias.
+- Recomendação de promoções ou lembretes de pagamento via tooltips no painel do aluno.
+
+---
+
+## ​ Pedido à IA:
+Baseada nessa descrição, implemente o fluxo completo:
+
+- Serviço backend (`asaasService.createOrGetCustomer(...)`, `createPayment(...)`)
+- Endpoint `/api/admin/aluno/:id/aprovar`
+- Criação do registro `contas_receber`
+- Modificação no painel admin para mostrar status dos títulos
+- Componente frontend no painel do aluno para exibir boleto/QR code
+
+Use Node.js + Express + Axios + React + Tailwind + Prisma. Crie funções modulares e bem tipadas.

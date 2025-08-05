@@ -223,9 +223,9 @@ export default function LoginPage() {
                         href={publicInfo.website}
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-slate-300 hover:text-white transition-colors text-sm flex items-center gap-1"
+                        className="text-slate-300 hover:text-white transition-colors text-sm"
                       >
-                        {getSocialMediaInfo(publicInfo.website).icon} Visite nosso {getSocialMediaInfo(publicInfo.website).type}
+                        Visite nosso website
                       </a>
                     </div>
                   )}

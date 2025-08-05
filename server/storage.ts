@@ -16,6 +16,7 @@ import {
   streakAchievements, type StreakAchievement, type InsertStreakAchievement,
   dailyLoginRecords, type DailyLoginRecord, type InsertDailyLoginRecord,
   beltLevels, type BeltLevel, type InsertBeltLevel,
+  contasReceber,
   type StudentWithUser, type ClassWithInstructor,
   type AttendanceWithDetails, type StudentPaymentWithDetails,
   type UserWithStreakData
@@ -148,6 +149,15 @@ export interface IStorage {
   updateBeltLevel(id: number, beltLevel: Partial<BeltLevel>): Promise<BeltLevel | undefined>;
   deleteBeltLevel(id: number): Promise<boolean>;
   getBeltStats(): Promise<{ [key: string]: number }>;
+
+  // Contas a Receber (ASAAS Integration)
+  getContaReceber(id: number): Promise<any>;
+  getContasReceberByStudent(studentId: number): Promise<any[]>;
+  getContasReceberPendentes(): Promise<any[]>;
+  getContaReceberByAsaasId(asaasPaymentId: string): Promise<any>;
+  createContaReceber(conta: any): Promise<any>;
+  updateContaReceber(id: number, conta: Partial<any>): Promise<any>;
+  deleteContaReceber(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -2039,6 +2049,58 @@ export class DatabaseStorage implements IStorage {
     });
 
     return result;
+  }
+
+  // Contas a Receber (ASAAS Integration)
+  async getContaReceber(id: number): Promise<any> {
+    const [conta] = await db.select().from(contasReceber)
+      .where(eq(contasReceber.id, id));
+    return conta;
+  }
+
+  async getContasReceberByStudent(studentId: number): Promise<any[]> {
+    return await db.select().from(contasReceber)
+      .where(eq(contasReceber.studentId, studentId))
+      .orderBy(desc(contasReceber.dueDate));
+  }
+
+  async getContasReceberPendentes(): Promise<any[]> {
+    return await db.select().from(contasReceber)
+      .where(eq(contasReceber.status, 'PENDING'))
+      .orderBy(contasReceber.dueDate);
+  }
+
+  async getContaReceberByAsaasId(asaasPaymentId: string): Promise<any> {
+    const [conta] = await db.select().from(contasReceber)
+      .where(eq(contasReceber.asaasPaymentId, asaasPaymentId));
+    return conta;
+  }
+
+  async createContaReceber(contaData: any): Promise<any> {
+    const [conta] = await db.insert(contasReceber).values({
+      ...contaData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return conta;
+  }
+
+  async updateContaReceber(id: number, contaData: Partial<any>): Promise<any> {
+    const [updatedConta] = await db
+      .update(contasReceber)
+      .set({
+        ...contaData,
+        updatedAt: new Date()
+      })
+      .where(eq(contasReceber.id, id))
+      .returning();
+    return updatedConta;
+  }
+
+  async deleteContaReceber(id: number): Promise<boolean> {
+    const result = await db.delete(contasReceber)
+      .where(eq(contasReceber.id, id));
+    return result.rowCount > 0;
   }
 }
 

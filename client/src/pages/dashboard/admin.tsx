@@ -31,6 +31,7 @@ import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
 import BeltSummaryAdultWidget from '@/components/dashboard/BeltSummaryAdultWidget';
 import BeltSummaryChildWidget from '@/components/dashboard/BeltSummaryChildWidget';
 import { FinancialCard } from '@/components/dashboard/FinancialCard';
+import PendingApprovals from '@/components/admin/PendingApprovals';
 
 // Interface para métricas em tempo real
 interface DashboardMetrics {
@@ -813,9 +814,14 @@ export default function AdminDashboard() {
 
       {/* Layout principal com 3 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Coluna 1 - Aulas de Hoje */}
+        {/* Coluna 1 - Aulas de Hoje e Aprovações */}
         <div className="lg:col-span-2 space-y-6">
           <TodayClassesCard classes={todayClasses} />
+          
+          {/* Aprovações Pendentes */}
+          {pendingUsers?.users && pendingUsers.users.length > 0 && (
+            <PendingApprovals />
+          )}
           
           {/* Total por Faixa */}
           <BeltSummaryAdultWidget />

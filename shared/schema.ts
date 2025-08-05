@@ -10,6 +10,7 @@ export const paymentStatusEnum = pgEnum('payment_status', ['paid', 'pending', 'o
 export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'absent', 'late']);
 export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
 export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
+export const billingTypeEnum = pgEnum('billing_type', ['BOLETO', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'TRANSFER']);
 
 // Belt levels management table
 export const beltLevels = pgTable("belt_levels", {
@@ -124,6 +125,35 @@ export const schoolPayments = pgTable("school_payments", {
   paidAt: timestamp("paid_at"),
   description: text("description").default("Mensalidade SenseiSystem"),
   externalReference: text("external_reference"), // Referência externa
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Contas a Receber (ASAAS Integration) table
+export const contasReceber = pgTable("contas_receber", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  asaasPaymentId: text("asaas_payment_id").unique(), // ID do pagamento no ASAAS
+  asaasCustomerId: text("asaas_customer_id"), // ID do cliente no ASAAS
+  status: text("status").notNull().default('PENDING'), // PENDING, RECEIVED, OVERDUE, CANCELLED
+  billingType: billingTypeEnum("billing_type").notNull().default('BOLETO'),
+  value: integer("value").notNull(), // Valor em centavos
+  netValue: integer("net_value"), // Valor líquido após taxas
+  dueDate: timestamp("due_date").notNull(),
+  description: text("description").notNull(),
+  externalReference: text("external_reference"), // Referência interna
+  // ASAAS specific fields
+  invoiceUrl: text("invoice_url"), // URL da fatura
+  bankSlipUrl: text("bank_slip_url"), // URL do boleto
+  pixQrCode: text("pix_qr_code"), // QR Code do PIX
+  pixCopyAndPaste: text("pix_copy_and_paste"), // Código PIX para copiar/colar
+  // Payment tracking
+  confirmedDate: timestamp("confirmed_date"), // Data de confirmação do pagamento
+  receivedDate: timestamp("received_date"), // Data de recebimento
+  overdueDate: timestamp("overdue_date"), // Data de vencimento em atraso
+  // Webhook data
+  lastWebhookReceived: timestamp("last_webhook_received"),
+  webhookEvents: text("webhook_events").array().default([]), // Eventos de webhook recebidos
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

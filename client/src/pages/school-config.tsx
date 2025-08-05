@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, School, Upload, Save, Award } from "lucide-react";
+import { Loader2, School, Upload, Save, Award, CreditCard } from "lucide-react";
 import type { SchoolConfig } from "@shared/schema";
 
 // Schema para validação do formulário
@@ -36,6 +36,7 @@ const schoolConfigSchema = z.object({
   congratsMessage: z.string().optional(),
   welcomeMessage: z.string().optional(),
   defaultTheme: z.enum(["light", "dark"]).default("light"),
+  asaasApiKey: z.string().optional(),
 });
 
 type SchoolConfigForm = z.infer<typeof schoolConfigSchema>;
@@ -69,6 +70,7 @@ export default function SchoolConfigPage() {
       tiktok: currentConfig?.tiktok || "",
       congratsMessage: currentConfig?.congratsMessage || "",
       welcomeMessage: currentConfig?.welcomeMessage || "",
+      asaasApiKey: currentConfig?.asaasApiKey || "",
     },
   });
 
@@ -92,6 +94,7 @@ export default function SchoolConfigPage() {
         congratsMessage: currentConfig.congratsMessage || "",
         welcomeMessage: currentConfig.welcomeMessage || "",
         defaultTheme: (currentConfig.defaultTheme as "light" | "dark") || "light",
+        asaasApiKey: currentConfig.asaasApiKey || "",
       });
     }
   }, [currentConfig, form]);
@@ -601,6 +604,39 @@ export default function SchoolConfigPage() {
                         )}
                       />
                     </div>
+                  </div>
+
+                  {/* Seção ASAAS */}
+                  <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Integração ASAAS
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Configure a integração com ASAAS para automação de cobranças e gestão financeira.
+                      A API Key é necessária para criar clientes e cobranças automaticamente quando aprovar alunos.
+                    </p>
+                    
+                    <FormField
+                      control={form.control}
+                      name="asaasApiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Key ASAAS</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password"
+                              placeholder="Digite sua API Key do ASAAS..." 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <div className="text-sm text-gray-500">
+                            Encontre sua API Key no painel ASAAS em: Configurações → API Keys
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   {/* Botão de Salvar */}

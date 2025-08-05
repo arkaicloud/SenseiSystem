@@ -1,203 +1,224 @@
+import axios, { AxiosInstance, AxiosError } from 'axios';
+import { storage } from '../storage';
+
+// Types for ASAAS API
 interface AsaasCustomer {
+  id: string;
   name: string;
-  email: string;
-  cpfCnpj?: string;
-  phone?: string;
-  address?: string;
-  externalReference?: string;
+  cpfCnpj: string;
+  email?: string;
+  mobilePhone?: string;
+  postalCode?: string;
+  addressNumber?: string;
+  addressComplement?: string;
 }
 
 interface AsaasPayment {
+  id: string;
   customer: string;
-  billingType: 'PIX' | 'BOLETO' | 'CREDIT_CARD' | 'DEBIT_CARD';
+  billingType: 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER';
+  value: number;
+  netValue?: number;
+  dueDate: string;
+  description?: string;
+  externalReference?: string;
+  status: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCode?: string;
+  pixCopyAndPaste?: string;
+}
+
+interface CreateCustomerRequest {
+  name: string;
+  cpfCnpj: string;
+  email?: string;
+  mobilePhone?: string;
+  postalCode?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+}
+
+interface CreatePaymentRequest {
+  customer: string;
+  billingType: 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER';
   value: number;
   dueDate: string;
   description?: string;
   externalReference?: string;
 }
 
-interface AsaasWebhookEvent {
-  event: string;
-  payment: {
-    id: string;
-    customer: string;
-    value: number;
-    netValue?: number;
-    originalValue?: number;
-    status: string;
-    billingType: string;
-    dueDate: string;
-    originalDueDate?: string;
-    paymentDate?: string;
-    clientPaymentDate?: string;
-    externalReference?: string;
-    description?: string;
-  };
-}
-
 export class AsaasService {
-  private readonly baseUrl: string;
-  private readonly apiKey: string;
+  private client: AxiosInstance;
+  private apiKey: string | null = null;
 
-  constructor(apiKey?: string, useSandbox: boolean = true) {
-    // Use sandbox environment by default for testing
-    this.baseUrl = useSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://www.asaas.com/api/v3';
-    this.apiKey = apiKey || process.env.ASAAS_API_KEY || '';
-  }
-
-  private async makeRequest(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', data?: any) {
-    const url = `${this.baseUrl}${endpoint}`;
-    
-    const options: RequestInit = {
-      method,
+  constructor() {
+    this.client = axios.create({
+      baseURL: 'https://www.asaas.com/api/v3',
+      timeout: 30000,
       headers: {
-        'access_token': this.apiKey, // ASAAS uses 'access_token' header, not Authorization Bearer
         'Content-Type': 'application/json',
       },
-    };
+    });
 
-    if (data && (method === 'POST' || method === 'PUT')) {
-      options.body = JSON.stringify(data);
-    }
-
-    try {
-      const response = await fetch(url, options);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`ASAAS API Error: ${response.status} - ${errorText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('ASAAS API Error:', error);
-      throw error;
-    }
-  }
-
-  // Criar cliente no ASAAS
-  async createCustomer(customerData: AsaasCustomer): Promise<{ id: string; name: string; email: string }> {
-    console.log('🔄 Creating ASAAS customer:', customerData.name);
-    
-    const response = await this.makeRequest('/customers', 'POST', customerData);
-    
-    console.log('✅ ASAAS customer created:', response.id);
-    return response;
-  }
-
-  // Criar cobrança no ASAAS
-  async createPayment(paymentData: AsaasPayment): Promise<{ id: string; status: string; invoiceUrl?: string; pixQrCode?: string }> {
-    console.log('💰 Creating ASAAS payment for customer:', paymentData.customer);
-    
-    const response = await this.makeRequest('/payments', 'POST', paymentData);
-    
-    console.log('✅ ASAAS payment created:', response.id);
-    return response;
-  }
-
-  // Buscar informações de um pagamento
-  async getPayment(paymentId: string): Promise<any> {
-    const response = await this.makeRequest(`/payments/${paymentId}`, 'GET');
-    return response;
-  }
-
-  // Listar pagamentos de um cliente
-  async getCustomerPayments(customerId: string, limit: number = 100): Promise<any> {
-    const response = await this.makeRequest(`/payments?customer=${customerId}&limit=${limit}`, 'GET');
-    return response;
-  }
-
-  // Criar cobrança recorrente
-  async createSubscription(subscriptionData: {
-    customer: string;
-    billingType: string;
-    value: number;
-    cycle: 'MONTHLY' | 'YEARLY';
-    description?: string;
-    nextDueDate: string;
-    externalReference?: string;
-  }): Promise<any> {
-    console.log('🔄 Creating ASAAS subscription for customer:', subscriptionData.customer);
-    
-    const response = await this.makeRequest('/subscriptions', 'POST', subscriptionData);
-    
-    console.log('✅ ASAAS subscription created:', response.id);
-    return response;
-  }
-
-  // Validar webhook do ASAAS
-  validateWebhook(event: AsaasWebhookEvent): boolean {
-    // Implementar validação de webhook se necessário
-    return Boolean(event && event.event && event.payment);
-  }
-
-  // Testar conexão com a API ASAAS
-  async testConnection(): Promise<{ success: boolean; message: string; data?: any }> {
-    try {
-      console.log('🔍 Testing ASAAS API connection...');
-      
+    // Add request interceptor to include API key
+    this.client.interceptors.request.use(async (config) => {
       if (!this.apiKey) {
-        return {
-          success: false,
-          message: 'API Key do ASAAS não configurada'
-        };
+        await this.loadApiKey();
       }
-
-      // Tentar buscar informações da conta
-      const response = await this.makeRequest('/myAccount');
       
-      return {
-        success: true,
-        message: 'Conexão com ASAAS estabelecida com sucesso',
-        data: {
-          name: response.name || 'Não informado',
-          email: response.email || 'Não informado',
-          environment: this.baseUrl.includes('sandbox') ? 'Sandbox (Teste)' : 'Produção'
-        }
-      };
+      if (this.apiKey) {
+        config.headers.Authorization = `Bearer ${this.apiKey}`;
+      }
+      
+      return config;
+    });
+
+    // Add response interceptor for error handling
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        console.error('ASAAS API Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        });
+        throw error;
+      }
+    );
+  }
+
+  private async loadApiKey(): Promise<void> {
+    try {
+      const config = await storage.getSchoolConfig();
+      if (config?.asaasApiKey) {
+        this.apiKey = config.asaasApiKey;
+      } else {
+        throw new Error('ASAAS API Key not configured');
+      }
     } catch (error) {
-      console.error('❌ Error testing ASAAS connection:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Erro desconhecido ao conectar com ASAAS'
-      };
+      console.error('Failed to load ASAAS API key:', error);
+      throw new Error('ASAAS integration not properly configured');
     }
   }
 
-  // Processar evento de webhook
-  processWebhookEvent(event: AsaasWebhookEvent): {
-    paymentId: string;
-    status: string;
-    value: number;
-    paidAt?: string;
-    externalReference?: string;
-  } {
-    return {
-      paymentId: event.payment.id,
-      status: this.mapAsaasStatusToLocal(event.payment.status),
-      value: event.payment.value,
-      paidAt: event.payment.paymentDate || event.payment.clientPaymentDate,
-      externalReference: event.payment.externalReference,
-    };
+  /**
+   * Criar ou buscar cliente no ASAAS
+   */
+  async createOrGetCustomer(customerData: CreateCustomerRequest): Promise<AsaasCustomer> {
+    try {
+      // First try to find existing customer by CPF/CNPJ
+      const existingCustomer = await this.findCustomerByCpf(customerData.cpfCnpj);
+      if (existingCustomer) {
+        console.log('Customer already exists in ASAAS:', existingCustomer.id);
+        return existingCustomer;
+      }
+
+      // Create new customer
+      const response = await this.client.post<AsaasCustomer>('/customers', customerData);
+      console.log('New customer created in ASAAS:', response.data.id);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating/getting customer:', error);
+      throw new Error('Failed to create or get customer in ASAAS');
+    }
   }
 
-  // Mapear status do ASAAS para status local
-  private mapAsaasStatusToLocal(asaasStatus: string): string {
-    const statusMap: { [key: string]: string } = {
-      'PENDING': 'pending',
-      'RECEIVED': 'paid',
-      'RECEIVED_IN_CASH': 'paid',
-      'CONFIRMED': 'paid',
-      'OVERDUE': 'overdue',
-      'REFUNDED': 'cancelled',
-      'CANCELLED': 'cancelled',
-      'CHARGEBACK_REQUESTED': 'failed',
-      'CHARGEBACK_DISPUTE': 'failed',
-      'AWAITING_CHARGEBACK_REVERSAL': 'failed',
-    };
+  /**
+   * Buscar cliente por CPF/CNPJ
+   */
+  private async findCustomerByCpf(cpfCnpj: string): Promise<AsaasCustomer | null> {
+    try {
+      const response = await this.client.get('/customers', {
+        params: { cpfCnpj }
+      });
+      
+      if (response.data.data && response.data.data.length > 0) {
+        return response.data.data[0];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding customer by CPF:', error);
+      return null;
+    }
+  }
 
-    return statusMap[asaasStatus] || 'pending';
+  /**
+   * Criar pagamento (título/cobrança)
+   */
+  async createPayment(paymentData: CreatePaymentRequest): Promise<AsaasPayment> {
+    try {
+      const response = await this.client.post<AsaasPayment>('/payments', paymentData);
+      console.log('Payment created in ASAAS:', response.data.id);
+      
+      // Se for PIX, buscar QR Code
+      if (paymentData.billingType === 'PIX') {
+        const pixData = await this.getPixQrCode(response.data.id);
+        response.data.pixQrCode = pixData.qrCode;
+        response.data.pixCopyAndPaste = pixData.payload;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      throw new Error('Failed to create payment in ASAAS');
+    }
+  }
+
+  /**
+   * Buscar QR Code do PIX
+   */
+  private async getPixQrCode(paymentId: string): Promise<{ qrCode: string; payload: string }> {
+    try {
+      const response = await this.client.get(`/payments/${paymentId}/pixQrCode`);
+      return {
+        qrCode: response.data.encodedImage,
+        payload: response.data.payload
+      };
+    } catch (error) {
+      console.error('Error getting PIX QR Code:', error);
+      return { qrCode: '', payload: '' };
+    }
+  }
+
+  /**
+   * Buscar status de um pagamento
+   */
+  async getPaymentStatus(paymentId: string): Promise<AsaasPayment> {
+    try {
+      const response = await this.client.get<AsaasPayment>(`/payments/${paymentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting payment status:', error);
+      throw new Error('Failed to get payment status from ASAAS');
+    }
+  }
+
+  /**
+   * Verificar se a integração está configurada
+   */
+  async isConfigured(): Promise<boolean> {
+    try {
+      await this.loadApiKey();
+      return !!this.apiKey;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Testar conexão com ASAAS
+   */
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.client.get('/customers?limit=1');
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
-export default AsaasService;
+// Singleton instance
+export const asaasService = new AsaasService();

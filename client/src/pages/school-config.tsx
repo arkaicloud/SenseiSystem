@@ -176,25 +176,7 @@ export default function SchoolConfigPage() {
                             
                             {/* Opções de logo */}
                             <div className="flex flex-col gap-4">
-                              {/* Usar logo padrão Huios */}
-                              <div className="flex items-center gap-3">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => {
-                                    // Usar a imagem do logo Huios como padrão
-                                    field.onChange("/assets/targeted_element_1754259068936.png");
-                                    toast({
-                                      title: "Logo atualizado",
-                                      description: "Logo padrão Huios Jiu Jitsu aplicado com sucesso",
-                                    });
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Award className="h-4 w-4" />
-                                  Usar Logo Padrão Huios
-                                </Button>
-                              </div>
+                              
 
                               {/* Upload de arquivo */}
                               <div className="border-t pt-3">

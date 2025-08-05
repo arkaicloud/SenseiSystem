@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -43,7 +43,10 @@ import {
   Users,
   Upload,
   Save,
-  X
+  X,
+  FileCheck,
+  Clock,
+  Shield
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -295,55 +298,61 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-background border-border">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col bg-background border-border">
+        <DialogHeader className="sticky top-0 z-10 bg-background border-b border-border pb-4">
           <DialogTitle className="text-foreground flex items-center gap-2">
             <User className="h-5 w-5" />
             Edição Completa do Aluno - {student?.firstName} {student?.lastName}
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Gerenciar informações completas do aluno incluindo dados pessoais, contato, saúde e documentos.
+          </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-9 bg-muted h-auto p-1">
-                <TabsTrigger value="personal" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <User className="h-4 w-4 mr-1" />
-                  Dados Pessoais
+        <div className="flex-1 overflow-hidden">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+                <TabsList className="sticky top-0 z-10 grid w-full grid-cols-9 bg-muted h-16 p-2 mb-4 shadow-sm">
+                <TabsTrigger value="personal" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <User className="h-5 w-5" />
+                  <span className="text-xs">Dados Pessoais</span>
                 </TabsTrigger>
-                <TabsTrigger value="contact" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Phone className="h-4 w-4 mr-1" />
-                  Contato
+                <TabsTrigger value="contact" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Phone className="h-5 w-5" />
+                  <span className="text-xs">Contato</span>
                 </TabsTrigger>
-                <TabsTrigger value="address" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Endereço
+                <TabsTrigger value="address" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <MapPin className="h-5 w-5" />
+                  <span className="text-xs">Endereço</span>
                 </TabsTrigger>
-                <TabsTrigger value="health" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Heart className="h-4 w-4 mr-1" />
-                  Saúde e Graduação
+                <TabsTrigger value="health" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Heart className="h-5 w-5" />
+                  <span className="text-xs">Saúde e Graduação</span>
                 </TabsTrigger>
-                <TabsTrigger value="financial" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Users className="h-4 w-4 mr-1" />
-                  Responsável Financeiro
+                <TabsTrigger value="financial" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Users className="h-5 w-5" />
+                  <span className="text-xs">Responsável Financeiro</span>
                 </TabsTrigger>
-                <TabsTrigger value="plan" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <CreditCard className="h-4 w-4 mr-1" />
-                  Plano
+                <TabsTrigger value="plan" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <CreditCard className="h-5 w-5" />
+                  <span className="text-xs">Plano</span>
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileText className="h-4 w-4 mr-1" />
-                  Documentos
+                <TabsTrigger value="documents" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileText className="h-5 w-5" />
+                  <span className="text-xs">Documentos</span>
                 </TabsTrigger>
-                <TabsTrigger value="physical" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Activity className="h-4 w-4 mr-1" />
-                  Avaliação Física
+                <TabsTrigger value="physical" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Activity className="h-5 w-5" />
+                  <span className="text-xs">Avaliação Física</span>
                 </TabsTrigger>
-                <TabsTrigger value="contract" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Scale className="h-4 w-4 mr-1" />
-                  Contrato/Termos
+                <TabsTrigger value="contract" className="text-sm p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileCheck className="h-5 w-5" />
+                  <span className="text-xs">Termos</span>
                 </TabsTrigger>
               </TabsList>
+
+              <div className="flex-1 overflow-y-auto">
 
               {/* Tab 1: Dados Pessoais */}
               <TabsContent value="personal" className="space-y-6 mt-6">
@@ -1268,45 +1277,56 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
               {/* Tab 9: Contrato/Termos */}
               <TabsContent value="contract" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Scale className="h-5 w-5" />
+                    <CardTitle className="text-card-foreground flex items-center gap-2">
+                      <FileCheck className="h-5 w-5" />
                       Contrato e Termos
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="bg-green-900/20 border border-green-600 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-600 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-green-400 font-medium">Contrato assinado digitalmente</span>
+                        <span className="text-green-700 dark:text-green-400 font-medium">Contrato assinado digitalmente</span>
                       </div>
-                      <p className="text-gray-300 text-sm">Data: 5 de agosto de 2025 às 01:29</p>
-                      <p className="text-gray-300 text-sm">IP: 192.168.1.100</p>
-                      <p className="text-gray-300 text-sm">Responsável: Sistema Administrativo</p>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-muted-foreground">
+                          <Clock className="h-4 w-4 inline mr-2" />
+                          Data: 5 de agosto de 2025 às 01:46
+                        </p>
+                        <p className="text-muted-foreground">
+                          <Shield className="h-4 w-4 inline mr-2" />
+                          IP: 192.168.1.100
+                        </p>
+                        <p className="text-muted-foreground">
+                          <User className="h-4 w-4 inline mr-2" />
+                          Responsável: Sistema Administrativo
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                    <div className="flex gap-2 flex-wrap">
+                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
                         <FileText className="h-4 w-4 mr-2" />
                         Remover Assinatura
                       </Button>
-                      <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-                        <FileText className="h-4 w-4 mr-2" />
+                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
+                        <Mail className="h-4 w-4 mr-2" />
                         Reenviar Termos
                       </Button>
-                      <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
                         <FileText className="h-4 w-4 mr-2" />
                         Gerar PDF
                       </Button>
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="text-blue-400 font-medium">Conteúdo do Contrato</h4>
-                      <div className="bg-gray-700 border border-gray-600 rounded-lg p-4 max-h-64 overflow-y-auto">
-                        <div className="text-white text-sm space-y-2">
+                      <h4 className="text-primary font-medium">Conteúdo do Contrato</h4>
+                      <div className="bg-muted border border-border rounded-lg p-4 max-h-64 overflow-y-auto">
+                        <div className="text-foreground text-sm space-y-2">
                           <h5 className="font-medium">§3.1 Da Contratada:</h5>
-                          <ul className="list-disc pl-5 space-y-1">
+                          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
                             <li>Ministrar as aulas conforme cronograma estabelecido;</li>
                             <li>Fornecer orientação técnica qualificada;</li>
                             <li>Manter as instalações em condições adequadas;</li>
@@ -1314,33 +1334,38 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                           </ul>
                           
                           <h5 className="font-medium mt-4">§3.2 Do Contratante:</h5>
-                          <ul className="list-disc pl-5 space-y-1">
+                          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
                             <li>Efetuar o pagamento das mensalidades nas datas acordadas;</li>
+                            <li>Respeitar as normas internas da academia;</li>
+                            <li>Comunicar qualquer problema de saúde relevante;</li>
                           </ul>
                         </div>
                       </div>
                       
-                      <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-                        <FileText className="h-4 w-4 mr-2" />
+                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
+                        <Upload className="h-4 w-4 mr-2" />
                         Restaurar Modelo
                       </Button>
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="text-blue-400 font-medium">Histórico de Aceites</h4>
-                      <div className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                      <h4 className="text-primary font-medium">Histórico de Aceites</h4>
+                      <div className="bg-muted border border-border rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium">Aceite Digital Registrado</p>
-                            <p className="text-gray-400 text-sm">5 de agosto de 2025 às 01:29</p>
+                            <p className="text-foreground font-medium">Aceite Digital Registrado</p>
+                            <p className="text-muted-foreground text-sm">5 de agosto de 2025 às 01:46</p>
                           </div>
-                          <Badge className="bg-green-600 text-white">Válido</Badge>
+                          <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                            Válido
+                          </Badge>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
+              </div>
             </Tabs>
 
             <div className="flex justify-between items-center pt-6 border-t border-border">
@@ -1381,6 +1406,7 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
             </div>
           </form>
         </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

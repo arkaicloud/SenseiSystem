@@ -25,36 +25,34 @@ const ONBOARDING_CACHE_KEY = "senseisystem_onboarding_cache";
 const ONBOARDING_STEP_KEY = "senseisystem_onboarding_step";
 
 export default function OnboardingPage() {
+  // Função para limpar cache ao inicializar
+  const clearCacheOnInit = () => {
+    try {
+      localStorage.removeItem(ONBOARDING_CACHE_KEY);
+      localStorage.removeItem(ONBOARDING_STEP_KEY);
+      console.log('🗑️ Cache limpo ao inicializar novo onboarding');
+    } catch (error) {
+      console.warn('⚠️ Erro ao limpar cache inicial:', error);
+    }
+  };
+
   // Função para carregar dados do cache
   const loadCachedData = (): Partial<OnboardingData> => {
-    try {
-      const cached = localStorage.getItem(ONBOARDING_CACHE_KEY);
-      if (cached) {
-        const parsedData = JSON.parse(cached);
-        console.log('📥 Dados carregados do cache:', parsedData);
-        return parsedData;
-      }
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar cache:', error);
-    }
+    // Não carregar cache - sempre começar limpo
     return {};
   };
 
   // Função para carregar step do cache
   const loadCachedStep = (): number => {
-    try {
-      const cached = localStorage.getItem(ONBOARDING_STEP_KEY);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar step:', error);
-    }
+    // Sempre começar no step 1 para novos onboardings
     return 1;
   };
 
-  const [currentStep, setCurrentStep] = useState(loadCachedStep());
-  const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>(loadCachedData());
+  // Limpar cache ao inicializar
+  clearCacheOnInit();
+  
+  const [currentStep, setCurrentStep] = useState(1); // Sempre começar no step 1
+  const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>({});
   const [success, setSuccess] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [registrationError, setRegistrationError] = useState<string>("");
@@ -95,25 +93,8 @@ export default function OnboardingPage() {
     },
   });
 
-  // Salvar dados no localStorage sempre que houver mudança
-  useEffect(() => {
-    try {
-      localStorage.setItem(ONBOARDING_CACHE_KEY, JSON.stringify(onboardingData));
-      console.log('💾 Dados salvos no cache');
-    } catch (error) {
-      console.warn('⚠️ Erro ao salvar cache:', error);
-    }
-  }, [onboardingData]);
-
-  // Salvar step no localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(ONBOARDING_STEP_KEY, JSON.stringify(currentStep));
-      console.log('💾 Step salvo no cache:', currentStep);
-    } catch (error) {
-      console.warn('⚠️ Erro ao salvar step:', error);
-    }
-  }, [currentStep]);
+  // Cache desabilitado para sempre começar limpo
+  // useEffect para salvar dados removido intencionalmente
 
   // Detectar se é mobile
   useEffect(() => {

@@ -7,7 +7,7 @@ import {
   Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, 
   Home, CheckSquare, MessageSquare, AlertTriangle, GraduationCap, 
   UserCheck, DollarSign, Building2, BarChart3, UserCog, ChevronDown,
-  FileText, Clock, Award
+  FileText, Clock, Award, X
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -26,9 +26,10 @@ interface MenuItem {
 interface SidebarProps {
   isOpen: boolean;
   isMobile: boolean;
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
   const { user, logout, isLoading } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
@@ -327,21 +328,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile }) => {
       className={cn(
         "bg-sidebar-background border-r border-sidebar-border w-64 min-w-64 h-screen",
         isMobile 
-          ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out` 
+          ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out shadow-2xl` 
           : "fixed top-0 left-0 z-40",
-        "flex flex-col shadow-sm"
+        "flex flex-col"
       )}
     >
       {/* Header */}
-      <div className="p-4 flex items-center border-b border-sidebar-border flex-shrink-0">
-        <div className="bg-sidebar-primary p-2 rounded-lg mr-3">
-          <span className="text-sidebar-primary-foreground text-sm font-bold">
-            {(schoolConfig as any)?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
-          </span>
+      <div className="p-4 flex items-center justify-between border-b border-sidebar-border flex-shrink-0">
+        <div className="flex items-center">
+          <div className="bg-sidebar-primary p-2 rounded-lg mr-3">
+            <span className="text-sidebar-primary-foreground text-sm font-bold">
+              {(schoolConfig as any)?.config?.schoolName?.charAt(0)?.toUpperCase() || 'S'}
+            </span>
+          </div>
+          <h1 className="font-semibold text-sidebar-foreground text-lg">
+            {(schoolConfig as any)?.config?.schoolName || 'SenseiSystem'}
+          </h1>
         </div>
-        <h1 className="font-semibold text-sidebar-foreground text-lg">
-          {(schoolConfig as any)?.config?.schoolName || 'SenseiSystem'}
-        </h1>
+        
+        {/* Close button for mobile */}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Navigation - scrollable middle section */}

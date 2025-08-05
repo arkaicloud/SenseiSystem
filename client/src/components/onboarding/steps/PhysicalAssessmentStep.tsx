@@ -2,26 +2,24 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, Activity, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, ArrowRight, Heart, Shield } from "lucide-react";
 
 const physicalAssessmentSchema = z.object({
-  hasHealthIssues: z.boolean().default(false),
-  healthIssuesDescription: z.string().optional(),
-  takeMedications: z.boolean().default(false),
-  medicationsDescription: z.string().optional(),
-  hasAllergies: z.boolean().default(false),
-  allergiesDescription: z.string().optional(),
-  exerciseRegularly: z.boolean().default(false),
-  exerciseDescription: z.string().optional(),
-  hasInjuries: z.boolean().default(false),
-  injuriesDescription: z.string().optional(),
-  emergencyMedicalInfo: z.string().optional(),
-  doctorClearance: z.boolean().default(false),
+  // Health questionnaire fields - same as desktop
+  hasHeartProblem: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  hasChestPain: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  hasBreathingProblem: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  hasBloodPressureProblem: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  hasBoneProblem: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  hasOtherHealthProblem: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  takeMedication: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  doctorRecommendation: z.enum(["yes", "no"], { required_error: "Resposta obrigatória" }),
+  medicalConditions: z.string().optional(),
 });
 
 export type PhysicalAssessmentType = z.infer<typeof physicalAssessmentSchema>;
@@ -36,18 +34,15 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
   const form = useForm<PhysicalAssessmentType>({
     resolver: zodResolver(physicalAssessmentSchema),
     defaultValues: {
-      hasHealthIssues: false,
-      healthIssuesDescription: "",
-      takeMedications: false,
-      medicationsDescription: "",
-      hasAllergies: false,
-      allergiesDescription: "",
-      exerciseRegularly: false,
-      exerciseDescription: "",
-      hasInjuries: false,
-      injuriesDescription: "",
-      emergencyMedicalInfo: "",
-      doctorClearance: false,
+      hasHeartProblem: undefined,
+      hasChestPain: undefined,
+      hasBreathingProblem: undefined,
+      hasBloodPressureProblem: undefined,
+      hasBoneProblem: undefined,
+      hasOtherHealthProblem: undefined,
+      takeMedication: undefined,
+      doctorRecommendation: undefined,
+      medicalConditions: "",
       ...defaultValues,
     },
   });
@@ -56,330 +51,257 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
     onNext(data);
   };
 
-  const watchHasHealthIssues = form.watch("hasHealthIssues");
-  const watchTakeMedications = form.watch("takeMedications");
-  const watchHasAllergies = form.watch("hasAllergies");
-  const watchExerciseRegularly = form.watch("exerciseRegularly");
-  const watchHasInjuries = form.watch("hasInjuries");
+  // Check if any health question was answered with "yes"
+  const hasHealthIssues = form.watch(['hasHeartProblem', 'hasChestPain', 'hasBreathingProblem', 'hasBloodPressureProblem', 'hasBoneProblem', 'hasOtherHealthProblem', 'takeMedication'])
+    .some(value => value === 'yes');
 
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
         <div className="flex justify-center mb-2">
           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <Activity className="w-5 h-5 text-blue-600" />
+            <Heart className="w-5 h-5 text-blue-600" />
           </div>
         </div>
-        <h3 className="text-lg font-semibold mb-1">Avaliação Física</h3>
-        <p className="text-sm text-muted-foreground px-2">
-          Informações sobre sua saúde e condicionamento físico
+        <h3 className="text-lg font-semibold">Questionário de Saúde</h3>
+        <p className="text-sm text-gray-600 px-2">
+          Para sua segurança, responda as perguntas sobre sua condição de saúde
         </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           
-          {/* Problemas de Saúde */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Condições de Saúde</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="hasHealthIssues"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-base font-medium">
-                        Possui algum problema de saúde ou condição médica?
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {watchHasHealthIssues && (
-                <FormField
-                  control={form.control}
-                  name="healthIssuesDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Descreva os problemas de saúde:</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Hipertensão, diabetes, problemas cardíacos..."
-                          {...field} 
-                          className="text-base"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* Health Questions */}
+          <div className="space-y-5">
+            <FormField
+              control={form.control}
+              name="hasHeartProblem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">1. Você tem algum problema cardíaco?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="heart-yes-mobile" />
+                        <Label htmlFor="heart-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="heart-no-mobile" />
+                        <Label htmlFor="heart-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </CardContent>
-          </Card>
+            />
 
-          {/* Medicamentos */}
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <FormField
-                control={form.control}
-                name="takeMedications"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-base font-medium">
-                        Faz uso regular de medicamentos?
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {watchTakeMedications && (
-                <FormField
-                  control={form.control}
-                  name="medicationsDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Quais medicamentos:</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Liste os medicamentos e dosagens..."
-                          {...field} 
-                          className="text-base"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="hasChestPain"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">2. Você sente dor no peito durante atividades físicas?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="chest-yes-mobile" />
+                        <Label htmlFor="chest-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="chest-no-mobile" />
+                        <Label htmlFor="chest-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </CardContent>
-          </Card>
+            />
 
-          {/* Alergias */}
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <FormField
-                control={form.control}
-                name="hasAllergies"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-base font-medium">
-                        Possui alergias conhecidas?
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {watchHasAllergies && (
-                <FormField
-                  control={form.control}
-                  name="allergiesDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Descreva as alergias:</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Amendoim, pólen, medicamentos específicos..."
-                          {...field} 
-                          className="text-base"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="hasBreathingProblem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">3. Você tem problemas respiratórios ou falta de ar?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="breathing-yes-mobile" />
+                        <Label htmlFor="breathing-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="breathing-no-mobile" />
+                        <Label htmlFor="breathing-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </CardContent>
-          </Card>
+            />
 
-          {/* Exercícios */}
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <FormField
-                control={form.control}
-                name="exerciseRegularly"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-base font-medium">
-                        Pratica exercícios físicos regularmente?
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {watchExerciseRegularly && (
-                <FormField
-                  control={form.control}
-                  name="exerciseDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Que tipo de exercícios:</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Corrida 3x/semana, musculação, natação..."
-                          {...field} 
-                          className="text-base"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="hasBloodPressureProblem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">4. Você tem problemas de pressão arterial?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="pressure-yes-mobile" />
+                        <Label htmlFor="pressure-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="pressure-no-mobile" />
+                        <Label htmlFor="pressure-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </CardContent>
-          </Card>
+            />
 
-          {/* Lesões */}
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <FormField
-                control={form.control}
-                name="hasInjuries"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-base font-medium">
-                        Possui lesões atuais ou históricas relevantes?
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {watchHasInjuries && (
-                <FormField
-                  control={form.control}
-                  name="injuriesDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Descreva as lesões:</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Lesão no joelho direito em 2023, cirurgia no ombro..."
-                          {...field} 
-                          className="text-base"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="hasBoneProblem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">5. Você tem problemas ósseos ou articulares?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="bone-yes-mobile" />
+                        <Label htmlFor="bone-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="bone-no-mobile" />
+                        <Label htmlFor="bone-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </CardContent>
-          </Card>
+            />
 
-          {/* Informações de Emergência Médica */}
+            <FormField
+              control={form.control}
+              name="hasOtherHealthProblem"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">6. Você tem algum outro problema de saúde?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="other-yes-mobile" />
+                        <Label htmlFor="other-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="other-no-mobile" />
+                        <Label htmlFor="other-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="takeMedication"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">7. Você toma algum medicamento regularmente?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="medication-yes-mobile" />
+                        <Label htmlFor="medication-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="medication-no-mobile" />
+                        <Label htmlFor="medication-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="doctorRecommendation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">8. Algum médico já recomendou que você evite exercícios físicos?</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="doctor-yes-mobile" />
+                        <Label htmlFor="doctor-yes-mobile" className="text-sm">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="doctor-no-mobile" />
+                        <Label htmlFor="doctor-no-mobile" className="text-sm">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {hasHealthIssues && (
+            <Alert>
+              <Shield className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Como você indicou ter problemas de saúde, recomendamos consultar um médico antes de iniciar as atividades. Descreva seus problemas de saúde no campo abaixo.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <FormField
             control={form.control}
-            name="emergencyMedicalInfo"
+            name="medicalConditions"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Informações médicas de emergência (opcional)</FormLabel>
+                <FormLabel className="text-sm font-medium">Observações sobre sua saúde (opcional)</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Qualquer informação importante que devemos saber em caso de emergência..."
-                    {...field} 
-                    className="text-base"
-                    rows={3}
+                  <Textarea
+                    placeholder="Descreva qualquer condição médica, medicamento ou observação importante..."
+                    className="min-h-[80px] text-sm"
+                    {...field}
                   />
                 </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Ex: Tipo sanguíneo, condições críticas, medicamentos de emergência
-                </div>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Liberação Médica */}
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <FormField
-                control={form.control}
-                name="doctorClearance"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-base font-medium text-green-800">
-                        Declaro estar apto(a) para a prática de atividades físicas *
-                      </FormLabel>
-                      <p className="text-xs text-green-700 mt-2">
-                        Caso possua alguma condição médica, recomendamos consultar um médico antes de iniciar as atividades.
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col space-y-3 pt-4">
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-base font-medium"
-              disabled={!form.watch("doctorClearance")}
-            >
-              Continuar
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
+          <div className="flex flex-col gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
               onClick={onBack}
-              className="w-full h-12 text-base font-medium"
+              className="w-full"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
+            </Button>
+            <Button
+              type="submit"
+              className="w-full"
+            >
+              Finalizar Matrícula
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </form>

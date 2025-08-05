@@ -74,7 +74,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
               <div className="border rounded-lg overflow-hidden">
                 <DocusealForm
                   src="https://sign.arkaicloud.com.br/d/VMPk9dCNbCHyoE"
-                  onCompleted={handleDocumentComplete}
+                  onComplete={handleDocumentComplete}
                   className="w-full min-h-[500px]"
                 />
               </div>

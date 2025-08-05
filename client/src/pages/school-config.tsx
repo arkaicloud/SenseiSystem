@@ -22,11 +22,19 @@ const schoolConfigSchema = z.object({
     // Aceita URLs ou dados base64
     return val.startsWith("http") || val.startsWith("data:image/");
   }, "Logo deve ser uma URL válida ou uma imagem"),
+  logoLightUrl: z.string().optional(),
+  logoDarkUrl: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email deve ser válido").optional().or(z.literal("")),
   website: z.string().url("Website deve ser uma URL válida").optional().or(z.literal("")),
+  instagram: z.string().url("Instagram deve ser uma URL válida").optional().or(z.literal("")),
+  facebook: z.string().url("Facebook deve ser uma URL válida").optional().or(z.literal("")),
+  whatsapp: z.string().optional(),
+  youtube: z.string().url("YouTube deve ser uma URL válida").optional().or(z.literal("")),
+  tiktok: z.string().url("TikTok deve ser uma URL válida").optional().or(z.literal("")),
   congratsMessage: z.string().optional(),
+  welcomeMessage: z.string().optional(),
   defaultTheme: z.enum(["light", "dark"]).default("light"),
 });
 
@@ -48,11 +56,19 @@ export default function SchoolConfigPage() {
     defaultValues: {
       schoolName: currentConfig?.schoolName || "",
       logoUrl: currentConfig?.logoUrl || "",
+      logoLightUrl: currentConfig?.logoLightUrl || "",
+      logoDarkUrl: currentConfig?.logoDarkUrl || "",
       address: currentConfig?.address || "",
       phone: currentConfig?.phone || "",
       email: currentConfig?.email || "",
       website: currentConfig?.website || "",
+      instagram: currentConfig?.instagram || "",
+      facebook: currentConfig?.facebook || "",
+      whatsapp: currentConfig?.whatsapp || "",
+      youtube: currentConfig?.youtube || "",
+      tiktok: currentConfig?.tiktok || "",
       congratsMessage: currentConfig?.congratsMessage || "",
+      welcomeMessage: currentConfig?.welcomeMessage || "",
     },
   });
 
@@ -62,11 +78,19 @@ export default function SchoolConfigPage() {
       form.reset({
         schoolName: currentConfig.schoolName || "",
         logoUrl: currentConfig.logoUrl || "",
+        logoLightUrl: currentConfig.logoLightUrl || "",
+        logoDarkUrl: currentConfig.logoDarkUrl || "",
         address: currentConfig.address || "",
         phone: currentConfig.phone || "",
         email: currentConfig.email || "",
         website: currentConfig.website || "",
+        instagram: currentConfig.instagram || "",
+        facebook: currentConfig.facebook || "",
+        whatsapp: currentConfig.whatsapp || "",
+        youtube: currentConfig.youtube || "",
+        tiktok: currentConfig.tiktok || "",
         congratsMessage: currentConfig.congratsMessage || "",
+        welcomeMessage: currentConfig.welcomeMessage || "",
         defaultTheme: (currentConfig.defaultTheme as "light" | "dark") || "light",
       });
     }

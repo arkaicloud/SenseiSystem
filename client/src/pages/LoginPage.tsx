@@ -235,7 +235,7 @@ export default function LoginPage() {
           </div>
           
           {/* Lado Direito - Formulário de Login */}
-          <div className="order-2 lg:order-2">
+          <div className="order-1 lg:order-2">
             <div className="mx-auto max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8">
               {/* Header */}
               <div className="text-center mb-8">

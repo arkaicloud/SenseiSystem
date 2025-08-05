@@ -1003,8 +1003,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      res.json({ user: { ...user, password: undefined } });
+      // If user is a student, also fetch student data
+      let studentData = null;
+      if (user.role === 'student') {
+        try {
+          const student = await storage.getStudentByUserId(user.id);
+          if (student) {
+            studentData = student;
+          }
+        } catch (error) {
+          console.warn('Failed to fetch student data:', error);
+        }
+      }
+
+      res.json({ 
+        ...user, 
+        password: undefined,
+        student: studentData
+      });
     } catch (error) {
+      console.error('Error fetching user:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -1035,7 +1053,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: updateData.lastName,
         email: updateData.email,
         phone: updateData.phone,
-        emergencyContact: updateData.emergencyContact,
+        cpf: updateData.cpf,
+        rg: updateData.rg,
+        emergencyContact: updateData.emergencyContactName,
+        emergencyPhone: updateData.emergencyContactPhone,
         birthDate: updateData.birthDate ? new Date(updateData.birthDate) : undefined,
         street: updateData.street,
         number: updateData.number,

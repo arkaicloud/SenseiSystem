@@ -212,8 +212,8 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
         neighborhood: student.neighborhood || "",
         city: student.city || "",
         state: student.state || "",
-        emergencyContactName: student.emergencyContactName || "",
-        emergencyContactPhone: student.emergencyContactPhone || "",
+        emergencyContactName: (student as any).emergencyContact || "",
+        emergencyContactPhone: (student as any).emergencyPhone || "",
         beltLevel: student.student?.beltLevel || "white",
         lastPromotionDate: student.student?.lastPromotionDate ? 
           new Date(student.student.lastPromotionDate).toISOString().split('T')[0] : "",

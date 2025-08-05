@@ -230,15 +230,44 @@ export default function SchoolConfigPage() {
                                   className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
                                 
-                                {/* URL manual como alternativa */}
-                                <div className="flex items-center gap-2 mt-3">
-                                  <span className="text-sm text-gray-500">ou</span>
-                                  <Input 
-                                    placeholder="URL da imagem (https://...)"
-                                    value={field.value?.startsWith('http') ? field.value : ''}
-                                    onChange={(e) => field.onChange(e.target.value)}
-                                    className="flex-1"
-                                  />
+                                {/* Opções de tema do logo */}
+                                <div className="mt-4 space-y-2">
+                                  <div className="text-sm font-medium text-gray-700">Opções de Logo:</div>
+                                  <div className="space-y-2">
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        name="logoTheme"
+                                        value="default"
+                                        checked={!field.value || field.value === 'default'}
+                                        onChange={() => field.onChange('default')}
+                                        className="text-blue-600"
+                                      />
+                                      <span className="text-sm text-gray-600">Usar Logo Padrão SenseiSystem</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        name="logoTheme"
+                                        value="light"
+                                        checked={field.value === 'light'}
+                                        onChange={() => field.onChange('light')}
+                                        className="text-blue-600"
+                                      />
+                                      <span className="text-sm text-gray-600">Logo Tema Claro</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        name="logoTheme"
+                                        value="dark"
+                                        checked={field.value === 'dark'}
+                                        onChange={() => field.onChange('dark')}
+                                        className="text-blue-600"
+                                      />
+                                      <span className="text-sm text-gray-600">Logo Tema Escuro</span>
+                                    </label>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -246,10 +275,10 @@ export default function SchoolConfigPage() {
                         </FormControl>
                         <FormMessage />
                         <div className="text-sm text-gray-500 space-y-1">
-                          <p>• Faça upload de uma imagem (máximo 2MB) ou cole uma URL</p>
-                          <p>• <strong>Tamanho recomendado:</strong> 400x400 pixels (formato quadrado)</p>
-                          <p>• <strong>Formatos aceitos:</strong> PNG, JPG, JPEG (PNG com fundo transparente funciona melhor)</p>
-                          <p>• O logo será exibido em 128x128 pixels na tela de login</p>
+                          <p>• <strong>Logo Padrão:</strong> Usa o nome da escola em destaque no login</p>
+                          <p>• <strong>Tema Claro:</strong> Logo otimizado para fundo claro</p>
+                          <p>• <strong>Tema Escuro:</strong> Logo otimizado para fundo escuro</p>
+                          <p>• Faça upload de uma imagem personalizada se necessário</p>
                         </div>
                       </FormItem>
                     )}

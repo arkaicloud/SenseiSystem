@@ -22,7 +22,7 @@ interface DocumentInfo {
 }
 
 export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: DocumentsStepProps) {
-  const [documents] = useState<DocumentInfo[]>([
+  const [documents, setDocuments] = useState<DocumentInfo[]>([
     {
       id: '1',
       name: 'Questionário de Saúde',
@@ -47,13 +47,41 @@ export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: 
     }
   ]);
 
+  const [uploadedFiles, setUploadedFiles] = useState<{[key: string]: File}>({});
+
   const requiredCompleted = documents.filter(doc => doc.required && doc.completed).length;
   const totalRequired = documents.filter(doc => doc.required).length;
   const allRequiredCompleted = requiredCompleted === totalRequired;
 
   const handleFileUpload = (documentId: string, file: File) => {
-    // Implementar upload de arquivo
+    // Validar tipo de arquivo
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.');
+      return;
+    }
+
+    // Validar tamanho (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert('Arquivo muito grande. Tamanho máximo: 10MB.');
+      return;
+    }
+
     console.log(`Uploading file for document ${documentId}:`, file);
+    
+    // Salvar arquivo no estado
+    setUploadedFiles(prev => ({
+      ...prev,
+      [documentId]: file
+    }));
+
+    // Marcar documento como completo
+    setDocuments(prev => prev.map(doc => 
+      doc.id === documentId 
+        ? { ...doc, completed: true, uploadedAt: new Date() }
+        : doc
+    ));
   };
 
   const handleDownload = (documentId: string) => {
@@ -130,14 +158,33 @@ export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: 
               {document.completed ? (
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <FileIcon className="h-4 w-4" />
-                      <span>Enviado em {document.uploadedAt?.toLocaleDateString('pt-BR')}</span>
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <FileIcon className="h-4 w-4" />
+                        <span>Enviado em {document.uploadedAt?.toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      {uploadedFiles[document.id] && (
+                        <div className="text-xs text-blue-600">
+                          {uploadedFiles[document.id].name} ({formatFileSize(uploadedFiles[document.id].size)})
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownload(document.id)}
+                      onClick={() => {
+                        if (uploadedFiles[document.id]) {
+                          // Download do arquivo que foi feito upload
+                          const url = URL.createObjectURL(uploadedFiles[document.id]);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = uploadedFiles[document.id].name;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        } else {
+                          handleDownload(document.id);
+                        }
+                      }}
                       className="text-xs"
                     >
                       <Download className="h-3 w-3 mr-1" />
@@ -152,7 +199,7 @@ export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: 
                     {document.type === 'medical_certificate' && "Atestado médico para atividades físicas (opcional)."}
                   </p>
                   
-                  <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center hover:border-muted-foreground/40 transition-colors">
+                  <div className="relative border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center hover:border-muted-foreground/40 transition-colors">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Clique para enviar ou arraste o arquivo</p>
@@ -168,6 +215,8 @@ export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: 
                         if (file) {
                           handleFileUpload(document.id, file);
                         }
+                        // Limpar input para permitir re-upload
+                        e.target.value = '';
                       }}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />

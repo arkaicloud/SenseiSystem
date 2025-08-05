@@ -69,22 +69,38 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       const username = data.email.split('@')[0].toLowerCase();
       const password = "123456"; // Default password - user can change later
       
-      await register(data.email, password, {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        username: username,
+      // Create clean data object to avoid circular references
+      const cleanData = {
+        firstName: String(data.firstName),
+        lastName: String(data.lastName),
+        username: String(username),
         role: "student" as const,
-        phone: data.phone,
-        emergencyContact: data.emergencyContact,
-        birthDate: data.birthDate,
-        street: data.street,
-        number: data.number,
-        complement: data.complement || "",
-        neighborhood: data.neighborhood,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-      });
+        phone: String(data.phone || ""),
+        emergencyContact: String(data.emergencyContact || ""),
+        emergencyPhone: String(data.emergencyPhone || ""),
+        birthDate: data.birthDate ? String(data.birthDate) : null,
+        street: String(data.street || ""),
+        number: String(data.number || ""),
+        complement: String(data.complement || ""),
+        neighborhood: String(data.neighborhood || ""),
+        city: String(data.city || ""),
+        state: String(data.state || ""),
+        zipCode: String(data.zipCode || ""),
+        cpf: String(data.cpf || ""),
+        rg: String(data.rg || ""),
+        beltLevel: String(data.beltLevel || "white"),
+        stripes: Number(data.stripes || 0),
+        medicalConditions: String(data.medicalConditions || ""),
+        financialResponsibleName: String(data.financialResponsibleName || ""),
+        financialResponsibleEmail: String(data.financialResponsibleEmail || ""),
+        financialResponsiblePhone: String(data.financialResponsiblePhone || ""),
+        financialResponsibleCpf: String(data.financialResponsibleCpf || ""),
+        financialResponsibleRelationship: String(data.financialResponsibleRelationship || "self"),
+        paymentPlanId: data.paymentPlanId ? String(data.paymentPlanId) : null,
+        dueDate: data.dueDate ? String(data.dueDate) : null
+      };
+      
+      await register(data.email, password, cleanData);
       
       setSuccess(true);
       setTimeout(() => onSuccess(), 2000);

@@ -153,6 +153,7 @@ export interface IStorage {
   // Contas a Receber (ASAAS Integration)
   getContaReceber(id: number): Promise<any>;
   getContasReceberByStudent(studentId: number): Promise<any[]>;
+  getContasReceberByStudentId(studentId: number): Promise<any[]>;
   getContasReceberPendentes(): Promise<any[]>;
   getContaReceberByAsaasId(asaasPaymentId: string): Promise<any>;
   createContaReceber(conta: any): Promise<any>;
@@ -2059,6 +2060,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getContasReceberByStudent(studentId: number): Promise<any[]> {
+    return await db.select().from(contasReceber)
+      .where(eq(contasReceber.studentId, studentId))
+      .orderBy(desc(contasReceber.dueDate));
+  }
+
+  async getContasReceberByStudentId(studentId: number): Promise<any[]> {
     return await db.select().from(contasReceber)
       .where(eq(contasReceber.studentId, studentId))
       .orderBy(desc(contasReceber.dueDate));

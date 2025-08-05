@@ -778,6 +778,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Approve user mutation
+  // Update payment plan for pending user
+  app.patch("/api/users/:id/payment-plan", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { paymentPlanId } = req.body;
+
+      if (isNaN(userId) || !paymentPlanId) {
+        return res.status(400).json({ error: "ID do usuário e plano de pagamento são obrigatórios" });
+      }
+
+      // Verify payment plan exists
+      const paymentPlan = await storage.getPaymentPlan(paymentPlanId);
+      if (!paymentPlan) {
+        return res.status(404).json({ error: "Plano de pagamento não encontrado" });
+      }
+
+      // Get user's student record
+      const student = await storage.getStudentByUserId(userId);
+      if (!student) {
+        return res.status(404).json({ error: "Registro de aluno não encontrado" });
+      }
+
+      // Update payment plan
+      await storage.updateStudent(student.id, { paymentPlanId });
+
+      res.json({ 
+        success: true, 
+        message: "Plano de pagamento atualizado com sucesso",
+        paymentPlan: paymentPlan.name
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar plano de pagamento:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
   app.post("/api/users/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;

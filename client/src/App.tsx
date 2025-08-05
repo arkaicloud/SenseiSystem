@@ -20,7 +20,7 @@ import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import BeltManagement from "@/pages/admin/BeltManagement";
-import LoginPage from "@/pages/login-page";
+import LoginPage from "@/pages/LoginPage";
 import OnboardingPage from "@/pages/onboarding-page";
 import AwaitingApprovalPage from "@/pages/awaiting-approval";
 import { AuthProvider } from "@/providers/auth-provider";

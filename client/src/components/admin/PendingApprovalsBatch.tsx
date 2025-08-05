@@ -72,11 +72,16 @@ export default function PendingApprovalsBatch() {
   const [editingPlan, setEditingPlan] = useState<number | null>(null);
   const [editingStudent, setEditingStudent] = useState<number | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
+  const [userStatuses, setUserStatuses] = useState<Map<number, {
+    status: 'success' | 'error' | 'pending',
+    message: string,
+    asaasError?: string
+  }>>(new Map());
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch pending users
-  const { data: pendingUsers, isLoading: usersLoading } = useQuery({
+  const { data: pendingUsers, isLoading: usersLoading } = useQuery<{ users: PendingUser[] }>({
     queryKey: ["/api/users/pending"],
     refetchInterval: 30000,
   });
@@ -144,7 +149,7 @@ export default function PendingApprovalsBatch() {
     });
 
     // Sort by join date (newest first)
-    return filtered.sort((a, b) => 
+    return filtered.sort((a: PendingUser, b: PendingUser) => 
       new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime()
     );
   }, [pendingUsers, searchTerm, filterStatus]);
@@ -168,15 +173,40 @@ export default function PendingApprovalsBatch() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
-      setSelectedUsers(new Set());
+      // Update user statuses based on results
+      const newStatuses = new Map(userStatuses);
       
-      const { successful, failed } = data;
+      if (data.userResults) {
+        data.userResults.forEach((result: any) => {
+          newStatuses.set(result.userId, {
+            status: result.status,
+            message: result.message,
+            asaasError: result.asaasError
+          });
+        });
+      }
       
+      setUserStatuses(newStatuses);
+
+      // Show success toast with summary
       toast({
-        title: "Aprovação em lote concluída!",
-        description: `${successful} alunos aprovados com sucesso. ${failed > 0 ? `${failed} falharam.` : ''}`,
+        title: "Processamento Concluído",
+        description: `${data.successful} aprovados, ${data.failed} com erro`,
       });
+
+      // Clear selection for successful users only
+      const successfulUserIds = data.userResults
+        ?.filter((result: any) => result.status === 'success')
+        ?.map((result: any) => result.userId) || [];
+      
+      const newSelection = new Set(selectedUsers);
+      successfulUserIds.forEach((userId: number) => {
+        newSelection.delete(userId);
+      });
+      setSelectedUsers(newSelection);
+
+      // Refresh pending users to remove successful approvals
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
     },
     onError: (error: Error) => {
       toast({
@@ -240,8 +270,8 @@ export default function PendingApprovalsBatch() {
   };
 
   const selectAllUsers = () => {
-    const eligibleUsers = filteredUsers.filter(user => validateStudentData(user).isValid);
-    setSelectedUsers(new Set(eligibleUsers.map(user => user.id)));
+    const eligibleUsers = filteredUsers.filter((user: PendingUser) => validateStudentData(user).isValid);
+    setSelectedUsers(new Set(eligibleUsers.map((user: PendingUser) => user.id)));
   };
 
   const clearSelection = () => {
@@ -353,7 +383,7 @@ export default function PendingApprovalsBatch() {
         <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/50 rounded-lg border">
           <div className="flex items-center gap-2">
             <Checkbox
-              checked={selectedUsers.size === filteredUsers.filter(user => validateStudentData(user).isValid).length && selectedUsers.size > 0}
+              checked={selectedUsers.size === filteredUsers.filter((user: PendingUser) => validateStudentData(user).isValid).length && selectedUsers.size > 0}
               onCheckedChange={(checked) => {
                 if (checked) {
                   selectAllUsers();
@@ -366,7 +396,7 @@ export default function PendingApprovalsBatch() {
           </div>
           
           <div className="text-sm text-muted-foreground">
-            {filteredUsers.filter(user => validateStudentData(user).isValid).length} alunos prontos para aprovação
+            {filteredUsers.filter((user: PendingUser) => validateStudentData(user).isValid).length} alunos prontos para aprovação
           </div>
         </div>
       )}
@@ -467,6 +497,37 @@ export default function PendingApprovalsBatch() {
                             {getPaymentPlanName(user.student?.paymentPlanId)}
                           </div>
                         </div>
+
+                        {/* User Status (ASAAS errors, etc.) */}
+                        {userStatuses.has(user.id) && (
+                          <Alert className={`mb-3 ${
+                            userStatuses.get(user.id)?.status === 'error' 
+                              ? 'border-red-500 bg-red-50 dark:bg-red-950' 
+                              : 'border-green-500 bg-green-50 dark:bg-green-950'
+                          }`}>
+                            {userStatuses.get(user.id)?.status === 'error' ? (
+                              <XCircle className="h-4 w-4 text-red-600" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
+                            <AlertDescription>
+                              <div className="font-medium mb-1">
+                                {userStatuses.get(user.id)?.status === 'error' ? 'Erro na Aprovação:' : 'Status:'}
+                              </div>
+                              <div className="text-sm">
+                                {userStatuses.get(user.id)?.message}
+                              </div>
+                              {userStatuses.get(user.id)?.asaasError && (
+                                <div className="text-sm mt-1 p-2 bg-red-100 dark:bg-red-900 rounded border-l-4 border-red-500">
+                                  <span className="font-medium text-red-800 dark:text-red-200">ASAAS: </span>
+                                  <span className="text-red-700 dark:text-red-300">
+                                    {userStatuses.get(user.id)?.asaasError}
+                                  </span>
+                                </div>
+                              )}
+                            </AlertDescription>
+                          </Alert>
+                        )}
 
                         {/* Validation Issues */}
                         {!validation.isValid && (

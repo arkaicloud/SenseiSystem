@@ -825,17 +825,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const config = await storage.getSchoolConfig();
                 if (config?.asaasApiKey) {
                   const { AsaasService } = await import("./services/asaasService");
-                  const asaasService = new AsaasService(config.asaasApiKey, true); // Use sandbox
+                  const asaasService = new AsaasService(); // Initialize without parameters
 
                   console.log('🔄 Creating ASAAS customer for approved student:', user.firstName, user.lastName);
                   
                   // Create ASAAS customer
-                  const asaasCustomer = await asaasService.createCustomer({
+                  const asaasCustomer = await asaasService.createOrGetCustomer({
                     name: student.financialResponsibleName,
                     email: student.financialResponsibleEmail,
-                    cpfCnpj: student.financialResponsibleCpf?.replace(/\D/g, ''), // Remove formatting
-                    phone: student.financialResponsiblePhone?.replace(/\D/g, ''), // Remove formatting
-                    externalReference: `student_${student.id}` // Link to our student
+                    cpfCnpj: student.financialResponsibleCpf?.replace(/\D/g, '') || '', // Remove formatting and ensure not null
+                    mobilePhone: student.financialResponsiblePhone?.replace(/\D/g, '') || undefined // Remove formatting
                   });
 
                   console.log('✅ ASAAS customer created:', asaasCustomer.id);
@@ -856,20 +855,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       nextDueDate.setMonth(nextDueDate.getMonth() + 1);
                     }
 
-                    const subscription = await asaasService.createSubscription({
+                    const payment = await asaasService.createPayment({
                       customer: asaasCustomer.id,
                       billingType: "BOLETO",
                       value: plan.amount / 100, // Convert from cents to reais
-                      nextDueDate: nextDueDate.toISOString().split('T')[0], // YYYY-MM-DD format
-                      cycle: "MONTHLY",
+                      dueDate: nextDueDate.toISOString().split('T')[0], // YYYY-MM-DD format
                       description: `Mensalidade - ${plan.name} - ${user.firstName} ${user.lastName}`,
                       externalReference: `student_${student.id}_plan_${plan.id}`
                     });
 
-                    console.log('✅ ASAAS subscription created:', subscription.id);
+                    console.log('✅ ASAAS payment created:', payment.id);
 
-                    // Update student with ASAAS subscription ID
-                    await storage.updateStudent(student.id, { asaasSubscriptionId: subscription.id });
+                    // Save payment to database
+                    await storage.createContaReceber({
+                      studentId: student.id,
+                      asaasPaymentId: payment.id,
+                      asaasCustomerId: asaasCustomer.id,
+                      status: payment.status,
+                      billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
+                      value: Math.round(payment.value * 100), // Convert back to cents
+                      netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
+                      dueDate: new Date(payment.dueDate),
+                      description: payment.description || '',
+                      externalReference: payment.externalReference || null,
+                      invoiceUrl: payment.invoiceUrl || null,
+                      bankSlipUrl: payment.bankSlipUrl || null,
+                      pixQrCode: payment.pixQrCode || null,
+                      pixCopyAndPaste: payment.pixCopyAndPaste || null
+                    });
                   }
                 }
               } catch (error) {

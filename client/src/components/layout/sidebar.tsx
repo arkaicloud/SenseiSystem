@@ -78,8 +78,8 @@ export const Sidebar = () => {
     : [];
     
   // Debug: Log filtered items for troubleshooting
-  console.log('User role:', user?.role);
-  console.log('Filtered items:', filteredItems.map(item => ({ key: item.key, label: item.label, roles: item.roles })));
+  // console.log('User role:', user?.role);
+  // console.log('Filtered items:', filteredItems.map(item => ({ key: item.key, label: item.label, roles: item.roles })));
   
   const isActive = (path: string) => {
     if (path === '/dashboard' && location === '/') return true;

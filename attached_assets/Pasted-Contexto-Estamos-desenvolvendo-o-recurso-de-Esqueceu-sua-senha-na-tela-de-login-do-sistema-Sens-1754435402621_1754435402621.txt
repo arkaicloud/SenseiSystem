@@ -1,0 +1,46 @@
+Contexto:
+Estamos desenvolvendo o recurso de "Esqueceu sua senha?" na tela de login do sistema SenseiSystem. Ao clicar no link, o usuário deve poder solicitar a troca de senha e receber um e-mail com link seguro para redefinir sua senha.
+
+Requisitos:
+
+1. **Rota no frontend:**
+   - `/auth/forgot-password`: formulário com campo de e-mail.
+   - Botão "Enviar link de redefinição".
+   - Exibir mensagem: "Se o e-mail informado estiver cadastrado, enviaremos instruções para redefinir sua senha."
+
+2. **Backend:**
+   - Criar rota `POST /api/auth/forgot-password`.
+     - Recebe o e-mail.
+     - Verifica se o usuário existe.
+     - Gera token de 6 dígitos ou UUID com expiração de 1h.
+     - Armazena o token com referência ao user no banco (tabela `password_reset_tokens`).
+     - Envia e-mail com link no formato:
+       ```
+       https://senseisystem.com.br/auth/reset-password?token=ABC123
+       ```
+     - O e-mail deve conter o nome da escola, saudação personalizada e botão para redefinir senha.
+
+3. **Rota para reset:**
+   - `/auth/reset-password?token=abc123`: formulário com nova senha e confirmação.
+   - Backend: `POST /api/auth/reset-password`
+     - Valida token, verifica expiração.
+     - Atualiza a senha (criptografada com bcrypt).
+     - Exclui token usado.
+     - Redireciona com mensagem: "Senha atualizada com sucesso."
+
+4. **Segurança:**
+   - Token único e temporário.
+   - Não revelar se o e-mail está ou não cadastrado.
+   - Logs de auditoria no backend para tentativas de reset.
+
+5. **Extras opcionais:**
+   - Desabilitar o botão "Redefinir" caso a senha não atenda aos critérios de segurança.
+   - Permitir envio de novo link apenas após 5 minutos.
+
+Pontos técnicos:
+- Stack atual: React + Tailwind + Express + Prisma + PostgreSQL.
+- Utilizar `nodemailer` ou serviço de envio (ex: Brevo, SendGrid).
+- Reutilizar componentes `Input`, `Card`, `Button` já existentes.
+
+Objetivo:
+Implementar uma experiência simples, segura e profissional para recuperação de senha de usuários (alunos, admins, professores) no SenseiSystem, com identidade visual e textos coerentes com a plataforma.

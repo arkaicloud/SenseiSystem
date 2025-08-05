@@ -90,14 +90,24 @@ export class AsaasService {
 
   private async loadApiKey(): Promise<void> {
     try {
+      // First try environment variable
+      if (process.env.ASAAS_API_KEY) {
+        this.apiKey = process.env.ASAAS_API_KEY;
+        console.log('✅ ASAAS API Key loaded from environment');
+        return;
+      }
+
+      // Fallback to database config
       const config = await storage.getSchoolConfig();
       if (config?.asaasApiKey) {
         this.apiKey = config.asaasApiKey;
-      } else {
-        throw new Error('ASAAS API Key not configured');
+        console.log('✅ ASAAS API Key loaded from database');
+        return;
       }
+      
+      throw new Error('ASAAS API Key not configured in environment or database');
     } catch (error) {
-      console.error('Failed to load ASAAS API key:', error);
+      console.error('❌ Failed to load ASAAS API key:', error);
       throw new Error('ASAAS integration not properly configured');
     }
   }

@@ -18,6 +18,7 @@ interface BeltLevel {
   name: string;
   levelKey: string;
   colorCode: string;
+  category: string;
   order: number;
   active: boolean;
   createdAt: string;
@@ -28,6 +29,7 @@ const beltFormSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   levelKey: z.string().min(1, 'Chave do nível é obrigatória'),
   colorCode: z.string().min(4, 'Código de cor é obrigatório'),
+  category: z.string().min(1, 'Categoria é obrigatória'),
   order: z.number().min(1, 'Ordem deve ser maior que 0'),
 });
 

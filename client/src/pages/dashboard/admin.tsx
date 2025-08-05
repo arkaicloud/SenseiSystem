@@ -28,6 +28,8 @@ import {
   Bell
 } from 'lucide-react';
 import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
+import BeltSummaryAdultWidget from '@/components/dashboard/BeltSummaryAdultWidget';
+import BeltSummaryChildWidget from '@/components/dashboard/BeltSummaryChildWidget';
 
 // Interface para métricas em tempo real
 interface DashboardMetrics {
@@ -867,7 +869,8 @@ export default function AdminDashboard() {
           <TodayClassesCard classes={todayClasses} />
           
           {/* Total por Faixa */}
-          <BeltSummaryWidget />
+          <BeltSummaryAdultWidget />
+          <BeltSummaryChildWidget />
         </div>
 
         {/* Coluna 2 - Financeiro e Ações */}

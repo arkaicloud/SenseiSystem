@@ -17,6 +17,7 @@ export const beltLevels = pgTable("belt_levels", {
   name: text("name").notNull(), // "Faixa Branca", "Faixa Azul", etc.
   levelKey: text("level_key").notNull().unique(), // "white", "blue", etc. - matches beltLevelEnum
   colorCode: text("color_code").notNull(), // "#FFFFFF", "#0000FF", etc.
+  category: text("category").notNull().default('adult'), // "adult", "child" - categoria da faixa
   order: integer("order").notNull(), // For sorting
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),

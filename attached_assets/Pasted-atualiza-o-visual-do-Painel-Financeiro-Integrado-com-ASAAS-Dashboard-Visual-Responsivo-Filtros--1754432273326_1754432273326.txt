@@ -1,0 +1,147 @@
+atualização visual do Painel Financeiro Integrado com ASAAS (Dashboard Visual, Responsivo + Filtros)
+Contexto:
+Estamos desenvolvendo o módulo financeiro do sistema SenseiSystem com integração total ao ASAAS. O painel deve exibir as cobranças, métricas financeiras e permitir busca e filtros avançados. Já temos integração com o ASAAS via API Key.
+
+🎯 Objetivo:
+Desenvolver a interface e backend do Painel Financeiro com base nos dados do ASAAS, incluindo:
+
+Cobranças por aluno
+
+Total recebido, pendente e em atraso
+
+Taxa de inadimplência
+
+Próximo vencimento
+
+Filtros e busca por cliente
+
+Responsividade total para desktop e mobile
+
+📊 Dados visuais a serem exibidos:
+Cards superiores com resumo financeiro:
+
+plaintext
+Copiar
+Editar
+• Recebido no mês
+• Valor em aberto
+• Pagamentos em atraso
+• Taxa de inadimplência (baseado no total de cobranças)
+• Total de cobranças no mês
+• Próximo vencimento
+• Total recebido
+• Total pendente
+• Total em atraso
+Tabela de cobranças:
+Campos:
+
+Nome do aluno
+
+Valor
+
+Status (Recebido, Pendente, Em Atraso)
+
+Vencimento
+
+Descrição (ex: Mensalidade - Julho)
+
+Ações: botão "Ver Boleto" + botão "Link"
+
+🔍 Filtros a implementar (acima da tabela):
+plaintext
+Copiar
+Editar
+Filtrar por tipo de cobrança:
+- Todas
+- Assinaturas
+- Avulsas
+- Parceladas
+
+Filtrar por data:
+- Data de vencimento
+- Data de recebimento
+- Data de criação da cobrança
+
+Outras opções:
+- Mostrar cobranças recebidas em dinheiro
+- Ocultar cobranças antecipadas
+- Ocultar cobranças negativadas
+🧠 Lógica Backend (Node.js):
+GET /financeiro/sync
+
+Conecta-se à API ASAAS
+
+Rota segura com token .env (ASAAS_API_KEY)
+
+Endpoint usado:
+
+bash
+Copiar
+Editar
+GET https://sandbox.asaas.com/api/v3/payments?limit=100
+Headers: Authorization: Bearer <token>
+Salva em cache local ou em memória para atualizar a visualização sem refazer chamadas desnecessárias
+
+GET /financeiro/cliente/:cpf
+
+Busca cobranças filtradas por CPF (ou nome)
+
+Utiliza query local ou direta no ASAAS com:
+
+bash
+Copiar
+Editar
+GET https://sandbox.asaas.com/api/v3/customers?cpfCnpj=<cpf>
+GET /financeiro/resumo
+
+Calcula: total recebido, total em aberto, em atraso, inadimplência, próximo vencimento
+
+💄 UI/UX (Frontend React):
+Use TailwindCSS + ícones Lucide + shadcn/ui
+
+Cards com cores distintas (verde, vermelho, amarelo) conforme status
+
+Barra lateral mantém menu “Financeiro > Contas a Receber”
+
+Utilize DatePicker, Combobox, Toggle para filtros
+
+Layout responsivo: exibição em grid para desktop, colunas para mobile
+
+Exibir gráfico de pizza ou linha para inadimplência (opcional)
+
+🛡️ Segurança:
+Validar token ASAAS no backend
+
+Não expor o token no frontend
+
+Restringir requisição por usuário logado (admin apenas)
+
+💬 Exemplo de Resposta da API ASAAS para cobranças:
+json
+Copiar
+Editar
+{
+  "data": [
+    {
+      "id": "pay_123",
+      "customer": "Pedro Oliveira",
+      "value": 199.90,
+      "status": "OVERDUE",
+      "dueDate": "2025-07-14",
+      "invoiceUrl": "https://...",
+      "description": "Mensalidade - Julho"
+    }
+  ]
+}
+✅ Ações na tabela:
+Se status = RECEIVED → Mostrar “Pago”
+
+Se status = PENDING ou OVERDUE → Mostrar botões:
+
+Ver Boleto (abre invoiceUrl)
+
+Link (copia para área de transferência)
+
+🔁 Atualizar:
+Botão “Atualizar” no topo do painel que refaz o GET e atualiza dados em tempo real com loading visual.
+e a cada vez que entrar na tela executar o get do botão

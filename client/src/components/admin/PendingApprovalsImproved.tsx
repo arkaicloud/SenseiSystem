@@ -147,7 +147,19 @@ export default function PendingApprovalsImproved() {
   // Mutations
   const approveMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest(`/api/users/${userId}/approve`, "POST");
+      const response = await fetch(`/api/users/${userId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao aprovar aluno");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -167,7 +179,19 @@ export default function PendingApprovalsImproved() {
 
   const rejectMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest(`/api/users/${userId}/reject`, "POST");
+      const response = await fetch(`/api/users/${userId}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao rejeitar aluno");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -187,7 +211,20 @@ export default function PendingApprovalsImproved() {
 
   const updatePlanMutation = useMutation({
     mutationFn: async ({ userId, planId }: { userId: number; planId: number }) => {
-      return await apiRequest(`/api/users/${userId}/payment-plan`, "PATCH", { paymentPlanId: planId });
+      const response = await fetch(`/api/users/${userId}/payment-plan`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ paymentPlanId: planId }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao atualizar plano");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({

@@ -40,10 +40,12 @@ import {
   Calendar,
   Heart,
   Award,
-  Users
+  Users,
+  Upload,
+  Save,
+  X
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import BeltFilter from '@/components/ui/BeltFilter';
 
 // Schema completo para edição de aluno
 const studentEditSchema = z.object({
@@ -282,9 +284,9 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
   if (isLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl bg-background border-border">
           <div className="flex items-center justify-center p-8">
-            <div className="text-gray-400">Carregando dados do aluno...</div>
+            <div className="text-muted-foreground">Carregando dados do aluno...</div>
           </div>
         </DialogContent>
       </Dialog>
@@ -293,9 +295,9 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
+          <DialogTitle className="text-foreground flex items-center gap-2">
             <User className="h-5 w-5" />
             Edição Completa do Aluno - {student?.firstName} {student?.lastName}
           </DialogTitle>
@@ -304,40 +306,40 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-9 bg-gray-800 h-auto p-1">
-                <TabsTrigger value="personal" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <TabsList className="grid w-full grid-cols-9 bg-muted h-auto p-1">
+                <TabsTrigger value="personal" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <User className="h-4 w-4 mr-1" />
                   Dados Pessoais
                 </TabsTrigger>
-                <TabsTrigger value="contact" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="contact" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Phone className="h-4 w-4 mr-1" />
                   Contato
                 </TabsTrigger>
-                <TabsTrigger value="address" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="address" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <MapPin className="h-4 w-4 mr-1" />
                   Endereço
                 </TabsTrigger>
-                <TabsTrigger value="health" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="health" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Heart className="h-4 w-4 mr-1" />
                   Saúde e Graduação
                 </TabsTrigger>
-                <TabsTrigger value="financial" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="financial" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Users className="h-4 w-4 mr-1" />
                   Responsável Financeiro
                 </TabsTrigger>
-                <TabsTrigger value="plan" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="plan" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <CreditCard className="h-4 w-4 mr-1" />
                   Plano
                 </TabsTrigger>
-                <TabsTrigger value="documents" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="documents" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <FileText className="h-4 w-4 mr-1" />
                   Documentos
                 </TabsTrigger>
-                <TabsTrigger value="physical" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="physical" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Activity className="h-4 w-4 mr-1" />
                   Avaliação Física
                 </TabsTrigger>
-                <TabsTrigger value="contract" className="text-xs p-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="contract" className="text-xs p-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Scale className="h-4 w-4 mr-1" />
                   Contrato/Termos
                 </TabsTrigger>
@@ -345,9 +347,9 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
               {/* Tab 1: Dados Pessoais */}
               <TabsContent value="personal" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-card-foreground flex items-center gap-2">
                       <User className="h-5 w-5" />
                       Dados Pessoais
                     </CardTitle>
@@ -359,11 +361,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="firstName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Nome *</FormLabel>
+                            <FormLabel className="text-foreground">Nome *</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="Nome é obrigatório"
                               />
                             </FormControl>
@@ -377,11 +379,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="lastName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Sobrenome *</FormLabel>
+                            <FormLabel className="text-foreground">Sobrenome *</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="Sobrenome é obrigatório"
                               />
                             </FormControl>
@@ -397,12 +399,12 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="birthDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Data de Nascimento</FormLabel>
+                            <FormLabel className="text-foreground">Data de Nascimento</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="date"
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                               />
                             </FormControl>
                             <FormMessage />
@@ -415,11 +417,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="cpf"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">CPF</FormLabel>
+                            <FormLabel className="text-foreground">CPF</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="000.000.000-00"
                               />
                             </FormControl>
@@ -433,11 +435,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="rg"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">RG</FormLabel>
+                            <FormLabel className="text-foreground">RG</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="00.000.000-0"
                               />
                             </FormControl>
@@ -452,14 +454,14 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-300">Sexo (opcional)</FormLabel>
+                          <FormLabel className="text-foreground">Sexo (opcional)</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                              <SelectTrigger className="bg-input border-border text-foreground">
                                 <SelectValue placeholder="Selecionar sexo" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="bg-gray-700 border-gray-600">
+                            <SelectContent className="bg-popover border-border">
                               <SelectItem value="M">Masculino</SelectItem>
                               <SelectItem value="F">Feminino</SelectItem>
                               <SelectItem value="O">Outro</SelectItem>
@@ -475,9 +477,9 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
 
               {/* Tab 2: Contato */}
               <TabsContent value="contact" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-card-foreground flex items-center gap-2">
                       <Phone className="h-5 w-5" />
                       Informações de Contato
                     </CardTitle>
@@ -489,12 +491,12 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">E-mail *</FormLabel>
+                            <FormLabel className="text-foreground">E-mail *</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="email"
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="E-mail é obrigatório"
                               />
                             </FormControl>
@@ -508,11 +510,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-300">Telefone Celular</FormLabel>
+                            <FormLabel className="text-foreground">Telefone Celular</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
+                                className="bg-input border-border text-foreground"
                                 placeholder="(00) 00000-0000"
                               />
                             </FormControl>
@@ -522,21 +524,21 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                       />
                     </div>
 
-                    <Separator className="bg-gray-600" />
+                    <Separator className="bg-border" />
                     
                     <div>
-                      <h4 className="text-blue-400 font-medium mb-4">Contato de Emergência</h4>
+                      <h4 className="text-primary font-medium mb-4">Contato de Emergência</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
                           name="emergencyContactName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-300">Nome</FormLabel>
+                              <FormLabel className="text-foreground">Nome</FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
-                                  className="bg-gray-700 border-gray-600 text-white"
+                                  className="bg-input border-border text-foreground"
                                   placeholder="Nome do contato de emergência"
                                 />
                               </FormControl>
@@ -550,11 +552,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                           name="emergencyContactPhone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-300">Telefone</FormLabel>
+                              <FormLabel className="text-foreground">Telefone</FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
-                                  className="bg-gray-700 border-gray-600 text-white"
+                                  className="bg-input border-border text-foreground"
                                   placeholder="Telefone do contato de emergência"
                                 />
                               </FormControl>
@@ -1341,13 +1343,14 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-between items-center pt-6 border-t border-gray-700">
+            <div className="flex justify-between items-center pt-6 border-t border-border">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                className="border-border text-foreground hover:bg-accent"
               >
+                <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
               
@@ -1355,7 +1358,7 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                 <Button 
                   type="button"
                   variant="secondary"
-                  className="bg-gray-700 text-white hover:bg-gray-600"
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 >
                   Visualizar como Aluno
                 </Button>
@@ -1363,9 +1366,16 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                 <Button 
                   type="submit"
                   disabled={updateStudentMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  {updateStudentMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                  {updateStudentMutation.isPending ? (
+                    "Salvando..."
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Alterações
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

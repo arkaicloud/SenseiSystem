@@ -300,12 +300,19 @@ export const documents = pgTable("documents", {
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users)
-  .omit({ id: true })
+  .omit({ 
+    id: true, 
+    joinDate: true,  // Remove joinDate para evitar problemas com timestamp
+    lastLoginDate: true  // Remove lastLoginDate para evitar problemas com timestamp
+  })
   .extend({
     // Garantir que o birthDate possa ser recebido como string e convertido para Date no servidor
     birthDate: z.string().optional().nullable(),
   });
-export const insertStudentSchema = createInsertSchema(students).omit({ id: true });
+export const insertStudentSchema = createInsertSchema(students).omit({ 
+  id: true,
+  lastPromotionDate: true  // Remove lastPromotionDate para evitar problemas com timestamp
+});
 export const insertSchoolConfigSchema = createInsertSchema(schoolConfig).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSchoolPaymentSchema = createInsertSchema(schoolPayments).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertClassSchema = createInsertSchema(classes).omit({ id: true });

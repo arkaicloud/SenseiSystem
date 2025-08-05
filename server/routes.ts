@@ -21,9 +21,10 @@ import {
   insertSchoolPaymentSchema,
   insertBeltLevelSchema
 } from "@shared/schema";
-import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff } from "./auth";
+import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashPassword } from "./auth";
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
@@ -1160,24 +1161,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const studentData = req.body;
 
-      // Validar dados do usuário primeiro
-      const userData = insertUserSchema.parse({
+      // Preparar dados do usuário sem usar o schema parse para evitar problemas com timestamp
+      const userData = {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
         username: studentData.username,
         email: studentData.email,
         password: studentData.password || 'temporaryPassword123',
-        role: "student",
+        role: "student" as const,
         active: true,
         phone: studentData.phone || null,
         emergencyContact: studentData.emergencyContact || null,
         street: studentData.street || null,
+        number: studentData.number || null,
         city: studentData.city || null,
         state: studentData.state || null,
         zipCode: studentData.zipCode || null,
         complement: studentData.complement || null,
-        joinDate: new Date()
-      });
+        neighborhood: studentData.neighborhood || null,
+        birthDate: studentData.birthDate || null,
+        status: "active" as const,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalLogins: 0
+      };
 
       // Criar o usuário primeiro
       const user = await storage.createUser(userData);
@@ -3673,6 +3680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/register-student", async (req, res) => {
     try {
       const studentData = req.body;
+      console.log('📥 Received student data:', JSON.stringify(studentData, null, 2));
       
       // Validate required fields
       if (!studentData.firstName || !studentData.lastName || !studentData.email) {
@@ -3682,20 +3690,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if email already exists
       const existingUser = await storage.getUserByEmail(studentData.email);
       if (existingUser) {
-        return res.status(400).json({ message: "Este email já está cadastrado" });
+        return res.status(400).json({ message: "Email already in use" });
       }
 
       // Generate username from email if not provided
       const username = studentData.username || studentData.email.split('@')[0].toLowerCase();
 
-      // Validate user data
-      const userData = insertUserSchema.parse({
+      // Create user without birthDate first to avoid timestamp issues
+      const userData = {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
         username: username,
         email: studentData.email,
         password: studentData.password || 'temporaryPassword123',
-        role: "student",
+        role: "student" as const,
         active: false, // Pending approval
         phone: studentData.phone || null,
         emergencyContact: studentData.emergencyContact || null,
@@ -3706,24 +3714,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         zipCode: studentData.zipCode || null,
         complement: studentData.complement || null,
         neighborhood: studentData.neighborhood || null,
-        birthDate: studentData.birthDate || null,
-        joinDate: new Date()
-      });
+        status: "pending" as const,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalLogins: 0
+      };
 
-      // Create user first
       const user = await storage.createUser(userData);
 
-      // Student specific data
+      // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
+      if (studentData.birthDate) {
+        await db.execute(sql`
+          UPDATE users SET birth_date = ${new Date(studentData.birthDate)} WHERE id = ${user.id}
+        `);
+      }
+
+      // Student specific data - remove null timestamp fields to avoid Drizzle errors
       const studentInfo = insertStudentSchema.parse({
         userId: user.id,
         beltLevel: studentData.beltLevel || "white",
         stripes: studentData.stripes || 0,
-        lastPromotionDate: null,
-        attendanceRate: null,
+        // Remove lastPromotionDate to use database default (NULL)
+        attendanceRate: studentData.attendanceRate || 0,
         notes: studentData.notes || null,
-        avatarColor: null,
-        avatarStyle: null,
-        avatarImage: null,
+        avatarColor: studentData.avatarColor || null,
+        avatarStyle: studentData.avatarStyle || null,
+        avatarImage: studentData.avatarImage || null,
         // Financial responsibility data
         financialResponsibleName: studentData.financialResponsibleName || `${studentData.firstName} ${studentData.lastName}`,
         financialResponsibleEmail: studentData.financialResponsibleEmail || studentData.email,
@@ -3752,6 +3768,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("❌ Error in student registration:", error);
+      console.error("❌ Full error details:", JSON.stringify(error, null, 2));
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });

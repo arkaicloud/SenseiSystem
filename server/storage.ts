@@ -238,7 +238,7 @@ export class MemStorage implements IStorage {
       lastName: "Sensei",
       username: "admin",
       email: "admin@senseisystem.com",
-      password: "$2b$10$1HOmR7MXx5inyCqQg2UwgOgW7fSoP0V5TSbdx1ZQS/akkpfvp3j/6", // "password"
+      password: "$2b$10$nyKIage48tmqXthsjlVCZeGOoXlDa9.rW4iR3D8IcL5U/IjIk3sO2", // "12345678"
       role: "admin",
       phone: "555-123-4567",
       emergencyContact: "",

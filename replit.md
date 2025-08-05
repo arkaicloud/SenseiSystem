@@ -229,3 +229,12 @@ The application follows a monorepo structure with shared TypeScript definitions,
 - **30-Day Maturity Rule**: Students must have 30+ days since joinDate to be evaluated for risk metrics
 - **Real-Time Auto-Refresh**: Dashboard updates metrics every 5 minutes automatically with manual refresh option
 - **Portuguese Localization**: All engagement metrics labels and descriptions implemented in Portuguese BR
+
+### August 5, 2025 - Login Screen School Info Display & Sidebar Organization
+- **School Info Card**: Created component to display school contact information on login screen with WhatsApp and social media links
+- **Public API Endpoint**: Added `/api/school/public-info` for public school information display
+- **Social Media Detection**: Automatic detection and labeling of Instagram, Facebook, YouTube, TikTok links
+- **WhatsApp Integration**: Phone numbers automatically convert to WhatsApp links with proper formatting
+- **Belt Management Menu**: Added "Gerenciar Faixas" option to Configuration section in sidebar for admin users
+- **Sidebar Cleanup**: Removed duplicate/unused sidebar component, consolidated to single accordion-style sidebar
+- **Login Text Update**: Changed welcome message to "Seja Bem Vindos ao {schoolName}"

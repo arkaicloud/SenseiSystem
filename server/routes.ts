@@ -930,11 +930,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
                 console.log('✅ ASAAS payment created:', payment.id);
 
-                // Save payment to database
-                await storage.createContaReceber({
-                  studentId: student.id,
-                  asaasPaymentId: payment.id,
-                  asaasCustomerId: payment.customer,
+                // Check if payment already exists in database before saving
+                const existingPayment = await storage.getContaReceberByAsaasId(payment.id);
+                if (!existingPayment) {
+                  // Save payment to database only if it doesn't exist
+                  await storage.createContaReceber({
+                    studentId: student.id,
+                    asaasPaymentId: payment.id,
+                    asaasCustomerId: payment.customer,
                   status: payment.status,
                   billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
                   value: Math.round(payment.value * 100), // Convert back to cents
@@ -946,7 +949,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   bankSlipUrl: payment.bankSlipUrl || null,
                   pixQrCode: payment.pixQrCode || null,
                   pixCopyAndPaste: payment.pixCopyAndPaste || null
-                });
+                  });
+                  console.log(`💾 Novo pagamento salvo no banco: ${payment.id}`);
+                } else {
+                  console.log(`⏭️ Pagamento já existe no banco, pulando: ${payment.id}`);
+                }
               } catch (error) {
                 console.error('❌ Error creating ASAAS customer/subscription:', error);
                 // Continue with approval even if ASAAS fails - log the error but don't fail the approval
@@ -3978,11 +3985,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
                 console.log(`✅ ASAAS payment created: ${payment.id}`);
 
-                // Save payment to database
-                await storage.createContaReceber({
-                  studentId: student.id,
-                  asaasPaymentId: payment.id,
-                  asaasCustomerId: payment.customer,
+                // Check if payment already exists in database before saving
+                const existingPayment = await storage.getContaReceberByAsaasId(payment.id);
+                if (!existingPayment) {
+                  // Save payment to database only if it doesn't exist
+                  await storage.createContaReceber({
+                    studentId: student.id,
+                    asaasPaymentId: payment.id,
+                    asaasCustomerId: payment.customer,
                   status: payment.status,
                   billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
                   value: Math.round(payment.value * 100), // Convert back to cents
@@ -3994,7 +4004,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   bankSlipUrl: payment.bankSlipUrl || null,
                   pixQrCode: payment.pixQrCode || null,
                   pixCopyAndPaste: payment.pixCopyAndPaste || null
-                });
+                  });
+                  console.log(`💾 Novo pagamento salvo no banco: ${payment.id}`);
+                } else {
+                  console.log(`⏭️ Pagamento já existe no banco, pulando: ${payment.id}`);
+                }
                 asaasSuccess = true;
               } catch (error) {
                 console.error(`❌ ASAAS error for user ${userId}:`, error);

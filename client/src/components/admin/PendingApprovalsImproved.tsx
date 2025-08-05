@@ -147,9 +147,7 @@ export default function PendingApprovalsImproved() {
   // Mutations
   const approveMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest(`/api/users/${userId}/approve`, {
-        method: "POST",
-      });
+      return await apiRequest(`/api/users/${userId}/approve`, "POST");
     },
     onSuccess: () => {
       toast({
@@ -169,9 +167,7 @@ export default function PendingApprovalsImproved() {
 
   const rejectMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest(`/api/users/${userId}/reject`, {
-        method: "POST",
-      });
+      return await apiRequest(`/api/users/${userId}/reject`, "POST");
     },
     onSuccess: () => {
       toast({
@@ -191,10 +187,7 @@ export default function PendingApprovalsImproved() {
 
   const updatePlanMutation = useMutation({
     mutationFn: async ({ userId, planId }: { userId: number; planId: number }) => {
-      return await apiRequest(`/api/users/${userId}/payment-plan`, {
-        method: "PATCH",
-        body: JSON.stringify({ paymentPlanId: planId }),
-      });
+      return await apiRequest(`/api/users/${userId}/payment-plan`, "PATCH", { paymentPlanId: planId });
     },
     onSuccess: () => {
       toast({

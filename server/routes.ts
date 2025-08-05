@@ -954,6 +954,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reject user
+  app.post("/api/users/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const user = await storage.getUser(Number(id));
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.active) {
+        return res.status(400).json({ message: "Cannot reject an active user" });
+      }
+
+      // Delete the user and associated student record
+      const student = await storage.getStudentByUserId(user.id);
+      if (student) {
+        await storage.deleteStudent(student.id);
+      }
+      
+      await storage.deleteUser(user.id);
+
+      // Create activity log for rejection
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        activity: `User rejected: ${user.firstName} ${user.lastName} (${user.role})${reason ? ` - Reason: ${reason}` : ''}`,
+        userId: requestUser.id,
+        entityType: "user",
+        entityId: user.id,
+        timestamp: new Date()
+      });
+
+      res.json({ 
+        message: "User rejected successfully"
+      });
+    } catch (err) {
+      console.error("Error rejecting user:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/users/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;

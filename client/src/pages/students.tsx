@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { BeltWithLabel } from "@/components/ui/belt";
 import StudentForm from "@/components/students/StudentForm";
+import StudentEditDialog from "@/components/students/StudentEditDialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,8 @@ const Students: React.FC = () => {
   const { t } = useTranslation();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
+  const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [beltFilter, setBeltFilter] = useState("all");
@@ -350,7 +353,7 @@ const Students: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <BeltWithLabel beltLevel={student.beltLevel} stripes={student.stripes} />
+                          <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-500">
                           <div>Rua A, 123</div>
@@ -420,10 +423,10 @@ const Students: React.FC = () => {
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0"
-                              title="Editar aluno"
+                              title="Editar dados do aluno"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedStudent(student);
+                                setStudentToEdit(student); setIsEditStudentOpen(true);
                               }}
                             >
                               <span className="material-icons text-gray-500 text-sm">edit</span>
@@ -517,7 +520,7 @@ const Students: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <BeltWithLabel beltLevel={student.beltLevel} stripes={student.stripes} />
+                          <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-500">
                           <div>Rua A, 123</div>
@@ -587,10 +590,10 @@ const Students: React.FC = () => {
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0"
-                              title="Editar aluno"
+                              title="Editar dados do aluno"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedStudent(student);
+                                setStudentToEdit(student); setIsEditStudentOpen(true);
                               }}
                             >
                               <span className="material-icons text-gray-500 text-sm">edit</span>
@@ -774,10 +777,10 @@ const Students: React.FC = () => {
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0"
-                              title="Editar aluno"
+                              title="Editar dados do aluno"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedStudent(student);
+                                setStudentToEdit(student); setIsEditStudentOpen(true);
                               }}
                             >
                               <span className="material-icons text-gray-500 text-sm">edit</span>
@@ -868,11 +871,11 @@ const Students: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-      {/* Edit Student Dialog */}
+      {/* View Student Dialog */}
       {selectedStudent && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedStudent(null)}>
           <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Editar Aluno</DialogTitle>
+            <DialogTitle>Visualizar Aluno</DialogTitle>
             <StudentForm 
               defaultValues={{
                 firstName: selectedStudent.user.firstName,
@@ -890,6 +893,20 @@ const Students: React.FC = () => {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Edit Student Dialog - New Complete Interface */}
+      {studentToEdit && (
+        <StudentEditDialog
+          studentId={studentToEdit.id}
+          open={isEditStudentOpen}
+          onOpenChange={(open) => {
+            setIsEditStudentOpen(open);
+            if (!open) {
+              setStudentToEdit(null);
+            }
+          }}
+        />
       )}
     </>
   );

@@ -245,7 +245,7 @@ export default function LoginPage() {
                   </h1>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400">
-                  {schoolConfig?.config?.welcomeMessage || "Seja bem-vindo ao Leo"}
+                  {schoolConfig?.config?.welcomeMessage || "Seja bem-vindo"}
                 </p>
               </div>
               

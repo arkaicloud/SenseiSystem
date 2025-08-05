@@ -309,11 +309,11 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden flex flex-col">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                <TabsList className="sticky top-0 z-10 grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 bg-muted h-auto sm:h-16 p-1 sm:p-2 mb-4 shadow-sm gap-1 sm:gap-0">
+                <TabsList className="shrink-0 grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 bg-muted h-auto sm:h-16 p-1 sm:p-2 mb-4 shadow-sm gap-1 sm:gap-0">
                 <TabsTrigger value="personal" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <User className="h-3 w-3 sm:h-5 sm:w-5" />
                   <span className="text-xs hidden sm:inline">Dados Pessoais</span>
@@ -356,7 +356,7 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                 </TabsTrigger>
               </TabsList>
 
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto px-1">
 
               {/* Tab 1: Dados Pessoais */}
               <TabsContent value="personal" className="space-y-6 mt-6">
@@ -1371,8 +1371,10 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
               </TabsContent>
               </div>
             </Tabs>
-
-            <div className="flex justify-between items-center pt-6 border-t border-border">
+              
+            
+            {/* Botões de ação - sempre visível na parte inferior */}
+            <div className="shrink-0 flex justify-between items-center pt-4 mt-6 border-t border-border bg-background">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -1408,8 +1410,8 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
                 </Button>
               </div>
             </div>
-          </form>
-        </Form>
+            </form>
+          </Form>
         </div>
       </DialogContent>
     </Dialog>

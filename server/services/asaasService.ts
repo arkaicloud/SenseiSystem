@@ -61,9 +61,9 @@ export interface AsaasPayment {
 }
 
 /**
- * ASAAS Service - Implementado seguindo ARKAIDEV checklist
- * URL Sandbox: https://sandbox.asaas.com/api/v3
- * Header: Authorization: Bearer <API_KEY>
+ * ASAAS Service - Implementado seguindo documentação oficial
+ * URL Sandbox: https://api-sandbox.asaas.com/v3
+ * Headers: access_token, User-Agent, Content-Type
  */
 export class AsaasService {
   private client: AxiosInstance;
@@ -79,12 +79,13 @@ export class AsaasService {
     console.log('🔑 ASAAS API Key loaded from environment (length:', this.apiKey.length, ')');
     console.log('🔧 ASAAS Service initialized with Sandbox URL');
 
-    // Configuração exata conforme ARKAIDEV checklist
+    // Configuração exata conforme documentação oficial ASAAS
     this.client = axios.create({
-      baseURL: 'https://sandbox.asaas.com/api/v3',
+      baseURL: 'https://api-sandbox.asaas.com/v3',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'SenseiSystem/1.0',
+        'access_token': this.apiKey
       },
       timeout: 30000
     });
@@ -112,24 +113,42 @@ export class AsaasService {
   }
 
   /**
-   * Teste de conexão seguindo ARKAIDEV checklist
+   * Teste de conexão seguindo documentação oficial ASAAS
+   * Testa primeiro com /customers (endpoint público) para validar autenticação
    */
   async testConnection(): Promise<{ success: boolean; message: string; data?: any }> {
     try {
-      console.log('🧪 Testing ASAAS connection with /me endpoint...');
-      const response = await this.client.get('/me');
+      console.log('🧪 Testing ASAAS connection with /customers endpoint...');
+      const response = await this.client.get('/customers?limit=1');
       
       return {
         success: true,
-        message: 'Conexão OK ✅',
-        data: response.data
+        message: 'Conexão ASAAS OK ✅',
+        data: {
+          status: 'connected',
+          endpoint: '/customers',
+          hasData: response.data?.data ? response.data.data.length > 0 : false
+        }
       };
     } catch (error: any) {
       console.error('🔥 ASAAS Connection Test Failed:', error.response?.data || error.message);
       
+      // Tenta identificar o tipo de erro baseado na resposta
+      if (error.response?.status === 401) {
+        return {
+          success: false,
+          message: `Chave API inválida ❌ - ${error.response?.data?.errors?.[0]?.description || 'Unauthorized'}`
+        };
+      } else if (error.response?.status === 404) {
+        return {
+          success: false, 
+          message: `Endpoint não encontrado ❌ - Verifique URL: ${this.client.defaults.baseURL}`
+        };
+      }
+      
       return {
         success: false,
-        message: `Erro ASAAS ❌ - Status: ${error.response?.status || 'Unknown'} - ${error.response?.data?.errors?.[0]?.description || error.message}`
+        message: `Erro ASAAS ❌ - Status: ${error.response?.status || 'Unknown'} - ${error.message}`
       };
     }
   }

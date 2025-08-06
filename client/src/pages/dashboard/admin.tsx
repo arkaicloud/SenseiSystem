@@ -23,7 +23,8 @@ import {
   Plus,
   Eye,
   FileText,
-  Settings
+  Settings,
+  RefreshCw
 } from 'lucide-react';
 import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
 import BeltSummaryAdultWidget from '@/components/dashboard/BeltSummaryAdultWidget';
@@ -563,27 +564,47 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header com ações principais */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-        <div>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">Dashboard Administrativo</h1>
           <p className="text-muted-foreground">Visão geral da sua escola</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handleNewStudent}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Aluno
-          </Button>
-          <Button variant="outline" onClick={handleScheduleClass}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Agendar Aula
-          </Button>
-          <Button variant="outline" onClick={() => {
-            fetchLiveMetrics();
-            fetchEngagementMetrics();
-          }} size="sm" disabled={metricsLoading}>
-            <TrendingUp className="h-4 w-4 mr-2" />
-            {metricsLoading ? 'Atualizando...' : 'Atualizar Métricas'}
-          </Button>
+        
+        {/* Botões de ação - layout responsivo */}
+        <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
+          {/* Grupo de botões principais */}
+          <div className="flex flex-wrap gap-2 flex-1 sm:flex-initial">
+            <Button onClick={handleNewStudent} className="flex-1 sm:flex-initial">
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Aluno
+            </Button>
+            <Button variant="outline" onClick={handleScheduleClass} className="flex-1 sm:flex-initial">
+              <Calendar className="h-4 w-4 mr-2" />
+              Agendar Aula
+            </Button>
+          </div>
+          
+          {/* Botão de reload - sempre à direita */}
+          <div className="flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                fetchLiveMetrics();
+                fetchEngagementMetrics();
+              }} 
+              disabled={metricsLoading}
+              className="min-w-[140px] sm:min-w-[120px]"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">
+                {metricsLoading ? 'Atualizando...' : 'Atualizar'}
+              </span>
+              <span className="sm:hidden">
+                {metricsLoading ? 'Carregando...' : 'Reload'}
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
 

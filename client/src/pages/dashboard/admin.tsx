@@ -17,7 +17,6 @@ import {
   AlertTriangle, 
   UserCheck, 
   Clock, 
-  Target,
   Gift,
   Star,
   ChevronRight,
@@ -559,137 +558,7 @@ export default function AdminDashboard() {
     window.location.href = '/classes?action=create';
   };
 
-  // Mutation para gerar dados de teste
-  const generateTestDataMutation = useMutation({
-    mutationFn: async () => {
-      const testStudents = [
-        {
-          name: "Carlos Silva Santos",
-          email: "carlos.silva@test.com.br",
-          phone: "(11) 99999-0001",
-          cpf: "12345678901",
-          beltLevel: "white",
-          stripes: 0,
-          status: "active",
-          attendanceRate: Math.floor(Math.random() * 30) + 70,
-          financialResponsibleName: "Carlos Silva Santos",
-          financialResponsibleEmail: "carlos.silva@test.com.br",
-          financialResponsiblePhone: "(11) 99999-0001",
-          financialResponsibleCpf: "12345678901",
-          financialResponsibleRelation: "self"
-        },
-        {
-          name: "Ana Paula Rodrigues",
-          email: "ana.paula@test.com.br", 
-          phone: "(11) 99999-0002",
-          cpf: "23456789012",
-          beltLevel: "blue",
-          stripes: 2,
-          status: "active",
-          attendanceRate: Math.floor(Math.random() * 40) + 40,
-          financialResponsibleName: "Ana Paula Rodrigues",
-          financialResponsibleEmail: "ana.paula@test.com.br",
-          financialResponsiblePhone: "(11) 99999-0002",
-          financialResponsibleCpf: "23456789012",
-          financialResponsibleRelation: "self"
-        },
-        {
-          name: "João Pedro Oliveira",
-          email: "joao.pedro@test.com.br",
-          phone: "(11) 99999-0003", 
-          cpf: "34567890123",
-          beltLevel: "white",
-          stripes: 1,
-          status: "pending",
-          attendanceRate: Math.floor(Math.random() * 20) + 30,
-          financialResponsibleName: "Maria Oliveira",
-          financialResponsibleEmail: "maria.oliveira@test.com.br",
-          financialResponsiblePhone: "(11) 99999-0004",
-          financialResponsibleCpf: "45678901234",
-          financialResponsibleRelation: "mother"
-        }
-      ];
-
-      // Criar cada aluno de teste
-      for (const studentData of testStudents) {
-        try {
-          // Primeiro criar usuário
-          const userResponse = await fetch('/api/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              firstName: studentData.name.split(' ')[0],
-              lastName: studentData.name.split(' ').slice(1).join(' '),
-              email: studentData.email,
-              password: "password123",
-              role: "student",
-              status: "approved"
-            })
-          });
-
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            
-            // Depois criar o estudante
-            await fetch('/api/students', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: userData.user.id,
-                name: studentData.name,
-                email: studentData.email,
-                phone: studentData.phone,
-                cpf: studentData.cpf,
-                beltLevel: studentData.beltLevel,
-                stripes: studentData.stripes,
-                status: studentData.status,
-                attendanceRate: studentData.attendanceRate,
-                financialResponsibleName: studentData.financialResponsibleName,
-                financialResponsibleEmail: studentData.financialResponsibleEmail,
-                financialResponsiblePhone: studentData.financialResponsiblePhone,
-                financialResponsibleCpf: studentData.financialResponsibleCpf,
-                financialResponsibleRelation: studentData.financialResponsibleRelation
-              })
-            });
-          }
-        } catch (error) {
-          console.error(`Erro ao criar aluno teste ${studentData.name}:`, error);
-        }
-      }
-
-      return { success: true, studentsCreated: testStudents.length };
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Dados de Teste Criados",
-        description: `${data.studentsCreated} alunos de teste adicionados com sucesso!`,
-      });
-      
-      // Recarregar todos os dados
-      queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/classes'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dash/admin'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao Gerar Dados",
-        description: "Ocorreu um erro ao criar os dados de teste.",
-        variant: "destructive",
-      });
-      console.error("Erro na geração de dados QA:", error);
-    },
-  });
-
-  // Função para popular dados de teste (QA)
-  const generateTestData = () => {
-    toast({
-      title: "Gerando Dados de Teste",
-      description: "Criando alunos e situações de teste...",
-    });
-    
-    generateTestDataMutation.mutate();
-  };
+  
 
   return (
     <div className="space-y-6">
@@ -707,10 +576,6 @@ export default function AdminDashboard() {
           <Button variant="outline" onClick={handleScheduleClass}>
             <Calendar className="h-4 w-4 mr-2" />
             Agendar Aula
-          </Button>
-          <Button variant="secondary" onClick={generateTestData} size="sm">
-            <Target className="h-4 w-4 mr-2" />
-            Gerar Dados QA
           </Button>
           <Button variant="outline" onClick={() => {
             fetchLiveMetrics();

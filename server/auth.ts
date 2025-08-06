@@ -61,7 +61,8 @@ export const isSelfOrStaff = (req: Request, res: Response, next: NextFunction) =
       return next();
     }
   }
-  res.status(403).json({ message: "Forbidden: Access denied" });
+  res.status(403).json({ message: "Acesso negado. Você não tem permissão para acessar este recurso." });
+
 };
 
 export function setupAuth(app: Express) {

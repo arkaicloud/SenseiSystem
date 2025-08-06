@@ -431,7 +431,7 @@ export default function LoginPage() {
                       type="email"
                       value={loginData.username}
                       onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                      placeholder="adm@senseisystem.com.br"
+                      placeholder="Digite seu E-mail"
                       className="w-full"
                       required
                     />

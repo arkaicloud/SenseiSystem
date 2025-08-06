@@ -84,6 +84,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           path: "/admin/pending-approvals",
           roles: ["admin"],
         },
+        
+        {
+          id: "gerenciar-faixas",
+          label: "Gerenciar Faixas",
+          icon: Award,
+          path: "/belt-management",
+          roles: ["admin", "instructor"],
+        },
       ],
     },
     {
@@ -156,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       children: [
         {
           id: "pessoais",
-          label: "Pessoais",
+          label: "Meu Perfil",
           icon: User,
           path: "/settings",
         },
@@ -166,14 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           icon: Building2,
           path: "/school-config",
           roles: ["admin"],
-        },
-        {
-          id: "gerenciar-faixas",
-          label: "Gerenciar Faixas",
-          icon: Award,
-          path: "/belt-management",
-          roles: ["admin"],
-        },
+        }
       ],
     },
   ];

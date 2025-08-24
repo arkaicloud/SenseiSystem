@@ -622,6 +622,18 @@ export default function PendingApprovalsBatch() {
                         )}
                       </Button>
                       
+                      {/* Edit Button - shows when data is incomplete */}
+                      {!validation.isValid && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingStudent(user.id)}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
                       {validation.isValid && (
                         <Button
                           size="sm"
@@ -643,6 +655,21 @@ export default function PendingApprovalsBatch() {
             );
           })}
         </div>
+      )}
+
+      {/* Student Edit Dialog */}
+      {editingStudent && (
+        <StudentEditDialog
+          studentId={editingStudent}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingStudent(null);
+              // Refresh pending users list after edit
+              queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+            }
+          }}
+        />
       )}
     </div>
   );

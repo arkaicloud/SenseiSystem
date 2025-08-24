@@ -497,7 +497,7 @@ export default function LoginPage() {
                       type="button" 
                       variant="outline"
                       onClick={handleRegisterClick}
-                      className="w-full border-slate-300 text-white font-semibold hover:bg-slate-600/90 hover:text-white hover:border-slate-200 dark:border-slate-400 dark:text-slate-50 dark:hover:bg-slate-700/90 dark:hover:text-white dark:hover:border-slate-300 transition-all duration-200"
+                      className="w-full border-slate-300 text-black font-semibold hover:bg-slate-600/90 hover:text-white hover:border-slate-200 dark:border-slate-400 dark:text-black dark:hover:bg-slate-700/90 dark:hover:text-white dark:hover:border-slate-300 transition-all duration-200"
                     >
                       Matricule-se Agora
                     </Button>

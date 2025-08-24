@@ -140,9 +140,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
-      <div className="min-h-screen flex items-stretch lg:items-center justify-center">
-        <div className="w-full max-w-7xl grid lg:grid-cols-2 min-h-screen lg:min-h-0 lg:gap-12 items-stretch lg:items-center lg:my-8">
+    <div className="w-full h-full min-h-screen min-w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 m-0 p-0">
+      <div className="w-full h-full min-h-screen flex items-stretch lg:items-center justify-center m-0 p-0">
+        <div className="w-full max-w-none lg:max-w-7xl grid lg:grid-cols-2 min-h-screen lg:min-h-0 lg:gap-12 items-stretch lg:items-center lg:my-8 m-0 p-0">
           
           {/* Lado Esquerdo - Área de Apresentação */}
           <div className="order-2 lg:order-1 text-white space-y-6 lg:space-y-8 px-6 lg:px-8 py-8 lg:py-0 hidden lg:block">
@@ -318,8 +318,8 @@ export default function LoginPage() {
           </div>
           
           {/* Lado Direito - Formulário de Login */}
-          <div className="order-1 lg:order-2 flex items-center justify-center lg:justify-end p-6 lg:p-8">
-            <div className="w-full max-w-md bg-slate-800/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 dark:border-slate-600/50 p-8 lg:p-10">
+          <div className="order-1 lg:order-2 flex items-center justify-center lg:justify-end p-4 lg:p-6 w-full">
+            <div className="w-full max-w-md bg-slate-800/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 dark:border-slate-600/50 p-6 lg:p-8">
               {/* Header */}
               <div className="text-center mb-8">
                 {/* Mobile version - Show school branding */}

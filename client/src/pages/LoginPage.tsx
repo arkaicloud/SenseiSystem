@@ -147,10 +147,10 @@ export default function LoginPage() {
           {/* Lado Esquerdo - Área de Apresentação */}
           <div className="order-2 lg:order-1 text-white space-y-8 px-8">
             <div className="space-y-4">
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
+              <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-white dark:text-slate-100">
                 Transforme sua escola com tecnologia
               </h1>
-              <p className="text-xl text-slate-300">
+              <p className="text-xl text-slate-300 dark:text-slate-200">
                 A gestão moderna que seu dojo merece
               </p>
             </div>

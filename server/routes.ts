@@ -4304,10 +4304,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Test connection with real API Key
-      const asaasService = new AsaasService(config.asaasApiKey, false); // false = production
-      const testResult = await asaasService.testConnection();
-
-      res.json(testResult);
+      const asaasService = new AsaasService(config.asaasApiKey);
+      const result = await asaasService.testConnection();
+      
+      if (!result.success) {
+        console.error("❌ ASAAS Connection Test Failed:", result);
+        return res.status(200).json({
+          success: false,
+          message: result.message,
+          environment: result.environment,
+          baseURL: result.baseURL,
+          status: result.status || null,
+          errors: result.errors || null,
+          hint: "Se sua chave começar com algo como '_hmlg' use ASAAS_ENV=sandbox (URL sandbox). Chaves de produção pedem ASAAS_ENV=production (URL prod).",
+        });
+      }
+      
+      return res.json({
+        success: true,
+        message: "Conexão ASAAS OK",
+        environment: result.environment,
+        baseURL: result.baseURL,
+        sampleCount: result.total,
+      });
     } catch (error: any) {
       console.error('❌ Error testing ASAAS connection:', error);
       res.status(500).json({
@@ -4331,7 +4350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const asaasService = new AsaasService(config.asaasApiKey, false);
+      const asaasService = new AsaasService(config.asaasApiKey);
 
       // Get all customers from ASAAS
       const customersResponse = await asaasService.getCustomers(100);
@@ -4396,10 +4415,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error: any) {
+      const status = error?.response?.status;
+      const code = error?.response?.data?.errors?.[0]?.code;
+      const description = error?.response?.data?.errors?.[0]?.description;
+
       console.error('❌ Error syncing ASAAS customers:', error);
-      res.status(500).json({
+
+      // Devolve mensagem mais útil para erro de ambiente
+      if (status === 401 && code === 'invalid_environment') {
+        return res.status(502).json({
+          success: false,
+          message: 'Chave de API ASAAS incompatível com o ambiente. Ajuste ASAAS_ENV (sandbox/production) OU use a chave correta para o ambiente atual.',
+          detail: description || null,
+        });
+      }
+
+      return res.status(500).json({
         success: false,
-        message: `Erro na sincronização: ${error.message}`
+        message: 'Erro ao sincronizar clientes do ASAAS.',
+        detail: description || error?.message || null,
       });
     }
   });

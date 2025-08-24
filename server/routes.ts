@@ -886,7 +886,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create ASAAS customer and subscription after approval
             if (student.financialResponsibleName && student.financialResponsibleEmail) {
               try {
-                const { AsaasService } = await import("./services/asaasService");
                 const asaasService = new AsaasService();
 
                 console.log('🎯 ARKAIDEV: Processando aprovação individual com anti-duplicata:', user.firstName, user.lastName);
@@ -3360,7 +3359,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Buscar configuração do ASAAS
         const config = await storage.getSchoolConfig();
         if (config?.asaasApiKey && student.asaasCustomerId) {
-          const { AsaasService } = await import("./services/asaasService");
           const asaasService = new AsaasService(config.asaasApiKey, true);
           
           // Buscar faturas do cliente no ASAAS
@@ -3696,8 +3694,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid student ID' });
       }
 
-      // Import asaasService dynamically
-      const { asaasService } = await import('./services/asaasService');
+      // Use static AsaasService import
+      const asaasService = new AsaasService();
       
       // Buscar dados do aluno
       const student = await storage.getStudentByUserId(studentId);
@@ -4112,7 +4110,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Try ASAAS integration
             if (student.financialResponsibleName && student.financialResponsibleEmail) {
               try {
-                const { AsaasService } = await import("./services/asaasService");
                 const asaasService = new AsaasService();
 
                 console.log(`🎯 ARKAIDEV: Processando aluno com verificação anti-duplicata: ${user.firstName} ${user.lastName}`);
@@ -4564,7 +4561,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/students/:id/sync-asaas", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { AsaasService } = await import("./services/asaasService");
       const asaasService = new AsaasService();
       
       console.log(`🔄 Manual ASAAS sync requested for student ID: ${id}`);
@@ -4664,7 +4660,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const { AsaasService } = await import("./services/asaasService");
       const asaasService = new AsaasService();
       
       console.log(`🔍 Verificando cliente ASAAS - CPF: ${cpf}, Email: ${email}`);

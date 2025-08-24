@@ -113,6 +113,44 @@ export default function AsaasPayments() {
     },
   });
 
+  // Mutation para sincronizar alunos do ASAAS
+  const syncAsaasCustomers = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/asaas/sync-customers");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Erro ao sincronizar alunos");
+      }
+      return await response.json();
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        toast({
+          title: "Sincronização Concluída! ✅",
+          description: `${result.syncedCount} alunos importados do ASAAS de ${result.totalCustomers} clientes.`,
+          variant: "default"
+        });
+        // Refresh student data
+        queryClient.invalidateQueries({ queryKey: ['/api/students'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
+      } else {
+        toast({
+          title: "Erro na Sincronização",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error("Erro ao sincronizar alunos ASAAS:", error);
+      toast({
+        title: "Erro",
+        description: error?.message || "Erro ao sincronizar alunos do ASAAS",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Atualizar estado quando dados chegarem
   useEffect(() => {
     if (schoolConfig?.config) {
@@ -231,6 +269,14 @@ export default function AsaasPayments() {
               disabled={testAsaasConnection.isPending || !asaasConfig.asaasApiKey}
             >
               {testAsaasConnection.isPending ? "Testando..." : "Testar Conexão"}
+            </Button>
+
+            <Button 
+              variant="secondary"
+              onClick={() => syncAsaasCustomers.mutate()}
+              disabled={syncAsaasCustomers.isPending || !asaasConfig.asaasApiKey}
+            >
+              {syncAsaasCustomers.isPending ? "Sincronizando..." : "Sincronizar Alunos"}
             </Button>
           </div>
         </CardContent>

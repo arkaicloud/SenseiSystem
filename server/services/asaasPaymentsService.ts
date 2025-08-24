@@ -62,15 +62,16 @@ export class AsaasPaymentsService {
   private baseUrl: string;
   private isConfigured: boolean;
 
-  constructor() {
-    this.apiKey = process.env.ASAAS_API_KEY || '';
-    this.baseUrl = 'https://sandbox.asaas.com/api/v3';
+  constructor(apiKey?: string, useSandbox: boolean = false) {
+    // Priority: provided apiKey > environment variable > empty
+    this.apiKey = apiKey || process.env.ASAAS_API_KEY || '';
+    this.baseUrl = useSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3';
     this.isConfigured = !!this.apiKey;
 
     if (!this.isConfigured) {
       console.warn('⚠️ ASAAS_API_KEY not found - using mock data for financial features');
     } else {
-      console.log('✅ ASAAS Service initialized successfully');
+      console.log('✅ ASAAS PaymentsService initialized successfully with URL:', this.baseUrl);
     }
   }
 

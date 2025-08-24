@@ -70,26 +70,28 @@ export class AsaasService {
   private readonly apiKey: string;
   private readonly isConfigured: boolean;
 
-  constructor() {
-    this.apiKey = process.env.ASAAS_API_KEY || '';
+  constructor(apiKey?: string, useSandbox: boolean = false) {
+    // Priority: provided apiKey > environment variable > empty
+    this.apiKey = apiKey || process.env.ASAAS_API_KEY || '';
     this.isConfigured = !!this.apiKey;
     
     if (!this.isConfigured) {
       console.warn('⚠️ ASAAS_API_KEY not found - financial features will use mock data');
       // Create a dummy client to prevent errors
       this.client = axios.create({
-        baseURL: 'https://api-sandbox.asaas.com/v3',
+        baseURL: useSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3',
         timeout: 30000
       });
       return;
     }
 
-    console.log('🔑 ASAAS API Key loaded from environment (length:', this.apiKey.length, ')');
-    console.log('🔧 ASAAS Service initialized with Sandbox URL');
+    const baseURL = useSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3';
+    console.log('🔑 ASAAS API Key loaded (length:', this.apiKey.length, ')');
+    console.log('🔧 ASAAS Service initialized with URL:', baseURL);
 
     // Configuração exata conforme documentação oficial ASAAS
     this.client = axios.create({
-      baseURL: 'https://api-sandbox.asaas.com/v3',
+      baseURL,
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'SenseiSystem/1.0',

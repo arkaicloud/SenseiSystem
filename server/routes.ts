@@ -25,6 +25,7 @@ import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashP
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
+import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
 import crypto from "crypto";
 
@@ -4309,11 +4310,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====ASAAS Integration Routes=====
+  // Test ASAAS connection using school config API Key
+  app.post('/api/asaas/test-connection', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      console.log('🧪 Testing ASAAS connection...');
+      
+      // Get API Key from school config
+      const config = await storage.getSchoolConfig();
+      if (!config?.asaasApiKey) {
+        return res.status(400).json({
+          success: false,
+          message: 'API Key ASAAS não configurada. Configure nas configurações da escola.'
+        });
+      }
+
+      // Test connection with real API Key
+      const asaasService = new AsaasService(config.asaasApiKey, false); // false = production
+      const testResult = await asaasService.testConnection();
+
+      res.json(testResult);
+    } catch (error: any) {
+      console.error('❌ Error testing ASAAS connection:', error);
+      res.status(500).json({
+        success: false,
+        message: `Erro ao testar conexão: ${error.message}`
+      });
+    }
+  });
+
+  // Sync students from ASAAS customers
+  app.post('/api/asaas/sync-customers', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      console.log('🔄 Syncing customers from ASAAS...');
+      
+      // Get API Key from school config
+      const config = await storage.getSchoolConfig();
+      if (!config?.asaasApiKey) {
+        return res.status(400).json({
+          success: false,
+          message: 'API Key ASAAS não configurada'
+        });
+      }
+
+      const asaasService = new AsaasService(config.asaasApiKey, false);
+
+      // Get all customers from ASAAS
+      const customersResponse = await asaasService.getCustomers(100);
+      const customers = customersResponse.data || [];
+      
+      let syncedCount = 0;
+      let errors = [];
+
+      for (const customer of customers) {
+        try {
+          // Check if student already exists by email
+          const existingUserByEmail = await storage.getUserByEmail(customer.email);
+          
+          if (existingUserByEmail) {
+            console.log(`📝 Customer ${customer.name} already exists, skipping...`);
+            continue;
+          }
+
+          // Create new user and student from ASAAS customer
+          const userData = {
+            firstName: customer.name.split(' ')[0] || 'Cliente',
+            lastName: customer.name.split(' ').slice(1).join(' ') || 'ASAAS',
+            username: customer.email,
+            email: customer.email,
+            password: 'temp123456', // Temporary password
+            role: 'student' as const,
+            phone: customer.mobilePhone || customer.phone,
+            cpf: customer.cpfCnpj,
+            active: false, // Requires admin approval
+            status: 'pending'
+          };
+
+          const newUser = await storage.createUser(userData);
+          
+          // Create student record
+          const studentData = {
+            userId: newUser.id,
+            beltLevel: 'white' as const,
+            financialResponsibleName: customer.name,
+            financialResponsibleEmail: customer.email,
+            financialResponsiblePhone: customer.mobilePhone || customer.phone,
+            financialResponsibleCpf: customer.cpfCnpj,
+            asaasCustomerId: customer.id
+          };
+
+          await storage.createStudent(studentData);
+          syncedCount++;
+          console.log(`✅ Synced customer: ${customer.name} -> Student ID: ${newUser.id}`);
+          
+        } catch (studentError: any) {
+          console.error(`❌ Error syncing customer ${customer.name}:`, studentError);
+          errors.push(`${customer.name}: ${studentError.message}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Sincronização concluída. ${syncedCount} alunos importados do ASAAS.`,
+        syncedCount,
+        totalCustomers: customers.length,
+        errors: errors.length > 0 ? errors : undefined
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error syncing ASAAS customers:', error);
+      res.status(500).json({
+        success: false,
+        message: `Erro na sincronização: ${error.message}`
+      });
+    }
+  });
+
   // =====Financial Panel Routes=====
   // Get ASAAS payments and metrics
   app.get("/api/financial/payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const asaasService = new AsaasPaymentsService();
+      // Try to get API Key from school config first
+      const config = await storage.getSchoolConfig();
+      const asaasService = config?.asaasApiKey 
+        ? new AsaasPaymentsService(config.asaasApiKey, false)
+        : new AsaasPaymentsService();
       const limit = parseInt(req.query.limit as string) || 100;
       
       console.log('🔄 Fetching ASAAS payments for financial panel...');

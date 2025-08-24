@@ -564,4 +564,23 @@ export class AsaasService {
       throw new Error(`Erro ao sincronizar dados ASAAS: ${error.message}`);
     }
   }
+
+  /**
+   * Buscar todos os clientes ASAAS
+   */
+  async getCustomers(limit: number = 100) {
+    if (!this.isConfigured) {
+      throw new Error('ASAAS não configurado - API Key não encontrada');
+    }
+
+    try {
+      console.log(`📋 Buscando ${limit} clientes no ASAAS...`);
+      const response = await this.client.get(`/customers?limit=${limit}`);
+      console.log(`✅ Encontrados ${response.data?.data?.length || 0} clientes no ASAAS`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar clientes ASAAS:', error.response?.data || error.message);
+      throw error;
+    }
+  }
 }

@@ -3256,25 +3256,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Testar conexão com ASAAS - ARKAIDEV checklist
-  app.post("/api/asaas/test-connection", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      console.log('🧪 Testing ASAAS connection - ARKAIDEV checklist');
-      const { AsaasService } = await import("./services/asaasService");
-      const asaasService = new AsaasService();
-      
-      // Test connection using the new testConnection method
-      const result = await asaasService.testConnection();
-      
-      res.json(result);
-    } catch (error) {
-      console.error("❌ ASAAS connection test error:", error);
-      res.json({
-        success: false,  
-        message: `Erro ao inicializar ASAAS Service: ${error instanceof Error ? error.message : "Unknown error"}`
-      });
-    }
-  });
 
   // ===== Login Streak Tracking Routes =====
   

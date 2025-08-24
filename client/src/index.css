@@ -118,24 +118,65 @@
 @layer base {
   * {
     @apply border-border;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow-x: hidden;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+    background: transparent !important;
+    overflow-x: hidden;
   }
   
-  /* PWA Viewport Adjustments */
-  html, body {
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+    overflow-x: hidden;
+  }
+  
+  /* PWA Viewport Adjustments - Remove all borders */
+  html, body, #root {
+    margin: 0;
+    padding: 0;
     overflow-x: hidden;
     width: 100%;
     height: 100%;
+    min-height: 100vh;
+    min-width: 100vw;
   }
   
   /* Remove white borders on mobile PWA */
   @media (display-mode: standalone) {
+    html, body, #root {
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    
     body {
       padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     }
+  }
+  
+  /* Force full viewport coverage */
+  * {
+    box-sizing: border-box;
   }
   
   /* Custom backdrop blur for better visual consistency */

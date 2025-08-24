@@ -72,18 +72,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // For the auth page, just render children with no layout
-  if (isAuthPage) {
-    return <>{children}</>;
+  // For public routes (login, onboarding, etc.) - no layout needed
+  const publicRoutes = ['/login', '/onboarding', '/awaiting-approval', '/auth/forgot-password', '/auth/reset-password'];
+  const isPublicRoute = publicRoutes.some(route => location === route || location.startsWith(route));
+  
+  if (isAuthPage || isPublicRoute || !user) {
+    return <div className="w-full h-full min-h-screen m-0 p-0">{children}</div>;
   }
 
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+      <div className="flex items-center justify-center w-full h-full min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 m-0 p-0">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-300">{t('loading')}</p>
+          <Loader2 className="h-10 w-10 animate-spin text-white mx-auto mb-4" />
+          <p className="text-slate-300 dark:text-slate-400">{t('loading')}</p>
         </div>
       </div>
     );
@@ -93,7 +96,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-gray-900 relative">
+    <div className="flex w-full h-full min-h-screen bg-white dark:bg-gray-900 relative m-0 p-0">
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div 

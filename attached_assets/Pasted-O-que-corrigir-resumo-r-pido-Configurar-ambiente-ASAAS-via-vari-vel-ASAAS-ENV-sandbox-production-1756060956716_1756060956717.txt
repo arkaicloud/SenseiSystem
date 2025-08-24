@@ -1,0 +1,282 @@
+O que corrigir (resumo rápido)
+
+Configurar ambiente ASAAS via variável (ASAAS_ENV=sandbox|production) e derivar a baseURL correta:
+
+sandbox: https://sandbox.asaas.com/api/v3
+
+production: https://api.asaas.com/v3
+
+Validar coerência entre ASAAS_ENV e o prefixo da chave (ex.: contém _hmlg_ ⇒ sandbox).
+
+Melhorar as mensagens do /api/asaas/test-connection e do sync para informar claramente o ambiente detectado, a baseURL e a dica de correção.
+
+(Opcional) Tratar Browserslist com um script simples para não poluir o console.
+
+Patch sugerido (TypeScript)
+
+Arquivo: server/services/asaasService.ts
+(ajuste os caminhos se seu projeto estiver diferente)
+
+// server/services/asaasService.ts
+import axios, { AxiosInstance } from "axios";
+
+type AsaasEnv = "sandbox" | "production";
+
+function inferEnvFromKey(key: string): AsaasEnv | null {
+  if (!key) return null;
+  const k = key.toLowerCase();
+  // Heurísticas comuns (ajuste se você tiver um padrão diferente):
+  if (k.includes("_hmlg") || k.includes("homolog") || k.includes("sandbox")) return "sandbox";
+  return "production";
+}
+
+function getBaseUrl(env: AsaasEnv): string {
+  return env === "sandbox"
+    ? "https://sandbox.asaas.com/api/v3"
+    : "https://api.asaas.com/v3";
+}
+
+export class AsaasService {
+  private client: AxiosInstance;
+  private env: AsaasEnv;
+  private apiKey: string;
+
+  constructor() {
+    const rawKey = process.env.ASAAS_API_KEY?.trim() || "";
+    if (!rawKey) {
+      throw new Error("ASAAS_API_KEY não configurada.");
+    }
+
+    const cfgEnv = (process.env.ASAAS_ENV?.toLowerCase() as AsaasEnv) || null;
+    const inferred = inferEnvFromKey(rawKey);
+
+    // Regra final: valor explícito em ASAAS_ENV vence; se ausente, usa inferência pela chave
+    this.env = cfgEnv || inferred || "production";
+
+    // Se houver conflito óbvio, avisa no log
+    if (cfgEnv && inferred && cfgEnv !== inferred) {
+      // Apenas loga — seguimos com o env explícito.
+      // Se preferir, você pode lançar erro aqui para forçar consistência.
+      console.warn(
+        `[ASAAS] Aviso: ASAAS_ENV='${cfgEnv}' e a chave sugere '${inferred}'. Prosseguindo com '${cfgEnv}'.`
+      );
+    }
+
+    const baseURL = getBaseUrl(this.env);
+    this.apiKey = rawKey;
+
+    this.client = axios.create({
+      baseURL,
+      timeout: 30000,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "SenseiSystem/1.0",
+        // ASAAS espera este header como 'access_token'
+        access_token: this.apiKey,
+      },
+    });
+
+    console.log(`🔧 ASAAS Service -> env: ${this.env} | baseURL: ${baseURL} | key.len: ${this.apiKey.length}`);
+  }
+
+  public getEnvironment(): AsaasEnv {
+    return this.env;
+  }
+
+  public async testConnection() {
+    try {
+      // endpoint leve
+      const res = await this.client.get("/customers?limit=1");
+      return {
+        success: true,
+        environment: this.env,
+        baseURL: this.client.defaults.baseURL,
+        total: Array.isArray(res.data?.data) ? res.data.data.length : "unknown",
+      };
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      const friendly =
+        status === 401 && data?.errors?.[0]?.code === "invalid_environment"
+          ? "A chave de API não corresponde ao ambiente. Verifique se ASAAS_ENV e a chave estão coerentes (sandbox vs production)."
+          : err?.message || "Falha ao testar conexão";
+
+      return {
+        success: false,
+        environment: this.env,
+        baseURL: this.client.defaults.baseURL,
+        status,
+        errors: data?.errors || null,
+        message: friendly,
+      };
+    }
+  }
+
+  // Exemplo de uso no sync de clientes
+  public async getCustomers(limit = 100) {
+    const res = await this.client.get(`/customers?limit=${limit}`);
+    return res.data;
+  }
+}
+
+
+Arquivo: server/routes.ts
+(trecho dos handlers ASAAS — ajuste os nomes conforme seu arquivo)
+
+// server/routes.ts (trechos)
+import { AsaasService } from "./services/asaasService";
+
+app.post("/api/asaas/test-connection", async (req, res) => {
+  try {
+    const svc = new AsaasService();
+    console.log("🧪 Testing ASAAS connection...");
+    const result = await svc.testConnection();
+    if (!result.success) {
+      console.error("❌ ASAAS Connection Test Failed:", result);
+      return res.status(200).json({
+        success: false,
+        message: result.message,
+        environment: result.environment,
+        baseURL: result.baseURL,
+        status: result.status || null,
+        errors: result.errors || null,
+        hint:
+          "Se sua chave começar com algo como '_hmlg' use ASAAS_ENV=sandbox (URL sandbox). Chaves de produção pedem ASAAS_ENV=production (URL prod).",
+      });
+    }
+    return res.json({
+      success: true,
+      message: "Conexão ASAAS OK",
+      environment: result.environment,
+      baseURL: result.baseURL,
+      sampleCount: result.total,
+    });
+  } catch (e: any) {
+    console.error("🔥 Erro inesperado no teste ASAAS:", e);
+    return res.status(500).json({ success: false, message: "Erro interno ao testar ASAAS." });
+  }
+});
+
+app.post("/api/asaas/sync-customers", async (req, res) => {
+  try {
+    console.log("🔄 Syncing customers from ASAAS...");
+    const svc = new AsaasService();
+    const data = await svc.getCustomers(100);
+    // ... persistir clientes aqui ...
+    return res.json({ success: true, total: data?.data?.length || 0 });
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const code = e?.response?.data?.errors?.[0]?.code;
+    const description = e?.response?.data?.errors?.[0]?.description;
+
+    console.error("❌ Error syncing ASAAS customers:", e);
+
+    // Devolve mensagem mais útil
+    if (status === 401 && code === "invalid_environment") {
+      return res.status(502).json({
+        success: false,
+        message:
+          "Chave de API ASAAS incompatível com o ambiente. Ajuste ASAAS_ENV (sandbox/production) OU use a chave correta para o ambiente atual.",
+        detail: description || null,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao sincronizar clientes do ASAAS.",
+      detail: description || e?.message || null,
+    });
+  }
+});
+
+
+Arquivo: .env.example (e alinhe seu .env real)
+
+# ASAAS
+ASAAS_ENV=sandbox            # 'sandbox' ou 'production'
+ASAAS_API_KEY=               # cole aqui a chave correta para o ambiente
+
+
+Observação:
+
+Com ASAAS_ENV=sandbox a base URL muda para https://sandbox.asaas.com/api/v3.
+
+Mantendo a chave ..._hmlg_... em sandbox, o teste e o sync devem funcionar.
+
+Notas sobre os outros logs
+
+GET /api/user 401 Not authenticated antes do login é normal. Depois do POST /api/login 200, os requests passaram a devolver 200/304. ✅
+
+Browserslist: ... 10 months old é só aviso do Vite/React build. Pode silenciar/atualizar:
+
+npx update-browserslist-db@latest
+
+
+ou adicionar um script dev:pre chamando isso, se quiser.
+
+Prompts ArkDev (para colar no Replit)
+1) ArkDev – Correção ASAAS (rápida e objetiva)
+
+Objetivo: Garantir que a integração ASAAS use a baseURL do ambiente correto e valide a coerência da chave.
+
+ArkDev
+Contexto:
+- Projeto: SenseiSystem (Node/Express + TS).
+- Problema: Erro 401 "invalid_environment" no ASAAS. Log mostra chave com prefixo de homologação ($aact_hmlg_...) sendo usada contra baseURL de PRODUÇÃO (https://api.asaas.com/v3).
+- Meta: Selecionar baseURL por ambiente (sandbox vs production), validar coerência chave x ambiente, e melhorar mensagens de erro.
+
+Tarefas:
+1) Criar/ajustar serviço server/services/asaasService.ts:
+   - Ler ASAAS_API_KEY e ASAAS_ENV do process.env.
+   - Inferir ambiente pela chave (contém "_hmlg" => sandbox; caso contrário production) quando ASAAS_ENV não estiver setado.
+   - Resolver baseURL: sandbox => https://sandbox.asaas.com/api/v3 ; production => https://api.asaas.com/v3.
+   - Configurar axios com header access_token (valor = ASAAS_API_KEY).
+   - Implementar método testConnection() que chama GET /customers?limit=1 e retorna {success, environment, baseURL, ...} com mensagens amigáveis em caso de 401/invalid_environment.
+
+2) Ajustar rotas em server/routes.ts:
+   - /api/asaas/test-connection: usar AsaasService().testConnection() e retornar payload amigável, incluindo dicas de correção.
+   - /api/asaas/sync-customers: capturar 401 invalid_environment e retornar 502 com mensagem clara sobre chave x ambiente.
+
+3) Atualizar .env.example:
+   - Incluir ASAAS_ENV=sandbox|production e ASAAS_API_KEY=.
+
+4) Testes manuais:
+   - Colocar ASAAS_ENV=sandbox e chave de homologação => /api/asaas/test-connection deve retornar success=true.
+   - Colocar ASAAS_ENV=production com mesma chave => deve retornar success=false com mensagem de ambiente inválido.
+
+Critérios de aceitação:
+- Chaves de homolog apontando para sandbox funcionam.
+- Chaves de produção em production funcionam.
+- Mensagens claras em 401 invalid_environment.
+- Logs informam env, baseURL e length da chave (não expor a chave).
+
+Saída esperada:
+- Patches aplicados nos arquivos.
+- Servidor reiniciado sem erros.
+- /api/asaas/test-connection respondendo coerentemente.
+
+2) ArkDev – Checklist de Config & QA
+ArkDev
+Checklist de Configuração:
+- [ ] Definir ASAAS_ENV no .env (sandbox ou production).
+- [ ] Usar a ASAAS_API_KEY correspondente ao ambiente.
+- [ ] Confirmar que server/services/asaasService.ts usa baseURL correta.
+- [ ] Rodar: POST /api/asaas/test-connection e verificar { success: true }.
+
+QA Funcional:
+- [ ] Login: POST /api/login retorna 200 e seta sessão/cookie.
+- [ ] Dashboard Admin carrega sem 401 pós-login.
+- [ ] /api/asaas/sync-customers com chave/ambiente corretos retorna success e total > 0 (se houver clientes).
+- [ ] Em caso de erro 401, API retorna 502 com mensagem “chave incompatível com o ambiente”.
+
+Manutenção:
+- [ ] Executar "npx update-browserslist-db@latest" para limpar aviso do frontend quando conveniente.
+
+3) ArkDev – Rollback Plan (segurança)
+ArkDev
+Plano de Rollback:
+- Git: criar branch 'fix/asaas-env'.
+- Commits pequenos e atômicos por arquivo alterado.
+- Se algum endpoint crítico quebrar, reverter para o commit anterior na branch.
+- Manter logs anteriores para comparar (antes/depois).

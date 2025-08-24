@@ -140,12 +140,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
+      <div className="min-h-screen flex items-stretch lg:items-center justify-center">
+        <div className="w-full max-w-7xl grid lg:grid-cols-2 min-h-screen lg:min-h-0 lg:gap-12 items-stretch lg:items-center lg:my-8">
           
           {/* Lado Esquerdo - Área de Apresentação */}
-          <div className="order-2 lg:order-1 text-white space-y-8 px-8">
+          <div className="order-2 lg:order-1 text-white space-y-6 lg:space-y-8 px-6 lg:px-8 py-8 lg:py-0 hidden lg:block">
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-white dark:text-slate-100">
                 Transforme sua escola com tecnologia
@@ -318,10 +318,19 @@ export default function LoginPage() {
           </div>
           
           {/* Lado Direito - Formulário de Login */}
-          <div className="order-1 lg:order-2">
-            <div className="mx-auto max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8">
+          <div className="order-1 lg:order-2 flex items-center justify-center lg:justify-end p-6 lg:p-8">
+            <div className="w-full max-w-md bg-slate-800/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 dark:border-slate-600/50 p-8 lg:p-10">
               {/* Header */}
               <div className="text-center mb-8">
+                {/* Mobile version - Show school branding */}
+                <div className="lg:hidden mb-6">
+                  <h1 className="text-2xl font-bold text-white mb-2">
+                    Transforme sua escola com tecnologia
+                  </h1>
+                  <p className="text-slate-300">
+                    A gestão moderna que seu dojo merece
+                  </p>
+                </div>
                 {/* Logo or School Name */}
                 <div className="mb-4">
                   {(() => {
@@ -399,13 +408,13 @@ export default function LoginPage() {
                     
                     // Default: Show school name in highlighted style
                     return (
-                      <h1 className="text-2xl font-bold text-red-600 dark:text-red-500 border-2 border-red-600 dark:border-red-500 px-4 py-2 inline-block rounded">
+                      <h1 className="text-2xl font-bold text-red-500 dark:text-red-400 border-2 border-red-500/50 dark:border-red-400/50 px-4 py-2 inline-block rounded bg-red-500/10 dark:bg-red-400/10">
                         {schoolConfig?.config?.schoolName?.toUpperCase() || "SENSEI SYSTEM"}
                       </h1>
                     );
                   })()}
                 </div>
-                <p className="text-slate-600 dark:text-slate-400">
+                <p className="text-slate-300 dark:text-slate-400">
                   {schoolConfig?.config?.welcomeMessage || "Seja bem-vindo"}
                 </p>
               </div>
@@ -413,8 +422,8 @@ export default function LoginPage() {
               {/* Login Form */}
               <div className="space-y-6">
                 <div className="text-left">
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Entre na sua conta</h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Digite suas credenciais para acessar sua conta</p>
+                  <h2 className="text-lg font-semibold text-white dark:text-slate-100 mb-1">Entre na sua conta</h2>
+                  <p className="text-sm text-slate-300 dark:text-slate-400">Digite suas credenciais para acessar sua conta</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -425,20 +434,20 @@ export default function LoginPage() {
                   )}
                   
                   <div className="space-y-2">
-                    <Label htmlFor="username" className="text-sm font-medium text-slate-700 dark:text-slate-300">E-mail</Label>
+                    <Label htmlFor="username" className="text-sm font-medium text-slate-200 dark:text-slate-300">E-mail</Label>
                     <Input
                       id="username"
                       type="email"
                       value={loginData.username}
                       onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                       placeholder="Digite seu E-mail"
-                      className="w-full"
+                      className="w-full bg-slate-700/50 dark:bg-slate-800/50 border-slate-600/50 dark:border-slate-700/50 text-white dark:text-slate-100 placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500/20"
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">Senha</Label>
+                    <Label htmlFor="password" className="text-sm font-medium text-slate-200 dark:text-slate-300">Senha</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -446,13 +455,13 @@ export default function LoginPage() {
                         value={loginData.password}
                         onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                         placeholder="Digite sua senha"
-                        className="w-full pr-10"
+                        className="w-full pr-10 bg-slate-700/50 dark:bg-slate-800/50 border-slate-600/50 dark:border-slate-700/50 text-white dark:text-slate-100 placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500/20"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 dark:hover:text-slate-300 transition-colors"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -463,7 +472,7 @@ export default function LoginPage() {
                     <button 
                       type="button" 
                       onClick={() => setLocation("/auth/forgot-password")}
-                      className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+                      className="text-sm text-red-400 hover:text-red-300 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
                     >
                       Esqueceu sua senha?
                     </button>
@@ -471,7 +480,7 @@ export default function LoginPage() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-medium py-3 rounded-md transition-all duration-200"
+                    className="w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white font-bold py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-red-500/25"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? (
@@ -484,13 +493,13 @@ export default function LoginPage() {
                     )}
                   </Button>
 
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
-                    <p className="text-sm text-slate-600 dark:text-slate-400 text-center mb-3">Ainda não tem acesso?</p>
+                  <div className="pt-4 border-t border-slate-600/50 dark:border-slate-700/50">
+                    <p className="text-sm text-slate-300 dark:text-slate-400 text-center mb-3">Ainda não tem acesso?</p>
                     <Button 
                       type="button" 
                       variant="outline"
                       onClick={handleRegisterClick}
-                      className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950"
+                      className="w-full border-slate-500/50 text-slate-200 hover:bg-slate-700/50 dark:border-slate-600/50 dark:text-slate-300 dark:hover:bg-slate-800/50 transition-all duration-200"
                     >
                       Matricule-se Agora
                     </Button>
@@ -501,12 +510,12 @@ export default function LoginPage() {
               {/* Footer */}
               <div className="text-center mt-8 space-y-3">
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-600 to-blue-600 rounded-md flex items-center justify-center">
+                  <div className="w-6 h-6 bg-gradient-to-br from-red-600 to-red-700 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs font-bold">S</span>
                   </div>
-                  <span className="text-base font-bold text-slate-800 dark:text-slate-200">SenseiSystem</span>
+                  <span className="text-base font-bold text-slate-200 dark:text-slate-200">SenseiSystem</span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Plataforma líder em gestão para artes marciais</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Plataforma líder em gestão para artes marciais</p>
               </div>
             </div>
           </div>

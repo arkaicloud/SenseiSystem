@@ -99,6 +99,21 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Incorrect email or password" });
           }
           
+          // Auto-approve admin users if they are pending
+          if (user.role === 'admin' && (user.status === 'pending' || !user.active)) {
+            try {
+              await storage.updateUser(user.id, { 
+                status: 'active', 
+                active: true 
+              });
+              user.status = 'active';
+              user.active = true;
+              console.log(`✅ Admin user auto-approved: ${user.email}`);
+            } catch (error) {
+              console.error('❌ Failed to auto-approve admin:', error);
+            }
+          }
+          
           // Check user status for access control
           if (user.status === 'inactive' || user.status === 'blocked') {
             return done(null, false, { message: "Conta inativa. Entre em contato com a administração." });
@@ -172,7 +187,8 @@ export function setupAuth(app: Express) {
       const userData = {
         ...req.body,
         password: hashedPassword,
-        active: false, // Default to pending status
+        active: req.body.role === 'admin' ? true : false, // Auto-activate admins
+        status: req.body.role === 'admin' ? 'active' : 'pending', // Auto-approve admins
       };
       
       // Tratar o campo birthDate: converter de string para data, se existir
@@ -375,6 +391,7 @@ export async function initializeDefaultAdmin() {
         password: hashedPassword,
         role: "admin",
         active: true,
+        status: "active",
         phone: null,
         emergencyContact: null,
         joinDate: new Date(),

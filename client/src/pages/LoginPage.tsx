@@ -331,17 +331,24 @@ export default function LoginPage() {
                     A gestão moderna que seu dojo merece
                   </p>
                 </div>
-                {/* Logo or School Name */}
-                <div className="mb-4">
-                  {(() => {
-                    // Check for theme-specific logos first
-                    const lightLogo = schoolConfig?.config?.logoLightUrl;
-                    const darkLogo = schoolConfig?.config?.logoDarkUrl;
-                    const generalLogo = schoolConfig?.config?.logoUrl;
-                    
-                    // If we have theme-specific logos, use them
-                    if (lightLogo || darkLogo) {
-                      return (
+                {/* Logo (only show if configured by admin) */}
+                {(() => {
+                  // Check for theme-specific logos first
+                  const lightLogo = schoolConfig?.config?.logoLightUrl;
+                  const darkLogo = schoolConfig?.config?.logoDarkUrl;
+                  const generalLogo = schoolConfig?.config?.logoUrl;
+                  
+                  // Only show logo section if admin has configured a logo
+                  const hasLogo = lightLogo || darkLogo || (generalLogo && generalLogo !== 'default');
+                  
+                  if (!hasLogo) {
+                    return null; // Don't show anything if no logo is configured
+                  }
+                  
+                  return (
+                    <div className="mb-4">
+                      {/* If we have theme-specific logos, use them */}
+                      {(lightLogo || darkLogo) && (
                         <div className="mb-2">
                           {/* Light theme logo */}
                           {lightLogo && (
@@ -387,12 +394,10 @@ export default function LoginPage() {
                             />
                           )}
                         </div>
-                      );
-                    }
-                    
-                    // If we have a general logo (not default), use it
-                    if (generalLogo && generalLogo !== 'default') {
-                      return (
+                      )}
+                      
+                      {/* If we have a general logo (not default), use it */}
+                      {generalLogo && generalLogo !== 'default' && !(lightLogo || darkLogo) && (
                         <div className="mb-2">
                           <img 
                             src={generalLogo} 
@@ -403,17 +408,10 @@ export default function LoginPage() {
                             }}
                           />
                         </div>
-                      );
-                    }
-                    
-                    // Default: Show school name in highlighted style
-                    return (
-                      <h1 className="text-2xl font-bold text-red-500 dark:text-red-400 border-2 border-red-500/50 dark:border-red-400/50 px-4 py-2 inline-block rounded bg-red-500/10 dark:bg-red-400/10">
-                        {schoolConfig?.config?.schoolName?.toUpperCase() || "SENSEI SYSTEM"}
-                      </h1>
-                    );
-                  })()}
-                </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <p className="text-slate-300 dark:text-slate-400">
                   {schoolConfig?.config?.welcomeMessage || "Seja bem-vindo"}
                 </p>

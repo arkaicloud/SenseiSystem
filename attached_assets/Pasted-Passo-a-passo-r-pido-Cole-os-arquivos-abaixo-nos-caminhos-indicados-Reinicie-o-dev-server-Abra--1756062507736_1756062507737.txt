@@ -1,0 +1,757 @@
+Passo a passo rápido
+
+Cole os arquivos abaixo nos caminhos indicados.
+
+Reinicie o dev server.
+
+Abra a tela “Edição Completa do Aluno” e valide:
+
+Dialog responsivo (mobile/desktop)
+
+Abas scrolláveis horizontalmente
+
+Campos carregando valores do DB corretamente
+
+Botão Salvar sempre visível (footer sticky)
+
+PATCH funcionando com toast de sucesso/erro
+
+FRONTEND
+1) Utilidades de formatação
+
+frontend/src/lib/formatters.ts
+
+// frontend/src/lib/formatters.ts
+export const onlyDigits = (v?: string | null) => (v || "").replace(/\D+/g, "");
+
+export function formatCPF(v?: string | null) {
+  const s = onlyDigits(v);
+  return s
+    .slice(0, 11)
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+export function unformatCPF(v?: string | null) {
+  return onlyDigits(v).slice(0, 11);
+}
+
+export function formatRG(v?: string | null) {
+  const s = onlyDigits(v).slice(0, 9);
+  if (s.length <= 2) return s;
+  if (s.length <= 5) return s.replace(/^(\d{2})(\d+)/, "$1.$2");
+  if (s.length <= 8) return s.replace(/^(\d{2})(\d{3})(\d+)/, "$1.$2.$3");
+  return s.replace(/^(\d{2})(\d{3})(\d{3})(\d)/, "$1.$2.$3-$4");
+}
+export const unformatRG = (v?: string | null) => onlyDigits(v).slice(0, 9);
+
+export function formatPhone(v?: string | null) {
+  const s = onlyDigits(v).slice(0, 11);
+  if (s.length <= 10) {
+    return s.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3").trim();
+  }
+  return s.replace(/^(\d{2})(\d{5})(\d{0,4})$/, "($1) $2-$3").trim();
+}
+export const unformatPhone = (v?: string | null) => onlyDigits(v).slice(0, 11);
+
+export function formatCEP(v?: string | null) {
+  return onlyDigits(v).slice(0, 8).replace(/^(\d{5})(\d{0,3})$/, "$1-$2").trim();
+}
+export const unformatCEP = (v?: string | null) => onlyDigits(v).slice(0, 8);
+
+export function toDisplayDate(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+export function toISODate(display?: string | null) {
+  if (!display) return null;
+  const m = display.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [_, dd, mm, yyyy] = m;
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+2) Client de API do aluno
+
+frontend/src/services/api/students.ts
+
+// frontend/src/services/api/students.ts
+import axios from "axios";
+
+export type StudentEditDTO = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  birthDate: string | null;
+  cpf: string | null;
+  rg: string | null;
+  contact: { phones: string[]; email: string | null };
+  address: { street: string | null; number: string | null; district: string | null; city: string | null; state: string | null; zip: string | null };
+  health: { notes: string | null };
+  graduation: { beltLevel: string | null; graduationDate: string | null };
+  guardian: { name: string | null; relation: string | null; phone: string | null; email: string | null };
+};
+
+export async function getStudentById(id: number) {
+  const { data } = await axios.get(`/api/students/${id}?include=all`);
+  return data as StudentEditDTO;
+}
+
+export async function updateStudent(id: number, payload: StudentEditDTO) {
+  const { data } = await axios.patch(`/api/students/${id}`, payload);
+  return data as StudentEditDTO;
+}
+
+3) Dialog responsivo com RHF + Zod
+
+frontend/src/components/students/StudentEditDialog.tsx
+
+// frontend/src/components/students/StudentEditDialog.tsx
+import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getStudentById, updateStudent, StudentEditDTO } from "@/services/api/students";
+import { formatCPF, unformatCPF, formatRG, unformatRG, formatPhone, unformatPhone, formatCEP, unformatCEP, toDisplayDate, toISODate } from "@/lib/formatters";
+
+// shadcn/ui (ajuste imports conforme seu projeto)
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+
+const StudentSchema = z.object({
+  id: z.number(),
+  firstName: z.string().min(1, "Nome obrigatório"),
+  lastName: z.string().min(1, "Sobrenome obrigatório"),
+  birthDate: z.string().nullable().optional(),
+  cpf: z.string().nullable().optional(),
+  rg: z.string().nullable().optional(),
+  contact: z.object({
+    phones: z.array(z.string()).default([]),
+    email: z.string().email().nullable().optional()
+  }),
+  address: z.object({
+    street: z.string().nullable().optional(),
+    number: z.string().nullable().optional(),
+    district: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+    zip: z.string().nullable().optional(),
+  }),
+  health: z.object({
+    notes: z.string().nullable().optional()
+  }),
+  graduation: z.object({
+    beltLevel: z.string().nullable().optional(),
+    graduationDate: z.string().nullable().optional(),
+  }),
+  guardian: z.object({
+    name: z.string().nullable().optional(),
+    relation: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
+    email: z.string().email().nullable().optional(),
+  }),
+});
+
+type FormValues = z.infer<typeof StudentSchema>;
+
+type Props = {
+  studentId: number;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  studentName: string; // para header
+};
+
+export default function StudentEditDialog({ studentId, open, onOpenChange, studentName }: Props) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState("dados");
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(StudentSchema),
+    defaultValues: {
+      id: studentId,
+      firstName: "",
+      lastName: "",
+      birthDate: "",
+      cpf: "",
+      rg: "",
+      contact: { phones: [""], email: "" },
+      address: { street: "", number: "", district: "", city: "", state: "", zip: "" },
+      health: { notes: "" },
+      graduation: { beltLevel: "", graduationDate: "" },
+      guardian: { name: "", relation: "", phone: "", email: "" },
+    },
+    mode: "onChange",
+  });
+
+  // Carregar dados
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    getStudentById(studentId)
+      .then((dto) => {
+        form.reset({
+          id: dto.id,
+          firstName: dto.firstName || "",
+          lastName: dto.lastName || "",
+          birthDate: toDisplayDate(dto.birthDate),
+          cpf: formatCPF(dto.cpf || ""),
+          rg: formatRG(dto.rg || ""),
+          contact: {
+            phones: (dto.contact?.phones?.length ? dto.contact.phones : [""]).map(formatPhone),
+            email: dto.contact?.email || "",
+          },
+          address: {
+            street: dto.address?.street || "",
+            number: dto.address?.number || "",
+            district: dto.address?.district || "",
+            city: dto.address?.city || "",
+            state: dto.address?.state || "",
+            zip: formatCEP(dto.address?.zip || ""),
+          },
+          health: { notes: dto.health?.notes || "" },
+          graduation: {
+            beltLevel: dto.graduation?.beltLevel || "",
+            graduationDate: toDisplayDate(dto.graduation?.graduationDate),
+          },
+          guardian: {
+            name: dto.guardian?.name || "",
+            relation: dto.guardian?.relation || "",
+            phone: formatPhone(dto.guardian?.phone || ""),
+            email: dto.guardian?.email || "",
+          },
+        });
+      })
+      .catch(() => {
+        toast({ title: "Erro ao carregar", description: "Não foi possível carregar os dados do aluno.", variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, studentId]);
+
+  async function onSubmit(values: FormValues) {
+    setLoading(true);
+    try {
+      const payload: StudentEditDTO = {
+        id: values.id,
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        birthDate: toISODate(values.birthDate) || null,
+        cpf: unformatCPF(values.cpf),
+        rg: unformatRG(values.rg),
+        contact: {
+          phones: (values.contact.phones || []).map(unformatPhone).filter(Boolean),
+          email: values.contact.email?.trim() || null,
+        },
+        address: {
+          street: values.address.street?.trim() || null,
+          number: values.address.number?.trim() || null,
+          district: values.address.district?.trim() || null,
+          city: values.address.city?.trim() || null,
+          state: values.address.state?.trim() || null,
+          zip: unformatCEP(values.address.zip),
+        },
+        health: { notes: values.health.notes?.trim() || null },
+        graduation: {
+          beltLevel: values.graduation.beltLevel?.trim() || null,
+          graduationDate: toISODate(values.graduation.graduationDate) || null,
+        },
+        guardian: {
+          name: values.guardian.name?.trim() || null,
+          relation: values.guardian.relation?.trim() || null,
+          phone: unformatPhone(values.guardian.phone),
+          email: values.guardian.email?.trim() || null,
+        },
+      };
+      await updateStudent(studentId, payload);
+      toast({ title: "Salvo!", description: "Dados do aluno atualizados com sucesso." });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar", description: e?.response?.data?.detail || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // UI helpers
+  const headerTitle = useMemo(() => `Edição Completa do Aluno – ${studentName}`, [studentName]);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => {
+      if (!v && form.formState.isDirty && !window.confirm("Descartar alterações não salvas?")) return;
+      onOpenChange(v);
+    }}>
+      <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
+        {/* HEADER */}
+        <div className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b">
+          <DialogHeader className="px-4 py-3 md:px-6">
+            <DialogTitle className="text-lg md:text-xl">{headerTitle}</DialogTitle>
+            <DialogDescription className="hidden md:block">Gerenciar informações completas do aluno incluindo dados pessoais, contato, endereço, saúde e documentos.</DialogDescription>
+          </DialogHeader>
+
+          {/* TABS BAR */}
+          <div className="border-t">
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap gap-1 px-2 md:px-4 py-2">
+                <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+                <TabsTrigger value="contato">Contato</TabsTrigger>
+                <TabsTrigger value="endereco">Endereço</TabsTrigger>
+                <TabsTrigger value="saude">Saúde & Graduação</TabsTrigger>
+                <TabsTrigger value="responsavel">Responsável Financeiro</TabsTrigger>
+                <TabsTrigger value="docs">Documentos</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* BODY */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="relative h-[calc(100%-140px)] md:h-[calc(100%-120px)]">
+          <div className="h-full overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+            {/* DADOS */}
+            {tab === "dados" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Dados Pessoais</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>Nome *</Label>
+                    <Input {...form.register("firstName")} placeholder="Ex.: Gabriela" />
+                  </div>
+                  <div>
+                    <Label>Sobrenome *</Label>
+                    <Input {...form.register("lastName")} placeholder="Ex.: Santos" />
+                  </div>
+                  <div>
+                    <Label>Data de Nascimento</Label>
+                    <Input
+                      value={form.watch("birthDate") || ""}
+                      onChange={(e) => form.setValue("birthDate", e.target.value)}
+                      placeholder="dd/mm/aaaa"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div>
+                    <Label>CPF</Label>
+                    <Input
+                      value={form.watch("cpf") || ""}
+                      onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))}
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div>
+                    <Label>RG</Label>
+                    <Input
+                      value={form.watch("rg") || ""}
+                      onChange={(e) => form.setValue("rg", formatRG(e.target.value))}
+                      inputMode="numeric"
+                    />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* CONTATO */}
+            {tab === "contato" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Contato</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="sm:col-span-1">
+                    <Label>Telefone</Label>
+                    <Controller
+                      control={form.control}
+                      name="contact.phones.0"
+                      render={({ field }) => (
+                        <Input {...field} value={field.value || ""} onChange={(e) => field.onChange(formatPhone(e.target.value))} placeholder="(11) 99999-9999" inputMode="tel" />
+                      )}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>E-mail</Label>
+                    <Input {...form.register("contact.email")} type="email" placeholder="email@exemplo.com" />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* ENDEREÇO */}
+            {tab === "endereco" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Endereço</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>CEP</Label>
+                    <Input
+                      value={form.watch("address.zip") || ""}
+                      onChange={(e) => form.setValue("address.zip", formatCEP(e.target.value))}
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <Label>Logradouro</Label>
+                    <Input {...form.register("address.street")} />
+                  </div>
+                  <div>
+                    <Label>Número</Label>
+                    <Input {...form.register("address.number")} />
+                  </div>
+                  <div>
+                    <Label>Bairro</Label>
+                    <Input {...form.register("address.district")} />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input {...form.register("address.city")} />
+                  </div>
+                  <div>
+                    <Label>Estado</Label>
+                    <Input {...form.register("address.state")} maxLength={2} placeholder="SP" />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* SAÚDE & GRADUAÇÃO */}
+            {tab === "saude" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Saúde & Graduação</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="lg:col-span-3">
+                    <Label>Observações de Saúde</Label>
+                    <Input {...form.register("health.notes")} placeholder="Alergias, restrições, etc." />
+                  </div>
+                  <div>
+                    <Label>Faixa (nível)</Label>
+                    <Input {...form.register("graduation.beltLevel")} placeholder="Branca, Azul, ..." />
+                  </div>
+                  <div>
+                    <Label>Data de Graduação</Label>
+                    <Input
+                      value={form.watch("graduation.graduationDate") || ""}
+                      onChange={(e) => form.setValue("graduation.graduationDate", e.target.value)}
+                      placeholder="dd/mm/aaaa"
+                      inputMode="numeric"
+                    />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* RESPONSÁVEL FINANCEIRO */}
+            {tab === "responsavel" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Responsável Financeiro</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>Nome</Label>
+                    <Input {...form.register("guardian.name")} />
+                  </div>
+                  <div>
+                    <Label>Parentesco</Label>
+                    <Input {...form.register("guardian.relation")} />
+                  </div>
+                  <div>
+                    <Label>Telefone</Label>
+                    <Controller
+                      control={form.control}
+                      name="guardian.phone"
+                      render={({ field }) => (
+                        <Input {...field} value={field.value || ""} onChange={(e) => field.onChange(formatPhone(e.target.value))} placeholder="(11) 99999-9999" inputMode="tel" />
+                      )}
+                    />
+                  </div>
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <Label>E-mail</Label>
+                    <Input {...form.register("guardian.email")} type="email" />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* DOCS (placeholder) */}
+            {tab === "docs" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Documentos</h3>
+                <p className="text-sm text-muted-foreground">Upload de documentos em breve.</p>
+              </section>
+            )}
+          </div>
+
+          {/* FOOTER STICKY */}
+          <div className="sticky bottom-0 z-20 bg-background/90 backdrop-blur border-t px-4 md:px-6 py-3 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
+            <DialogClose asChild>
+              <Button variant="ghost" type="button" disabled={loading}>Cancelar</Button>
+            </DialogClose>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Salvando..." : "Salvar alterações"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+Observações:
+
+O Dialog usa header + tabs + body scrollável + footer sticky; o botão Salvar não some.
+
+Campos com máscara usam Controller quando necessário; todos os valores caem como "" se vazios, evitando undefined.
+
+BACKEND
+1) DTO unificado
+
+server/dto/StudentEditDTO.ts
+
+// server/dto/StudentEditDTO.ts
+export type StudentEditDTO = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  birthDate: string | null; // ISO "YYYY-MM-DD"
+  cpf: string | null;       // só números
+  rg: string | null;        // só números
+  contact: { phones: string[]; email: string | null };
+  address: { street: string | null; number: string | null; district: string | null; city: string | null; state: string | null; zip: string | null };
+  health: { notes: string | null };
+  graduation: { beltLevel: string | null; graduationDate: string | null };
+  guardian: { name: string | null; relation: string | null; phone: string | null; email: string | null };
+};
+
+2) Service de mapeamento/normalização (exemplo com Prisma – adapte ao seu ORM)
+
+server/services/studentsService.ts
+
+// server/services/studentsService.ts
+import { prisma } from "../prisma"; // ajuste se necessário
+import { StudentEditDTO } from "../dto/StudentEditDTO";
+
+const nd = (v?: string | null) => (v == null ? null : v.trim() || null);
+
+export async function getStudentEditDTO(id: number): Promise<StudentEditDTO | null> {
+  const s = await prisma.student.findUnique({
+    where: { id },
+    include: {
+      user: true,
+      contact: true,
+      address: true,
+      health: true,
+      graduation: true,
+      guardian: true,
+    },
+  });
+  if (!s || !s.user) return null;
+
+  return {
+    id: s.id,
+    firstName: s.user.firstName,
+    lastName: s.user.lastName,
+    birthDate: s.birthDate ? s.birthDate.toISOString().slice(0, 10) : null,
+    cpf: s.cpf || null,
+    rg: s.rg || null,
+    contact: {
+      phones: s.contact?.phones || [],
+      email: s.contact?.email || null,
+    },
+    address: {
+      street: s.address?.street || null,
+      number: s.address?.number || null,
+      district: s.address?.district || null,
+      city: s.address?.city || null,
+      state: s.address?.state || null,
+      zip: s.address?.zip || null,
+    },
+    health: { notes: s.health?.notes || null },
+    graduation: {
+      beltLevel: s.graduation?.beltLevel || null,
+      graduationDate: s.graduation?.graduationDate
+        ? s.graduation.graduationDate.toISOString().slice(0, 10)
+        : null,
+    },
+    guardian: {
+      name: s.guardian?.name || null,
+      relation: s.guardian?.relation || null,
+      phone: s.guardian?.phone || null,
+      email: s.guardian?.email || null,
+    },
+  };
+}
+
+export async function patchStudentFromDTO(id: number, dto: StudentEditDTO): Promise<StudentEditDTO> {
+  // transação para manter consistência
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: (await tx.student.findUniqueOrThrow({ where: { id } })).userId },
+      data: { firstName: dto.firstName, lastName: dto.lastName },
+    });
+
+    await tx.student.update({
+      where: { id },
+      data: {
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
+        cpf: dto.cpf || null,
+        rg: dto.rg || null,
+      },
+    });
+
+    // contato
+    const hasContact = await tx.contact.findUnique({ where: { studentId: id } });
+    if (hasContact) {
+      await tx.contact.update({
+        where: { studentId: id },
+        data: { phones: dto.contact.phones || [], email: nd(dto.contact.email) },
+      });
+    } else {
+      await tx.contact.create({
+        data: { studentId: id, phones: dto.contact.phones || [], email: nd(dto.contact.email) },
+      });
+    }
+
+    // endereço
+    const hasAddress = await tx.address.findUnique({ where: { studentId: id } });
+    const addrData = {
+      street: nd(dto.address.street),
+      number: nd(dto.address.number),
+      district: nd(dto.address.district),
+      city: nd(dto.address.city),
+      state: nd(dto.address.state),
+      zip: nd(dto.address.zip),
+    };
+    if (hasAddress) {
+      await tx.address.update({ where: { studentId: id }, data: addrData });
+    } else {
+      await tx.address.create({ data: { studentId: id, ...addrData } });
+    }
+
+    // saúde
+    const hasHealth = await tx.health.findUnique({ where: { studentId: id } });
+    if (hasHealth) {
+      await tx.health.update({ where: { studentId: id }, data: { notes: nd(dto.health.notes) } });
+    } else {
+      await tx.health.create({ data: { studentId: id, notes: nd(dto.health.notes) } });
+    }
+
+    // graduação
+    const hasGrad = await tx.graduation.findUnique({ where: { studentId: id } });
+    const gradData = {
+      beltLevel: nd(dto.graduation.beltLevel),
+      graduationDate: dto.graduation.graduationDate ? new Date(dto.graduation.graduationDate) : null,
+    };
+    if (hasGrad) {
+      await tx.graduation.update({ where: { studentId: id }, data: gradData });
+    } else {
+      await tx.graduation.create({ data: { studentId: id, ...gradData } });
+    }
+
+    // responsável
+    const hasGuardian = await tx.guardian.findUnique({ where: { studentId: id } });
+    const gData = {
+      name: nd(dto.guardian.name),
+      relation: nd(dto.guardian.relation),
+      phone: nd(dto.guardian.phone),
+      email: nd(dto.guardian.email),
+    };
+    if (hasGuardian) {
+      await tx.guardian.update({ where: { studentId: id }, data: gData });
+    } else {
+      await tx.guardian.create({ data: { studentId: id, ...gData } });
+    }
+  });
+
+  // retornar DTO atualizado
+  const updated = await getStudentEditDTO(id);
+  if (!updated) throw new Error("Falha ao recarregar aluno.");
+  return updated;
+}
+
+
+Dica: se seus nomes de tabelas diferirem, mapeie conforme o seu schema. O importante é manter um DTO único e estável.
+
+3) Rotas (GET/PATCH)
+
+server/routes.ts (apenas o trecho das rotas do aluno)
+
+// server/routes.ts (trechos relevantes)
+import type { Request, Response } from "express";
+import { getStudentEditDTO, patchStudentFromDTO } from "./services/studentsService";
+import { StudentEditDTO } from "./dto/StudentEditDTO";
+
+app.get("/api/students/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const dto = await getStudentEditDTO(id);
+    if (!dto) return res.status(404).json({ message: "Aluno não encontrado" });
+    return res.json(dto);
+  } catch (e: any) {
+    console.error("GET /api/students/:id error", e);
+    return res.status(500).json({ message: "Erro ao carregar aluno." });
+  }
+});
+
+app.patch("/api/students/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const body: StudentEditDTO = req.body;
+    if (id !== body.id) return res.status(400).json({ message: "ID inconsistente." });
+    const updated = await patchStudentFromDTO(id, body);
+    return res.json(updated);
+  } catch (e: any) {
+    console.error("PATCH /api/students/:id error", e);
+    return res.status(500).json({ message: "Erro ao salvar dados do aluno.", detail: e?.message });
+  }
+});
+
+CSS opcional (rolagem suave nas abas)
+
+Adicione ao seu global.css caso queira rolagem horizontal sem mostrar a barra:
+
+/* frontend/src/styles/globals.css (ou tailwind.css) */
+.tabs-scroll::-webkit-scrollbar { height: 0; }
+
+
+e aplique className="tabs-scroll" no TabsList se quiser.
+
+Prompts ArkDev prontos (para colar no Replit)
+ArkDev — “Aplicar correção completa na Edição de Aluno”
+ArkDev
+Contexto: SenseiSystem – Correção da tela "Edição Completa do Aluno" (responsividade + binding + salvamento).
+Objetivo: Aplicar os arquivos fornecidos, ajustar rotas, e validar end-to-end.
+
+Tarefas:
+1) Criar/atualizar:
+   - frontend/src/lib/formatters.ts
+   - frontend/src/services/api/students.ts
+   - frontend/src/components/students/StudentEditDialog.tsx
+   - server/dto/StudentEditDTO.ts
+   - server/services/studentsService.ts
+   - server/routes.ts (trechos GET/PATCH de students)
+2) Build e rodar.
+3) Testes manuais:
+   - Abrir aluno existente com dados preenchidos: verificar campos populados corretamente.
+   - Mobile: confirmar que todas as seções aparecem e o botão "Salvar alterações" fica visível (footer sticky).
+   - Editar CPF/RG/Telefone/CEP/Data com máscaras; salvar e reabrir para conferir persistência.
+   - Realizar PATCH e validar toast de sucesso; em erro, toast de erro.
+
+Critérios de aceitação:
+- Dialog responsivo em 360×640 e em 1366×768.
+- Abas com scroll horizontal quando necessário.
+- Dados do banco carregam e exibem corretamente.
+- PATCH persiste alterações em todas as seções.
+
+ArkDev — “Rollback”
+ArkDev
+Criar branch: fix/student-edit-responsive
+Commits atômicos por arquivo.
+Se quebrar algo crítico, reverter para o commit anterior. Manter logs do servidor para diagnóstico.
+
+
+se quiser, eu também já monto um diff/patch no formato git apply com esses arquivos. quer que eu te envie o patch pronto?

@@ -1,295 +1,227 @@
-import React, { useState, useEffect } from "react";
+import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  CreditCard, 
-  FileText, 
-  Activity, 
-  Scale,
-  Calendar,
-  Heart,
-  Award,
-  Users,
-  Upload,
-  Save,
-  X,
-  FileCheck,
-  Clock,
-  Shield
-} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { formatCPF, unformatCPF, formatRG, unformatRG, formatPhone, unformatPhone, formatCEP, unformatCEP, toDisplayDate, toISODate } from "@/lib/formatters";
 
-// Schema completo para edição de aluno
-const studentEditSchema = z.object({
-  // Dados Pessoais
-  firstName: z.string().min(1, "Nome é obrigatório"),
-  lastName: z.string().min(1, "Sobrenome é obrigatório"),
-  birthDate: z.string().optional(),
-  cpf: z.string().optional(),
-  rg: z.string().optional(),
+// shadcn/ui imports
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+
+const StudentSchema = z.object({
+  id: z.number(),
+  firstName: z.string().min(1, "Nome obrigatório"),
+  lastName: z.string().min(1, "Sobrenome obrigatório"),
+  birthDate: z.string().nullable().optional(),
+  cpf: z.string().nullable().optional(),
+  rg: z.string().nullable().optional(),
   gender: z.enum(["M", "F", "O"]).optional(),
-  
-  // Contato
-  email: z.string().email("Email inválido"),
-  phone: z.string().optional(),
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
-  
-  // Endereço
-  zipCode: z.string().optional(),
-  street: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  
-  // Saúde e Graduação
-  healthQuestions: z.object({
-    q1: z.boolean().default(false),
-    q2: z.boolean().default(false),
-    q3: z.boolean().default(false),
-    q4: z.boolean().default(false),
-    q5: z.boolean().default(false),
-    q6: z.boolean().default(false),
-    q7: z.boolean().default(false),
-  }).optional(),
-  medicalObservations: z.string().optional(),
-  beltLevel: z.string().default("white"),
-  lastPromotionDate: z.string().optional(),
-  
-  // Responsável Financeiro
-  financialResponsibleName: z.string().optional(),
-  financialResponsibleCpf: z.string().optional(),
-  financialResponsibleEmail: z.string().optional(),
-  financialResponsiblePhone: z.string().optional(),
-  financialResponsibleRelation: z.string().optional(),
-  
-  // Plano
-  paymentPlanId: z.number().optional(),
-  planObservations: z.string().optional(),
-  
-  // Avaliação Física
-  physicalAssessment: z.object({
-    date: z.string().optional(),
-    evaluator: z.string().optional(),
-    height: z.number().optional(),
-    weight: z.number().optional(),
-    flexibility: z.number().optional(),
-    strength: z.number().optional(),
-    resistance: z.number().optional(),
-    observations: z.string().optional(),
-  }).optional(),
+  email: z.string().email().nullable(),
+  phone: z.string().nullable().optional(),
+  emergencyContactName: z.string().nullable().optional(),
+  emergencyContactPhone: z.string().nullable().optional(),
+  zipCode: z.string().nullable().optional(),
+  street: z.string().nullable().optional(),
+  number: z.string().nullable().optional(),
+  complement: z.string().nullable().optional(),
+  neighborhood: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+  medicalObservations: z.string().nullable().optional(),
+  beltLevel: z.string().nullable().optional(),
+  paymentPlanId: z.number().nullable().optional(),
+  financialResponsibleName: z.string().nullable().optional(),
+  financialResponsibleCpf: z.string().nullable().optional(),
+  financialResponsibleEmail: z.string().nullable().optional(),
+  financialResponsiblePhone: z.string().nullable().optional(),
+  financialResponsibleRelation: z.enum(["self", "parent", "spouse", "other"]).nullable().optional(),
 });
 
-type StudentEditValues = z.infer<typeof studentEditSchema>;
+type FormValues = z.infer<typeof StudentSchema>;
 
-interface Student {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  birthDate?: string;
-  cpf?: string;
-  rg?: string;
-  zipCode?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  student?: {
-    beltLevel?: string;
-    lastPromotionDate?: string;
-    financialResponsibleName?: string;
-    financialResponsibleCpf?: string;
-    financialResponsibleEmail?: string;
-    financialResponsiblePhone?: string;
-    financialResponsibleRelation?: string;
-    paymentPlanId?: number;
-    medicalObservations?: string;
-    planObservations?: string;
-  };
-}
-
-interface StudentEditDialogProps {
-  studentId: number | null;
+type Props = {
+  studentId: number;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+  onOpenChange: (v: boolean) => void;
+};
 
-export default function StudentEditDialog({ studentId, open, onOpenChange }: StudentEditDialogProps) {
-  const [activeTab, setActiveTab] = useState("personal");
+export default function StudentEditDialog({ studentId, open, onOpenChange }: Props) {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState("dados");
   const queryClient = useQueryClient();
 
-  // Fetch student data
-  const { data: student, isLoading } = useQuery<Student>({
+  // Fetch user data
+  const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: [`/api/users/${studentId}`],
-    enabled: !!studentId && open,
+    enabled: open && !!studentId,
   });
 
   // Fetch payment plans
-  const { data: paymentPlansData } = useQuery<{ plans: any[] }>({
+  const { data: paymentPlansData } = useQuery({
     queryKey: ["/api/payment-plans"],
+    enabled: open,
   });
 
-  // Fetch belt levels
-  const { data: beltLevels } = useQuery({
-    queryKey: ["/api/admin/belts"],
-  });
-
-  const form = useForm<StudentEditValues>({
-    resolver: zodResolver(studentEditSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(StudentSchema),
     defaultValues: {
+      id: studentId,
       firstName: "",
       lastName: "",
+      birthDate: "",
+      cpf: "",
+      rg: "",
+      gender: undefined,
       email: "",
-      beltLevel: "white",
-      healthQuestions: {
-        q1: false, q2: false, q3: false, q4: false, q5: false, q6: false, q7: false
-      },
-      physicalAssessment: {
-        height: 0,
-        weight: 0,
-        flexibility: 0,
-        strength: 0,
-        resistance: 0,
-      },
+      phone: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      zipCode: "",
+      street: "",
+      number: "",
+      complement: "",
+      neighborhood: "",
+      city: "",
+      state: "",
+      medicalObservations: "",
+      beltLevel: "",
+      paymentPlanId: null,
+      financialResponsibleName: "",
+      financialResponsibleCpf: "",
+      financialResponsibleEmail: "",
+      financialResponsiblePhone: "",
+      financialResponsibleRelation: null,
     },
+    mode: "onChange",
   });
 
-  // Load student data into form
+  // Load user data when dialog opens
   useEffect(() => {
-    if (student && open) {
-      form.reset({
-        firstName: student.firstName || "",
-        lastName: student.lastName || "",
-        email: student.email || "",
-        phone: student.phone || "",
-        birthDate: student.birthDate ? new Date(student.birthDate).toISOString().split('T')[0] : "",
-        cpf: student.cpf || "",
-        rg: student.rg || "",
-        zipCode: student.zipCode || "",
-        street: student.street || "",
-        number: student.number || "",
-        complement: student.complement || "",
-        neighborhood: student.neighborhood || "",
-        city: student.city || "",
-        state: student.state || "",
-        emergencyContactName: (student as any).emergencyContact || "",
-        emergencyContactPhone: (student as any).emergencyPhone || "",
-        beltLevel: student.student?.beltLevel || "white",
-        lastPromotionDate: student.student?.lastPromotionDate ? 
-          new Date(student.student.lastPromotionDate).toISOString().split('T')[0] : "",
-        financialResponsibleName: student.student?.financialResponsibleName || "",
-        financialResponsibleCpf: student.student?.financialResponsibleCpf || "",
-        financialResponsibleEmail: student.student?.financialResponsibleEmail || "",
-        financialResponsiblePhone: student.student?.financialResponsiblePhone || "",
-        financialResponsibleRelation: student.student?.financialResponsibleRelation || "",
-        paymentPlanId: student.student?.paymentPlanId || undefined,
-        medicalObservations: student.student?.medicalObservations || "",
-        planObservations: student.student?.planObservations || "",
-      });
-    }
-  }, [student, open, form]);
+    if (!open || !userData) return;
+    
+    const user = userData as any;
+    form.reset({
+      id: user?.id || studentId,
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      birthDate: user?.student?.birthDate ? toDisplayDate(user.student.birthDate) : "",
+      cpf: formatCPF(user?.student?.cpf || ""),
+      rg: formatRG(user?.student?.rg || ""),
+      gender: user?.student?.gender || undefined,
+      email: user?.email || "",
+      phone: formatPhone(user?.student?.phone || ""),
+      emergencyContactName: user?.student?.emergencyContactName || "",
+      emergencyContactPhone: formatPhone(user?.student?.emergencyContactPhone || ""),
+      zipCode: formatCEP(user?.student?.zipCode || ""),
+      street: user?.student?.street || "",
+      number: user?.student?.number || "",
+      complement: user?.student?.complement || "",
+      neighborhood: user?.student?.neighborhood || "",
+      city: user?.student?.city || "",
+      state: user?.student?.state || "",
+      medicalObservations: user?.student?.medicalObservations || "",
+      beltLevel: user?.student?.beltLevel || "",
+      paymentPlanId: user?.student?.paymentPlanId || null,
+      financialResponsibleName: user?.student?.financialResponsibleName || "",
+      financialResponsibleCpf: formatCPF(user?.student?.financialResponsibleCpf || ""),
+      financialResponsibleEmail: user?.student?.financialResponsibleEmail || "",
+      financialResponsiblePhone: formatPhone(user?.student?.financialResponsiblePhone || ""),
+      financialResponsibleRelation: user?.student?.financialResponsibleRelation || null,
+    });
+  }, [open, userData, form, studentId]);
 
-  // Update student mutation
-  const updateStudentMutation = useMutation({
-    mutationFn: async (data: StudentEditValues) => {
+  const updateMutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      const payload = {
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        email: values.email?.trim(),
+        student: {
+          birthDate: toISODate(values.birthDate),
+          cpf: unformatCPF(values.cpf),
+          rg: unformatRG(values.rg),
+          gender: values.gender,
+          phone: unformatPhone(values.phone),
+          emergencyContactName: values.emergencyContactName?.trim() || null,
+          emergencyContactPhone: unformatPhone(values.emergencyContactPhone),
+          zipCode: unformatCEP(values.zipCode),
+          street: values.street?.trim() || null,
+          number: values.number?.trim() || null,
+          complement: values.complement?.trim() || null,
+          neighborhood: values.neighborhood?.trim() || null,
+          city: values.city?.trim() || null,
+          state: values.state?.trim() || null,
+          medicalObservations: values.medicalObservations?.trim() || null,
+          beltLevel: values.beltLevel?.trim() || null,
+          paymentPlanId: values.paymentPlanId,
+          financialResponsibleName: values.financialResponsibleName?.trim() || null,
+          financialResponsibleCpf: unformatCPF(values.financialResponsibleCpf),
+          financialResponsibleEmail: values.financialResponsibleEmail?.trim() || null,
+          financialResponsiblePhone: unformatPhone(values.financialResponsiblePhone),
+          financialResponsibleRelation: values.financialResponsibleRelation,
+        }
+      };
+      
       const response = await fetch(`/api/users/${studentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
-        throw new Error('Falha ao atualizar aluno');
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao salvar");
       }
       
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Dados do aluno atualizados com sucesso",
+      toast({ 
+        title: "Salvo!", 
+        description: "Dados do aluno atualizados com sucesso." 
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       queryClient.invalidateQueries({ queryKey: [`/api/users/${studentId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       onOpenChange(false);
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao atualizar aluno: ${error.message}`,
-        variant: "destructive",
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao salvar", 
+        description: error?.message || "Tente novamente.", 
+        variant: "destructive" 
       });
-    },
+    }
   });
 
-  const onSubmit = (data: StudentEditValues) => {
-    updateStudentMutation.mutate(data);
-  };
+  async function onSubmit(values: FormValues) {
+    updateMutation.mutate(values);
+  }
 
-  const paymentPlans = paymentPlansData?.plans || [];
+  const headerTitle = useMemo(() => {
+    if (!userData) return "Editando Aluno";
+    const user = userData as any;
+    return `Editando ${user?.firstName || ""} ${user?.lastName || ""}`;
+  }, [userData]);
 
-  const formatCurrency = (amountInCents: number) => {
-    const amount = amountInCents / 100;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(amount);
-  };
-
-  const calculateIMC = (height: number, weight: number) => {
-    if (height && weight) {
-      const heightInMeters = height / 100;
-      return (weight / (heightInMeters * heightInMeters)).toFixed(1);
-    }
-    return "0";
-  };
-
-  if (isLoading) {
+  if (userLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl bg-background border-border">
-          <div className="flex items-center justify-center p-8">
-            <div className="text-muted-foreground">Carregando dados do aluno...</div>
+        <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         </DialogContent>
       </Dialog>
@@ -297,1122 +229,303 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Stu
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl w-[95vw] h-[90vh] flex flex-col bg-background border-border overflow-hidden">
-        <DialogHeader className="sticky top-0 z-10 bg-background border-b border-border pb-4">
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Edição Completa do Aluno - {student?.firstName} {student?.lastName}
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Gerenciar informações completas do aluno incluindo dados pessoais, contato, saúde e documentos.
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={open} onOpenChange={(v) => {
+      if (!v && form.formState.isDirty && !window.confirm("Descartar alterações não salvas?")) return;
+      onOpenChange(v);
+    }}>
+      <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
+        {/* HEADER */}
+        <div className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b">
+          <DialogHeader className="px-4 py-3 md:px-6">
+            <DialogTitle className="text-lg md:text-xl">{headerTitle}</DialogTitle>
+            <DialogDescription className="hidden md:block">
+              Gerenciar informações completas do aluno incluindo dados pessoais, contato, endereço, saúde e documentos.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                <TabsList className="shrink-0 grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 bg-muted h-auto sm:h-16 p-1 sm:p-2 mb-4 shadow-sm gap-1 sm:gap-0">
-                <TabsTrigger value="personal" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <User className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs hidden sm:inline">Dados Pessoais</span>
-                  <span className="text-xs sm:hidden">Dados</span>
-                </TabsTrigger>
-                <TabsTrigger value="contact" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Phone className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs">Contato</span>
-                </TabsTrigger>
-                <TabsTrigger value="address" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <MapPin className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs">Endereço</span>
-                </TabsTrigger>
-                <TabsTrigger value="health" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-1 col-span-3">
-                  <Heart className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs hidden sm:inline">Saúde e Graduação</span>
-                  <span className="text-xs sm:hidden">Saúde</span>
-                </TabsTrigger>
-                <TabsTrigger value="financial" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-1 col-span-3">
-                  <Users className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs hidden sm:inline">Responsável Financeiro</span>
-                  <span className="text-xs sm:hidden">Financeiro</span>
-                </TabsTrigger>
-                <TabsTrigger value="plan" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:col-span-1 col-span-3">
-                  <CreditCard className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs">Plano</span>
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileText className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs">Documentos</span>
-                </TabsTrigger>
-                <TabsTrigger value="physical" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Activity className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs hidden sm:inline">Avaliação Física</span>
-                  <span className="text-xs sm:hidden">Física</span>
-                </TabsTrigger>
-                <TabsTrigger value="contract" className="text-xs sm:text-sm p-1 sm:p-3 flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileCheck className="h-3 w-3 sm:h-5 sm:w-5" />
-                  <span className="text-xs">Termos</span>
-                </TabsTrigger>
+          {/* TABS BAR */}
+          <div className="border-t">
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap gap-1 px-2 md:px-4 py-2">
+                <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+                <TabsTrigger value="contato">Contato</TabsTrigger>
+                <TabsTrigger value="endereco">Endereço</TabsTrigger>
+                <TabsTrigger value="saude">Saúde & Graduação</TabsTrigger>
+                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
               </TabsList>
+            </Tabs>
+          </div>
+        </div>
 
-              <div className="flex-1 overflow-y-auto px-1">
-
-              {/* Tab 1: Dados Pessoais */}
-              <TabsContent value="personal" className="space-y-6 mt-6">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-card-foreground flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      Dados Pessoais
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Nome *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="Nome é obrigatório"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Sobrenome *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="Sobrenome é obrigatório"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="birthDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Data de Nascimento</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="date"
-                                className="bg-input border-border text-foreground"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="cpf"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">CPF</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="000.000.000-00"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="rg"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">RG</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="00.000.000-0"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
+        {/* BODY */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="relative h-[calc(100%-140px)] md:h-[calc(100%-120px)]">
+          <div className="h-full overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+            {/* DADOS PESSOAIS */}
+            {tab === "dados" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Dados Pessoais</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>Nome *</Label>
+                    <Input {...form.register("firstName")} placeholder="Ex.: Gabriela" />
+                    {form.formState.errors.firstName && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.firstName.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Sobrenome *</Label>
+                    <Input {...form.register("lastName")} placeholder="Ex.: Santos" />
+                    {form.formState.errors.lastName && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.lastName.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Data de Nascimento</Label>
+                    <Input
+                      value={form.watch("birthDate") || ""}
+                      onChange={(e) => form.setValue("birthDate", e.target.value)}
+                      placeholder="dd/mm/aaaa"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div>
+                    <Label>CPF</Label>
+                    <Input
+                      value={form.watch("cpf") || ""}
+                      onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))}
+                      inputMode="numeric"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  <div>
+                    <Label>RG</Label>
+                    <Input
+                      value={form.watch("rg") || ""}
+                      onChange={(e) => form.setValue("rg", formatRG(e.target.value))}
+                      inputMode="numeric"
+                      placeholder="00.000.000-0"
+                    />
+                  </div>
+                  <div>
+                    <Label>Sexo</Label>
+                    <Controller
                       control={form.control}
                       name="gender"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Sexo (opcional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="bg-input border-border text-foreground">
-                                <SelectValue placeholder="Selecionar sexo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-popover border-border">
-                              <SelectItem value="M">Masculino</SelectItem>
-                              <SelectItem value="F">Feminino</SelectItem>
-                              <SelectItem value="O">Outro</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="M">Masculino</SelectItem>
+                            <SelectItem value="F">Feminino</SelectItem>
+                            <SelectItem value="O">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
                       )}
                     />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 2: Contato */}
-              <TabsContent value="contact" className="space-y-6 mt-6">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-card-foreground flex items-center gap-2">
-                      <Phone className="h-5 w-5" />
-                      Informações de Contato
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">E-mail *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="email"
-                                className="bg-input border-border text-foreground"
-                                placeholder="E-mail é obrigatório"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Telefone Celular</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="(00) 00000-0000"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <Separator className="bg-border" />
-                    
-                    <div>
-                      <h4 className="text-primary font-medium mb-4">Contato de Emergência</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="emergencyContactName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-foreground">Nome</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  className="bg-input border-border text-foreground"
-                                  placeholder="Nome do contato de emergência"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="emergencyContactPhone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-foreground">Telefone</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  className="bg-input border-border text-foreground"
-                                  placeholder="Telefone do contato de emergência"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 3: Endereço */}
-              <TabsContent value="address" className="space-y-6 mt-6">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-card-foreground flex items-center gap-2">
-                      <MapPin className="h-5 w-5" />
-                      Endereço
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="zipCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">CEP</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="00000-000"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="street"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Logradouro</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="Rua, Avenida, etc."
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Número</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="123"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="complement"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Complemento</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="Apto, Casa, etc."
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="neighborhood"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Bairro</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="Bairro"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Cidade</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="Cidade"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Estado</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-input border-border text-foreground"
-                                placeholder="SP"
-                                maxLength={2}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 4: Saúde e Graduação */}
-              <TabsContent value="health" className="space-y-6 mt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-card-foreground flex items-center gap-2">
-                        <Heart className="h-5 w-5" />
-                        Questionário de Saúde PAR-Q
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">
-                        Responda SIM ou NÃO para cada pergunta abaixo
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {[
-                        "Algum médico já disse que você possui algum problema de coração?",
-                        "Você sente dores no peito quando pratica atividade física?",
-                        "No último mês, você sentiu dores no peito quando não estava praticando atividade física?",
-                        "Você apresenta desequilíbrio devido à tontura e/ou perda de consciência?",
-                        "Você tem algum problema ósseo ou articular que poderia ser piorado pela atividade física?",
-                        "Algum médico já recomendou o uso de medicamentos para sua pressão arterial ou condição do coração?",
-                        "Você tem conhecimento, através da sua própria experiência e/ou aconselhamento médico, de alguma outra razão física que o impeça de participar de atividades físicas?"
-                      ].map((question, index) => (
-                        <FormField
-                          key={index}
-                          control={form.control}
-                          name={`healthQuestions.q${index + 1}` as any}
-                          render={({ field }) => (
-                            <div className="flex items-start space-x-3">
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="mt-1"
-                              />
-                              <label className="text-sm text-foreground">
-                                {index + 1}. {question}
-                              </label>
-                            </div>
-                          )}
-                        />
-                      ))}
-
-                      <FormField
-                        control={form.control}
-                        name="medicalObservations"
-                        render={({ field }) => (
-                          <FormItem className="mt-6">
-                            <FormLabel className="text-foreground">Observações Médicas</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                className="bg-input border-border text-foreground min-h-[100px]"
-                                placeholder="Descreva qualquer condição médica relevante, medicamentos em uso ou outras observações importantes..."
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-card-foreground flex items-center gap-2">
-                        <Award className="h-5 w-5" />
-                        Graduação
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="beltLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Faixa Atual *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-input border-border text-foreground">
-                                  <SelectValue placeholder="Selecionar faixa" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="bg-popover border-border">
-                                <SelectItem value="white">Faixa Branca</SelectItem>
-                                <SelectItem value="blue">Faixa Azul</SelectItem>
-                                <SelectItem value="purple">Faixa Roxa</SelectItem>
-                                <SelectItem value="brown">Faixa Marrom</SelectItem>
-                                <SelectItem value="black">Faixa Preta</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="lastPromotionDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-foreground">Última Troca de Faixa</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="date"
-                                className="bg-input border-border text-foreground"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
+                  </div>
                 </div>
-              </TabsContent>
+              </section>
+            )}
 
-              {/* Tab 5: Responsável Financeiro */}
-              <TabsContent value="financial" className="space-y-6 mt-6">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-card-foreground flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Responsável Financeiro
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Como o aluno é menor de idade, é obrigatório informar um responsável financeiro
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
+            {/* CONTATO */}
+            {tab === "contato" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Contato</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <Label>E-mail *</Label>
+                    <Input {...form.register("email")} type="email" placeholder="email@exemplo.com" />
+                    {form.formState.errors.email && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Telefone</Label>
+                    <Input
+                      value={form.watch("phone") || ""}
+                      onChange={(e) => form.setValue("phone", formatPhone(e.target.value))}
+                      placeholder="(11) 99999-9999"
+                      inputMode="tel"
+                    />
+                  </div>
+                  <div>
+                    <Label>Contato de Emergência - Nome</Label>
+                    <Input {...form.register("emergencyContactName")} placeholder="Nome completo" />
+                  </div>
+                  <div>
+                    <Label>Contato de Emergência - Telefone</Label>
+                    <Input
+                      value={form.watch("emergencyContactPhone") || ""}
+                      onChange={(e) => form.setValue("emergencyContactPhone", formatPhone(e.target.value))}
+                      placeholder="(11) 99999-9999"
+                      inputMode="tel"
+                    />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* ENDEREÇO */}
+            {tab === "endereco" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Endereço</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <Label>CEP</Label>
+                    <Input
+                      value={form.watch("zipCode") || ""}
+                      onChange={(e) => form.setValue("zipCode", formatCEP(e.target.value))}
+                      inputMode="numeric"
+                      placeholder="00000-000"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <Label>Logradouro</Label>
+                    <Input {...form.register("street")} placeholder="Rua, Avenida, etc." />
+                  </div>
+                  <div>
+                    <Label>Número</Label>
+                    <Input {...form.register("number")} placeholder="123" />
+                  </div>
+                  <div>
+                    <Label>Complemento</Label>
+                    <Input {...form.register("complement")} placeholder="Apto, Casa, etc." />
+                  </div>
+                  <div>
+                    <Label>Bairro</Label>
+                    <Input {...form.register("neighborhood")} placeholder="Bairro" />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input {...form.register("city")} placeholder="Cidade" />
+                  </div>
+                  <div>
+                    <Label>Estado</Label>
+                    <Input {...form.register("state")} maxLength={2} placeholder="SP" />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* SAÚDE & GRADUAÇÃO */}
+            {tab === "saude" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Saúde & Graduação</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Observações de Saúde</Label>
+                    <Textarea 
+                      {...form.register("medicalObservations")} 
+                      placeholder="Alergias, restrições médicas, etc."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div>
+                    <Label>Nível da Faixa</Label>
+                    <Input {...form.register("beltLevel")} placeholder="Branca, Azul, Roxa, etc." />
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* FINANCEIRO */}
+            {tab === "financeiro" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Responsável Financeiro</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="lg:col-span-2">
+                    <Label>Nome do Responsável</Label>
+                    <Input {...form.register("financialResponsibleName")} placeholder="Nome completo" />
+                  </div>
+                  <div>
+                    <Label>Relação</Label>
+                    <Controller
                       control={form.control}
                       name="financialResponsibleRelation"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-300">Grau de Parentesco *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                                <SelectValue placeholder="Selecionar parentesco" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-gray-700 border-gray-600">
-                              <SelectItem value="self">Próprio aluno</SelectItem>
-                              <SelectItem value="parent">Pai/Mãe</SelectItem>
-                              <SelectItem value="guardian">Responsável Legal</SelectItem>
-                              <SelectItem value="spouse">Cônjuge</SelectItem>
-                              <SelectItem value="other">Outro</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="self">Próprio aluno</SelectItem>
+                            <SelectItem value="parent">Pai/Mãe</SelectItem>
+                            <SelectItem value="spouse">Cônjuge</SelectItem>
+                            <SelectItem value="other">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
                       )}
                     />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="financialResponsibleName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">Nome Completo *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
-                                placeholder="Nome é obrigatório"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="financialResponsibleCpf"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">CPF *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
-                                placeholder="000.000.000-00"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="financialResponsibleEmail"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">E-mail</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="email"
-                                className="bg-gray-700 border-gray-600 text-white"
-                                placeholder="email@exemplo.com"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="financialResponsiblePhone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">Telefone</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
-                                placeholder="(00) 00000-0000"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 6: Plano */}
-              <TabsContent value="plan" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      Plano de Mensalidade
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
+                  </div>
+                  <div>
+                    <Label>CPF do Responsável</Label>
+                    <Input
+                      value={form.watch("financialResponsibleCpf") || ""}
+                      onChange={(e) => form.setValue("financialResponsibleCpf", formatCPF(e.target.value))}
+                      inputMode="numeric"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  <div>
+                    <Label>E-mail do Responsável</Label>
+                    <Input {...form.register("financialResponsibleEmail")} type="email" placeholder="email@exemplo.com" />
+                  </div>
+                  <div>
+                    <Label>Telefone do Responsável</Label>
+                    <Input
+                      value={form.watch("financialResponsiblePhone") || ""}
+                      onChange={(e) => form.setValue("financialResponsiblePhone", formatPhone(e.target.value))}
+                      placeholder="(11) 99999-9999"
+                      inputMode="tel"
+                    />
+                  </div>
+                  <div>
+                    <Label>Plano de Pagamento</Label>
+                    <Controller
                       control={form.control}
                       name="paymentPlanId"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-300">Tipo de Plano *</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                                <SelectValue placeholder="Selecionar plano" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-gray-700 border-gray-600">
-                              {paymentPlans.map((plan: any) => (
-                                <SelectItem key={plan.id} value={plan.id.toString()}>
-                                  {plan.name} - {formatCurrency(plan.amount)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
+                        <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar plano" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(paymentPlansData as any)?.paymentPlans?.map((plan: any) => (
+                              <SelectItem key={plan.id} value={plan.id.toString()}>
+                                {plan.name} - R$ {plan.price}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       )}
                     />
+                  </div>
+                </div>
+              </section>
+            )}
+          </div>
 
-                    <FormField
-                      control={form.control}
-                      name="planObservations"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-300">Observações do Plano</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              className="bg-gray-700 border-gray-600 text-white"
-                              placeholder="Informações adicionais sobre o plano, descontos, promoções, etc."
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 7: Documentos */}
-              <TabsContent value="documents" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Documentos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h4 className="text-blue-400 font-medium">RG (Frente e Verso)</h4>
-                        <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-                          <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-gray-400 mb-2">Clique para fazer upload ou arraste o arquivo aqui</p>
-                          <p className="text-xs text-gray-500">PDF, JPG ou PNG, máx. 5MB</p>
-                          <Badge variant="secondary" className="mt-2">Pendente</Badge>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h4 className="text-blue-400 font-medium">CPF</h4>
-                        <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-                          <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-gray-400 mb-2">Clique para fazer upload ou arraste o arquivo aqui</p>
-                          <p className="text-xs text-gray-500">PDF, JPG ou PNG, máx. 5MB</p>
-                          <Badge variant="secondary" className="mt-2">Pendente</Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Baixar Todos os Documentos
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 8: Avaliação Física */}
-              <TabsContent value="physical" className="space-y-6 mt-6">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Activity className="h-5 w-5" />
-                      Avaliação Física
-                    </CardTitle>
-                    <CardDescription className="text-gray-400">
-                      Dados opcionais para acompanhamento do desenvolvimento físico do aluno
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="physicalAssessment.date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">Data da Avaliação</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="date"
-                                className="bg-gray-700 border-gray-600 text-white"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="physicalAssessment.evaluator"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-300">Avaliador</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="bg-gray-700 border-gray-600 text-white"
-                                placeholder="Nome do professor/avaliador"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div>
-                      <h4 className="text-blue-400 font-medium mb-4">Medidas Corporais</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="physicalAssessment.height"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Altura (cm)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number"
-                                  className="bg-gray-700 border-gray-600 text-white"
-                                  placeholder="170"
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="physicalAssessment.weight"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Peso (kg)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number"
-                                  className="bg-gray-700 border-gray-600 text-white"
-                                  placeholder="70"
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="space-y-2">
-                          <label className="text-gray-300 text-sm font-medium">IMC</label>
-                          <div className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
-                            {calculateIMC(
-                              form.watch("physicalAssessment.height") || 0,
-                              form.watch("physicalAssessment.weight") || 0
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="text-gray-300 text-sm font-medium">Categoria</label>
-                          <div className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
-                            {(() => {
-                              const imc = Number(calculateIMC(
-                                form.watch("physicalAssessment.height") || 0,
-                                form.watch("physicalAssessment.weight") || 0
-                              ));
-                              if (imc < 18.5) return "Abaixo do peso";
-                              if (imc < 25) return "Normal";
-                              if (imc < 30) return "Sobrepeso";
-                              return "Obesidade";
-                            })()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-blue-400 font-medium mb-4">Testes Físicos</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="physicalAssessment.flexibility"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Flexibilidade (0-10)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  className="bg-gray-700 border-gray-600 text-white"
-                                  placeholder="0"
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                />
-                              </FormControl>
-                              <p className="text-xs text-gray-500">Teste de sentar e alcançar</p>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="physicalAssessment.strength"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Força (0-10)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  className="bg-gray-700 border-gray-600 text-white"
-                                  placeholder="0"
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                />
-                              </FormControl>
-                              <p className="text-xs text-gray-500">Teste de flexão de braço</p>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="physicalAssessment.resistance"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-300">Resistência (0-10)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  className="bg-gray-700 border-gray-600 text-white"
-                                  placeholder="0"
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
-                                />
-                              </FormControl>
-                              <p className="text-xs text-gray-500">Teste de resistência cardiovascular</p>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="physicalAssessment.observations"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-300">Observações Técnicas</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
-                              placeholder="Observações sobre o desempenho, limitações, pontos de melhoria, etc."
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 9: Contrato/Termos */}
-              <TabsContent value="contract" className="space-y-6 mt-6">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-card-foreground flex items-center gap-2">
-                      <FileCheck className="h-5 w-5" />
-                      Contrato e Termos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-600 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-green-700 dark:text-green-400 font-medium">Contrato assinado digitalmente</span>
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <p className="text-muted-foreground">
-                          <Clock className="h-4 w-4 inline mr-2" />
-                          Data: 5 de agosto de 2025 às 01:46
-                        </p>
-                        <p className="text-muted-foreground">
-                          <Shield className="h-4 w-4 inline mr-2" />
-                          IP: 192.168.1.100
-                        </p>
-                        <p className="text-muted-foreground">
-                          <User className="h-4 w-4 inline mr-2" />
-                          Responsável: Sistema Administrativo
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 flex-wrap">
-                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Remover Assinatura
-                      </Button>
-                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
-                        <Mail className="h-4 w-4 mr-2" />
-                        Reenviar Termos
-                      </Button>
-                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Gerar PDF
-                      </Button>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h4 className="text-primary font-medium">Conteúdo do Contrato</h4>
-                      <div className="bg-muted border border-border rounded-lg p-4 max-h-64 overflow-y-auto">
-                        <div className="text-foreground text-sm space-y-2">
-                          <h5 className="font-medium">§3.1 Da Contratada:</h5>
-                          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                            <li>Ministrar as aulas conforme cronograma estabelecido;</li>
-                            <li>Fornecer orientação técnica qualificada;</li>
-                            <li>Manter as instalações em condições adequadas;</li>
-                            <li>Zelar pela segurança dos alunos;</li>
-                          </ul>
-                          
-                          <h5 className="font-medium mt-4">§3.2 Do Contratante:</h5>
-                          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                            <li>Efetuar o pagamento das mensalidades nas datas acordadas;</li>
-                            <li>Respeitar as normas internas da academia;</li>
-                            <li>Comunicar qualquer problema de saúde relevante;</li>
-                          </ul>
-                        </div>
-                      </div>
-                      
-                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Restaurar Modelo
-                      </Button>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h4 className="text-primary font-medium">Histórico de Aceites</h4>
-                      <div className="bg-muted border border-border rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-foreground font-medium">Aceite Digital Registrado</p>
-                            <p className="text-muted-foreground text-sm">5 de agosto de 2025 às 01:46</p>
-                          </div>
-                          <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
-                            Válido
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              </div>
-            </Tabs>
-              
-            
-            {/* Botões de ação - sempre visível na parte inferior */}
-            <div className="shrink-0 flex justify-between items-center pt-4 mt-6 border-t border-border bg-background">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                className="border-border text-foreground hover:bg-accent"
-              >
-                <X className="h-4 w-4 mr-2" />
+          {/* FOOTER STICKY */}
+          <div className="sticky bottom-0 z-20 bg-background/90 backdrop-blur border-t px-4 md:px-6 py-3 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
+            <DialogClose asChild>
+              <Button variant="ghost" type="button" disabled={updateMutation.isPending}>
                 Cancelar
               </Button>
-              
-              <div className="flex gap-2">
-                <Button 
-                  type="button"
-                  variant="secondary"
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                >
-                  Visualizar como Aluno
-                </Button>
-                
-                <Button 
-                  type="submit"
-                  disabled={updateStudentMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  {updateStudentMutation.isPending ? (
-                    "Salvando..."
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Salvar Alterações
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-            </form>
-          </Form>
-        </div>
+            </DialogClose>
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar alterações"
+              )}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

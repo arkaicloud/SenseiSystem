@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowRight, ArrowLeft, User, Phone, Users, Calendar, CreditCard, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { CpfExistsDialog } from "@/components/ui/cpf-exists-dialog";
 import AddressForm from "@/components/ui/address-form";
 
 // Função para validar CPF brasileiro - Algoritmo oficial módulo 11
@@ -97,6 +99,9 @@ interface PersonalInfoStepProps {
 export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfoStepProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
+  const [cpfDialogOpen, setCpfDialogOpen] = useState(false);
+  const [existingStudent, setExistingStudent] = useState<{ name: string; active: boolean } | null>(null);
+  const { toast } = useToast();
 
   // Fetch payment plans
   const { data: paymentPlansData } = useQuery<{ plans: Array<{ id: number; name: string; amount: number; description: string }> }>({
@@ -151,6 +156,42 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
 
   // Watch the financial responsible relationship to show/hide fields
   const financialRelationship = form.watch("financialResponsibleRelationship");
+
+  // Função para validar CPF no servidor
+  const checkCpfExists = useCallback(async (cpf: string) => {
+    if (!validateCPF(cpf)) return; // Só verifica se o CPF é válido
+
+    try {
+      const cleanCpf = cpf.replace(/\D/g, '');
+      const response = await fetch(`/api/validate-cpf/${cleanCpf}`);
+      const result = await response.json();
+
+      if (result.success && result.exists) {
+        setExistingStudent({
+          name: result.student.name,
+          active: result.student.active
+        });
+        setCpfDialogOpen(true);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Erro ao verificar CPF:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar o CPF. Tente novamente.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [toast]);
+
+  // Handler para redirecionar ao login
+  const handleGoToLogin = () => {
+    setCpfDialogOpen(false);
+    // Redirecionar para a página de login
+    window.location.href = "/";
+  };
 
   const handleSubmit = (data: PersonalInfoData) => {
     onNext(data);
@@ -266,6 +307,11 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                       onChange={(e) => {
                         const formatted = formatCPF(e.target.value);
                         field.onChange(formatted);
+                      }}
+                      onBlur={async () => {
+                        if (field.value && validateCPF(field.value)) {
+                          await checkCpfExists(field.value);
+                        }
                       }}
                       maxLength={14}
                     />
@@ -685,6 +731,15 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
           </div>
         </form>
       </Form>
+      
+      {/* Dialog de CPF existente */}
+      <CpfExistsDialog
+        open={cpfDialogOpen}
+        onClose={() => setCpfDialogOpen(false)}
+        onGoToLogin={handleGoToLogin}
+        studentName={existingStudent?.name}
+        isActive={existingStudent?.active}
+      />
     </div>
   );
 }

@@ -386,6 +386,14 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Student = typeof students.$inferSelect;
+export type StudentWithUser = {
+  id: number;
+  userId: number;
+  firstName: string;
+  lastName: string;
+  cpf: string;
+  active: boolean;
+};
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 
 export type SchoolConfig = typeof schoolConfig.$inferSelect;

@@ -4850,6 +4850,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== CPF VALIDATION ROUTES =====
+  
+  // GET: Verificar se CPF já existe no sistema
+  app.get("/api/validate-cpf/:cpf", async (req: Request, res: Response) => {
+    try {
+      const cpf = req.params.cpf;
+      
+      if (!cpf) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "CPF é obrigatório" 
+        });
+      }
+
+      // Buscar estudante por CPF
+      const existingStudent = await storage.getStudentByCpf(cpf);
+      
+      if (existingStudent) {
+        return res.json({
+          success: true,
+          exists: true,
+          message: "CPF já cadastrado no sistema",
+          student: {
+            id: existingStudent.id,
+            name: `${existingStudent.firstName} ${existingStudent.lastName}`,
+            active: existingStudent.active
+          }
+        });
+      }
+
+      return res.json({
+        success: true,
+        exists: false,
+        message: "CPF disponível para cadastro"
+      });
+
+    } catch (error: any) {
+      console.error("Erro ao validar CPF:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
   // ===== HEALTH QUESTIONNAIRE ROUTES =====
   
   // POST: Salvar questionário de saúde e gerar PDF

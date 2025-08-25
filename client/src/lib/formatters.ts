@@ -56,10 +56,39 @@ export function toDisplayDate(iso?: string | null) {
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
 }
-export function toISODate(display?: string | null) {
+export function toISODate(display?: string | null): string | null {
   if (!display) return null;
-  const m = display.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!m) return null;
-  const [_, dd, mm, yyyy] = m;
-  return `${yyyy}-${mm}-${dd}`;
+  try {
+    // Try to parse dd/mm/yyyy format
+    const parts = display.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      if (day && month && year && year.length === 4) {
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split("T")[0];
+        }
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Money formatting
+export function formatMoney(cents?: number | null): string {
+  if (cents == null) return "R$ 0,00";
+  const reais = cents / 100;
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(reais);
+}
+
+export function unformatMoney(formatted?: string | null): number {
+  if (!formatted) return 0;
+  const digits = formatted.replace(/[^\d,]/g, "").replace(",", ".");
+  const value = parseFloat(digits) || 0;
+  return Math.round(value * 100);
 }

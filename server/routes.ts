@@ -1354,6 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/students/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
+      const { include } = req.query;
       const student = await storage.getStudent(Number(id));
 
       if (!student) {
@@ -1372,7 +1373,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      res.json({ student: { ...student, user: { ...user, password: undefined } } });
+      // If include=all, return in the new DTO format
+      if (include === 'all') {
+        const studentEditDTO = {
+          id: Number(id),
+          firstName: user.firstName,
+          lastName: user.lastName,
+          birthDate: student.birthDate || null,
+          cpf: student.cpf || null,
+          rg: student.rg || null,
+          sex: student.gender || null, // Map gender to sex
+          contact: {
+            email: user.email || null,
+            phone: student.phone || null
+          },
+          emergency: {
+            name: student.emergencyContactName || null,
+            phone: student.emergencyContactPhone || null
+          },
+          financialResponsible: {
+            relation: student.financialResponsibleRelation || null
+          },
+          billing: {
+            planId: student.paymentPlanId || null,
+            preferredDueDay: student.preferredDueDay || null
+          },
+          address: {
+            zip: student.zipCode || null,
+            street: student.street || null,
+            number: student.number || null,
+            complement: student.complement || null,
+            district: student.neighborhood || null,
+            city: student.city || null,
+            state: student.state || null
+          },
+          health: {
+            notes: student.medicalObservations || null
+          },
+          graduation: {
+            beltLevel: student.beltLevel || null,
+            graduationDate: student.graduationDate || null
+          }
+        };
+        res.json(studentEditDTO);
+      } else {
+        // Return in the old format for backwards compatibility
+        res.json({ student: { ...student, user: { ...user, password: undefined } } });
+      }
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
@@ -1407,6 +1454,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid student data", errors: error.errors });
       }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // PATCH endpoint for new DTO format
+  app.patch("/api/students/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const requestUser = (req as any).user;
+      const student = await storage.getStudent(Number(id));
+
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      const user = await storage.getUser(student.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found for student" });
+      }
+
+      // Check permissions: only own profile, instructors or admins
+      if (requestUser.id !== user.id && 
+          requestUser.role !== 'admin' && 
+          requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const payload = req.body;
+
+      // Update user data (firstName, lastName, etc.)
+      if (payload.firstName || payload.lastName || payload.contact?.email) {
+        const userData: any = {};
+        if (payload.firstName) userData.firstName = payload.firstName;
+        if (payload.lastName) userData.lastName = payload.lastName;
+        if (payload.contact?.email) userData.email = payload.contact.email;
+        
+        await storage.updateUser(user.id, userData);
+      }
+
+      // Update student data
+      const studentData: any = {};
+      if (payload.birthDate !== undefined) studentData.birthDate = payload.birthDate;
+      if (payload.cpf !== undefined) studentData.cpf = payload.cpf;
+      if (payload.rg !== undefined) studentData.rg = payload.rg;
+      if (payload.sex !== undefined) studentData.gender = payload.sex; // Map sex to gender
+      if (payload.contact?.phone !== undefined) studentData.phone = payload.contact.phone;
+      if (payload.emergency?.name !== undefined) studentData.emergencyContactName = payload.emergency.name;
+      if (payload.emergency?.phone !== undefined) studentData.emergencyContactPhone = payload.emergency.phone;
+      if (payload.financialResponsible?.relation !== undefined) studentData.financialResponsibleRelation = payload.financialResponsible.relation;
+      if (payload.billing?.planId !== undefined) studentData.paymentPlanId = payload.billing.planId;
+      if (payload.billing?.preferredDueDay !== undefined) studentData.preferredDueDay = payload.billing.preferredDueDay;
+      if (payload.address?.zip !== undefined) studentData.zipCode = payload.address.zip;
+      if (payload.address?.street !== undefined) studentData.street = payload.address.street;
+      if (payload.address?.number !== undefined) studentData.number = payload.address.number;
+      if (payload.address?.complement !== undefined) studentData.complement = payload.address.complement;
+      if (payload.address?.district !== undefined) studentData.neighborhood = payload.address.district;
+      if (payload.address?.city !== undefined) studentData.city = payload.address.city;
+      if (payload.address?.state !== undefined) studentData.state = payload.address.state;
+      if (payload.health?.notes !== undefined) studentData.medicalObservations = payload.health.notes;
+      if (payload.graduation?.beltLevel !== undefined) studentData.beltLevel = payload.graduation.beltLevel;
+      if (payload.graduation?.graduationDate !== undefined) studentData.graduationDate = payload.graduation.graduationDate;
+
+      const updatedStudent = await storage.updateStudent(student.id, studentData);
+
+      // Log activity
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} updated student profile for ${user.firstName} ${user.lastName}`,
+        entityType: 'student',
+        entityId: student.id
+      });
+
+      // Return in the new DTO format
+      const updatedUser = await storage.getUser(user.id);
+      const studentEditDTO = {
+        id: Number(id),
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        birthDate: updatedStudent.birthDate || null,
+        cpf: updatedStudent.cpf || null,
+        rg: updatedStudent.rg || null,
+        sex: updatedStudent.gender || null,
+        contact: {
+          email: updatedUser.email || null,
+          phone: updatedStudent.phone || null
+        },
+        emergency: {
+          name: updatedStudent.emergencyContactName || null,
+          phone: updatedStudent.emergencyContactPhone || null
+        },
+        financialResponsible: {
+          relation: updatedStudent.financialResponsibleRelation || null
+        },
+        billing: {
+          planId: updatedStudent.paymentPlanId || null,
+          preferredDueDay: updatedStudent.preferredDueDay || null
+        },
+        address: {
+          zip: updatedStudent.zipCode || null,
+          street: updatedStudent.street || null,
+          number: updatedStudent.number || null,
+          complement: updatedStudent.complement || null,
+          district: updatedStudent.neighborhood || null,
+          city: updatedStudent.city || null,
+          state: updatedStudent.state || null
+        },
+        health: {
+          notes: updatedStudent.medicalObservations || null
+        },
+        graduation: {
+          beltLevel: updatedStudent.beltLevel || null,
+          graduationDate: updatedStudent.graduationDate || null
+        }
+      };
+
+      res.json(studentEditDTO);
+    } catch (error) {
+      console.error("Error updating student:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -1960,6 +2125,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const plans = await storage.getPaymentPlans();
       res.json({ plans });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Alias for billing plans (same as payment plans)
+  app.get("/api/billing/plans", async (req, res) => {
+    try {
+      const plans = await storage.getPaymentPlans();
+      // Return in the format expected by the frontend DTO
+      const formattedPlans = plans.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        amount: plan.amount,
+        period: plan.frequency.toUpperCase() as "MONTHLY" | "WEEKLY" | "YEARLY"
+      }));
+      res.json(formattedPlans);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

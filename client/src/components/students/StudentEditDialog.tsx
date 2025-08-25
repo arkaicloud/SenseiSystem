@@ -104,12 +104,12 @@ export default function StudentEditDialog({
 
   // Buscar planos de pagamento
   const { data: paymentPlansData } = useQuery({
-    queryKey: ["/api/billing/plans"],
-    queryFn: () => fetch('/api/billing/plans').then(res => res.json()),
+    queryKey: ["/api/payment-plans"],
+    queryFn: () => fetch('/api/payment-plans').then(res => res.json()),
     enabled: open,
   });
 
-  const paymentPlans = paymentPlansData || [];
+  const paymentPlans = paymentPlansData?.plans || [];
 
   // Form setup
   const form = useForm<StudentEditFormData>({
@@ -818,11 +818,17 @@ export default function StudentEditDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {paymentPlans.map((plan: any) => (
-                                <SelectItem key={plan.id} value={plan.id.toString()}>
-                                  {plan.name} - R$ {(plan.amount / 100).toFixed(2)}
+                              {paymentPlans.length > 0 ? (
+                                paymentPlans.map((plan: any) => (
+                                  <SelectItem key={plan.id} value={plan.id.toString()}>
+                                    {plan.name} - R$ {(plan.amount / 100).toFixed(2)}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="loading" disabled>
+                                  Carregando planos...
                                 </SelectItem>
-                              ))}
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />

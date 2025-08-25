@@ -230,16 +230,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </svg>
             </button>
             <div className="flex items-center flex-1">
-              <div className="bg-primary p-1 rounded mr-2">
-                <div className="belt black-belt w-6 h-6 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">
-                    {schoolConfig?.schoolName?.charAt(0) || 'S'}
-                  </span>
-                </div>
-              </div>
               <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
+              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
+                {user?.firstName} {user?.lastName}
+              </span>
             </div>
             
             <div className="flex items-center space-x-2">

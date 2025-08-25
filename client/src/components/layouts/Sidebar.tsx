@@ -77,13 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           path: "/students-at-risk",
           roles: ["admin", "instructor"],
         },
-        {
-          id: "pedidos-pendentes",
-          label: "Pedidos Pendentes",
-          icon: UserCheck,
-          path: "/admin/pending-approvals",
-          roles: ["admin"],
-        },
         
         {
           id: "gerenciar-faixas",
@@ -156,26 +149,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       icon: MessageSquare,
       path: "/communications",
       roles: ["admin", "instructor"],
-    },
-    {
-      id: "configuracoes",
-      label: "Configurações",
-      icon: Settings,
-      children: [
-        {
-          id: "pessoais",
-          label: "Meu Perfil",
-          icon: User,
-          path: "/settings",
-        },
-        {
-          id: "da-escola",
-          label: "Da Escola",
-          icon: Building2,
-          path: "/school-config",
-          roles: ["admin"],
-        }
-      ],
     },
   ];
 
@@ -463,19 +436,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             <p className="font-medium text-slate-900 dark:text-white text-sm">{user.firstName} {user.lastName}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">{formatRole(user.role)}</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            disabled={isLoading}
-            className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <LogOut className="h-4 w-4" />
-            )}
-          </Button>
         </div>
         <div className="px-4 pb-3 text-xs text-slate-500 dark:text-slate-500">
           <p>SenseiSystem - Version 1.0.0</p>

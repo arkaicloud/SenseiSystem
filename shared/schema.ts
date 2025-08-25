@@ -9,6 +9,7 @@ export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'b
 export const paymentStatusEnum = pgEnum('payment_status', ['paid', 'pending', 'overdue']);
 export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'absent', 'late']);
 export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
+export const medicalCertificateStatusEnum = pgEnum('medical_certificate_status', ['PENDING', 'UPLOADED', 'WAIVED']);
 export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
 export const billingTypeEnum = pgEnum('billing_type', ['BOLETO', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'TRANSFER']);
 export const riskActionEnum = pgEnum('risk_action', ['call', 'email', 'whatsapp', 'visit', 'discount', 'other']);
@@ -83,6 +84,12 @@ export const students = pgTable("students", {
   // Payment preferences
   paymentPlanId: integer("payment_plan_id").references(() => paymentPlans.id),
   preferredDueDate: integer("preferred_due_date").default(5), // Dia preferido do mês para vencimento (1-28)
+  // Health questionnaire status
+  requiresMedicalCertificate: boolean("requires_medical_certificate").default(false),
+  medicalCertificateStatus: medicalCertificateStatusEnum("medical_certificate_status").default('PENDING'),
+  healthQuestionnaireCompletedAt: timestamp("health_questionnaire_completed_at"),
+  agreedToHealthTerms: boolean("agreed_to_health_terms").default(false),
+  healthTermsAgreedAt: timestamp("health_terms_agreed_at"),
 });
 
 // School Configuration table (tenant information)
@@ -131,6 +138,34 @@ export const schoolPayments = pgTable("school_payments", {
   externalReference: text("external_reference"), // Referência externa
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Health Questionnaire table
+export const healthQuestionnaires = pgTable("health_questionnaires", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  answersJson: text("answers_json").notNull(), // JSON das respostas
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  risky: boolean("risky").default(false), // Se exige atestado médico
+  pdfPath: text("pdf_path"), // Caminho do PDF gerado
+  pdfSize: integer("pdf_size"), // Tamanho do PDF em bytes
+  agreedToTerms: boolean("agreed_to_terms").default(false),
+  agreedAt: timestamp("agreed_at"),
+  ipAddress: text("ip_address"), // Para validade jurídica
+});
+
+// Student Documents table for file uploads
+export const studentDocuments = pgTable("student_documents", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  type: documentTypeEnum("type").notNull(),
+  name: text("name").notNull(), // Nome original do arquivo
+  filename: text("filename").notNull(), // Nome do arquivo no sistema
+  mime: text("mime").notNull(), // Tipo MIME
+  size: integer("size").notNull(), // Tamanho em bytes
+  path: text("path").notNull(), // Caminho do arquivo
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  description: text("description"), // Descrição opcional
 });
 
 // Contas a Receber (ASAAS Integration) table

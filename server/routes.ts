@@ -27,6 +27,10 @@ import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
 import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
+import { saveHealthQuestionnaire } from "./services/healthQuestionnaireService";
+import { upload } from "./middleware/uploadMiddleware";
+import { saveStudentDocument, getStudentDocuments, getDocumentById } from "./services/uploadService";
+import fs from "fs";
 import crypto from "crypto";
 
 
@@ -4842,6 +4846,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('❌ Erro na verificação do cliente:', error);
       res.status(500).json({
         message: `Erro na verificação: ${error.message}`
+      });
+    }
+  });
+
+  // ===== HEALTH QUESTIONNAIRE ROUTES =====
+  
+  // POST: Salvar questionário de saúde e gerar PDF
+  app.post("/api/students/:id/health-questionnaire", async (req: Request, res: Response) => {
+    try {
+      const studentId = Number(req.params.id);
+      const { answers, agreedToTerms = false } = req.body;
+      const ipAddress = req.ip;
+
+      if (!answers || !Array.isArray(answers)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Respostas do questionário são obrigatórias" 
+        });
+      }
+
+      if (!agreedToTerms) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "É necessário concordar com os termos para validação jurídica" 
+        });
+      }
+
+      const result = await saveHealthQuestionnaire(
+        studentId, 
+        answers, 
+        agreedToTerms, 
+        ipAddress
+      );
+
+      return res.json({ 
+        success: true, 
+        message: "Questionário de saúde salvo com sucesso",
+        ...result 
+      });
+    } catch (error: any) {
+      console.error("Erro ao salvar questionário de saúde:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor ao salvar questionário" 
+      });
+    }
+  });
+
+  // ===== DOCUMENT UPLOAD ROUTES =====
+  
+  // POST: Upload de documento (atestado médico, RG, etc.)
+  app.post("/api/students/:id/documents/:kind", upload.single("file"), async (req: Request, res: Response) => {
+    try {
+      const studentId = Number(req.params.id);
+      const documentType = String(req.params.kind); // "medical_certificate", "identification", etc.
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Nenhum arquivo foi enviado" 
+        });
+      }
+
+      const document = await saveStudentDocument(
+        studentId, 
+        file, 
+        documentType, 
+        req.body.description
+      );
+
+      // Se for atestado médico, atualizar status do aluno
+      if (documentType === "medical_certificate") {
+        await storage.updateStudent(studentId, {
+          medicalCertificateStatus: "UPLOADED"
+        });
+      }
+
+      return res.json({ 
+        success: true, 
+        message: "Documento enviado com sucesso",
+        document 
+      });
+    } catch (error: any) {
+      console.error("Erro ao fazer upload do documento:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor ao enviar documento" 
+      });
+    }
+  });
+
+  // GET: Listar documentos do aluno
+  app.get("/api/students/:id/documents", async (req: Request, res: Response) => {
+    try {
+      const studentId = Number(req.params.id);
+      const documents = await getStudentDocuments(studentId);
+      return res.json({ success: true, documents });
+    } catch (error: any) {
+      console.error("Erro ao listar documentos:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
+  // GET: Download de documento por ID
+  app.get("/api/documents/:docId/download", async (req: Request, res: Response) => {
+    try {
+      const docId = Number(req.params.docId);
+      const document = await getDocumentById(docId);
+      
+      if (!document || !fs.existsSync(document.path)) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Arquivo não encontrado" 
+        });
+      }
+
+      res.setHeader("Content-Type", document.mime);
+      res.setHeader("Content-Disposition", `attachment; filename="${document.name}"`);
+      fs.createReadStream(document.path).pipe(res);
+    } catch (error: any) {
+      console.error("Erro ao fazer download do documento:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
       });
     }
   });

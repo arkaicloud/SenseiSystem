@@ -6,12 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, User, Heart, FileText, ArrowLeft } from "lucide-react";
 import PersonalInfoStep, { type PersonalInfoData } from "./steps/PersonalInfoStep";
-import HealthFormStep, { type HealthFormData } from "./steps/HealthFormStep";
+import HealthFormStep from "./steps/HealthFormStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
 import { beltLevelEnum } from "@shared/schema";
 
-type OnboardingData = PersonalInfoData & HealthFormData & {
+type OnboardingData = PersonalInfoData & {
   username: string;
   password: string;
   confirmPassword: string;
@@ -29,17 +29,15 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
   const [success, setSuccess] = useState(false);
   const { register, error } = useAuth();
 
-  const handlePersonalInfoSubmit = (data: any) => {
-    setOnboardingData(prev => ({ ...prev, ...data }));
+  const handlePersonalInfoSubmit = (data: PersonalInfoData) => {
+    setOnboardingData((prev: Partial<OnboardingData>) => ({ ...prev, ...data }));
     setCurrentStep(2);
   };
 
-  const handleHealthFormSubmit = (data: any) => {
-    setOnboardingData(prev => ({ ...prev, ...data }));
-    setCurrentStep(3);
-  };
+  // Health questionnaire is now handled directly by HealthFormStep component
+  // No need to store health data in onboarding state
 
-  const handleDocumentsSubmit = async (data: any) => {
+  const handleDocumentsSubmit = async (data: Record<string, any>) => {
     const completeData = { ...onboardingData, ...data } as OnboardingData;
     setIsSubmitting(true);
 
@@ -150,10 +148,9 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
 
           {currentStep === 2 && (
             <HealthFormStep 
-              onNext={handleHealthFormSubmit}
-              onBack={() => setCurrentStep(1)}
-              defaultValues={onboardingData}
-              birthDate={onboardingData.birthDate}
+              onNext={() => setCurrentStep(3)}
+              onPrevious={() => setCurrentStep(1)}
+              studentId={undefined} // Será passado após registro
             />
           )}
 

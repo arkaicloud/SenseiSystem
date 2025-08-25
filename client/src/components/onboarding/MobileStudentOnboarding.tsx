@@ -69,35 +69,35 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       const username = data.email.split('@')[0].toLowerCase();
       const password = "123456"; // Default password - user can change later
       
-      // Create clean data object to avoid circular references
+      // Create clean data object - extract only primitive values to avoid circular references
       const cleanData = {
-        firstName: String(data.firstName),
-        lastName: String(data.lastName),
-        username: String(username),
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        username: username,
         role: "student" as const,
-        phone: String(data.phone || ""),
-        emergencyContact: String(data.emergencyContact || ""),
-        emergencyPhone: String((data as any).emergencyPhone || ""),
-        birthDate: data.birthDate ? String(data.birthDate) : null,
-        street: String(data.street || ""),
-        number: String(data.number || ""),
-        complement: String(data.complement || ""),
-        neighborhood: String(data.neighborhood || ""),
-        city: String(data.city || ""),
-        state: String(data.state || ""),
-        zipCode: String(data.zipCode || ""),
-        cpf: String((data as any).cpf || ""),
-        rg: String((data as any).rg || ""),
-        beltLevel: String((data as any).beltLevel || "white"),
-        stripes: Number((data as any).stripes || 0),
-        medicalConditions: String((data as any).medicalConditions || ""),
-        financialResponsibleName: String((data as any).financialResponsibleName || ""),
-        financialResponsibleEmail: String((data as any).financialResponsibleEmail || ""),
-        financialResponsiblePhone: String((data as any).financialResponsiblePhone || ""),
-        financialResponsibleCpf: String((data as any).financialResponsibleCpf || ""),
-        financialResponsibleRelationship: String((data as any).financialResponsibleRelationship || "self"),
-        paymentPlanId: (data as any).paymentPlanId ? String((data as any).paymentPlanId) : null,
-        dueDate: (data as any).dueDate ? String((data as any).dueDate) : null
+        phone: data.phone || "",
+        emergencyContact: data.emergencyContact || "",
+        emergencyPhone: (data as any).emergencyPhone || "",
+        birthDate: data.birthDate || null,
+        street: data.street || "",
+        number: data.number || "",
+        complement: data.complement || "",
+        neighborhood: data.neighborhood || "",
+        city: data.city || "",
+        state: data.state || "",
+        zipCode: data.zipCode || "",
+        cpf: (data as any).cpf || "",
+        rg: (data as any).rg || "",
+        beltLevel: (data as any).beltLevel || "white",
+        stripes: (data as any).stripes || 0,
+        medicalConditions: (data as any).medicalConditions || "",
+        financialResponsibleName: (data as any).financialResponsibleName || "",
+        financialResponsibleEmail: (data as any).financialResponsibleEmail || "",
+        financialResponsiblePhone: (data as any).financialResponsiblePhone || "",
+        financialResponsibleCpf: (data as any).financialResponsibleCpf || "",
+        financialResponsibleRelationship: (data as any).financialResponsibleRelationship || "self",
+        paymentPlanId: (data as any).paymentPlanId || null,
+        dueDate: (data as any).dueDate || null
       };
       
       await register(data.email, password, cleanData);

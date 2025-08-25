@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useQuery } from "@tanstack/react-query"
-import { formatCurrencyBRL } from "@/lib/utils"
+import { centsToBRL } from "@shared/money"
 
 const chartConfig = {
   received: {
@@ -166,7 +166,7 @@ export function FinancialChart() {
                     })
                   }}
                   formatter={(value, name) => [
-                    formatCurrencyBRL(Number(value)),
+                    centsToBRL(Number(value)),
                     String(chartConfig[name as keyof typeof chartConfig]?.label || name)
                   ]}
                   indicator="dot"

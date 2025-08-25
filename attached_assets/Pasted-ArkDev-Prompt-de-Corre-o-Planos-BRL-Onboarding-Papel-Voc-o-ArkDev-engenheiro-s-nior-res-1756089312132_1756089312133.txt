@@ -1,0 +1,228 @@
+ArkDev – Prompt de Correção (Planos BRL + Onboarding)
+
+Papel: Você é o ArkDev, engenheiro sênior responsável por aplicar correção ampla no front‑end e back‑end do SenseiSystem.
+
+🎯 Objetivos
+
+Dinheiro (BRL):
+
+Persistir valores sempre em centavos (inteiro).
+
+Exibir/editar em reais com formatação pt‑BR.
+
+Corrigir campos já gravados com deslocamento (ex.: 110,00 → 1,10).
+
+Replicar a correção em todas as telas que usam o plano e qualquer cálculo derivado.
+
+Onboarding do aluno:
+
+Eliminar erro “Converting circular structure to JSON”.
+
+Garantir que o payload de submit contenha apenas dados serializáveis (nada de event, DOM, refs).
+
+📦 Escopo
+
+Front‑end (React): formulários de Plano (criação/edição), listagens, detalhes, checkout/assinatura (se houver) e Onboarding do aluno.
+
+Back‑end/API: contratos/DTOs que recebem/enviam preço; padronizar em centavos.
+
+Migração do banco para corrigir dados já persistidos incorretamente.
+
+PDFs/recibos/contratos: exibir via função de formatação (nunca calcular manual).
+
+🧱 Padrões/Defesas (não negociar)
+
+price_cents: number (inteiro, centavos).
+
+currency: 'BRL'.
+
+Utilitário único money.ts com:
+
+brlToCents(input: string | number): number
+
+centsToBRL(cents: number): string
+
+formatBRLInput(value: string): string (opcional para UX)
+
+Proibir parseFloat("110,00").
+
+Proibir dividir por 100 no back‑end se o front já envia centavos.
+
+No submit de forms: nunca incluir event, target, ref.current, HTMLElement, SyntheticEvent.
+
+🗺️ Passo a passo (faça na ordem)
+
+Criar utilitário de dinheiro
+
+Arquivo: src/shared/money.ts
+
+Implementar brlToCents, centsToBRL, formatBRLInput conforme padrão acima.
+
+Adicionar testes unitários.
+
+Refatorar formulários de Plano
+
+src/features/plans/PlanForm.tsx (e similares):
+
+Campo de entrada trabalha em reais (string), conversão para centavos no onSubmit com brlToCents.
+
+Exibição/hidratação inicial com centsToBRL.
+
+Enviar para API: { name, price_cents, currency: 'BRL' }.
+
+Replicar em todas as telas que exibem preço
+
+Listas, detalhes, checkout, carrinho, dashboards: usar sempre centsToBRL(plan.price_cents).
+
+PDFs/contratos/recibos: usar centsToBRL no render.
+
+Padronizar Back‑end
+
+DTO/Schema: price_cents: integer, currency: 'BRL'.
+
+Endpoints: aceitar e responder em centavos.
+
+Remover qualquer conversão duplicada (ex.: dividir por 100).
+
+Corrigir Onboarding do aluno
+
+src/features/students/OnboardingForm.tsx:
+
+onSubmit(e) { e.preventDefault(); const fd = new FormData(e.currentTarget); ... }
+
+Extrair apenas valores primitivos/serializáveis.
+
+Converter campos monetários (se houver) com brlToCents.
+
+Enviar payload limpo para API.
+
+Auditar handlers para garantir que nenhum event ou ref vai para o estado/payload.
+
+Migração de dados (SQL)
+
+Se existe coluna price (reais), criar price_cents e popular: ROUND(price * 100).
+
+Se price_cents foi salvo incorretamente (ex.: dezenas/unidades): multiplicar por 100 na faixa suspeita.
+
+Scripts prontos na seção Migração (abaixo). Ajuste nomes de tabela/coluna.
+
+Testes
+
+Unit: money.test.ts cobrindo entradas com 110,00, 110.00, R$ 110,00, 1.234,56, vazios.
+
+E2E:
+
+Criar plano “110,00” → API recebe 11000.
+
+Editar/mostrar volta “R$ 110,00”.
+
+Onboarding: submit sem erros; payload sem objetos não‑serializáveis.
+
+PDF/Resumo: exibe “R$ 110,00”.
+
+Observabilidade
+
+Logar uma vez por request os campos monetários recebidos e enviados (mask/PII safe).
+
+Criar alerta se price_cents < 300 (limiar configurável) para planos pagos.
+
+Rollout
+
+Feature flag para troca de formatação, se necessário.
+
+Executar migração em janela controlada.
+
+Reprocessar caches/índices que materializam valores.
+
+🔧 Snippets/Diffs esperados
+
+src/shared/money.ts
+
+export function brlToCents(input: string | number): number { /* conforme padrão */ }
+export function centsToBRL(cents: number): string { /* Intl pt-BR currency */ }
+export function formatBRLInput(value: string): string { /* opcional */ }
+
+
+Uso no form de Plano
+
+const [priceInput, setPriceInput] = useState("110,00");
+function onSubmit(e){ e.preventDefault(); const price_cents = brlToCents(priceInput); api.plans.upsert({name, price_cents, currency:'BRL'}); }
+
+
+Onboarding (anti‑circular)
+
+function onSubmit(e){ 
+  e.preventDefault();
+  const fd = new FormData(e.currentTarget);
+  const payload = {
+    name: String(fd.get('name')||''),
+    email: String(fd.get('email')||''),
+    planId: String(fd.get('planId')||''),
+    plan_price_cents: brlToCents(String(fd.get('planPrice')||'')), // se aplicável
+  };
+  return api.students.onboard(payload);
+}
+
+🛢️ Migração (exemplos PostgreSQL – ajuste nomes)
+
+Criar coluna canônica e migrar de reais → centavos
+
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS price_cents INTEGER;
+UPDATE plans SET price_cents = ROUND(price * 100) WHERE currency = 'BRL' AND price IS NOT NULL;
+ALTER TABLE plans ALTER COLUMN price_cents SET NOT NULL;
+
+
+Corrigir casos salvos 100x menores (ex.: 1,10 em vez de 110,00)
+
+UPDATE plans
+SET price_cents = price_cents * 100
+WHERE currency = 'BRL' AND price_cents BETWEEN 1 AND 999; -- ajuste faixa ao seu cenário
+
+
+(Opcional) Remover coluna antiga
+
+-- ALTER TABLE plans DROP COLUMN price;
+
+✅ Critérios de Aceite
+
+ Inserir “110,00” em qualquer tela → persistir 11000 e exibir R$ 110,00.
+
+ Onboarding salva sem erro; payload não contém stateNode, target, view, __reactFiber, etc.
+
+ PDFs/recibos/contratos exibem valores via centsToBRL.
+
+ API/DB padronizados em centavos.
+
+ Migração corrige registros históricos, sem outliers.
+
+📋 Checklist de PR
+
+ money.ts + testes.
+
+ Refator de todos os formulários/listagens (grep: price, valor, plano).
+
+ Onboarding: submit serializável.
+
+ Ajustes em DTO/validators (zod/yup) para price_cents inteiro.
+
+ Scripts de migração versionados.
+
+ Documentação curta em docs/money-brl.md.
+
+ Smoke test E2E passando.
+
+🧨 Riscos & Mitigações
+
+Dupla conversão 100x: logs e feature flag para detectar e reverter rápido.
+
+Relatórios antigos: regenerar usando centsToBRL.
+
+Integrações externas: se alguma API espera reais, converter na borda (apenas no client daquela integração).
+
+🔁 Plano de Reversão
+
+Back‑out do deploy → restaura imagem anterior.
+
+Reverter migração com snapshot/backup.
+
+Flag para retornar à exibição antiga (somente visual) enquanto corrige dados.

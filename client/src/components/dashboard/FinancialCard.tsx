@@ -16,12 +16,7 @@ interface FinancialMetric {
   payingStudentsCount: number;
 }
 
-const formatCurrencyBRL = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value);
-};
+import { centsToBRL } from "@shared/money";
 
 export function FinancialCard() {
   const { data: statsData, isLoading } = useQuery({
@@ -88,7 +83,7 @@ export function FinancialCard() {
             </Badge>
           </div>
           <div className="text-xl font-semibold text-blue-600">
-            {formatCurrencyBRL(stats.averageTicket || 0)}
+            {centsToBRL(stats.averageTicket || 0)}
           </div>
           <div className="text-xs text-muted-foreground">
             Valor médio por aluno com pagamento confirmado

@@ -217,9 +217,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-0 flex flex-col">
       {/* Header - Compacto e Responsivo */}
-      <div className="bg-white border-b shadow-sm">
+      <header className="bg-white border-b shadow-sm flex-shrink-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex justify-between items-center">
             <div>
@@ -235,7 +235,7 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Progress Section - Compacto */}
       <div className="bg-white border-b">
@@ -279,7 +279,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Main Content - Otimizado */}
-      <div className="py-2">
+      <main className="flex-1 min-h-0 py-2">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <Card className="shadow-sm border">
             <CardContent className="p-4">
@@ -338,16 +338,16 @@ export default function OnboardingPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
 
       {/* Footer - Compacto */}
-      <div className="bg-white border-t mt-2">
+      <footer className="bg-white border-t flex-shrink-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2">
           <div className="text-center text-xs text-muted-foreground">
             <p>Dúvidas? Entre em contato conosco através do sistema principal.</p>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

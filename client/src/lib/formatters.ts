@@ -1,5 +1,6 @@
 // client/src/lib/formatters.ts
 export const onlyDigits = (v?: string | null) => (v || "").replace(/\D+/g, "");
+export const formatName = (s?: string | null) => (s || "").trim();
 
 export function formatCPF(v?: string | null) {
   const s = onlyDigits(v);
@@ -9,8 +10,9 @@ export function formatCPF(v?: string | null) {
     .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
     .replace(/\.(\d{3})(\d)/, ".$1-$2");
 }
-export function unformatCPF(v?: string | null) {
-  return onlyDigits(v).slice(0, 11);
+export function unformatCPF(v?: string | null): string | null {
+  const digits = onlyDigits(v);
+  return digits.length === 11 ? digits : null;
 }
 
 export function formatRG(v?: string | null) {
@@ -20,7 +22,10 @@ export function formatRG(v?: string | null) {
   if (s.length <= 8) return s.replace(/^(\d{2})(\d{3})(\d+)/, "$1.$2.$3");
   return s.replace(/^(\d{2})(\d{3})(\d{3})(\d)/, "$1.$2.$3-$4");
 }
-export const unformatRG = (v?: string | null) => onlyDigits(v).slice(0, 9);
+export const unformatRG = (v?: string | null) => {
+  const digits = onlyDigits(v).slice(0, 9);
+  return digits.length >= 7 ? digits : null;
+};
 
 export function formatPhone(v?: string | null) {
   const s = onlyDigits(v).slice(0, 11);
@@ -29,12 +34,18 @@ export function formatPhone(v?: string | null) {
   }
   return s.replace(/^(\d{2})(\d{5})(\d{0,4})$/, "($1) $2-$3").trim();
 }
-export const unformatPhone = (v?: string | null) => onlyDigits(v).slice(0, 11);
+export const unformatPhone = (v?: string | null) => {
+  const digits = onlyDigits(v).slice(0, 11);
+  return digits.length >= 10 ? digits : null;
+};
 
 export function formatCEP(v?: string | null) {
   return onlyDigits(v).slice(0, 8).replace(/^(\d{5})(\d{0,3})$/, "$1-$2").trim();
 }
-export const unformatCEP = (v?: string | null) => onlyDigits(v).slice(0, 8);
+export const unformatCEP = (v?: string | null) => {
+  const digits = onlyDigits(v).slice(0, 8);
+  return digits.length === 8 ? digits : null;
+};
 
 export function toDisplayDate(iso?: string | null) {
   if (!iso) return "";

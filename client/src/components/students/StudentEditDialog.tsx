@@ -15,6 +15,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Form,
   FormControl,
   FormField,
@@ -261,14 +267,28 @@ export default function StudentEditDialog({
     `${studentData.firstName} ${studentData.lastName}` : 
     studentName || "Aluno";
 
+  // Detectar se é mobile
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className={`${
+        isMobile 
+          ? 'max-w-[95vw] max-h-[95vh] p-4' 
+          : 'max-w-4xl max-h-[90vh]'
+      } overflow-y-auto`}>
+        <DialogHeader className={isMobile ? 'pb-2' : ''}>
+          <DialogTitle className={isMobile ? 'text-lg' : ''}>
             {readOnly ? `Visualizando ${displayName}` : `Editando ${displayName}`}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className={`text-sm text-muted-foreground ${isMobile ? 'hidden' : ''}`}>
             Gerencie informações completas do aluno incluindo dados pessoais, contato, endereço, saúde, financeiro e documentos.
           </p>
         </DialogHeader>
@@ -284,17 +304,45 @@ export default function StudentEditDialog({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs defaultValue="personal" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
-                  <TabsTrigger value="contact">Contato</TabsTrigger>
-                  <TabsTrigger value="address">Endereço</TabsTrigger>
-                  <TabsTrigger value="health">Saúde & Graduação</TabsTrigger>
-                  <TabsTrigger value="financial">Financeiro</TabsTrigger>
+                <TabsList className={`grid w-full ${
+                  isMobile 
+                    ? 'grid-cols-3 h-auto p-1 gap-1' 
+                    : 'grid-cols-5'
+                }`}>
+                  <TabsTrigger value="personal" className={isMobile ? 'text-xs px-2 py-2 h-auto' : ''}>
+                    {isMobile ? 'Pessoal' : 'Dados Pessoais'}
+                  </TabsTrigger>
+                  <TabsTrigger value="contact" className={isMobile ? 'text-xs px-2 py-2 h-auto' : ''}>
+                    Contato
+                  </TabsTrigger>
+                  <TabsTrigger value="address" className={isMobile ? 'text-xs px-2 py-2 h-auto' : ''}>
+                    {isMobile ? 'End.' : 'Endereço'}
+                  </TabsTrigger>
+                  {!isMobile && (
+                    <>
+                      <TabsTrigger value="health">Saúde & Graduação</TabsTrigger>
+                      <TabsTrigger value="financial">Financeiro</TabsTrigger>
+                    </>
+                  )}
                 </TabsList>
+                
+                {/* Segunda linha de tabs para mobile */}
+                {isMobile && (
+                  <TabsList className="grid w-full grid-cols-2 h-auto p-1 gap-1 mt-1">
+                    <TabsTrigger value="health" className="text-xs px-2 py-2 h-auto">
+                      Saúde & Faixa
+                    </TabsTrigger>
+                    <TabsTrigger value="financial" className="text-xs px-2 py-2 h-auto">
+                      Financeiro
+                    </TabsTrigger>
+                  </TabsList>
+                )}
 
-                {/* Dados Pessoais */}
+              {/* Dados Pessoais */}
                 <TabsContent value="personal" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className={`grid gap-4 ${
+                    isMobile ? 'grid-cols-1' : 'grid-cols-2'
+                  }`}>
                     <FormField
                       control={form.control}
                       name="firstName"

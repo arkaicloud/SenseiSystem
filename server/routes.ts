@@ -1449,8 +1449,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      res.json({ student: { ...student, user: { ...user, password: undefined } } });
+      // Return data in DTO format for StudentEditDialog
+      const studentDTO = {
+        id: student.id,
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        birthDate: user.birthDate,
+        cpf: user.cpf,
+        rg: user.rg,
+        sex: user.sex,
+        contact: {
+          email: user.email,
+          phone: user.phone
+        },
+        emergency: {
+          name: user.emergencyContact,
+          phone: user.emergencyPhone || null
+        },
+        address: {
+          zip: user.zipCode,
+          street: user.street,
+          number: user.number,
+          complement: user.complement,
+          district: user.neighborhood,
+          city: user.city,
+          state: user.state
+        },
+        health: {
+          notes: student.medicalObservations || null
+        },
+        graduation: {
+          beltLevel: student.beltLevel,
+          graduationDate: student.lastPromotionDate
+        },
+        financialResponsible: {
+          relation: student.financialResponsibleRelation || null
+        },
+        billing: {
+          planId: student.paymentPlanId,
+          preferredDueDay: student.preferredDueDate || 5
+        }
+      };
+
+      res.json(studentDTO);
     } catch (error) {
+      console.error("Error fetching student:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

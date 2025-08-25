@@ -22,18 +22,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { formatCurrencyBRL } from "@/lib/utils";
+import { brlToCents, centsToBRL, formatBRLInput } from "@shared/money";
 
-// Extend the payment plan schema for form validation
-const paymentPlanFormSchema = insertPaymentPlanSchema.extend({
-  amount: z.coerce.number().min(1, { message: "O valor deve ser maior que 0" }),
+// Form schema with price input as string (will be converted to cents)
+const paymentPlanFormSchema = z.object({
+  name: z.string().min(1, { message: "Nome é obrigatório" }),
+  amount: z.string().min(1, { message: "Valor é obrigatório" }),
+  frequency: z.string(),
+  description: z.string().optional(),
 });
 
 type PaymentPlanFormValues = z.infer<typeof paymentPlanFormSchema>;
 
 interface PaymentPlanFormProps {
-  defaultValues?: Partial<PaymentPlanFormValues>;
-  onSubmit: (data: PaymentPlanFormValues) => void;
+  defaultValues?: Partial<{
+    name: string;
+    amount: number; // This comes in cents from API
+    frequency: string;
+    description: string;
+  }>;
+  onSubmit: (data: { name: string; amount: number; frequency: string; description?: string }) => void;
   isLoading: boolean;
 }
 
@@ -47,17 +55,26 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
   const form = useForm<PaymentPlanFormValues>({
     resolver: zodResolver(paymentPlanFormSchema),
     defaultValues: {
-      name: "",
-      amount: 0,
-      frequency: "monthly",
-      description: "",
-      ...defaultValues,
+      name: defaultValues?.name || "",
+      amount: defaultValues?.amount ? centsToBRL(defaultValues.amount).replace('R$', '').trim() : "",
+      frequency: defaultValues?.frequency || "monthly",
+      description: defaultValues?.description || "",
     },
   });
 
+  const handleFormSubmit = (data: PaymentPlanFormValues) => {
+    const amountInCents = brlToCents(data.amount);
+    onSubmit({
+      name: data.name,
+      amount: amountInCents,
+      frequency: data.frequency,
+      description: data.description,
+    });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -82,11 +99,13 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
                 <div className="relative">
                   <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
                   <Input 
-                    type="number" 
+                    type="text" 
                     className="pl-9" 
-                    {...field} 
+                    {...field}
+                    placeholder="110,00"
                     onChange={(e) => {
-                      field.onChange(e.target.valueAsNumber);
+                      const formatted = formatBRLInput(e.target.value);
+                      field.onChange(formatted);
                     }}
                   />
                 </div>

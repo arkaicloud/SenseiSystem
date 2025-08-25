@@ -24,7 +24,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { cn, formatCurrencyBRL, formatCurrencyBRLInput, parseCurrencyBRL } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { centsToBRL, brlToCents, formatBRLInput } from "@shared/money";
 import { CalendarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -151,7 +152,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                       key={plan.id}
                       value={plan.id.toString()}
                     >
-                      {plan.name} - {formatCurrencyBRL(plan.amount)} ({t(plan.frequency)})
+                      {plan.name} - {centsToBRL(plan.amount)} ({t(plan.frequency)})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -282,7 +283,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                   type="text"
                   placeholder="99,00"
                   {...field}
-                  value={formatCurrencyBRLInput(field.value)}
+                  value={formatBRLInput(field.value.toString())}
                   onChange={(e) => {
                     const value = parseCurrencyBRL(e.target.value);
                     field.onChange(isNaN(value) ? 0 : value);

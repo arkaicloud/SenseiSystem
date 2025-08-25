@@ -279,10 +279,10 @@ export default function OnboardingPage() {
       </div>
 
       {/* Main Content - Otimizado */}
-      <div className="py-4">
+      <div className="py-2">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <Card className="shadow-sm border">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               {/* Erro de registro */}
               {registrationError && (
                 <Alert variant="destructive" className="mb-6">
@@ -340,9 +340,9 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Footer - Sem margem extra */}
-      <div className="bg-white border-t">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
+      {/* Footer - Compacto */}
+      <div className="bg-white border-t mt-2">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-2">
           <div className="text-center text-xs text-muted-foreground">
             <p>Dúvidas? Entre em contato conosco através do sistema principal.</p>
           </div>

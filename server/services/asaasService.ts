@@ -206,9 +206,31 @@ export class AsaasService {
       throw new Error('ASAAS not configured');
     }
 
+    // Calcular data de vencimento baseada na preferência do aluno
     const today = new Date();
-    const dueDate = new Date(today);
-    dueDate.setMonth(dueDate.getMonth() + (planData.frequency === 'monthly' ? 1 : 12));
+    const preferredDay = studentData.preferredDueDate || 5; // Default dia 5 se não informado
+    
+    // Próximo mês
+    const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, preferredDay);
+    
+    // Se a data preferida já passou no mês atual, usar no próximo mês
+    if (planData.frequency === 'monthly') {
+      const currentDay = today.getDate();
+      if (currentDay >= preferredDay) {
+        // Já passou do dia preferido no mês atual, usar próximo mês
+        dueDate.setMonth(dueDate.getMonth() + 1);
+      } else {
+        // Ainda não passou, usar no mês atual
+        dueDate.setMonth(today.getMonth());
+      }
+    }
+
+    // Para planos anuais, sempre próximo ano
+    if (planData.frequency === 'yearly' || planData.frequency === 'annual') {
+      dueDate.setFullYear(today.getFullYear() + 1);
+    }
+
+    console.log(`📅 Data de vencimento calculada: ${dueDate.toISOString().split('T')[0]} (dia preferido: ${preferredDay})`);
 
     const paymentData: CreatePaymentRequest = {
       customer: customerId,
@@ -247,10 +269,31 @@ export class AsaasService {
     return { customer: newCustomer, created: true };
   }
 
-  async createOrSyncCobranca(customerId: string, studentData: any, planData: any): Promise<AsaasPayment> {
+  async createOrSyncCobranca(alunoDataOrCustomerId: any, studentDataOrPlan?: any, planData?: any): Promise<AsaasPayment> {
+    // Handle both old and new method signatures for backward compatibility
+    let customerId: string;
+    let studentData: any;
+    let plan: any;
+
+    if (typeof alunoDataOrCustomerId === 'string') {
+      // Old signature: createOrSyncCobranca(customerId, studentData, planData)
+      customerId = alunoDataOrCustomerId;
+      studentData = studentDataOrPlan;
+      plan = planData;
+    } else {
+      // New signature: createOrSyncCobranca(alunoData, planData)
+      const alunoData = alunoDataOrCustomerId;
+      plan = studentDataOrPlan;
+      
+      // Get or create customer first
+      const { customer } = await this.getOrCreateAsaasCustomer(alunoData);
+      customerId = customer.id;
+      studentData = alunoData;
+    }
+
     // Check if payment already exists for this student/plan
     const existingPayments = await this.getCustomerPayments(customerId);
-    const planReference = `student_${studentData.user_id}_plan_${planData.id}`;
+    const planReference = `student_${studentData.user_id}_plan_${plan.id}`;
     
     const existingPayment = existingPayments.find((payment: any) => 
       payment.externalReference === planReference && payment.status === 'PENDING'
@@ -261,8 +304,8 @@ export class AsaasService {
       return existingPayment;
     }
 
-    // Create new payment
-    return await this.createPaymentForStudent(customerId, studentData, planData);
+    // Create new payment with correct due date
+    return await this.createPaymentForStudent(customerId, studentData, plan);
   }
 
   async syncExistingAsaasData(cpfOrEmail: string): Promise<{ customer: AsaasCustomer | null, payments: AsaasPayment[] }> {

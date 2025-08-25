@@ -19,6 +19,7 @@ const Students: React.FC = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +69,7 @@ const Students: React.FC = () => {
         title: "Sucesso",
         description: "Aluno atualizado com sucesso",
       });
+      setSelectedStudent(null);
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
     },
     onError: (error) => {
@@ -104,6 +106,43 @@ const Students: React.FC = () => {
     },
   });
 
+  // Mutation para reverter aprovação
+  const revertApprovalMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await fetch(`/api/users/${userId}/revert-approval`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          reason: 'Reversão solicitada pelo administrador' 
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao reverter aprovação');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Aprovação revertida",
+        description: "Aluno retornado ao status pendente",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const students = (data as any)?.students || [];
 
   // Função para obter status financeiro consistente baseado no ID do aluno
@@ -120,10 +159,10 @@ const Students: React.FC = () => {
       const name = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();
       const email = student.user.email.toLowerCase();
       const query = searchTerm.toLowerCase();
-      
+
       // Filtro de busca por nome/email
       const matchesSearch = !query || name.includes(query) || email.includes(query);
-      
+
       // Filtro de status baseado na aba
       let matchesStatus = true;
       if (tabFilter === "active") {
@@ -131,21 +170,21 @@ const Students: React.FC = () => {
       } else if (tabFilter === "inactive") {
         matchesStatus = !student.user.active;
       }
-      
+
       // Filtro de faixa
       const matchesBelt = beltFilter === "all" || student.beltLevel === beltFilter;
-      
+
       // Filtro financeiro consistente
       const financialStatus = getFinancialStatus(student.id);
       const matchesFinancial = financialFilter === "all" || financialStatus === financialFilter;
-      
+
       return matchesSearch && matchesStatus && matchesBelt && matchesFinancial;
     });
 
     // Ordenação
     filteredStudents.sort((a: any, b: any) => {
       let valueA, valueB;
-      
+
       switch (sortBy) {
         case "name":
           valueA = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
@@ -169,7 +208,7 @@ const Students: React.FC = () => {
           valueA = a.id;
           valueB = b.id;
       }
-      
+
       if (sortOrder === "asc") {
         return valueA > valueB ? 1 : -1;
       } else {
@@ -331,14 +370,7 @@ const Students: React.FC = () => {
                   </thead>
                   <tbody>
                     {getFilteredStudents("all").map((student: any) => (
-                      <tr 
-                        key={student.id} 
-                        className="border-b hover:bg-gray-50 cursor-pointer"
-                        onDoubleClick={() => {
-                          setStudentToEdit(student);
-                          setIsEditStudentOpen(true);
-                        }}
-                      >
+                      <tr key={student.id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
@@ -372,7 +404,7 @@ const Students: React.FC = () => {
                             const diffMinutes = Math.floor(diffMs / (1000 * 60));
                             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                            
+
                             if (diffMinutes < 60) {
                               return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
                             } else if (diffHours < 24) {
@@ -412,7 +444,18 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center space-x-1">
-
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Ver perfil completo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-blue-500 text-sm">visibility</span>
+                            </Button>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -446,6 +489,21 @@ const Students: React.FC = () => {
                                 <span className="material-icons text-green-500 text-sm">check_circle</span>
                               )}
                             </Button>
+                            {student.user.active && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                title="Reverter para pendente"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  revertApprovalMutation.mutate(student.user.id);
+                                }}
+                                disabled={revertApprovalMutation.isPending}
+                              >
+                                <span className="material-icons text-orange-500 text-sm">undo</span>
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -494,14 +552,7 @@ const Students: React.FC = () => {
                   </thead>
                   <tbody>
                     {getFilteredStudents("active").map((student: any) => (
-                      <tr 
-                        key={student.id} 
-                        className="border-b hover:bg-gray-50 cursor-pointer"
-                        onDoubleClick={() => {
-                          setStudentToEdit(student);
-                          setIsEditStudentOpen(true);
-                        }}
-                      >
+                      <tr key={student.id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
@@ -535,7 +586,7 @@ const Students: React.FC = () => {
                             const diffMinutes = Math.floor(diffMs / (1000 * 60));
                             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                            
+
                             if (diffMinutes < 60) {
                               return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
                             } else if (diffHours < 24) {
@@ -575,7 +626,18 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center space-x-1">
-
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Ver perfil completo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-blue-500 text-sm">visibility</span>
+                            </Button>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -609,6 +671,21 @@ const Students: React.FC = () => {
                                 <span className="material-icons text-green-500 text-sm">check_circle</span>
                               )}
                             </Button>
+                            {student.user.active && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                title="Reverter para pendente"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  revertApprovalMutation.mutate(student.user.id);
+                                }}
+                                disabled={revertApprovalMutation.isPending}
+                              >
+                                <span className="material-icons text-orange-500 text-sm">undo</span>
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -660,10 +737,7 @@ const Students: React.FC = () => {
                       <tr 
                         key={student.id} 
                         className="border-b hover:bg-gray-50 cursor-pointer"
-                        onDoubleClick={() => {
-                          setStudentToEdit(student);
-                          setIsEditStudentOpen(true);
-                        }}
+                        onClick={() => setSelectedStudent(student)}
                       >
                         <td className="py-3 px-4">
                           <span className="text-sm font-medium text-gray-600">
@@ -701,7 +775,7 @@ const Students: React.FC = () => {
                                 const diffMinutes = Math.floor(diffMs / (1000 * 60));
                                 const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                                 const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                                
+
                                 if (diffMinutes < 60) {
                                   return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
                                 } else if (diffHours < 24) {
@@ -754,7 +828,18 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center space-x-1">
-
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Ver perfil completo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(student);
+                              }}
+                            >
+                              <span className="material-icons text-blue-500 text-sm">visibility</span>
+                            </Button>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -788,6 +873,21 @@ const Students: React.FC = () => {
                                 <span className="material-icons text-green-500 text-sm">check_circle</span>
                               )}
                             </Button>
+                            {student.user.active && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                title="Reverter para pendente"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  revertApprovalMutation.mutate(student.user.id);
+                                }}
+                                disabled={revertApprovalMutation.isPending}
+                              >
+                                <span className="material-icons text-orange-500 text-sm">undo</span>
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -806,7 +906,7 @@ const Students: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
-                
+
                 {/* Paginação */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <div className="flex items-center text-sm text-gray-600">
@@ -853,6 +953,29 @@ const Students: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+      {/* View Student Dialog */}
+      {selectedStudent && (
+        <Dialog open={true} onOpenChange={(open) => !open && setSelectedStudent(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogTitle>Visualizar Aluno</DialogTitle>
+            <StudentForm 
+              defaultValues={{
+                firstName: selectedStudent.user.firstName,
+                lastName: selectedStudent.user.lastName,
+                email: selectedStudent.user.email,
+                username: selectedStudent.user.username,
+                beltLevel: selectedStudent.beltLevel,
+                stripes: selectedStudent.stripes,
+                emergencyContact: selectedStudent.user.emergencyContact || '',
+                notes: selectedStudent.notes || '',
+                phone: selectedStudent.user.phone || '',
+              }}
+              onSubmit={handleUpdateStudent}
+              isLoading={isUpdatingStudent}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Edit Student Dialog - New Complete Interface */}
       {studentToEdit && (

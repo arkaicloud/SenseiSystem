@@ -418,18 +418,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
         )}
       </nav>
 
-      {/* User info and footer - fixed at bottom */}
+      {/* Footer - fixed at bottom */}
       <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-        <div className="p-4 flex items-center">
-          <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center mr-3">
-            <span className="font-bold text-white text-sm">{userInitials}</span>
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-slate-900 dark:text-white text-sm">{user.firstName} {user.lastName}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">{formatRole(user.role)}</p>
-          </div>
-        </div>
-        <div className="px-4 pb-3 text-xs text-slate-500 dark:text-slate-500">
+        <div className="px-4 py-3 text-xs text-slate-500 dark:text-slate-500">
           <p>SenseiSystem - Version 1.0.0</p>
         </div>
       </div>

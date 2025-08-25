@@ -922,7 +922,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
                 console.log('🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...');
-                const payment = await asaasService.createOrSyncCobranca(alunoData, plan);
+                
+                // First get or create the customer
+                const { customer, created } = await asaasService.getOrCreateAsaasCustomer(alunoData);
+                console.log(`🏢 Cliente ASAAS: ${customer.id} (${created ? 'criado' : 'existente'})`);
+                
+                // Then create or sync the payment
+                const payment = await asaasService.createOrSyncCobranca(customer.id, alunoData, plan);
                 console.log(`✅ Processo concluído - Payment ID: ${payment.id}, Customer: ${payment.customer}`);
 
                 // Update student with ASAAS customer ID if not already set

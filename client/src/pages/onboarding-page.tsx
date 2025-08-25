@@ -217,7 +217,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       {/* Header - Compacto e Responsivo */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
@@ -340,8 +340,8 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Footer - Compacto */}
-      <div className="bg-white border-t mt-4">
+      {/* Footer - Sem margem extra */}
+      <div className="bg-white border-t">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
           <div className="text-center text-xs text-muted-foreground">
             <p>Dúvidas? Entre em contato conosco através do sistema principal.</p>

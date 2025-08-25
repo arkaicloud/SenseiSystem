@@ -10,13 +10,57 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import AddressForm from "@/components/ui/address-form";
 
+// Função para validar CPF brasileiro
+const validateCPF = (cpf: string): boolean => {
+  // Remove caracteres não numéricos
+  const cleanCPF = cpf.replace(/\D/g, '');
+  
+  // Verifica se tem 11 dígitos
+  if (cleanCPF.length !== 11) return false;
+  
+  // Verifica se todos os dígitos são iguais (CPF inválido)
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+  
+  // Validação do primeiro dígito verificador
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCPF[i]) * (10 - i);
+  }
+  let digit1 = (sum * 10) % 11;
+  if (digit1 === 10) digit1 = 0;
+  if (digit1 !== parseInt(cleanCPF[9])) return false;
+  
+  // Validação do segundo dígito verificador
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCPF[i]) * (11 - i);
+  }
+  let digit2 = (sum * 10) % 11;
+  if (digit2 === 10) digit2 = 0;
+  if (digit2 !== parseInt(cleanCPF[10])) return false;
+  
+  return true;
+};
+
+// Função para formatar CPF
+const formatCPF = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
 const personalInfoSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Sobrenome é obrigatório"),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
   email: z.string().email("E-mail inválido"),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-  cpf: z.string().min(11, "CPF é obrigatório"),
+  cpf: z.string()
+    .min(1, "CPF é obrigatório")
+    .refine((cpf) => {
+      const cleanCPF = cpf.replace(/\D/g, '');
+      return cleanCPF.length === 11;
+    }, "CPF deve ter 11 dígitos")
+    .refine(validateCPF, "CPF inválido"),
   rg: z.string().min(1, "RG é obrigatório"),
   emergencyContact: z.string().min(1, "Contato de emergência é obrigatório"),
   emergencyPhone: z.string().min(10, "Telefone de emergência deve ter pelo menos 10 dígitos"),
@@ -31,7 +75,17 @@ const personalInfoSchema = z.object({
   financialResponsibleName: z.string().optional(),
   financialResponsibleEmail: z.string().optional(),
   financialResponsiblePhone: z.string().optional(),
-  financialResponsibleCpf: z.string().optional(),
+  financialResponsibleCpf: z.string()
+    .optional()
+    .refine((cpf) => {
+      if (!cpf) return true; // Campo opcional
+      const cleanCPF = cpf.replace(/\D/g, '');
+      return cleanCPF.length === 11;
+    }, "CPF deve ter 11 dígitos")
+    .refine((cpf) => {
+      if (!cpf) return true; // Campo opcional
+      return validateCPF(cpf);
+    }, "CPF inválido"),
   financialResponsibleRelationship: z.enum(["self", "parent", "guardian", "spouse"], {
     errorMap: () => ({ message: "Selecione o grau de parentesco" })
   }),
@@ -186,7 +240,16 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                   <FormItem>
                     <FormLabel>CPF *</FormLabel>
                     <FormControl>
-                      <Input placeholder="000.000.000-00" {...field} />
+                      <Input 
+                        placeholder="000.000.000-00" 
+                        {...field}
+                        value={formatCPF(field.value || "")}
+                        onChange={(e) => {
+                          const formatted = formatCPF(e.target.value);
+                          field.onChange(formatted);
+                        }}
+                        maxLength={14}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -382,11 +445,12 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                           <Input 
                             {...field} 
                             placeholder="000.000.000-00"
+                            value={formatCPF(field.value || "")}
                             onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, "");
-                              const formattedValue = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-                              field.onChange(formattedValue);
+                              const formatted = formatCPF(e.target.value);
+                              field.onChange(formatted);
                             }}
+                            maxLength={14}
                           />
                         </FormControl>
                         <FormMessage />

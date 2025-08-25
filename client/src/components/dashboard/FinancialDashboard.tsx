@@ -91,37 +91,37 @@ export function FinancialDashboard() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric, index) => {
         const Icon = metric.icon;
         return (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-muted-foreground truncate">
                 {metric.title}
               </CardTitle>
-              <div className={`h-8 w-8 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
+              <div className={`h-8 w-8 rounded-lg ${metric.bgColor} flex items-center justify-center flex-shrink-0`}>
                 <Icon className={`h-4 w-4 ${metric.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metric.value}</div>
+              <div className="text-2xl font-bold truncate">{metric.value}</div>
               {metric.change && (
                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                   {metric.changeType === 'positive' && (
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                    <TrendingUp className="h-3 w-3 text-green-500 mr-1 flex-shrink-0" />
                   )}
                   {metric.changeType === 'negative' && (
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                    <TrendingDown className="h-3 w-3 text-red-500 mr-1 flex-shrink-0" />
                   )}
-                  <span className={
+                  <span className={`truncate ${
                     metric.changeType === 'positive' ? 'text-green-600' :
                     metric.changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
-                  }>
+                  }`}>
                     {metric.change}
                   </span>
                   {metric.description && (
-                    <span className="text-muted-foreground ml-1">
+                    <span className="text-muted-foreground ml-1 truncate">
                       {metric.description}
                     </span>
                   )}

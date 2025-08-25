@@ -234,6 +234,42 @@
   }
 }
 
+/* ==== Sticky footer sem espaço extra ==== */
+html, body {
+  height: auto !important;
+  min-height: 100svh !important; /* svh evita bugs do 100vh em mobile */
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100svh !important;
+}
+
+/* a área de conteúdo ocupa o meio, sem forçar altura extra */
+main, [data-main], .app-main {
+  flex: 1 0 auto !important;
+  min-height: 0 !important;
+}
+
+/* o footer vai para o fim da página, sem criar "piso" adicional */
+footer {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* saneamento defensivo: elimina margin/padding pós-footer */
+footer + * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* se algum contêiner genérico estiver "esticando" a página */
+.h-screen, .min-h-screen, .min-h-svh {
+  min-height: auto !important; /* só para esta tela de onboarding */
+}
+
 /* Mobile-specific fixes for onboarding */
 @media (max-width: 768px) {
   .safe-area-inset {

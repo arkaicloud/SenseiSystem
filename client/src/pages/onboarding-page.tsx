@@ -8,16 +8,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, User, Heart, FileText, ArrowLeft } from "lucide-react";
 import PersonalInfoStep, { type PersonalInfoData } from "@/components/onboarding/steps/PersonalInfoStep";
-import HealthFormStep, { type HealthFormData } from "@/components/onboarding/steps/HealthFormStep";
+import HealthFormStep from "@/components/onboarding/steps/HealthFormStep";
 import DocumentsStep from "@/components/onboarding/steps/DocumentsStep";
 import ReviewStep from "@/components/onboarding/steps/ReviewStep";
 import MobileStudentOnboarding from "@/components/onboarding/MobileStudentOnboarding";
 import { beltLevelEnum } from "@shared/schema";
 
-type OnboardingData = PersonalInfoData & HealthFormData & {
+type OnboardingData = PersonalInfoData & {
   username: string;
   password: string;
   confirmPassword: string;
+  medicalConditions?: string;
+  documentsCompleted?: boolean;
 };
 
 // Chave para o localStorage
@@ -121,7 +123,7 @@ export default function OnboardingPage() {
 
   // Função para resetar email em caso de erro
   const resetEmailField = () => {
-    setOnboardingData(prev => ({
+    setOnboardingData((prev: Partial<OnboardingData>) => ({
       ...prev,
       email: ""
     }));
@@ -129,14 +131,14 @@ export default function OnboardingPage() {
     setRegistrationError("");
   };
 
-  const handlePersonalInfoSubmit = (data: any) => {
-    setOnboardingData(prev => ({ ...prev, ...data }));
+  const handlePersonalInfoSubmit = (data: PersonalInfoData) => {
+    setOnboardingData((prev: Partial<OnboardingData>) => ({ ...prev, ...data }));
     setCurrentStep(2);
     setRegistrationError(""); // Limpar erro anterior
   };
 
   const handleHealthFormSubmit = (data: any) => {
-    setOnboardingData(prev => ({ ...prev, ...data }));
+    setOnboardingData((prev: Partial<OnboardingData>) => ({ ...prev, ...data }));
     setCurrentStep(3);
     setRegistrationError(""); // Limpar erro anterior
   };
@@ -321,7 +323,10 @@ export default function OnboardingPage() {
 
               {currentStep === 2 && (
                 <HealthFormStep 
-                  onNext={handleHealthFormSubmit}
+                  onNext={() => {
+                    setCurrentStep(3);
+                    setRegistrationError("");
+                  }}
                   onBack={() => setCurrentStep(1)}
                   defaultValues={onboardingData}
                 />

@@ -15,6 +15,8 @@ type OnboardingData = PersonalInfoData & {
   username: string;
   password: string;
   confirmPassword: string;
+  beltLevel?: string;
+  stripes?: number;
 };
 
 interface StudentOnboardingProps {

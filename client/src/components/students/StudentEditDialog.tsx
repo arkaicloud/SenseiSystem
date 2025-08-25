@@ -89,7 +89,8 @@ export default function StudentEditDialog({
 
   // Buscar dados do aluno
   const { data: studentData, isLoading: isLoadingStudent } = useQuery({
-    queryKey: [`/api/users/${studentId}`],
+    queryKey: [`/api/students/${studentId}`],
+    queryFn: () => fetch(`/api/students/${studentId}?include=all`).then(res => res.json()),
     enabled: open && !!studentId,
     staleTime: 0,
     cacheTime: 0,
@@ -97,11 +98,12 @@ export default function StudentEditDialog({
 
   // Buscar planos de pagamento
   const { data: paymentPlansData } = useQuery({
-    queryKey: ["/api/payment-plans"],
+    queryKey: ["/api/billing/plans"],
+    queryFn: () => fetch('/api/billing/plans').then(res => res.json()),
     enabled: open,
   });
 
-  const paymentPlans = paymentPlansData?.plans || [];
+  const paymentPlans = paymentPlansData || [];
 
   // Form setup
   const form = useForm<StudentEditFormData>({
@@ -140,12 +142,53 @@ export default function StudentEditDialog({
   // Mutation para atualizar aluno
   const updateStudentMutation = useMutation({
     mutationFn: async (data: StudentEditFormData) => {
-      const response = await fetch(`/api/users/${studentId}`, {
-        method: "PUT",
+      // Converter para formato DTO esperado pelo backend
+      const payload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        birthDate: data.birthDate,
+        cpf: data.cpf,
+        rg: data.rg,
+        sex: null, // Mapeado do gender se necessário
+        contact: {
+          email: data.email,
+          phone: data.phone
+        },
+        emergency: {
+          name: data.emergencyContactName,
+          phone: data.emergencyContactPhone
+        },
+        financialResponsible: {
+          relation: data.financialResponsibleRelation
+        },
+        billing: {
+          planId: data.paymentPlanId,
+          preferredDueDay: data.preferredDueDate
+        },
+        address: {
+          zip: data.zipCode,
+          street: data.street,
+          number: data.number,
+          complement: data.complement,
+          district: data.neighborhood,
+          city: data.city,
+          state: data.state
+        },
+        health: {
+          notes: data.medicalObservations
+        },
+        graduation: {
+          beltLevel: data.beltLevel,
+          graduationDate: data.lastPromotionDate
+        }
+      };
+
+      const response = await fetch(`/api/students/${studentId}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -160,7 +203,7 @@ export default function StudentEditDialog({
         title: "Sucesso",
         description: "Dados do aluno atualizados com sucesso",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${studentId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       onOpenChange(false);
@@ -177,36 +220,34 @@ export default function StudentEditDialog({
   // Preencher form quando dados carregarem
   useEffect(() => {
     if (studentData && open) {
-      const student = studentData.student;
-      
       form.reset({
         firstName: studentData.firstName || "",
         lastName: studentData.lastName || "",
         birthDate: studentData.birthDate ? new Date(studentData.birthDate).toISOString().split('T')[0] : null,
         cpf: studentData.cpf || null,
         rg: studentData.rg || null,
-        email: studentData.email || null,
-        phone: studentData.phone || null,
-        emergencyContactName: studentData.emergencyContact || null,
-        emergencyContactPhone: studentData.emergencyPhone || null,
-        street: studentData.street || null,
-        number: studentData.number || null,
-        complement: studentData.complement || null,
-        neighborhood: studentData.neighborhood || null,
-        city: studentData.city || null,
-        state: studentData.state || null,
-        zipCode: studentData.zipCode || null,
-        beltLevel: student?.beltLevel || "white",
-        lastPromotionDate: student?.lastPromotionDate ? new Date(student.lastPromotionDate).toISOString().split('T')[0] : null,
-        financialResponsibleName: student?.financialResponsibleName || null,
-        financialResponsibleCpf: student?.financialResponsibleCpf || null,
-        financialResponsibleEmail: student?.financialResponsibleEmail || null,
-        financialResponsiblePhone: student?.financialResponsiblePhone || null,
-        financialResponsibleRelation: student?.financialResponsibleRelation || null,
-        paymentPlanId: student?.paymentPlanId || null,
-        preferredDueDate: student?.preferredDueDate || 5,
-        medicalObservations: student?.medicalObservations || null,
-        planObservations: student?.planObservations || null,
+        email: studentData.contact?.email || "",
+        phone: studentData.contact?.phone || null,
+        emergencyContactName: studentData.emergency?.name || null,
+        emergencyContactPhone: studentData.emergency?.phone || null,
+        street: studentData.address?.street || null,
+        number: studentData.address?.number || null,
+        complement: studentData.address?.complement || null,
+        neighborhood: studentData.address?.district || null,
+        city: studentData.address?.city || null,
+        state: studentData.address?.state || null,
+        zipCode: studentData.address?.zip || null,
+        beltLevel: studentData.graduation?.beltLevel || "white",
+        lastPromotionDate: studentData.graduation?.graduationDate ? new Date(studentData.graduation.graduationDate).toISOString().split('T')[0] : null,
+        financialResponsibleName: null, // Será adicionado no futuro se necessário
+        financialResponsibleCpf: null, // Será adicionado no futuro se necessário
+        financialResponsibleEmail: null, // Será adicionado no futuro se necessário
+        financialResponsiblePhone: null, // Será adicionado no futuro se necessário
+        financialResponsibleRelation: studentData.financialResponsible?.relation || null,
+        paymentPlanId: studentData.billing?.planId || null,
+        preferredDueDate: studentData.billing?.preferredDueDay || 5,
+        medicalObservations: studentData.health?.notes || null,
+        planObservations: null,
       });
     }
   }, [studentData, open, form]);

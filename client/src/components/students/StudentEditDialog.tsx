@@ -1,249 +1,225 @@
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { formatCPF, unformatCPF, formatRG, unformatRG, formatPhone, unformatPhone, formatCEP, unformatCEP, toDisplayDate, toISODate } from "@/lib/formatters";
-
-// shadcn/ui imports
+import {
+  getStudentById, updateStudent, StudentEditDTO, listBillingPlans, BillingPlan
+} from "@/services/api/students";
+import {
+  formatCPF, unformatCPF, formatRG, unformatRG, formatPhone, unformatPhone,
+  formatCEP, unformatCEP, toDisplayDate, toISODate, formatName
+} from "@/lib/formatters";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 
-const StudentSchema = z.object({
+const Schema = z.object({
   id: z.number(),
   firstName: z.string().min(1, "Nome obrigatório"),
   lastName: z.string().min(1, "Sobrenome obrigatório"),
   birthDate: z.string().nullable().optional(),
   cpf: z.string().nullable().optional(),
   rg: z.string().nullable().optional(),
-  gender: z.enum(["M", "F", "O"]).optional(),
-  email: z.string().email().nullable(),
-  phone: z.string().nullable().optional(),
-  emergencyContactName: z.string().nullable().optional(),
-  emergencyContactPhone: z.string().nullable().optional(),
-  zipCode: z.string().nullable().optional(),
-  street: z.string().nullable().optional(),
-  number: z.string().nullable().optional(),
-  complement: z.string().nullable().optional(),
-  neighborhood: z.string().nullable().optional(),
-  city: z.string().nullable().optional(),
-  state: z.string().nullable().optional(),
-  medicalObservations: z.string().nullable().optional(),
-  beltLevel: z.string().nullable().optional(),
-  paymentPlanId: z.number().nullable().optional(),
-  financialResponsibleName: z.string().nullable().optional(),
-  financialResponsibleCpf: z.string().nullable().optional(),
-  financialResponsibleEmail: z.string().nullable().optional(),
-  financialResponsiblePhone: z.string().nullable().optional(),
-  financialResponsibleRelation: z.enum(["self", "parent", "spouse", "other"]).nullable().optional(),
+  sex: z.enum(["M","F","O"]).nullable().optional(),
+  contact: z.object({
+    email: z.string().email().nullable().optional(),
+    phone: z.string().nullable().optional(),
+  }),
+  emergency: z.object({
+    name: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
+  }),
+  financialResponsible: z.object({
+    relation: z.string().nullable().optional(),
+  }),
+  billing: z.object({
+    planId: z.number().nullable().optional(),
+    preferredDueDay: z.number().int().min(1).max(31).nullable().optional(),
+  }),
+  address: z.object({
+    zip: z.string().nullable().optional(),
+    street: z.string().nullable().optional(),
+    number: z.string().nullable().optional(),
+    complement: z.string().nullable().optional(),
+    district: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+  }),
+  health: z.object({ notes: z.string().nullable().optional() }),
+  graduation: z.object({
+    beltLevel: z.string().nullable().optional(),
+    graduationDate: z.string().nullable().optional(),
+  }),
 });
-
-type FormValues = z.infer<typeof StudentSchema>;
+type FormValues = z.infer<typeof Schema>;
 
 type Props = {
   studentId: number;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  studentName: string;
+  readOnly?: boolean; // para o "olho"
 };
 
-export default function StudentEditDialog({ studentId, open, onOpenChange }: Props) {
+export default function StudentEditDialog({ studentId, open, onOpenChange, studentName, readOnly }: Props) {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("dados");
-  const queryClient = useQueryClient();
-
-  // Fetch user data
-  const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: [`/api/users/${studentId}`],
-    enabled: open && !!studentId,
-  });
-
-  // Fetch payment plans
-  const { data: paymentPlansData } = useQuery({
-    queryKey: ["/api/payment-plans"],
-    enabled: open,
-  });
+  const [loading, setLoading] = useState(false);
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(StudentSchema),
+    resolver: zodResolver(Schema),
     defaultValues: {
       id: studentId,
-      firstName: "",
-      lastName: "",
-      birthDate: "",
-      cpf: "",
-      rg: "",
-      gender: undefined,
-      email: "",
-      phone: "",
-      emergencyContactName: "",
-      emergencyContactPhone: "",
-      zipCode: "",
-      street: "",
-      number: "",
-      complement: "",
-      neighborhood: "",
-      city: "",
-      state: "",
-      medicalObservations: "",
-      beltLevel: "",
-      paymentPlanId: null,
-      financialResponsibleName: "",
-      financialResponsibleCpf: "",
-      financialResponsibleEmail: "",
-      financialResponsiblePhone: "",
-      financialResponsibleRelation: null,
+      firstName: "", lastName: "", birthDate: "",
+      cpf: "", rg: "", sex: null,
+      contact: { email: "", phone: "" },
+      emergency: { name: "", phone: "" },
+      financialResponsible: { relation: "Eu mesmo(a)" },
+      billing: { planId: null, preferredDueDay: null },
+      address: { zip: "", street: "", number: "", complement: "", district: "", city: "", state: "" },
+      health: { notes: "" },
+      graduation: { beltLevel: "", graduationDate: "" },
     },
     mode: "onChange",
   });
 
-  // Load user data when dialog opens
+  // carrega planos p/ select
   useEffect(() => {
-    if (!open || !userData) return;
-    
-    const user = userData as any;
-    form.reset({
-      id: user?.id || studentId,
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
-      birthDate: user?.student?.birthDate ? toDisplayDate(user.student.birthDate) : "",
-      cpf: formatCPF(user?.student?.cpf || ""),
-      rg: formatRG(user?.student?.rg || ""),
-      gender: user?.student?.gender || undefined,
-      email: user?.email || "",
-      phone: formatPhone(user?.student?.phone || ""),
-      emergencyContactName: user?.student?.emergencyContactName || "",
-      emergencyContactPhone: formatPhone(user?.student?.emergencyContactPhone || ""),
-      zipCode: formatCEP(user?.student?.zipCode || ""),
-      street: user?.student?.street || "",
-      number: user?.student?.number || "",
-      complement: user?.student?.complement || "",
-      neighborhood: user?.student?.neighborhood || "",
-      city: user?.student?.city || "",
-      state: user?.student?.state || "",
-      medicalObservations: user?.student?.medicalObservations || "",
-      beltLevel: user?.student?.beltLevel || "",
-      paymentPlanId: user?.student?.paymentPlanId || null,
-      financialResponsibleName: user?.student?.financialResponsibleName || "",
-      financialResponsibleCpf: formatCPF(user?.student?.financialResponsibleCpf || ""),
-      financialResponsibleEmail: user?.student?.financialResponsibleEmail || "",
-      financialResponsiblePhone: formatPhone(user?.student?.financialResponsiblePhone || ""),
-      financialResponsibleRelation: user?.student?.financialResponsibleRelation || null,
-    });
-  }, [open, userData, form, studentId]);
+    listBillingPlans().then(setPlans).catch(() => {});
+  }, []);
 
-  const updateMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      const payload = {
-        firstName: values.firstName.trim(),
-        lastName: values.lastName.trim(),
-        email: values.email?.trim(),
-        student: {
-          birthDate: toISODate(values.birthDate),
-          cpf: unformatCPF(values.cpf),
-          rg: unformatRG(values.rg),
-          gender: values.gender,
-          phone: unformatPhone(values.phone),
-          emergencyContactName: values.emergencyContactName?.trim() || null,
-          emergencyContactPhone: unformatPhone(values.emergencyContactPhone),
-          zipCode: unformatCEP(values.zipCode),
-          street: values.street?.trim() || null,
-          number: values.number?.trim() || null,
-          complement: values.complement?.trim() || null,
-          neighborhood: values.neighborhood?.trim() || null,
-          city: values.city?.trim() || null,
-          state: values.state?.trim() || null,
-          medicalObservations: values.medicalObservations?.trim() || null,
-          beltLevel: values.beltLevel?.trim() || null,
-          paymentPlanId: values.paymentPlanId,
-          financialResponsibleName: values.financialResponsibleName?.trim() || null,
-          financialResponsibleCpf: unformatCPF(values.financialResponsibleCpf),
-          financialResponsibleEmail: values.financialResponsibleEmail?.trim() || null,
-          financialResponsiblePhone: unformatPhone(values.financialResponsiblePhone),
-          financialResponsibleRelation: values.financialResponsibleRelation,
-        }
-      };
-      
-      const response = await fetch(`/api/users/${studentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao salvar");
+  // carregar aluno correto com cancelamento
+  useEffect(() => {
+    if (!open || !studentId) return;
+    setLoading(true);
+
+    // aborta requisição anterior
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    (async () => {
+      try {
+        const dto = await getStudentById(studentId);
+        if (controller.signal.aborted) return;
+
+        form.reset({
+          id: dto.id,
+          firstName: formatName(dto.firstName),
+          lastName: formatName(dto.lastName),
+          birthDate: toDisplayDate(dto.birthDate),
+          cpf: formatCPF(dto.cpf || ""),
+          rg: formatRG(dto.rg || ""),
+          sex: (dto.sex as any) || null,
+          contact: {
+            email: dto.contact?.email || "",
+            phone: formatPhone(dto.contact?.phone || ""),
+          },
+          emergency: {
+            name: dto.emergency?.name || "",
+            phone: formatPhone(dto.emergency?.phone || ""),
+          },
+          financialResponsible: { relation: dto.financialResponsible?.relation || "Eu mesmo(a)" },
+          billing: {
+            planId: dto.billing?.planId ?? null,
+            preferredDueDay: dto.billing?.preferredDueDay ?? null,
+          },
+          address: {
+            zip: formatCEP(dto.address?.zip || ""),
+            street: dto.address?.street || "",
+            number: dto.address?.number || "",
+            complement: dto.address?.complement || "",
+            district: dto.address?.district || "",
+            city: dto.address?.city || "",
+            state: dto.address?.state || "",
+          },
+          health: { notes: dto.health?.notes || "" },
+          graduation: {
+            beltLevel: dto.graduation?.beltLevel || "",
+            graduationDate: toDisplayDate(dto.graduation?.graduationDate),
+          },
+        });
+      } catch (e) {
+        toast({ title: "Erro ao carregar", description: "Não foi possível carregar os dados do aluno.", variant: "destructive" });
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ 
-        title: "Salvo!", 
-        description: "Dados do aluno atualizados com sucesso." 
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${studentId}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
-      onOpenChange(false);
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Erro ao salvar", 
-        description: error?.message || "Tente novamente.", 
-        variant: "destructive" 
-      });
-    }
-  });
+    })();
+
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, studentId]);
 
   async function onSubmit(values: FormValues) {
-    updateMutation.mutate(values);
+    setLoading(true);
+    try {
+      const payload: StudentEditDTO = {
+        id: values.id,
+        firstName: formatName(values.firstName),
+        lastName: formatName(values.lastName),
+        birthDate: toISODate(values.birthDate) || null,
+        cpf: unformatCPF(values.cpf),
+        rg: unformatRG(values.rg),
+        sex: (values.sex as any) || null,
+        contact: {
+          email: values.contact.email?.trim() || null,
+          phone: unformatPhone(values.contact.phone),
+        },
+        emergency: {
+          name: formatName(values.emergency.name),
+          phone: unformatPhone(values.emergency.phone),
+        },
+        financialResponsible: { relation: values.financialResponsible.relation?.trim() || null },
+        billing: {
+          planId: values.billing.planId ?? null,
+          preferredDueDay: values.billing.preferredDueDay ?? null,
+        },
+        address: {
+          zip: unformatCEP(values.address.zip),
+          street: formatName(values.address.street),
+          number: formatName(values.address.number),
+          complement: formatName(values.address.complement),
+          district: formatName(values.address.district),
+          city: formatName(values.address.city),
+          state: formatName(values.address.state),
+        },
+        health: { notes: values.health.notes?.trim() || null },
+        graduation: {
+          beltLevel: values.graduation.beltLevel?.trim() || null,
+          graduationDate: toISODate(values.graduation.graduationDate) || null,
+        },
+      };
+
+      await updateStudent(studentId, payload);
+      toast({ title: "Salvo!", description: "Dados do aluno atualizados com sucesso." });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar", description: e?.response?.data?.detail || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const headerTitle = useMemo(() => {
-    if (!userData) return "Editando Aluno";
-    const user = userData as any;
-    return `Editando ${user?.firstName || ""} ${user?.lastName || ""}`;
-  }, [userData]);
-
-  if (userLoading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const headerTitle = useMemo(() => `Editando ${studentName}`, [studentName]);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => {
-      if (!v && form.formState.isDirty && !window.confirm("Descartar alterações não salvas?")) return;
+    <Dialog key={studentId} open={open} onOpenChange={(v) => {
+      if (!v && form.formState.isDirty && !readOnly && !window.confirm("Descartar alterações não salvas?")) return;
       onOpenChange(v);
     }}>
       <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
-        {/* HEADER */}
         <div className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b">
           <DialogHeader className="px-4 py-3 md:px-6">
             <DialogTitle className="text-lg md:text-xl">{headerTitle}</DialogTitle>
-            <DialogDescription className="hidden md:block">
-              Gerenciar informações completas do aluno incluindo dados pessoais, contato, endereço, saúde e documentos.
-            </DialogDescription>
+            <DialogDescription>Gerenciar informações completas do aluno incluindo dados pessoais, contato, endereço, saúde, financeiro e documentos.</DialogDescription>
           </DialogHeader>
-
-          {/* TABS BAR */}
           <div className="border-t">
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap gap-1 px-2 md:px-4 py-2">
@@ -257,7 +233,6 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Pro
           </div>
         </div>
 
-        {/* BODY */}
         <form onSubmit={form.handleSubmit(onSubmit)} className="relative h-[calc(100%-140px)] md:h-[calc(100%-120px)]">
           <div className="h-full overflow-y-auto px-4 md:px-6 py-4 space-y-6">
             {/* DADOS PESSOAIS */}
@@ -265,103 +240,53 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Pro
               <section className="space-y-4">
                 <h3 className="text-base font-semibold">Dados Pessoais</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div><Label>Nome *</Label><Input disabled={readOnly} {...form.register("firstName")} /></div>
+                  <div><Label>Sobrenome *</Label><Input disabled={readOnly} {...form.register("lastName")} /></div>
                   <div>
-                    <Label>Nome *</Label>
-                    <Input {...form.register("firstName")} placeholder="Ex.: Gabriela" />
-                    {form.formState.errors.firstName && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.firstName.message}</p>
-                    )}
+                    <Label>Data de Nascimento *</Label>
+                    <Input disabled={readOnly} value={form.watch("birthDate") || ""} onChange={(e)=>form.setValue("birthDate", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric"/>
                   </div>
-                  <div>
-                    <Label>Sobrenome *</Label>
-                    <Input {...form.register("lastName")} placeholder="Ex.: Santos" />
-                    {form.formState.errors.lastName && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.lastName.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label>Data de Nascimento</Label>
-                    <Input
-                      value={form.watch("birthDate") || ""}
-                      onChange={(e) => form.setValue("birthDate", e.target.value)}
-                      placeholder="dd/mm/aaaa"
-                      inputMode="numeric"
-                    />
-                  </div>
-                  <div>
-                    <Label>CPF</Label>
-                    <Input
-                      value={form.watch("cpf") || ""}
-                      onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))}
-                      inputMode="numeric"
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
-                  <div>
-                    <Label>RG</Label>
-                    <Input
-                      value={form.watch("rg") || ""}
-                      onChange={(e) => form.setValue("rg", formatRG(e.target.value))}
-                      inputMode="numeric"
-                      placeholder="00.000.000-0"
-                    />
-                  </div>
+                  <div><Label>CPF *</Label><Input disabled={readOnly} value={form.watch("cpf") || ""} onChange={(e)=>form.setValue("cpf", formatCPF(e.target.value))} inputMode="numeric"/></div>
+                  <div><Label>RG *</Label><Input disabled={readOnly} value={form.watch("rg") || ""} onChange={(e)=>form.setValue("rg", formatRG(e.target.value))} inputMode="numeric"/></div>
                   <div>
                     <Label>Sexo</Label>
-                    <Controller
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="M">Masculino</SelectItem>
-                            <SelectItem value="F">Feminino</SelectItem>
-                            <SelectItem value="O">Outro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
+                    <Select disabled={readOnly} value={form.watch("sex") ?? ""} onValueChange={(v)=>form.setValue("sex", (v||null) as any)}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar"/></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">Masculino</SelectItem>
+                        <SelectItem value="F">Feminino</SelectItem>
+                        <SelectItem value="O">Outro/Prefiro não dizer</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </section>
             )}
 
-            {/* CONTATO */}
+            {/* CONTATO + EMERGÊNCIA */}
             {tab === "contato" && (
               <section className="space-y-4">
                 <h3 className="text-base font-semibold">Contato</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2">
-                    <Label>E-mail *</Label>
-                    <Input {...form.register("email")} type="email" placeholder="email@exemplo.com" />
-                    {form.formState.errors.email && (
-                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.email.message}</p>
-                    )}
-                  </div>
+                  <div className="sm:col-span-2"><Label>E-mail *</Label><Input disabled={readOnly} type="email" {...form.register("contact.email")} placeholder="seu@email.com"/></div>
                   <div>
-                    <Label>Telefone</Label>
-                    <Input
-                      value={form.watch("phone") || ""}
-                      onChange={(e) => form.setValue("phone", formatPhone(e.target.value))}
-                      placeholder="(11) 99999-9999"
-                      inputMode="tel"
-                    />
+                    <Label>Telefone/Celular *</Label>
+                    <Controller control={form.control} name="contact.phone" render={({field})=>(
+                      <Input disabled={readOnly} {...field} value={field.value||""} onChange={(e)=>field.onChange(formatPhone(e.target.value))} inputMode="tel"/>
+                    )}/>
                   </div>
-                  <div>
-                    <Label>Contato de Emergência - Nome</Label>
-                    <Input {...form.register("emergencyContactName")} placeholder="Nome completo" />
-                  </div>
-                  <div>
-                    <Label>Contato de Emergência - Telefone</Label>
-                    <Input
-                      value={form.watch("emergencyContactPhone") || ""}
-                      onChange={(e) => form.setValue("emergencyContactPhone", formatPhone(e.target.value))}
-                      placeholder="(11) 99999-9999"
-                      inputMode="tel"
-                    />
+                </div>
+
+                <div className="pt-2">
+                  <h4 className="text-sm font-medium">Contato de Emergência</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                    <div className="sm:col-span-2"><Label>Nome *</Label><Input disabled={readOnly} {...form.register("emergency.name")}/></div>
+                    <div>
+                      <Label>Telefone de Emergência *</Label>
+                      <Controller control={form.control} name="emergency.phone" render={({field})=>(
+                        <Input disabled={readOnly} {...field} value={field.value||""} onChange={(e)=>field.onChange(formatPhone(e.target.value))} inputMode="tel"/>
+                      )}/>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -370,41 +295,15 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Pro
             {/* ENDEREÇO */}
             {tab === "endereco" && (
               <section className="space-y-4">
-                <h3 className="text-base font-semibold">Endereço</h3>
+                <h3 className="text-base font-semibold">Endereço Residencial</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <Label>CEP</Label>
-                    <Input
-                      value={form.watch("zipCode") || ""}
-                      onChange={(e) => form.setValue("zipCode", formatCEP(e.target.value))}
-                      inputMode="numeric"
-                      placeholder="00000-000"
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <Label>Logradouro</Label>
-                    <Input {...form.register("street")} placeholder="Rua, Avenida, etc." />
-                  </div>
-                  <div>
-                    <Label>Número</Label>
-                    <Input {...form.register("number")} placeholder="123" />
-                  </div>
-                  <div>
-                    <Label>Complemento</Label>
-                    <Input {...form.register("complement")} placeholder="Apto, Casa, etc." />
-                  </div>
-                  <div>
-                    <Label>Bairro</Label>
-                    <Input {...form.register("neighborhood")} placeholder="Bairro" />
-                  </div>
-                  <div>
-                    <Label>Cidade</Label>
-                    <Input {...form.register("city")} placeholder="Cidade" />
-                  </div>
-                  <div>
-                    <Label>Estado</Label>
-                    <Input {...form.register("state")} maxLength={2} placeholder="SP" />
-                  </div>
+                  <div><Label>CEP *</Label><Input disabled={readOnly} value={form.watch("address.zip") || ""} onChange={(e)=>form.setValue("address.zip", formatCEP(e.target.value))} inputMode="numeric"/></div>
+                  <div className="lg:col-span-2"><Label>Logradouro *</Label><Input disabled={readOnly} {...form.register("address.street")}/></div>
+                  <div><Label>Número *</Label><Input disabled={readOnly} {...form.register("address.number")}/></div>
+                  <div className="lg:col-span-2"><Label>Complemento</Label><Input disabled={readOnly} {...form.register("address.complement")}/></div>
+                  <div><Label>Bairro *</Label><Input disabled={readOnly} {...form.register("address.district")}/></div>
+                  <div><Label>Cidade *</Label><Input disabled={readOnly} {...form.register("address.city")}/></div>
+                  <div><Label>Estado *</Label><Input disabled={readOnly} {...form.register("address.state")} maxLength={2} placeholder="SP"/></div>
                 </div>
               </section>
             )}
@@ -413,18 +312,12 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Pro
             {tab === "saude" && (
               <section className="space-y-4">
                 <h3 className="text-base font-semibold">Saúde & Graduação</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="lg:col-span-3"><Label>Observações de Saúde</Label><Input disabled={readOnly} {...form.register("health.notes")} placeholder="Alergias, restrições, etc."/></div>
+                  <div><Label>Faixa (nível)</Label><Input disabled={readOnly} {...form.register("graduation.beltLevel")} placeholder="Branca, Azul, ..."/></div>
                   <div>
-                    <Label>Observações de Saúde</Label>
-                    <Textarea 
-                      {...form.register("medicalObservations")} 
-                      placeholder="Alergias, restrições médicas, etc."
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                  <div>
-                    <Label>Nível da Faixa</Label>
-                    <Input {...form.register("beltLevel")} placeholder="Branca, Azul, Roxa, etc." />
+                    <Label>Data de Graduação</Label>
+                    <Input disabled={readOnly} value={form.watch("graduation.graduationDate") || ""} onChange={(e)=>form.setValue("graduation.graduationDate", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric"/>
                   </div>
                 </div>
               </section>
@@ -433,97 +326,41 @@ export default function StudentEditDialog({ studentId, open, onOpenChange }: Pro
             {/* FINANCEIRO */}
             {tab === "financeiro" && (
               <section className="space-y-4">
-                <h3 className="text-base font-semibold">Responsável Financeiro</h3>
+                <h3 className="text-base font-semibold">Responsável Financeiro & Plano</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="lg:col-span-2">
-                    <Label>Nome do Responsável</Label>
-                    <Input {...form.register("financialResponsibleName")} placeholder="Nome completo" />
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <Label>Grau de Parentesco *</Label>
+                    <Input disabled={readOnly} {...form.register("financialResponsible.relation")} placeholder="Eu mesmo(a), Pai, Mãe..."/>
                   </div>
                   <div>
-                    <Label>Relação</Label>
-                    <Controller
-                      control={form.control}
-                      name="financialResponsibleRelation"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || undefined}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="self">Próprio aluno</SelectItem>
-                            <SelectItem value="parent">Pai/Mãe</SelectItem>
-                            <SelectItem value="spouse">Cônjuge</SelectItem>
-                            <SelectItem value="other">Outro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
+                    <Label>Plano de Mensalidade *</Label>
+                    <Select disabled={readOnly} value={(form.watch("billing.planId") ?? "").toString()}
+                      onValueChange={(v)=>form.setValue("billing.planId", v ? Number(v) : null)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o plano"/></SelectTrigger>
+                      <SelectContent>
+                        {plans.map(p => (<SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label>CPF do Responsável</Label>
-                    <Input
-                      value={form.watch("financialResponsibleCpf") || ""}
-                      onChange={(e) => form.setValue("financialResponsibleCpf", formatCPF(e.target.value))}
-                      inputMode="numeric"
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
-                  <div>
-                    <Label>E-mail do Responsável</Label>
-                    <Input {...form.register("financialResponsibleEmail")} type="email" placeholder="email@exemplo.com" />
-                  </div>
-                  <div>
-                    <Label>Telefone do Responsável</Label>
-                    <Input
-                      value={form.watch("financialResponsiblePhone") || ""}
-                      onChange={(e) => form.setValue("financialResponsiblePhone", formatPhone(e.target.value))}
-                      placeholder="(11) 99999-9999"
-                      inputMode="tel"
-                    />
-                  </div>
-                  <div>
-                    <Label>Plano de Pagamento</Label>
-                    <Controller
-                      control={form.control}
-                      name="paymentPlanId"
-                      render={({ field }) => (
-                        <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecionar plano" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(paymentPlansData as any)?.paymentPlans?.map((plan: any) => (
-                              <SelectItem key={plan.id} value={plan.id.toString()}>
-                                {plan.name} - R$ {plan.price}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
+                    <Label>Dia de Vencimento Preferido *</Label>
+                    <Select disabled={readOnly} value={(form.watch("billing.preferredDueDay") ?? "").toString()}
+                      onValueChange={(v)=>form.setValue("billing.preferredDueDay", v ? Number(v) : null)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o dia"/></SelectTrigger>
+                      <SelectContent>
+                        {[...Array(31)].map((_,i)=>(<SelectItem key={i+1} value={String(i+1)}>{i+1}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </section>
             )}
           </div>
 
-          {/* FOOTER STICKY */}
+          {/* FOOTER */}
           <div className="sticky bottom-0 z-20 bg-background/90 backdrop-blur border-t px-4 md:px-6 py-3 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
-            <DialogClose asChild>
-              <Button variant="ghost" type="button" disabled={updateMutation.isPending}>
-                Cancelar
-              </Button>
-            </DialogClose>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "Salvar alterações"
-              )}
-            </Button>
+            <DialogClose asChild><Button variant="ghost" type="button">Fechar</Button></DialogClose>
+            {!readOnly && <Button type="submit" disabled={loading}>{loading ? "Salvando..." : "Salvar alterações"}</Button>}
           </div>
         </form>
       </DialogContent>

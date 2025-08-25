@@ -32,7 +32,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import BeltIcon from '@/components/ui/belt-icon';
 import AddStudentModal from '@/components/modals/add-student-modal';
+import StudentEditDialog from '@/components/students/StudentEditDialog';
 import { useToast } from '@/hooks/use-toast';
+import { Eye, Edit2 } from 'lucide-react';
 
 export default function StudentsPage() {
   const { t, locale } = useTranslations();
@@ -40,6 +42,12 @@ export default function StudentsPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  
+  // Student edit dialog state
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [selectedStudentName, setSelectedStudentName] = useState<string>("");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogReadOnly, setEditDialogReadOnly] = useState(false);
   
   // Get students
   const { data: students, isLoading } = useQuery<Student[]>({
@@ -117,6 +125,22 @@ export default function StudentsPage() {
   
   // Check if user has permission to add/edit students
   const canManageStudents = user && ['admin', 'manager'].includes(user.role);
+
+  // Functions to open student edit dialog
+  function openEditDialog(studentId: number, studentName: string, readOnly = false) {
+    setSelectedStudentId(studentId);
+    setSelectedStudentName(studentName);
+    setEditDialogReadOnly(readOnly);
+    setEditDialogOpen(true);
+  }
+
+  function openViewDialog(studentId: number, studentName: string) {
+    openEditDialog(studentId, studentName, true);
+  }
+
+  function openEditDialogForEdit(studentId: number, studentName: string) {
+    openEditDialog(studentId, studentName, false);
+  }
   
   return (
     <Layout title={t('common.students')}>
@@ -168,7 +192,11 @@ export default function StudentsPage() {
                     </TableRow>
                   ) : (
                     filteredStudents.map((student) => (
-                      <TableRow key={student.id} className="border-gray-700">
+                      <TableRow 
+                        key={student.id} 
+                        className="border-gray-700 cursor-pointer hover:bg-gray-700/50"
+                        onDoubleClick={() => canManageStudents && openEditDialogForEdit(student.id, student.name)}
+                      >
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>
                           <div className="flex items-center">
@@ -191,43 +219,56 @@ export default function StudentsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            <Link href={`/students/${student.id}`}>
-                              <Button variant="outline" size="sm">
-                                <i className="fas fa-eye mr-1"></i> {t('common.view')}
-                              </Button>
-                            </Link>
-                            
+                            {/* View Button (Eye icon) */}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openViewDialog(student.id, student.name)}
+                              data-testid={`button-view-student-${student.id}`}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              {t('common.view')}
+                            </Button>
+
                             {canManageStudents && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <i className="fas fa-ellipsis-v"></i>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-gray-700 border-gray-600 text-white">
-                                  <Link href={`/students/edit/${student.id}`}>
-                                    <DropdownMenuItem className="cursor-pointer">
-                                      <i className="fas fa-edit mr-2"></i> {t('common.edit')}
-                                    </DropdownMenuItem>
-                                  </Link>
-                                  
-                                  {student.isActive ? (
-                                    <DropdownMenuItem 
-                                      className="cursor-pointer text-red-400"
-                                      onClick={() => deactivateStudentMutation.mutate(student.id)}
-                                    >
-                                      <i className="fas fa-user-minus mr-2"></i> {t('student.deactivate')}
-                                    </DropdownMenuItem>
-                                  ) : (
-                                    <DropdownMenuItem 
-                                      className="cursor-pointer text-green-400"
-                                      onClick={() => activateStudentMutation.mutate(student.id)}
-                                    >
-                                      <i className="fas fa-user-plus mr-2"></i> {t('student.activate')}
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              <>
+                                {/* Edit Button */}
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openEditDialogForEdit(student.id, student.name)}
+                                  data-testid={`button-edit-student-${student.id}`}
+                                >
+                                  <Edit2 className="h-4 w-4 mr-1" />
+                                  {t('common.edit')}
+                                </Button>
+
+                                {/* Actions dropdown */}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <i className="fas fa-ellipsis-v"></i>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="bg-gray-700 border-gray-600 text-white">
+                                    {student.isActive ? (
+                                      <DropdownMenuItem 
+                                        className="cursor-pointer text-red-400"
+                                        onClick={() => deactivateStudentMutation.mutate(student.id)}
+                                      >
+                                        <i className="fas fa-user-minus mr-2"></i> {t('student.deactivate')}
+                                      </DropdownMenuItem>
+                                    ) : (
+                                      <DropdownMenuItem 
+                                        className="cursor-pointer text-green-400"
+                                        onClick={() => activateStudentMutation.mutate(student.id)}
+                                      >
+                                        <i className="fas fa-user-plus mr-2"></i> {t('student.activate')}
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -247,6 +288,17 @@ export default function StudentsPage() {
         onClose={() => setIsAddStudentModalOpen(false)}
         onSubmit={handleAddStudent}
       />
+
+      {/* Student Edit Dialog */}
+      {selectedStudentId && (
+        <StudentEditDialog
+          studentId={selectedStudentId}
+          studentName={selectedStudentName}
+          open={editDialogOpen}
+          readOnly={editDialogReadOnly}
+          onOpenChange={setEditDialogOpen}
+        />
+      )}
     </Layout>
   );
 }

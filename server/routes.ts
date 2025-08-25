@@ -1090,7 +1090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow users to view their own profile or admins to view any profile
       const requestUser = (req as any).user;
-      if (requestUser.id !== user.id && requestUser.role !== 'admin') {
+      if (requestUser.id !== user.id && requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
         return res.status(403).json({ message: "Forbidden" });
       }
 

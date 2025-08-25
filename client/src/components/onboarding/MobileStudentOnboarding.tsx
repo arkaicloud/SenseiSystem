@@ -100,7 +100,19 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         dueDate: (data as any).dueDate || null
       };
       
-      await register(data.email, password, cleanData);
+      // Use the register-student endpoint directly instead of auth register
+      const response = await fetch('/api/register-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cleanData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha no cadastro');
+      }
       
       setSuccess(true);
       setTimeout(() => onSuccess(), 2000);

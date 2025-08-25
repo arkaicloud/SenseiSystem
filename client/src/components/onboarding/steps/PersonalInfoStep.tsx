@@ -11,36 +11,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import AddressForm from "@/components/ui/address-form";
 
-// Função para validar CPF brasileiro
-const validateCPF = (cpf: string): boolean => {
-  // Remove caracteres não numéricos
-  const cleanCPF = cpf.replace(/\D/g, '');
-  
-  // Verifica se tem 11 dígitos
-  if (cleanCPF.length !== 11) return false;
-  
-  // Verifica se todos os dígitos são iguais (CPF inválido)
-  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
-  
-  // Validação do primeiro dígito verificador
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleanCPF[i]) * (10 - i);
-  }
-  let digit1 = (sum * 10) % 11;
-  if (digit1 === 10) digit1 = 0;
-  if (digit1 !== parseInt(cleanCPF[9])) return false;
-  
-  // Validação do segundo dígito verificador
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(cleanCPF[i]) * (11 - i);
-  }
-  let digit2 = (sum * 10) % 11;
-  if (digit2 === 10) digit2 = 0;
-  if (digit2 !== parseInt(cleanCPF[10])) return false;
-  
-  return true;
+// Função para validar CPF brasileiro - Algoritmo oficial módulo 11
+const validateCPF = (input: string): boolean => {
+  const cpf = (input || "").replace(/\D+/g, "");
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false; // todos iguais
+
+  const calcDV = (base: string, factorStart: number) => {
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) {
+      sum += Number(base[i]) * (factorStart - i);
+    }
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+
+  const dv1 = calcDV(cpf.slice(0, 9), 10);
+  const dv2 = calcDV(cpf.slice(0, 9) + String(dv1), 11);
+
+  return cpf.endsWith(`${dv1}${dv2}`);
 };
 
 // Função para formatar CPF
@@ -57,11 +46,7 @@ const personalInfoSchema = z.object({
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
   cpf: z.string()
     .min(1, "CPF é obrigatório")
-    .refine((cpf) => {
-      const cleanCPF = cpf.replace(/\D/g, '');
-      return cleanCPF.length === 11;
-    }, "CPF deve ter 11 dígitos")
-    .refine(validateCPF, "CPF inválido"),
+    .refine(validateCPF, "CPF inválido - verifique os dígitos"),
   rg: z.string().min(1, "RG é obrigatório"),
   emergencyContact: z.string().min(1, "Contato de emergência é obrigatório"),
   emergencyPhone: z.string().min(10, "Telefone de emergência deve ter pelo menos 10 dígitos"),
@@ -80,13 +65,8 @@ const personalInfoSchema = z.object({
     .optional()
     .refine((cpf) => {
       if (!cpf) return true; // Campo opcional
-      const cleanCPF = cpf.replace(/\D/g, '');
-      return cleanCPF.length === 11;
-    }, "CPF deve ter 11 dígitos")
-    .refine((cpf) => {
-      if (!cpf) return true; // Campo opcional
       return validateCPF(cpf);
-    }, "CPF inválido"),
+    }, "CPF inválido - verifique os dígitos"),
   financialResponsibleRelationship: z.enum(["self", "parent", "guardian", "spouse"], {
     errorMap: () => ({ message: "Selecione o grau de parentesco" })
   }),

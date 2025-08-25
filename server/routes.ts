@@ -4864,18 +4864,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Buscar estudante por CPF
-      const existingStudent = await storage.getStudentByCpf(cpf);
+      // Buscar direto no banco de dados usando SQL para evitar problemas do Drizzle
+      const result = await db.execute(sql`
+        SELECT 
+          s.id,
+          s.user_id,
+          u.first_name,
+          u.last_name,
+          u.cpf,
+          u.active
+        FROM students s
+        INNER JOIN users u ON s.user_id = u.id
+        WHERE u.cpf = ${cpf}
+        LIMIT 1
+      `);
       
-      if (existingStudent) {
+      if (result.rows.length > 0) {
+        const student = result.rows[0] as any;
         return res.json({
           success: true,
           exists: true,
           message: "CPF já cadastrado no sistema",
           student: {
-            id: existingStudent.id,
-            name: `${existingStudent.firstName} ${existingStudent.lastName}`,
-            active: existingStudent.active
+            id: student.id,
+            name: `${student.first_name} ${student.last_name}`,
+            active: student.active
           }
         });
       }

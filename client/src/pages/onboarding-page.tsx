@@ -144,8 +144,43 @@ export default function OnboardingPage() {
   const handleDocumentsSubmit = (data: any) => {
     const completeData = { ...onboardingData, ...data } as OnboardingData;
     
-    // Submit registration
-    registerStudent(completeData);
+    // Create clean data object without File objects or DOM elements to avoid circular JSON structure
+    const cleanData = {
+      firstName: completeData.firstName || "",
+      lastName: completeData.lastName || "",
+      username: completeData.username || "",
+      email: completeData.email || "",
+      password: completeData.password || "",
+      role: "student" as const,
+      phone: completeData.phone || "",
+      emergencyContact: completeData.emergencyContact || "",
+      emergencyPhone: completeData.emergencyPhone || "",
+      birthDate: completeData.birthDate || null,
+      street: completeData.street || "",
+      number: completeData.number || "",
+      complement: completeData.complement || "",
+      neighborhood: completeData.neighborhood || "",
+      city: completeData.city || "",
+      state: completeData.state || "",
+      zipCode: completeData.zipCode || "",
+      cpf: completeData.cpf || "",
+      rg: completeData.rg || "",
+      beltLevel: completeData.beltLevel || "white",
+      stripes: completeData.stripes || 0,
+      medicalConditions: completeData.medicalConditions || "",
+      financialResponsibleName: completeData.financialResponsibleName || "",
+      financialResponsibleEmail: completeData.financialResponsibleEmail || "",
+      financialResponsiblePhone: completeData.financialResponsiblePhone || "",
+      financialResponsibleCpf: completeData.financialResponsibleCpf || "",
+      financialResponsibleRelationship: completeData.financialResponsibleRelationship || "self",
+      paymentPlanId: completeData.paymentPlanId || null,
+      dueDate: completeData.dueDate || null,
+      // Note: File uploads are handled separately via form data, not in this JSON payload
+      documentsCompleted: true
+    };
+    
+    // Submit registration with clean, serializable data
+    registerStudent(cleanData);
   };
 
   const progressPercentage = (currentStep / 3) * 100;

@@ -285,7 +285,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                   {...field}
                   value={formatBRLInput(field.value.toString())}
                   onChange={(e) => {
-                    const value = parseCurrencyBRL(e.target.value);
+                    const value = brlToCents(e.target.value);
                     field.onChange(isNaN(value) ? 0 : value);
                   }}
                 />

@@ -132,16 +132,16 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       {/* Birthday Notifications */}
       <BirthdayNotifications />
 
       {/* Header Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Administrativo</h1>
           <p className="text-muted-foreground">
-            Visão geral da sua academia de Jiu-Jitsu
+            Visão geral da sua escola
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -155,29 +155,29 @@ export function DashboardLayout() {
       {/* Quick Actions Cards */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Navegação Rápida</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Card key={index} className="hover:shadow-md transition-all hover:scale-105">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
+                  <CardTitle className="text-sm font-medium truncate">
                     {action.title}
                   </CardTitle>
-                  <div className={`h-8 w-8 rounded-lg ${action.bgColor} flex items-center justify-center`}>
+                  <div className={`h-8 w-8 rounded-lg ${action.bgColor} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`h-4 w-4 ${action.color}`} />
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{action.value}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground truncate">
                     {action.label}
                   </p>
                   <div className="mt-4">
                     <Link href={action.href}>
                       <Button size="sm" className="w-full">
-                        {action.description}
-                        <ArrowUpRight className="h-3 w-3 ml-1" />
+                        <span className="truncate">{action.description}</span>
+                        <ArrowUpRight className="h-3 w-3 ml-1 flex-shrink-0" />
                       </Button>
                     </Link>
                   </div>
@@ -200,7 +200,7 @@ export function DashboardLayout() {
       </div>
 
       {/* Statistics Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <BirthdayCard />
         <Card>
           <CardHeader>
@@ -229,16 +229,16 @@ export function DashboardLayout() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-green-600" />
-              Frequência Média
+              Taxa de Presença
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageAttendance}</div>
+            <div className="text-2xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
-              presenças por aula
+              Média de alunos ativos
             </p>
             <div className="mt-2">
-              <div className="text-xs text-muted-foreground">Total de presenças</div>
+              <div className="text-xs text-muted-foreground">Dados em tempo real</div>
               <div className="text-sm font-medium">{stats.totalAttendances}</div>
             </div>
           </CardContent>
@@ -248,17 +248,17 @@ export function DashboardLayout() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-purple-600" />
-              Distribuição de Faixas
+              Alunos em Risco
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {stats.beltDistribution.map((belt, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span className="text-sm capitalize">{belt.level}</span>
-                  <Badge variant="outline">{belt.count}</Badge>
-                </div>
-              ))}
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              O risco crítico
+            </p>
+            <div className="mt-2">
+              <div className="text-xs text-muted-foreground">Comparado ao</div>
+              <div className="text-sm font-medium">0.0%</div>
             </div>
           </CardContent>
         </Card>

@@ -110,7 +110,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {user && <Sidebar isOpen={sidebarOpen} isMobile={isMobile} onClose={() => setSidebarOpen(false)} />}
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden`}>
+      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
         {/* Desktop header */}
         {!isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 hidden md:flex items-center justify-between px-6 py-3 sticky top-0 z-40">
@@ -202,8 +202,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""}`}>
-          {children}
+        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""}`}>
+          <div className="max-w-full min-w-0">
+            {children}
+          </div>
         </div>
       </main>
     </div>

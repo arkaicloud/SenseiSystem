@@ -8,7 +8,8 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import type { SchoolConfig } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Sun, Moon, Settings, Building2, User, UserCheck, ChevronDown } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
@@ -19,7 +20,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
@@ -30,7 +31,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     enabled: !!user,
   });
 
+  // Buscar contagem de aprovações pendentes para admins
+  const { data: pendingUsersData } = useQuery({
+    queryKey: ['/api/users/pending'],
+    enabled: user?.role === 'admin',
+    refetchInterval: 30000,
+  });
+
   const schoolConfig = schoolConfigData?.config;
+  const pendingCount = (pendingUsersData as any)?.users?.length || 0;
 
   // Don't show layout on auth page
   const isAuthPage = location === "/auth";
@@ -139,9 +148,67 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 )}
               </Button>
               
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                <span className="font-bold text-white text-xs">{userInitials}</span>
-              </div>
+              {/* Admin & User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 h-8">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                      <span className="font-bold text-white text-xs">{userInitials}</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {/* Admin Options */}
+                  {user?.role === 'admin' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/pending-approvals" className="flex items-center space-x-2 w-full">
+                          <UserCheck className="w-4 h-4" />
+                          <span>Pedidos Pendentes</span>
+                          {pendingCount > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                              {pendingCount}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/school-config" className="flex items-center space-x-2 w-full">
+                          <Building2 className="w-4 h-4" />
+                          <span>Configurações da Escola</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
+                  {/* User Options */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center space-x-2 w-full">
+                      <User className="w-4 h-4" />
+                      <span>Meu Perfil</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Logout */}
+                  <DropdownMenuItem 
+                    onClick={async () => {
+                      try {
+                        await logout();
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                      }
+                    }}
+                    className="flex items-center space-x-2 text-red-600 focus:text-red-600"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         )}
@@ -194,9 +261,67 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 )}
               </Button>
               
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                <span className="font-bold text-white text-xs">{userInitials}</span>
-              </div>
+              {/* Admin & User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 h-8">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                      <span className="font-bold text-white text-xs">{userInitials}</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {/* Admin Options */}
+                  {user?.role === 'admin' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/pending-approvals" className="flex items-center space-x-2 w-full">
+                          <UserCheck className="w-4 h-4" />
+                          <span>Pedidos Pendentes</span>
+                          {pendingCount > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                              {pendingCount}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/school-config" className="flex items-center space-x-2 w-full">
+                          <Building2 className="w-4 h-4" />
+                          <span>Configurações da Escola</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
+                  {/* User Options */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center space-x-2 w-full">
+                      <User className="w-4 h-4" />
+                      <span>Meu Perfil</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Logout */}
+                  <DropdownMenuItem 
+                    onClick={async () => {
+                      try {
+                        await logout();
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                      }
+                    }}
+                    className="flex items-center space-x-2 text-red-600 focus:text-red-600"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         )}

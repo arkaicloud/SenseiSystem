@@ -1,0 +1,844 @@
+1) Campos que estavam faltando (mapa Onboarding → Cadastro)
+
+Pessoais
+
+firstName, lastName, birthDate, cpf, rg, sex (novo)
+
+Contato
+
+contact.email, contact.phone
+
+emergency.name, emergency.phone (novo grupo)
+
+Responsável Financeiro
+
+financialResponsible.relation (ex.: “Eu mesmo(a)”, Pai, Mãe, …)
+
+Plano de Pagamento
+
+billing.planId (select de planos)
+
+billing.preferredDueDay (dia do vencimento)
+
+Endereço
+
+address.zip, address.street, address.number, address.complement, address.district, address.city, address.state
+
+Esses campos vão ser carregados no diálogo, salvos em PATCH e re-exibidos corretamente.
+
+2) FRONTEND
+2.1 DTO e API (atualiza para incluir os novos grupos)
+
+frontend/src/services/api/students.ts
+
+import axios from "axios";
+
+export type StudentEditDTO = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  birthDate: string | null;       // ISO yyyy-mm-dd
+  cpf: string | null;             // só dígitos
+  rg: string | null;              // só dígitos
+  sex: "M" | "F" | "O" | null;    // novo (O = outro/ND)
+  contact: { email: string | null; phone: string | null };
+  emergency: { name: string | null; phone: string | null };
+  financialResponsible: { relation: string | null }; // "Eu mesmo(a)", Pai, Mãe, etc.
+  billing: { planId: number | null; preferredDueDay: number | null };
+  address: {
+    zip: string | null; street: string | null; number: string | null;
+    complement: string | null; district: string | null; city: string | null; state: string | null;
+  };
+  health: { notes: string | null };
+  graduation: { beltLevel: string | null; graduationDate: string | null };
+};
+
+export async function getStudentById(id: number) {
+  const { data } = await axios.get(`/api/students/${id}?include=all`, { headers: { "Cache-Control": "no-store" }});
+  return data as StudentEditDTO;
+}
+
+export async function updateStudent(id: number, payload: StudentEditDTO) {
+  const { data } = await axios.patch(`/api/students/${id}`, payload);
+  return data as StudentEditDTO;
+}
+
+// planos para o select
+export type BillingPlan = { id: number; name: string; amount: number; period: "MONTHLY"|"WEEKLY"|"YEARLY" };
+export async function listBillingPlans() {
+  const { data } = await axios.get(`/api/billing/plans`);
+  return data as BillingPlan[];
+}
+
+2.2 Formatters (já com máscaras usadas)
+
+frontend/src/lib/formatters.ts (igual ao que te enviei antes, mas adicionando formatName e helpers)
+
+export const onlyDigits = (v?: string | null) => (v || "").replace(/\D+/g, "");
+export const formatName = (s?: string | null) => (s || "").trim();
+
+export function formatCPF(v?: string | null) { /* ...igual antes... */ }
+export function unformatCPF(v?: string | null) { /* ... */ }
+export function formatRG(v?: string | null) { /* ... */ }
+export const unformatRG = (v?: string | null) => onlyDigits(v).slice(0, 9);
+export function formatPhone(v?: string | null) { /* ... */ }
+export const unformatPhone = (v?: string | null) => onlyDigits(v).slice(0, 11);
+export function formatCEP(v?: string | null) { /* ... */ }
+export const unformatCEP = (v?: string | null) => onlyDigits(v).slice(0, 8);
+
+export function toDisplayDate(iso?: string | null) { /* ... */ }
+export function toISODate(display?: string | null) { /* ... */ }
+
+2.3 Dialog de Edição (com todos os campos + correções de re-render e “abrir aluno errado”)
+
+Pontos‑chave da correção “abre aluno errado”:
+
+Forçar re-render do dialog por chave key={studentId}.
+
+Abortar fetch anterior ao trocar de aluno (race condition).
+
+no-store no GET (evita 304 com payload de outro aluno em proxies agressivos).
+
+useEffect dependente de studentId e open.
+
+form.reset() apenas depois que a resposta daquele id chegar.
+
+frontend/src/components/students/StudentEditDialog.tsx
+
+import * as React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  getStudentById, updateStudent, StudentEditDTO, listBillingPlans, BillingPlan
+} from "@/services/api/students";
+import {
+  formatCPF, unformatCPF, formatRG, unformatRG, formatPhone, unformatPhone,
+  formatCEP, unformatCEP, toDisplayDate, toISODate, formatName
+} from "@/lib/formatters";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+
+const Schema = z.object({
+  id: z.number(),
+  firstName: z.string().min(1, "Nome obrigatório"),
+  lastName: z.string().min(1, "Sobrenome obrigatório"),
+  birthDate: z.string().nullable().optional(),
+  cpf: z.string().nullable().optional(),
+  rg: z.string().nullable().optional(),
+  sex: z.enum(["M","F","O"]).nullable().optional(),
+  contact: z.object({
+    email: z.string().email().nullable().optional(),
+    phone: z.string().nullable().optional(),
+  }),
+  emergency: z.object({
+    name: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
+  }),
+  financialResponsible: z.object({
+    relation: z.string().nullable().optional(),
+  }),
+  billing: z.object({
+    planId: z.number().nullable().optional(),
+    preferredDueDay: z.number().int().min(1).max(31).nullable().optional(),
+  }),
+  address: z.object({
+    zip: z.string().nullable().optional(),
+    street: z.string().nullable().optional(),
+    number: z.string().nullable().optional(),
+    complement: z.string().nullable().optional(),
+    district: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+  }),
+  health: z.object({ notes: z.string().nullable().optional() }),
+  graduation: z.object({
+    beltLevel: z.string().nullable().optional(),
+    graduationDate: z.string().nullable().optional(),
+  }),
+});
+type FormValues = z.infer<typeof Schema>;
+
+type Props = {
+  studentId: number;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  studentName: string;
+  readOnly?: boolean; // para o "olho"
+};
+
+export default function StudentEditDialog({ studentId, open, onOpenChange, studentName, readOnly }: Props) {
+  const { toast } = useToast();
+  const [tab, setTab] = useState("dados");
+  const [loading, setLoading] = useState(false);
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(Schema),
+    defaultValues: {
+      id: studentId,
+      firstName: "", lastName: "", birthDate: "",
+      cpf: "", rg: "", sex: null,
+      contact: { email: "", phone: "" },
+      emergency: { name: "", phone: "" },
+      financialResponsible: { relation: "Eu mesmo(a)" },
+      billing: { planId: null, preferredDueDay: null },
+      address: { zip: "", street: "", number: "", complement: "", district: "", city: "", state: "" },
+      health: { notes: "" },
+      graduation: { beltLevel: "", graduationDate: "" },
+    },
+    mode: "onChange",
+  });
+
+  // carrega planos p/ select
+  useEffect(() => {
+    listBillingPlans().then(setPlans).catch(() => {});
+  }, []);
+
+  // carregar aluno correto com cancelamento
+  useEffect(() => {
+    if (!open || !studentId) return;
+    setLoading(true);
+
+    // aborta requisição anterior
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    (async () => {
+      try {
+        const dto = await getStudentById(studentId);
+        if (controller.signal.aborted) return;
+
+        form.reset({
+          id: dto.id,
+          firstName: formatName(dto.firstName),
+          lastName: formatName(dto.lastName),
+          birthDate: toDisplayDate(dto.birthDate),
+          cpf: formatCPF(dto.cpf || ""),
+          rg: formatRG(dto.rg || ""),
+          sex: (dto.sex as any) || null,
+          contact: {
+            email: dto.contact?.email || "",
+            phone: formatPhone(dto.contact?.phone || ""),
+          },
+          emergency: {
+            name: dto.emergency?.name || "",
+            phone: formatPhone(dto.emergency?.phone || ""),
+          },
+          financialResponsible: { relation: dto.financialResponsible?.relation || "Eu mesmo(a)" },
+          billing: {
+            planId: dto.billing?.planId ?? null,
+            preferredDueDay: dto.billing?.preferredDueDay ?? null,
+          },
+          address: {
+            zip: formatCEP(dto.address?.zip || ""),
+            street: dto.address?.street || "",
+            number: dto.address?.number || "",
+            complement: dto.address?.complement || "",
+            district: dto.address?.district || "",
+            city: dto.address?.city || "",
+            state: dto.address?.state || "",
+          },
+          health: { notes: dto.health?.notes || "" },
+          graduation: {
+            beltLevel: dto.graduation?.beltLevel || "",
+            graduationDate: toDisplayDate(dto.graduation?.graduationDate),
+          },
+        });
+      } catch (e) {
+        toast({ title: "Erro ao carregar", description: "Não foi possível carregar os dados do aluno.", variant: "destructive" });
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    })();
+
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, studentId]);
+
+  async function onSubmit(values: FormValues) {
+    setLoading(true);
+    try {
+      const payload: StudentEditDTO = {
+        id: values.id,
+        firstName: formatName(values.firstName),
+        lastName: formatName(values.lastName),
+        birthDate: toISODate(values.birthDate) || null,
+        cpf: unformatCPF(values.cpf),
+        rg: unformatRG(values.rg),
+        sex: (values.sex as any) || null,
+        contact: {
+          email: values.contact.email?.trim() || null,
+          phone: unformatPhone(values.contact.phone),
+        },
+        emergency: {
+          name: formatName(values.emergency.name),
+          phone: unformatPhone(values.emergency.phone),
+        },
+        financialResponsible: { relation: values.financialResponsible.relation?.trim() || null },
+        billing: {
+          planId: values.billing.planId ?? null,
+          preferredDueDay: values.billing.preferredDueDay ?? null,
+        },
+        address: {
+          zip: unformatCEP(values.address.zip),
+          street: formatName(values.address.street),
+          number: formatName(values.address.number),
+          complement: formatName(values.address.complement),
+          district: formatName(values.address.district),
+          city: formatName(values.address.city),
+          state: formatName(values.address.state),
+        },
+        health: { notes: values.health.notes?.trim() || null },
+        graduation: {
+          beltLevel: values.graduation.beltLevel?.trim() || null,
+          graduationDate: toISODate(values.graduation.graduationDate) || null,
+        },
+      };
+
+      await updateStudent(studentId, payload);
+      toast({ title: "Salvo!", description: "Dados do aluno atualizados com sucesso." });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar", description: e?.response?.data?.detail || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const headerTitle = useMemo(() => `Editando ${studentName}`, [studentName]);
+
+  return (
+    <Dialog key={studentId} open={open} onOpenChange={(v) => {
+      if (!v && form.formState.isDirty && !readOnly && !window.confirm("Descartar alterações não salvas?")) return;
+      onOpenChange(v);
+    }}>
+      <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
+        <div className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b">
+          <DialogHeader className="px-4 py-3 md:px-6">
+            <DialogTitle className="text-lg md:text-xl">{headerTitle}</DialogTitle>
+            <DialogDescription>Gerenciar informações completas do aluno incluindo dados pessoais, contato, endereço, saúde, financeiro e documentos.</DialogDescription>
+          </DialogHeader>
+          <div className="border-t">
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap gap-1 px-2 md:px-4 py-2">
+                <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+                <TabsTrigger value="contato">Contato</TabsTrigger>
+                <TabsTrigger value="endereco">Endereço</TabsTrigger>
+                <TabsTrigger value="saude">Saúde & Graduação</TabsTrigger>
+                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="relative h-[calc(100%-140px)] md:h-[calc(100%-120px)]">
+          <div className="h-full overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+            {/* DADOS PESSOAIS */}
+            {tab === "dados" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Dados Pessoais</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div><Label>Nome *</Label><Input disabled={readOnly} {...form.register("firstName")} /></div>
+                  <div><Label>Sobrenome *</Label><Input disabled={readOnly} {...form.register("lastName")} /></div>
+                  <div>
+                    <Label>Data de Nascimento *</Label>
+                    <Input disabled={readOnly} value={form.watch("birthDate") || ""} onChange={(e)=>form.setValue("birthDate", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric"/>
+                  </div>
+                  <div><Label>CPF *</Label><Input disabled={readOnly} value={form.watch("cpf") || ""} onChange={(e)=>form.setValue("cpf", formatCPF(e.target.value))} inputMode="numeric"/></div>
+                  <div><Label>RG *</Label><Input disabled={readOnly} value={form.watch("rg") || ""} onChange={(e)=>form.setValue("rg", formatRG(e.target.value))} inputMode="numeric"/></div>
+                  <div>
+                    <Label>Sexo</Label>
+                    <Select disabled={readOnly} value={form.watch("sex") ?? ""} onValueChange={(v)=>form.setValue("sex", (v||null) as any)}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar"/></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">Masculino</SelectItem>
+                        <SelectItem value="F">Feminino</SelectItem>
+                        <SelectItem value="O">Outro/Prefiro não dizer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* CONTATO + EMERGÊNCIA */}
+            {tab === "contato" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Contato</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2"><Label>E-mail *</Label><Input disabled={readOnly} type="email" {...form.register("contact.email")} placeholder="seu@email.com"/></div>
+                  <div>
+                    <Label>Telefone/Celular *</Label>
+                    <Controller control={form.control} name="contact.phone" render={({field})=>(
+                      <Input disabled={readOnly} {...field} value={field.value||""} onChange={(e)=>field.onChange(formatPhone(e.target.value))} inputMode="tel"/>
+                    )}/>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <h4 className="text-sm font-medium">Contato de Emergência</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                    <div className="sm:col-span-2"><Label>Nome *</Label><Input disabled={readOnly} {...form.register("emergency.name")}/></div>
+                    <div>
+                      <Label>Telefone de Emergência *</Label>
+                      <Controller control={form.control} name="emergency.phone" render={({field})=>(
+                        <Input disabled={readOnly} {...field} value={field.value||""} onChange={(e)=>field.onChange(formatPhone(e.target.value))} inputMode="tel"/>
+                      )}/>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* ENDEREÇO */}
+            {tab === "endereco" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Endereço Residencial</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div><Label>CEP *</Label><Input disabled={readOnly} value={form.watch("address.zip") || ""} onChange={(e)=>form.setValue("address.zip", formatCEP(e.target.value))} inputMode="numeric"/></div>
+                  <div className="lg:col-span-2"><Label>Logradouro *</Label><Input disabled={readOnly} {...form.register("address.street")}/></div>
+                  <div><Label>Número *</Label><Input disabled={readOnly} {...form.register("address.number")}/></div>
+                  <div className="lg:col-span-2"><Label>Complemento</Label><Input disabled={readOnly} {...form.register("address.complement")}/></div>
+                  <div><Label>Bairro *</Label><Input disabled={readOnly} {...form.register("address.district")}/></div>
+                  <div><Label>Cidade *</Label><Input disabled={readOnly} {...form.register("address.city")}/></div>
+                  <div><Label>Estado *</Label><Input disabled={readOnly} {...form.register("address.state")} maxLength={2} placeholder="SP"/></div>
+                </div>
+              </section>
+            )}
+
+            {/* SAÚDE & GRADUAÇÃO */}
+            {tab === "saude" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Saúde & Graduação</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="lg:col-span-3"><Label>Observações de Saúde</Label><Input disabled={readOnly} {...form.register("health.notes")} placeholder="Alergias, restrições, etc."/></div>
+                  <div><Label>Faixa (nível)</Label><Input disabled={readOnly} {...form.register("graduation.beltLevel")} placeholder="Branca, Azul, ..."/></div>
+                  <div>
+                    <Label>Data de Graduação</Label>
+                    <Input disabled={readOnly} value={form.watch("graduation.graduationDate") || ""} onChange={(e)=>form.setValue("graduation.graduationDate", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric"/>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* FINANCEIRO */}
+            {tab === "financeiro" && (
+              <section className="space-y-4">
+                <h3 className="text-base font-semibold">Responsável Financeiro & Plano</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <Label>Grau de Parentesco *</Label>
+                    <Input disabled={readOnly} {...form.register("financialResponsible.relation")} placeholder="Eu mesmo(a), Pai, Mãe..."/>
+                  </div>
+                  <div>
+                    <Label>Plano de Mensalidade *</Label>
+                    <Select disabled={readOnly} value={(form.watch("billing.planId") ?? "").toString()}
+                      onValueChange={(v)=>form.setValue("billing.planId", v ? Number(v) : null)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o plano"/></SelectTrigger>
+                      <SelectContent>
+                        {plans.map(p => (<SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Dia de Vencimento Preferido *</Label>
+                    <Select disabled={readOnly} value={(form.watch("billing.preferredDueDay") ?? "").toString()}
+                      onValueChange={(v)=>form.setValue("billing.preferredDueDay", v ? Number(v) : null)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o dia"/></SelectTrigger>
+                      <SelectContent>
+                        {[...Array(31)].map((_,i)=>(<SelectItem key={i+1} value={String(i+1)}>{i+1}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* FOOTER */}
+          <div className="sticky bottom-0 z-20 bg-background/90 backdrop-blur border-t px-4 md:px-6 py-3 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
+            <DialogClose asChild><Button variant="ghost" type="button">Fechar</Button></DialogClose>
+            {!readOnly && <Button type="submit" disabled={loading}>{loading ? "Salvando..." : "Salvar alterações"}</Button>}
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+2.4 Tabela: duplo‑clique na linha e “olho” abrindo a mesma tela
+
+frontend/src/pages/students/StudentsList.tsx (ou o componente da tabela)
+
+// ideias-chave: onRowDoubleClick e ação do "olho" usando o mesmo Dialog
+import { useState } from "react";
+import StudentEditDialog from "@/components/students/StudentEditDialog";
+// ...
+
+export default function StudentsList() {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedName, setSelectedName] = useState<string>("");
+  const [open, setOpen] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
+
+  function openEdit(row: { id: number; name: string }, ro = false) {
+    setSelectedId(row.id);
+    setSelectedName(row.name);
+    setReadOnly(ro);
+    setOpen(true);
+  }
+
+  // na definição da tabela / rows
+  // <tr onDoubleClick={() => openEdit({id: row.id, name: row.fullName})} ...>
+  // No botão "olho":
+  // <Button onClick={()=> openEdit({id: row.id, name: row.fullName}, true)}><EyeIcon/></Button>
+
+  return (
+    <>
+      {/* ... sua tabela ... */}
+      {selectedId && (
+        <StudentEditDialog
+          studentId={selectedId}
+          studentName={selectedName}
+          open={open}
+          readOnly={readOnly}
+          onOpenChange={setOpen}
+        />
+      )}
+    </>
+  );
+}
+
+
+Resultado: duplo‑clique em qualquer lugar da linha abre edição; o ícone de “olho” abre a mesma tela, porém readOnly=true (sem botão Salvar).
+
+3) BACKEND
+3.1 DTO (sincronizado com o frontend)
+
+server/dto/StudentEditDTO.ts
+
+export type StudentEditDTO = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  birthDate: string | null;   // ISO yyyy-mm-dd
+  cpf: string | null;
+  rg: string | null;
+  sex: "M" | "F" | "O" | null;
+  contact: { email: string | null; phone: string | null };
+  emergency: { name: string | null; phone: string | null };
+  financialResponsible: { relation: string | null };
+  billing: { planId: number | null; preferredDueDay: number | null };
+  address: {
+    zip: string | null; street: string | null; number: string | null;
+    complement: string | null; district: string | null; city: string | null; state: string | null;
+  };
+  health: { notes: string | null };
+  graduation: { beltLevel: string | null; graduationDate: string | null };
+};
+
+3.2 Service (monta/agrega tudo; respeita nulos; transação no PATCH)
+
+server/services/studentsService.ts
+
+import { prisma } from "../prisma";
+import { StudentEditDTO } from "../dto/StudentEditDTO";
+
+const nd = (v?: string | null) => (v == null ? null : v.trim() || null);
+const onlyDigits = (v?: string | null) => (v || "").replace(/\D+/g, "");
+
+export async function getStudentEditDTO(id: number): Promise<StudentEditDTO | null> {
+  const s = await prisma.student.findUnique({
+    where: { id },
+    include: {
+      user: true,
+      contact: true,
+      emergency: true,
+      address: true,
+      financialResponsible: true,
+      billingPreference: true,
+      health: true,
+      graduation: true,
+    },
+  });
+  if (!s || !s.user) return null;
+
+  return {
+    id: s.id,
+    firstName: s.user.firstName,
+    lastName: s.user.lastName,
+    birthDate: s.birthDate ? s.birthDate.toISOString().slice(0,10) : null,
+    cpf: s.cpf || null,
+    rg: s.rg || null,
+    sex: (s.sex as any) ?? null,
+    contact: {
+      email: s.contact?.email || null,
+      phone: s.contact?.phone || null,
+    },
+    emergency: {
+      name: s.emergency?.name || null,
+      phone: s.emergency?.phone || null,
+    },
+    financialResponsible: { relation: s.financialResponsible?.relation || null },
+    billing: {
+      planId: s.billingPreference?.planId ?? null,
+      preferredDueDay: s.billingPreference?.preferredDueDay ?? null,
+    },
+    address: {
+      zip: s.address?.zip || null,
+      street: s.address?.street || null,
+      number: s.address?.number || null,
+      complement: s.address?.complement || null,
+      district: s.address?.district || null,
+      city: s.address?.city || null,
+      state: s.address?.state || null,
+    },
+    health: { notes: s.health?.notes || null },
+    graduation: {
+      beltLevel: s.graduation?.beltLevel || null,
+      graduationDate: s.graduation?.graduationDate ? s.graduation.graduationDate.toISOString().slice(0,10) : null,
+    },
+  };
+}
+
+export async function patchStudentFromDTO(id: number, dto: StudentEditDTO): Promise<StudentEditDTO> {
+  await prisma.$transaction(async (tx) => {
+    const st = await tx.student.findUniqueOrThrow({ where: { id }});
+
+    await tx.user.update({
+      where: { id: st.userId },
+      data: { firstName: nd(dto.firstName), lastName: nd(dto.lastName) },
+    });
+
+    await tx.student.update({
+      where: { id },
+      data: {
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
+        cpf: onlyDigits(dto.cpf),
+        rg: onlyDigits(dto.rg),
+        sex: dto.sex ?? null,
+      },
+    });
+
+    // contato
+    const c = await tx.contact.findUnique({ where: { studentId: id }});
+    const cData = { email: nd(dto.contact.email), phone: onlyDigits(dto.contact.phone) || null, studentId: id };
+    c ? await tx.contact.update({ where: { studentId: id }, data: cData }) : await tx.contact.create({ data: cData });
+
+    // emergência
+    const em = await tx.emergency.findUnique({ where: { studentId: id }});
+    const emData = { name: nd(dto.emergency.name), phone: onlyDigits(dto.emergency.phone) || null, studentId: id };
+    em ? await tx.emergency.update({ where: { studentId: id }, data: emData }) : await tx.emergency.create({ data: emData });
+
+    // responsável financeiro
+    const fr = await tx.financialResponsible.findUnique({ where: { studentId: id }});
+    const frData = { relation: nd(dto.financialResponsible.relation), studentId: id };
+    fr ? await tx.financialResponsible.update({ where: { studentId: id }, data: frData }) : await tx.financialResponsible.create({ data: frData });
+
+    // preferência de cobrança
+    const bp = await tx.billingPreference.findUnique({ where: { studentId: id }});
+    const bpData = { planId: dto.billing.planId, preferredDueDay: dto.billing.preferredDueDay, studentId: id };
+    bp ? await tx.billingPreference.update({ where: { studentId: id }, data: bpData }) : await tx.billingPreference.create({ data: bpData });
+
+    // endereço
+    const ad = await tx.address.findUnique({ where: { studentId: id }});
+    const adData = {
+      zip: onlyDigits(dto.address.zip) || null,
+      street: nd(dto.address.street), number: nd(dto.address.number),
+      complement: nd(dto.address.complement), district: nd(dto.address.district),
+      city: nd(dto.address.city), state: nd(dto.address.state), studentId: id
+    };
+    ad ? await tx.address.update({ where: { studentId: id }, data: adData }) : await tx.address.create({ data: adData });
+
+    // saúde
+    const he = await tx.health.findUnique({ where: { studentId: id }});
+    he ? await tx.health.update({ where: { studentId: id }, data: { notes: nd(dto.health.notes) }})
+       : await tx.health.create({ data: { notes: nd(dto.health.notes), studentId: id }});
+
+    // graduação
+    const gr = await tx.graduation.findUnique({ where: { studentId: id }});
+    const grData = { beltLevel: nd(dto.graduation.beltLevel), graduationDate: dto.graduation.graduationDate ? new Date(dto.graduation.graduationDate) : null, studentId: id };
+    gr ? await tx.graduation.update({ where: { studentId: id }, data: grData })
+       : await tx.graduation.create({ data: grData });
+  });
+
+  const updated = await getStudentEditDTO(id);
+  if (!updated) throw new Error("Falha ao recarregar aluno.");
+  return updated;
+}
+
+3.3 Rotas (com Cache-Control: no-store no GET)
+
+server/routes.ts (trecho relevante)
+
+import type { Request, Response } from "express";
+import { getStudentEditDTO, patchStudentFromDTO } from "./services/studentsService";
+import { StudentEditDTO } from "./dto/StudentEditDTO";
+
+// GET
+app.get("/api/students/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const dto = await getStudentEditDTO(id);
+    res.setHeader("Cache-Control", "no-store");
+    if (!dto) return res.status(404).json({ message: "Aluno não encontrado" });
+    return res.json(dto);
+  } catch (e: any) {
+    console.error("GET /api/students/:id error", e);
+    return res.status(500).json({ message: "Erro ao carregar aluno." });
+  }
+});
+
+// PATCH
+app.patch("/api/students/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const body: StudentEditDTO = req.body;
+    if (id !== body.id) return res.status(400).json({ message: "ID inconsistente." });
+    const updated = await patchStudentFromDTO(id, body);
+    return res.json(updated);
+  } catch (e: any) {
+    console.error("PATCH /api/students/:id error", e);
+    return res.status(500).json({ message: "Erro ao salvar dados do aluno.", detail: e?.message });
+  }
+});
+
+// planos (para o select)
+app.get("/api/billing/plans", async (_req: Request, res: Response) => {
+  const plans = await prisma.billingPlan.findMany({ select: { id: true, name: true, amount: true, period: true }});
+  return res.json(plans);
+});
+
+
+Importante: se você usa outro ORM/tabelas, ajuste os include/findUnique/update para os nomes corretos.
+
+4) (Opcional) Migration de banco (Prisma – exemplo)
+
+Se ainda não tiver tabelas para emergência, financialResponsible e billingPreference, crie algo assim:
+
+model Student {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id])
+  birthDate   DateTime?
+  cpf         String?
+  rg          String?
+  sex         String?  // "M" | "F" | "O"
+
+  contact             Contact?
+  emergency           Emergency?
+  address             Address?
+  financialResponsible FinancialResponsible?
+  billingPreference   BillingPreference?
+  health              Health?
+  graduation          Graduation?
+}
+
+model Contact {
+  studentId Int     @id
+  student   Student @relation(fields: [studentId], references: [id])
+  email     String?
+  phone     String?
+}
+
+model Emergency {
+  studentId Int     @id
+  student   Student @relation(fields: [studentId], references: [id])
+  name      String?
+  phone     String?
+}
+
+model FinancialResponsible {
+  studentId Int     @id
+  student   Student @relation(fields: [studentId], references: [id])
+  relation  String?
+}
+
+model BillingPreference {
+  studentId       Int     @id
+  student         Student @relation(fields: [studentId], references: [id])
+  planId          Int?
+  preferredDueDay Int?
+}
+
+model Address {
+  studentId  Int     @id
+  student    Student @relation(fields: [studentId], references: [id])
+  zip        String?
+  street     String?
+  number     String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+}
+
+model Health {
+  studentId Int     @id
+  student   Student @relation(fields: [studentId], references: [id])
+  notes     String?
+}
+
+model Graduation {
+  studentId      Int     @id
+  student        Student @relation(fields: [studentId], references: [id])
+  beltLevel      String?
+  graduationDate DateTime?
+}
+
+model BillingPlan {
+  id     Int     @id @default(autoincrement())
+  name   String
+  amount Float
+  period String   // "MONTHLY" | "WEEKLY" | "YEARLY"
+}
+
+5) Prompts ArkDev (cola no Replit)
+ArkDev — “Sincronizar Onboarding ⇄ Edição do Aluno + Corrigir fetch”
+ArkDev
+Contexto: SenseiSystem. Na tela de edição do aluno, preciso:
+- Exibir todos os campos do Onboarding.
+- Salvar todos no banco e reexibir corretamente.
+- Corrigir bug de abrir aluno X e carregar dados do Y.
+- Adicionar duplo-clique na linha para abrir edição e o ícone "olho" usando a mesma tela em modo readOnly.
+
+Tarefas:
+1) FRONTEND:
+   - Atualizar StudentEditDTO em frontend/src/services/api/students.ts com grupos: sex, contact, emergency, financialResponsible, billing, address, health, graduation.
+   - Atualizar StudentEditDialog.tsx conforme snippet fornecido: key={studentId}, AbortController para cancelar fetch anterior, no-store no GET, tabs responsivas, footer sticky, modo readOnly, selects de Plano/Vencimento.
+   - Em StudentsList.tsx adicionar onRowDoubleClick => abre edição; ação "olho" => abrir mesma tela com readOnly=true.
+
+2) BACKEND:
+   - Criar/atualizar server/dto/StudentEditDTO.ts (mesma estrutura do frontend).
+   - Em server/services/studentsService.ts, implementar getStudentEditDTO (joins) e patchStudentFromDTO (transação; normalização de dígitos e trims).
+   - Em server/routes.ts: GET /api/students/:id com Cache-Control: no-store; PATCH /api/students/:id; GET /api/billing/plans.
+
+3) DB (se necessário):
+   - Adicionar tabelas: Emergency, FinancialResponsible, BillingPreference, BillingPlan (ou adaptar às existentes).
+
+Critérios de aceitação:
+- Abrir aluno A sempre mostra dados do A (sem “fantasma” do B).
+- Todos os campos do Onboarding aparecem preenchidos quando existem no banco.
+- PATCH persiste e reabre exibindo dados atualizados.
+- Duplo-clique na linha abre edição; “olho” abre a mesma tela em modo readOnly.
+
+ArkDev — “QA rápido”
+ArkDev
+Cenários de teste:
+- Carregar aluno com dados completos do onboarding: conferir todos os campos.
+- Editar apenas endereço e salvar; reabrir e validar.
+- Trocar rapidamente entre 3 alunos e validar que cada um carrega seus dados (sem dados cruzados).
+- Mobile 360x640: tabs scrolláveis, botão Salvar sempre visível.
+- Ícone "olho": abre sem botão Salvar.
+
+
+Se quiser, eu também te preparo um patch único (git apply) com esses arquivos. Quer o patch pronto?

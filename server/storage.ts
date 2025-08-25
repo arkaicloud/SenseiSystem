@@ -1218,20 +1218,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getStudentByCpf(cpf: string): Promise<StudentWithUser | undefined> {
-    const [result] = await db
-      .select({
-        id: students.id,
-        userId: students.userId,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        cpf: students.cpf,
-        active: students.active,
-      })
-      .from(students)
-      .innerJoin(users, eq(students.userId, users.id))
-      .where(eq(students.cpf, cpf))
-      .limit(1);
-    return result;
+    try {
+      // Usando SQL direto para evitar problemas com o Drizzle
+      const result = await db.execute(sql`
+        SELECT 
+          s.id,
+          s.user_id,
+          u.first_name,
+          u.last_name,
+          s.cpf,
+          s.active
+        FROM students s
+        INNER JOIN users u ON s.user_id = u.id
+        WHERE s.cpf = ${cpf}
+        LIMIT 1
+      `);
+
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+
+      const row = result.rows[0] as any;
+      
+      return {
+        id: row.id,
+        userId: row.user_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        cpf: row.cpf,
+        active: row.active,
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estudante por CPF:', error);
+      return undefined;
+    }
   }
 
   async getStudents(): Promise<Student[]> {

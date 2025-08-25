@@ -19,7 +19,6 @@ const Students: React.FC = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,7 +68,6 @@ const Students: React.FC = () => {
         title: "Sucesso",
         description: "Aluno atualizado com sucesso",
       });
-      setSelectedStudent(null);
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
     },
     onError: (error) => {
@@ -333,7 +331,14 @@ const Students: React.FC = () => {
                   </thead>
                   <tbody>
                     {getFilteredStudents("all").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
+                      <tr 
+                        key={student.id} 
+                        className="border-b hover:bg-gray-50 cursor-pointer"
+                        onDoubleClick={() => {
+                          setStudentToEdit(student);
+                          setIsEditStudentOpen(true);
+                        }}
+                      >
                         <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
@@ -407,18 +412,7 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Ver perfil completo"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(student);
-                              }}
-                            >
-                              <span className="material-icons text-blue-500 text-sm">visibility</span>
-                            </Button>
+
                             <Button
                               size="sm"
                               variant="ghost"
@@ -500,7 +494,14 @@ const Students: React.FC = () => {
                   </thead>
                   <tbody>
                     {getFilteredStudents("active").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
+                      <tr 
+                        key={student.id} 
+                        className="border-b hover:bg-gray-50 cursor-pointer"
+                        onDoubleClick={() => {
+                          setStudentToEdit(student);
+                          setIsEditStudentOpen(true);
+                        }}
+                      >
                         <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
@@ -574,18 +575,7 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Ver perfil completo"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(student);
-                              }}
-                            >
-                              <span className="material-icons text-blue-500 text-sm">visibility</span>
-                            </Button>
+
                             <Button
                               size="sm"
                               variant="ghost"
@@ -670,7 +660,10 @@ const Students: React.FC = () => {
                       <tr 
                         key={student.id} 
                         className="border-b hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelectedStudent(student)}
+                        onDoubleClick={() => {
+                          setStudentToEdit(student);
+                          setIsEditStudentOpen(true);
+                        }}
                       >
                         <td className="py-3 px-4">
                           <span className="text-sm font-medium text-gray-600">
@@ -761,18 +754,7 @@ const Students: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Ver perfil completo"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(student);
-                              }}
-                            >
-                              <span className="material-icons text-blue-500 text-sm">visibility</span>
-                            </Button>
+
                             <Button
                               size="sm"
                               variant="ghost"
@@ -871,29 +853,6 @@ const Students: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-      {/* View Student Dialog */}
-      {selectedStudent && (
-        <Dialog open={true} onOpenChange={(open) => !open && setSelectedStudent(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Visualizar Aluno</DialogTitle>
-            <StudentForm 
-              defaultValues={{
-                firstName: selectedStudent.user.firstName,
-                lastName: selectedStudent.user.lastName,
-                email: selectedStudent.user.email,
-                username: selectedStudent.user.username,
-                beltLevel: selectedStudent.beltLevel,
-                stripes: selectedStudent.stripes,
-                emergencyContact: selectedStudent.user.emergencyContact || '',
-                notes: selectedStudent.notes || '',
-                phone: selectedStudent.user.phone || '',
-              }}
-              onSubmit={handleUpdateStudent}
-              isLoading={isUpdatingStudent}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Edit Student Dialog - New Complete Interface */}
       {studentToEdit && (

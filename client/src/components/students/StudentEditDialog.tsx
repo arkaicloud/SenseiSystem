@@ -1,368 +1,817 @@
-import * as React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  getStudentById, updateStudent, StudentEditDTO, listBillingPlans, BillingPlan
-} from "@/services/api/students";
-import {
-  formatCPF, unformatCPF, formatRG, unformatRG, formatPhone, unformatPhone,
-  formatCEP, unformatCEP, toDisplayDate, toISODate, formatName
-} from "@/lib/formatters";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-const Schema = z.object({
-  id: z.number(),
-  firstName: z.string().min(1, "Nome obrigatório"),
-  lastName: z.string().min(1, "Sobrenome obrigatório"),
-  birthDate: z.string().nullable().optional(),
-  cpf: z.string().nullable().optional(),
-  rg: z.string().nullable().optional(),
-  sex: z.enum(["M","F","O"]).nullable().optional(),
-  contact: z.object({
-    email: z.string().email().nullable().optional(),
-    phone: z.string().nullable().optional(),
-  }),
-  emergency: z.object({
-    name: z.string().nullable().optional(),
-    phone: z.string().nullable().optional(),
-  }),
-  financialResponsible: z.object({
-    relation: z.string().nullable().optional(),
-  }),
-  billing: z.object({
-    planId: z.number().nullable().optional(),
-    preferredDueDay: z.number().int().min(1).max(31).nullable().optional(),
-  }),
-  address: z.object({
-    zip: z.string().nullable().optional(),
-    street: z.string().nullable().optional(),
-    number: z.string().nullable().optional(),
-    complement: z.string().nullable().optional(),
-    district: z.string().nullable().optional(),
-    city: z.string().nullable().optional(),
-    state: z.string().nullable().optional(),
-  }),
-  health: z.object({ notes: z.string().nullable().optional() }),
-  graduation: z.object({
-    beltLevel: z.string().nullable().optional(),
-    graduationDate: z.string().nullable().optional(),
-  }),
+// Schema de validação
+const studentEditSchema = z.object({
+  firstName: z.string().min(1, "Nome é obrigatório"),
+  lastName: z.string().min(1, "Sobrenome é obrigatório"),
+  birthDate: z.string().nullable(),
+  cpf: z.string().nullable(),
+  rg: z.string().nullable(),
+  email: z.string().email("E-mail inválido").nullable(),
+  phone: z.string().nullable(),
+  emergencyContactName: z.string().nullable(),
+  emergencyContactPhone: z.string().nullable(),
+  street: z.string().nullable(),
+  number: z.string().nullable(),
+  complement: z.string().nullable(),
+  neighborhood: z.string().nullable(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  zipCode: z.string().nullable(),
+  beltLevel: z.string(),
+  lastPromotionDate: z.string().nullable(),
+  financialResponsibleName: z.string().nullable(),
+  financialResponsibleCpf: z.string().nullable(),
+  financialResponsibleEmail: z.string().nullable(),
+  financialResponsiblePhone: z.string().nullable(),
+  financialResponsibleRelation: z.string().nullable(),
+  paymentPlanId: z.number().nullable(),
+  preferredDueDate: z.number().nullable(),
+  medicalObservations: z.string().nullable(),
+  planObservations: z.string().nullable(),
 });
-type FormValues = z.infer<typeof Schema>;
 
-type Props = {
+type StudentEditFormData = z.infer<typeof studentEditSchema>;
+
+interface StudentEditDialogProps {
   studentId: number;
+  studentName?: string;
   open: boolean;
-  onOpenChange: (v: boolean) => void;
-  studentName: string;
-  readOnly?: boolean; // para o "olho"
-};
+  readOnly?: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-export default function StudentEditDialog({ studentId, open, onOpenChange, studentName, readOnly }: Props) {
+export default function StudentEditDialog({
+  studentId,
+  studentName = "",
+  open,
+  readOnly = false,
+  onOpenChange,
+}: StudentEditDialogProps) {
   const { toast } = useToast();
-  const [tab, setTab] = useState("dados");
-  const [loading, setLoading] = useState(false);
-  const [plans, setPlans] = useState<BillingPlan[]>([]);
-  const abortRef = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(Schema),
-    defaultValues: {
-      id: studentId,
-      firstName: "", lastName: "", birthDate: "",
-      cpf: "", rg: "", sex: null,
-      contact: { email: "", phone: "" },
-      emergency: { name: "", phone: "" },
-      financialResponsible: { relation: "Eu mesmo(a)" },
-      billing: { planId: null, preferredDueDay: null },
-      address: { zip: "", street: "", number: "", complement: "", district: "", city: "", state: "" },
-      health: { notes: "" },
-      graduation: { beltLevel: "", graduationDate: "" },
-    },
-    mode: "onChange",
+  // Buscar dados do aluno
+  const { data: studentData, isLoading: isLoadingStudent } = useQuery({
+    queryKey: [`/api/users/${studentId}`],
+    enabled: open && !!studentId,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
-  // carrega planos p/ select
-  useEffect(() => {
-    listBillingPlans().then(setPlans).catch(() => {});
-  }, []);
+  // Buscar planos de pagamento
+  const { data: paymentPlansData } = useQuery({
+    queryKey: ["/api/payment-plans"],
+    enabled: open,
+  });
 
-  // carregar aluno correto com cancelamento
-  useEffect(() => {
-    if (!open || !studentId) return;
-    setLoading(true);
+  const paymentPlans = paymentPlansData?.plans || [];
 
-    // aborta requisição anterior
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  // Form setup
+  const form = useForm<StudentEditFormData>({
+    resolver: zodResolver(studentEditSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      birthDate: null,
+      cpf: null,
+      rg: null,
+      email: null,
+      phone: null,
+      emergencyContactName: null,
+      emergencyContactPhone: null,
+      street: null,
+      number: null,
+      complement: null,
+      neighborhood: null,
+      city: null,
+      state: null,
+      zipCode: null,
+      beltLevel: "white",
+      lastPromotionDate: null,
+      financialResponsibleName: null,
+      financialResponsibleCpf: null,
+      financialResponsibleEmail: null,
+      financialResponsiblePhone: null,
+      financialResponsibleRelation: null,
+      paymentPlanId: null,
+      preferredDueDate: 5,
+      medicalObservations: null,
+      planObservations: null,
+    },
+  });
 
-    (async () => {
-      try {
-        const dto = await getStudentById(studentId);
-        if (controller.signal.aborted) return;
+  // Mutation para atualizar aluno
+  const updateStudentMutation = useMutation({
+    mutationFn: async (data: StudentEditFormData) => {
+      const response = await fetch(`/api/users/${studentId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-        form.reset({
-          id: dto.id,
-          firstName: formatName(dto.firstName),
-          lastName: formatName(dto.lastName),
-          birthDate: toDisplayDate(dto.birthDate),
-          cpf: formatCPF(dto.cpf || ""),
-          rg: formatRG(dto.rg || ""),
-          sex: (dto.sex as any) || null,
-          contact: {
-            email: dto.contact?.email || "",
-            phone: formatPhone(dto.contact?.phone || ""),
-          },
-          emergency: {
-            name: dto.emergency?.name || "",
-            phone: formatPhone(dto.emergency?.phone || ""),
-          },
-          financialResponsible: { relation: dto.financialResponsible?.relation || "Eu mesmo(a)" },
-          billing: {
-            planId: dto.billing?.planId ?? null,
-            preferredDueDay: dto.billing?.preferredDueDay ?? null,
-          },
-          address: {
-            zip: formatCEP(dto.address?.zip || ""),
-            street: dto.address?.street || "",
-            number: dto.address?.number || "",
-            complement: dto.address?.complement || "",
-            district: dto.address?.district || "",
-            city: dto.address?.city || "",
-            state: dto.address?.state || "",
-          },
-          health: { notes: dto.health?.notes || "" },
-          graduation: {
-            beltLevel: dto.graduation?.beltLevel || "",
-            graduationDate: toDisplayDate(dto.graduation?.graduationDate),
-          },
-        });
-      } catch (e) {
-        toast({ title: "Erro ao carregar", description: "Não foi possível carregar os dados do aluno.", variant: "destructive" });
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao atualizar aluno");
       }
-    })();
 
-    return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, studentId]);
-
-  async function onSubmit(values: FormValues) {
-    setLoading(true);
-    try {
-      const payload: StudentEditDTO = {
-        id: values.id,
-        firstName: formatName(values.firstName),
-        lastName: formatName(values.lastName),
-        birthDate: toISODate(values.birthDate) || null,
-        cpf: unformatCPF(values.cpf),
-        rg: unformatRG(values.rg),
-        sex: (values.sex as any) || null,
-        contact: {
-          email: values.contact.email?.trim() || null,
-          phone: unformatPhone(values.contact.phone),
-        },
-        emergency: {
-          name: formatName(values.emergency.name),
-          phone: unformatPhone(values.emergency.phone),
-        },
-        financialResponsible: { relation: values.financialResponsible.relation?.trim() || null },
-        billing: {
-          planId: values.billing.planId ?? null,
-          preferredDueDay: values.billing.preferredDueDay ?? null,
-        },
-        address: {
-          zip: unformatCEP(values.address.zip),
-          street: formatName(values.address.street),
-          number: formatName(values.address.number),
-          complement: formatName(values.address.complement),
-          district: formatName(values.address.district),
-          city: formatName(values.address.city),
-          state: formatName(values.address.state),
-        },
-        health: { notes: values.health.notes?.trim() || null },
-        graduation: {
-          beltLevel: values.graduation.beltLevel?.trim() || null,
-          graduationDate: toISODate(values.graduation.graduationDate) || null,
-        },
-      };
-
-      await updateStudent(studentId, payload);
-      toast({ title: "Salvo!", description: "Dados do aluno atualizados com sucesso." });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Dados do aluno atualizados com sucesso",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${studentId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
       onOpenChange(false);
-    } catch (e: any) {
-      toast({ title: "Erro ao salvar", description: e?.response?.data?.detail || "Tente novamente.", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar aluno",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const headerTitle = useMemo(() => `Editando ${studentName}`, [studentName]);
+  // Preencher form quando dados carregarem
+  useEffect(() => {
+    if (studentData && open) {
+      const student = studentData.student;
+      
+      form.reset({
+        firstName: studentData.firstName || "",
+        lastName: studentData.lastName || "",
+        birthDate: studentData.birthDate ? new Date(studentData.birthDate).toISOString().split('T')[0] : null,
+        cpf: studentData.cpf || null,
+        rg: studentData.rg || null,
+        email: studentData.email || null,
+        phone: studentData.phone || null,
+        emergencyContactName: studentData.emergencyContact || null,
+        emergencyContactPhone: studentData.emergencyPhone || null,
+        street: studentData.street || null,
+        number: studentData.number || null,
+        complement: studentData.complement || null,
+        neighborhood: studentData.neighborhood || null,
+        city: studentData.city || null,
+        state: studentData.state || null,
+        zipCode: studentData.zipCode || null,
+        beltLevel: student?.beltLevel || "white",
+        lastPromotionDate: student?.lastPromotionDate ? new Date(student.lastPromotionDate).toISOString().split('T')[0] : null,
+        financialResponsibleName: student?.financialResponsibleName || null,
+        financialResponsibleCpf: student?.financialResponsibleCpf || null,
+        financialResponsibleEmail: student?.financialResponsibleEmail || null,
+        financialResponsiblePhone: student?.financialResponsiblePhone || null,
+        financialResponsibleRelation: student?.financialResponsibleRelation || null,
+        paymentPlanId: student?.paymentPlanId || null,
+        preferredDueDate: student?.preferredDueDate || 5,
+        medicalObservations: student?.medicalObservations || null,
+        planObservations: student?.planObservations || null,
+      });
+    }
+  }, [studentData, open, form]);
+
+  const onSubmit = (data: StudentEditFormData) => {
+    if (readOnly) return;
+    updateStudentMutation.mutate(data);
+  };
+
+  const displayName = studentData ? 
+    `${studentData.firstName} ${studentData.lastName}` : 
+    studentName || "Aluno";
 
   return (
-    <Dialog key={studentId} open={open} onOpenChange={(v) => {
-      if (!v && form.formState.isDirty && !readOnly && !window.confirm("Descartar alterações não salvas?")) return;
-      onOpenChange(v);
-    }}>
-      <DialogContent className="w-screen h-screen md:h-[85vh] md:max-w-5xl lg:max-w-7xl p-0 overflow-hidden md:rounded-2xl">
-        <div className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b">
-          <DialogHeader className="px-4 py-3 md:px-6">
-            <DialogTitle className="text-lg md:text-xl">{headerTitle}</DialogTitle>
-            <DialogDescription>Gerenciar informações completas do aluno incluindo dados pessoais, contato, endereço, saúde, financeiro e documentos.</DialogDescription>
-          </DialogHeader>
-          <div className="border-t">
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap gap-1 px-2 md:px-4 py-2">
-                <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
-                <TabsTrigger value="contato">Contato</TabsTrigger>
-                <TabsTrigger value="endereco">Endereço</TabsTrigger>
-                <TabsTrigger value="saude">Saúde & Graduação</TabsTrigger>
-                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-              </TabsList>
-            </Tabs>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {readOnly ? `Visualizando ${displayName}` : `Editando ${displayName}`}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Gerencie informações completas do aluno incluindo dados pessoais, contato, endereço, saúde, financeiro e documentos.
+          </p>
+        </DialogHeader>
+
+        {isLoadingStudent ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Carregando dados do aluno...</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <Tabs defaultValue="personal" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
+                  <TabsTrigger value="contact">Contato</TabsTrigger>
+                  <TabsTrigger value="address">Endereço</TabsTrigger>
+                  <TabsTrigger value="health">Saúde & Graduação</TabsTrigger>
+                  <TabsTrigger value="financial">Financeiro</TabsTrigger>
+                </TabsList>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="relative h-[calc(100%-140px)] md:h-[calc(100%-120px)]">
-          <div className="h-full overflow-y-auto px-4 md:px-6 py-4 space-y-6">
-            {/* DADOS PESSOAIS */}
-            {tab === "dados" && (
-              <section className="space-y-4">
-                <h3 className="text-base font-semibold">Dados Pessoais</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div><Label>Nome *</Label><Input disabled={readOnly} {...form.register("firstName")} /></div>
-                  <div><Label>Sobrenome *</Label><Input disabled={readOnly} {...form.register("lastName")} /></div>
-                  <div>
-                    <Label>Data de Nascimento *</Label>
-                    <Input disabled={readOnly} value={form.watch("birthDate") || ""} onChange={(e)=>form.setValue("birthDate", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric"/>
-                  </div>
-                  <div><Label>CPF *</Label><Input disabled={readOnly} value={form.watch("cpf") || ""} onChange={(e)=>form.setValue("cpf", formatCPF(e.target.value))} inputMode="numeric"/></div>
-                  <div><Label>RG *</Label><Input disabled={readOnly} value={form.watch("rg") || ""} onChange={(e)=>form.setValue("rg", formatRG(e.target.value))} inputMode="numeric"/></div>
-                  <div>
-                    <Label>Sexo</Label>
-                    <Select disabled={readOnly} value={form.watch("sex") ?? ""} onValueChange={(v)=>form.setValue("sex", (v||null) as any)}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar"/></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="M">Masculino</SelectItem>
-                        <SelectItem value="F">Feminino</SelectItem>
-                        <SelectItem value="O">Outro/Prefiro não dizer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </section>
-            )}
+                {/* Dados Pessoais */}
+                <TabsContent value="personal" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-            {/* CONTATO + EMERGÊNCIA */}
-            {tab === "contato" && (
-              <section className="space-y-4">
-                <h3 className="text-base font-semibold">Contato</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2"><Label>E-mail *</Label><Input disabled={readOnly} type="email" {...form.register("contact.email")} placeholder="seu@email.com"/></div>
-                  <div>
-                    <Label>Telefone/Celular *</Label>
-                    <Controller control={form.control} name="contact.phone" render={({field})=>(
-                      <Input disabled={readOnly} {...field} value={field.value||""} onChange={(e)=>field.onChange(formatPhone(e.target.value))} inputMode="tel"/>
-                    )}/>
-                  </div>
-                </div>
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sobrenome *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <div className="pt-2">
-                  <h4 className="text-sm font-medium">Contato de Emergência</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                    <div className="sm:col-span-2"><Label>Nome *</Label><Input disabled={readOnly} {...form.register("emergency.name")}/></div>
-                    <div>
-                      <Label>Telefone de Emergência *</Label>
-                      <Controller control={form.control} name="emergency.phone" render={({field})=>(
-                        <Input disabled={readOnly} {...field} value={field.value||""} onChange={(e)=>field.onChange(formatPhone(e.target.value))} inputMode="tel"/>
-                      )}/>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
+                    <FormField
+                      control={form.control}
+                      name="birthDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Nascimento *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="dd/mm/aaaa"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-            {/* ENDEREÇO */}
-            {tab === "endereco" && (
-              <section className="space-y-4">
-                <h3 className="text-base font-semibold">Endereço Residencial</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div><Label>CEP *</Label><Input disabled={readOnly} value={form.watch("address.zip") || ""} onChange={(e)=>form.setValue("address.zip", formatCEP(e.target.value))} inputMode="numeric"/></div>
-                  <div className="lg:col-span-2"><Label>Logradouro *</Label><Input disabled={readOnly} {...form.register("address.street")}/></div>
-                  <div><Label>Número *</Label><Input disabled={readOnly} {...form.register("address.number")}/></div>
-                  <div className="lg:col-span-2"><Label>Complemento</Label><Input disabled={readOnly} {...form.register("address.complement")}/></div>
-                  <div><Label>Bairro *</Label><Input disabled={readOnly} {...form.register("address.district")}/></div>
-                  <div><Label>Cidade *</Label><Input disabled={readOnly} {...form.register("address.city")}/></div>
-                  <div><Label>Estado *</Label><Input disabled={readOnly} {...form.register("address.state")} maxLength={2} placeholder="SP"/></div>
-                </div>
-              </section>
-            )}
+                    <FormField
+                      control={form.control}
+                      name="cpf"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CPF *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="000.000.000-00"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-            {/* SAÚDE & GRADUAÇÃO */}
-            {tab === "saude" && (
-              <section className="space-y-4">
-                <h3 className="text-base font-semibold">Saúde & Graduação</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="lg:col-span-3"><Label>Observações de Saúde</Label><Input disabled={readOnly} {...form.register("health.notes")} placeholder="Alergias, restrições, etc."/></div>
-                  <div><Label>Faixa (nível)</Label><Input disabled={readOnly} {...form.register("graduation.beltLevel")} placeholder="Branca, Azul, ..."/></div>
-                  <div>
-                    <Label>Data de Graduação</Label>
-                    <Input disabled={readOnly} value={form.watch("graduation.graduationDate") || ""} onChange={(e)=>form.setValue("graduation.graduationDate", e.target.value)} placeholder="dd/mm/aaaa" inputMode="numeric"/>
+                    <FormField
+                      control={form.control}
+                      name="rg"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>RG</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
-              </section>
-            )}
+                </TabsContent>
 
-            {/* FINANCEIRO */}
-            {tab === "financeiro" && (
-              <section className="space-y-4">
-                <h3 className="text-base font-semibold">Responsável Financeiro & Plano</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <Label>Grau de Parentesco *</Label>
-                    <Input disabled={readOnly} {...form.register("financialResponsible.relation")} placeholder="Eu mesmo(a), Pai, Mãe..."/>
-                  </div>
-                  <div>
-                    <Label>Plano de Mensalidade *</Label>
-                    <Select disabled={readOnly} value={(form.watch("billing.planId") ?? "").toString()}
-                      onValueChange={(v)=>form.setValue("billing.planId", v ? Number(v) : null)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o plano"/></SelectTrigger>
-                      <SelectContent>
-                        {plans.map(p => (<SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Dia de Vencimento Preferido *</Label>
-                    <Select disabled={readOnly} value={(form.watch("billing.preferredDueDay") ?? "").toString()}
-                      onValueChange={(v)=>form.setValue("billing.preferredDueDay", v ? Number(v) : null)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o dia"/></SelectTrigger>
-                      <SelectContent>
-                        {[...Array(31)].map((_,i)=>(<SelectItem key={i+1} value={String(i+1)}>{i+1}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </section>
-            )}
-          </div>
+                {/* Contato */}
+                <TabsContent value="contact" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-          {/* FOOTER */}
-          <div className="sticky bottom-0 z-20 bg-background/90 backdrop-blur border-t px-4 md:px-6 py-3 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
-            <DialogClose asChild><Button variant="ghost" type="button">Fechar</Button></DialogClose>
-            {!readOnly && <Button type="submit" disabled={loading}>{loading ? "Salvando..." : "Salvar alterações"}</Button>}
-          </div>
-        </form>
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefone</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="(00) 00000-0000"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contato de Emergência</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefone de Emergência</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="(00) 00000-0000"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Endereço */}
+                <TabsContent value="address" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CEP</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="00000-000"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="street"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Logradouro</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="number"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="complement"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Complemento</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="neighborhood"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bairro</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cidade</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              maxLength={2}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Saúde & Graduação */}
+                <TabsContent value="health" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="beltLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Graduação</FormLabel>
+                          <Select
+                            disabled={readOnly}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione a faixa" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="white">Faixa Branca</SelectItem>
+                              <SelectItem value="blue">Faixa Azul</SelectItem>
+                              <SelectItem value="purple">Faixa Roxa</SelectItem>
+                              <SelectItem value="brown">Faixa Marrom</SelectItem>
+                              <SelectItem value="black">Faixa Preta</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="lastPromotionDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data da Última Graduação</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="medicalObservations"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações Médicas</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            disabled={readOnly}
+                            value={field.value || ""}
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+
+                {/* Financeiro */}
+                <TabsContent value="financial" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="financialResponsibleName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome do Responsável Financeiro</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="financialResponsibleCpf"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CPF do Responsável</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="000.000.000-00"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="financialResponsibleEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail do Responsável</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="financialResponsiblePhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefone do Responsável</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
+                              placeholder="(00) 00000-0000"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="paymentPlanId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Plano de Pagamento</FormLabel>
+                          <Select
+                            disabled={readOnly}
+                            value={field.value?.toString() || ""}
+                            onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um plano" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {paymentPlans.map((plan: any) => (
+                                <SelectItem key={plan.id} value={plan.id.toString()}>
+                                  {plan.name} - R$ {(plan.amount / 100).toFixed(2)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="preferredDueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dia de Vencimento Preferido</FormLabel>
+                          <Select
+                            disabled={readOnly}
+                            value={field.value?.toString() || "5"}
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o dia" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {[5, 10, 15, 20, 25, 30].map((day) => (
+                                <SelectItem key={day} value={day.toString()}>
+                                  Dia {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="planObservations"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações do Plano</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            disabled={readOnly}
+                            value={field.value || ""}
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Fechar
+                </Button>
+                {!readOnly && (
+                  <Button
+                    type="submit"
+                    disabled={updateStudentMutation.isPending}
+                  >
+                    {updateStudentMutation.isPending ? "Salvando..." : "Salvar alterações"}
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

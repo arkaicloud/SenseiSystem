@@ -217,56 +217,56 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
-      {/* Header - Responsivo */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - Compacto e Responsivo */}
       <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-primary">Matrícula SenseiSystem</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-primary">Matrícula SenseiSystem</h1>
               <p className="text-xs sm:text-sm text-muted-foreground">Complete sua inscrição em apenas 3 etapas</p>
             </div>
             <button 
               onClick={() => window.close()} 
-              className="text-muted-foreground hover:text-foreground self-end sm:self-auto"
+              className="text-muted-foreground hover:text-foreground"
               title="Fechar"
             >
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Progress Section - Responsivo */}
+      {/* Progress Section - Compacto */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="space-y-4">
-            <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm text-muted-foreground">
               <span>Etapa {currentStep} de 3</span>
               <span>{Math.round(progressPercentage)}% concluído</span>
             </div>
             <Progress value={progressPercentage} className="w-full h-2" />
 
-            {/* Step Indicators - Responsivo */}
-            <div className="flex justify-between mt-4 sm:mt-6 overflow-x-auto">
+            {/* Step Indicators - Compacto */}
+            <div className="flex justify-between mt-3">
               {steps.map((step) => {
                 const StepIcon = step.icon;
                 const isActive = currentStep === step.number;
                 const isCompleted = currentStep > step.number;
                 
                 return (
-                  <div key={step.number} className="flex flex-col items-center space-y-1 sm:space-y-2 min-w-0 flex-1">
-                    <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-colors ${
+                  <div key={step.number} className="flex flex-col items-center space-y-1 flex-1">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
                       isCompleted 
                         ? 'bg-green-500 border-green-500 text-white' 
                         : isActive 
                           ? 'bg-primary border-primary text-white' 
                           : 'bg-muted border-muted-foreground/20 text-muted-foreground'
                     }`}>
-                      {isCompleted ? <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6" /> : <StepIcon className="w-4 h-4 sm:w-6 sm:h-6" />}
+                      {isCompleted ? <CheckCircle className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
                     </div>
                     <div className="text-center">
-                      <div className={`text-xs sm:text-sm font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'} px-1 text-center`}>
+                      <div className={`text-xs font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'} px-1`}>
                         {step.title}
                       </div>
                     </div>
@@ -278,11 +278,11 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Main Content - Responsivo */}
-      <div className="flex-1 py-4 sm:py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="pt-6 sm:pt-8 pb-4 sm:pb-6">
+      {/* Main Content - Otimizado */}
+      <div className="py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <Card className="shadow-sm border">
+            <CardContent className="p-6">
               {/* Erro de registro */}
               {registrationError && (
                 <Alert variant="destructive" className="mb-6">
@@ -340,10 +340,10 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Footer - Responsivo */}
-      <div className="bg-white border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="text-center text-xs sm:text-sm text-muted-foreground">
+      {/* Footer - Compacto */}
+      <div className="bg-white border-t mt-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
+          <div className="text-center text-xs text-muted-foreground">
             <p>Dúvidas? Entre em contato conosco através do sistema principal.</p>
           </div>
         </div>

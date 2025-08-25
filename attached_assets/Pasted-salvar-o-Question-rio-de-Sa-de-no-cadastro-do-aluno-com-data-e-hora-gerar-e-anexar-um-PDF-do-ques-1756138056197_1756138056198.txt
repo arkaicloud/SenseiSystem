@@ -1,0 +1,555 @@
+salvar o Questionário de Saúde no cadastro do aluno, com data e hora;
+
+gerar e anexar um PDF do questionário no cadastro do aluno (com botão Baixar);
+
+deixar Atestado Médico obrigatório quando houver alguma resposta “SIM/risco” e manter status Pendente até o upload;
+
+permitir download e reupload desses anexos;
+
+ao finalizar, orientar o aluno a checar o e‑mail com link de assinatura e dados de acesso.
+
+Organizei em BACKEND + FRONTEND + Prompts ArkDev.
+
+BACKEND (Node/Express + TS)
+1) Modelo/SQL (Prisma como exemplo — adapte ao seu ORM)
+model Student {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id])
+
+  // status de documentos
+  requiresMedicalCertificate Boolean   @default(false)
+  medicalCertificateStatus   String    @default("PENDING") // "PENDING" | "UPLOADED" | "WAIVED"
+
+  // relações
+  healthQuestionnaire HealthQuestionnaire?
+  documents           Document[]
+}
+
+model HealthQuestionnaire {
+  id           Int      @id @default(autoincrement())
+  studentId    Int      @unique
+  student      Student  @relation(fields: [studentId], references: [id])
+  answersJson  Json
+  submittedAt  DateTime @default(now())
+  risky        Boolean  @default(false) // houve alguma resposta que exige atestado?
+  pdfPath      String?  // caminho do PDF gerado e anexado
+  pdfSize      Int?
+}
+
+model Document {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  student    Student  @relation(fields: [studentId], references: [id])
+  kind       String   // "RG_CNH" | "HEALTH_FORM_PDF" | "MEDICAL_CERT"
+  name       String
+  mime       String
+  size       Int
+  path       String
+  uploadedAt DateTime @default(now())
+}
+
+
+se você já possui tabelas, só adicione os campos que faltam:
+
+em Student: requiresMedicalCertificate e medicalCertificateStatus
+
+nova tabela HealthQuestionnaire (ou use sua existente)
+
+Document (se já existe, só acrescente kind se preciso)
+
+2) Utilitário para avaliar “risco” no questionário
+// server/utils/healthRisk.ts
+export type HealthAnswer = { key: string; question: string; value: boolean | string | null };
+
+const RISK_KEYS = new Set([
+  "heartCondition",
+  "chestPain",
+  "fainting",
+  "doctorRestriction",
+  "recentSurgery",
+  "medicationAffectsExercise",
+  "pregnancy",
+]);
+
+export function isRisky(answers: HealthAnswer[]): boolean {
+  for (const a of answers) {
+    if (RISK_KEYS.has(a.key) && (a.value === true || String(a.value).toLowerCase() === "sim")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+3) Geração do PDF do questionário (PDFKit)
+// server/services/healthQuestionnairePdf.ts
+import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
+import type { HealthAnswer } from "../utils/healthRisk";
+
+export async function generateHealthPdf(
+  studentFullName: string,
+  answers: HealthAnswer[],
+  submittedAt: Date,
+  outDir: string,
+  studentId: number
+): Promise<{ filePath: string; size: number; fileName: string }> {
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const fileName = `questionario-saude_${studentId}_${submittedAt.getTime()}.pdf`;
+  const filePath = path.join(outDir, fileName);
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    doc.fontSize(18).text("Questionário de Saúde", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(12).text(`Aluno: ${studentFullName}`);
+    doc.text(`Data/Hora de preenchimento: ${submittedAt.toLocaleString("pt-BR")}`);
+    doc.moveDown();
+
+    answers.forEach((a, i) => {
+      doc.font("Helvetica-Bold").text(`${i + 1}. ${a.question}`);
+      doc.font("Helvetica").text(`Resposta: ${a.value === true ? "Sim" : a.value === false ? "Não" : a.value ?? "-"}`);
+      doc.moveDown(0.5);
+    });
+
+    doc.end();
+    stream.on("finish", () => {
+      const stats = fs.statSync(filePath);
+      resolve({ filePath, size: stats.size, fileName });
+    });
+    stream.on("error", reject);
+  });
+}
+
+4) Service: salvar questionário, anexar PDF, e marcar exigência de atestado
+// server/services/healthQuestionnaireService.ts
+import path from "path";
+import { prisma } from "../prisma";
+import { isRisky, HealthAnswer } from "../utils/healthRisk";
+import { generateHealthPdf } from "./healthQuestionnairePdf";
+
+const STORAGE_ROOT = process.env.STORAGE_ROOT || path.join(process.cwd(), "storage");
+
+export async function saveHealthQuestionnaire(studentId: number, answers: HealthAnswer[]) {
+  const risky = isRisky(answers);
+  const submittedAt = new Date();
+
+  // upsert do questionário
+  await prisma.healthQuestionnaire.upsert({
+    where: { studentId },
+    create: { studentId, answersJson: answers, risky, submittedAt },
+    update: { answersJson: answers, risky, submittedAt },
+  });
+
+  // nome completo do aluno
+  const s = await prisma.student.findUnique({ where: { id: studentId }, include: { user: true } });
+  if (!s?.user) throw new Error("Aluno não encontrado para gerar PDF.");
+
+  // gerar PDF e registrar como Document
+  const outDir = path.join(STORAGE_ROOT, "students", String(studentId), "health");
+  const { filePath, size, fileName } = await generateHealthPdf(
+    `${s.user.firstName} ${s.user.lastName}`.trim(),
+    answers,
+    submittedAt,
+    outDir,
+    studentId
+  );
+
+  // atualizar caminho no questionário
+  await prisma.healthQuestionnaire.update({
+    where: { studentId },
+    data: { pdfPath: filePath, pdfSize: size },
+  });
+
+  // registrar/atualizar document kind=HEALTH_FORM_PDF
+  const exists = await prisma.document.findFirst({
+    where: { studentId, kind: "HEALTH_FORM_PDF" },
+  });
+
+  if (exists) {
+    await prisma.document.update({
+      where: { id: exists.id },
+      data: { name: fileName, mime: "application/pdf", size, path: filePath, uploadedAt: submittedAt },
+    });
+  } else {
+    await prisma.document.create({
+      data: {
+        studentId,
+        kind: "HEALTH_FORM_PDF",
+        name: fileName,
+        mime: "application/pdf",
+        size,
+        path: filePath,
+      },
+    });
+  }
+
+  // marcar necessidade de atestado
+  await prisma.student.update({
+    where: { id: studentId },
+    data: {
+      requiresMedicalCertificate: risky,
+      medicalCertificateStatus: risky ? "PENDING" : "WAIVED",
+    },
+  });
+
+  return { risky, submittedAt, fileName, size };
+}
+
+5) Upload do Atestado Médico + status
+// server/services/uploadService.ts
+import path from "path";
+import fs from "fs";
+
+const STORAGE_ROOT = process.env.STORAGE_ROOT || path.join(process.cwd(), "storage");
+
+export function ensureDir(p: string) { fs.mkdirSync(p, { recursive: true }); }
+
+export function destinationForStudentKind(studentId: number, kind: string) {
+  const dir = path.join(STORAGE_ROOT, "students", String(studentId), kind.toLowerCase());
+  ensureDir(dir);
+  return dir;
+}
+
+// server/routes.uploads.ts (multer config simplificado)
+import multer from "multer";
+import path from "path";
+import { destinationForStudentKind } from "./services/uploadService";
+
+const storage = multer.diskStorage({
+  destination: (req, _file, cb) => {
+    const studentId = Number(req.params.id);
+    const kind = String(req.params.kind || "misc");
+    const dir = destinationForStudentKind(studentId, kind);
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const name = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
+    cb(null, name);
+  },
+});
+
+export const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (_req, file, cb) => {
+    const ok = ["application/pdf", "image/png", "image/jpeg"].includes(file.mimetype);
+    cb(ok ? null : new Error("Tipo de arquivo inválido"), ok);
+  },
+});
+
+// server/routes.ts (trechos novos)
+import type { Request, Response } from "express";
+import fs from "fs";
+import { saveHealthQuestionnaire } from "./services/healthQuestionnaireService";
+import { upload } from "./routes.uploads";
+import { prisma } from "./prisma";
+
+// POST: salvar questionário, gerar PDF e atualizar status
+app.post("/api/students/:id/health-questionnaire", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const answers = req.body?.answers || [];
+    const result = await saveHealthQuestionnaire(id, answers);
+    return res.json({ success: true, ...result });
+  } catch (e: any) {
+    console.error("health-questionnaire error", e);
+    return res.status(500).json({ success: false, message: "Erro ao salvar o questionário." });
+  }
+});
+
+// GET: baixar PDF do questionário
+app.get("/api/students/:id/health-questionnaire/pdf", async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const q = await prisma.healthQuestionnaire.findUnique({ where: { studentId: id } });
+  if (!q?.pdfPath || !fs.existsSync(q.pdfPath)) return res.status(404).send("PDF não encontrado");
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="questionario-saude_${id}.pdf"`);
+  fs.createReadStream(q.pdfPath).pipe(res);
+});
+
+// POST upload de documento (ex.: atestado)
+app.post("/api/students/:id/documents/:kind", upload.single("file"), async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const kind = String(req.params.kind); // "MEDICAL_CERT" | "RG_CNH" | ...
+    const file = req.file!;
+    const doc = await prisma.document.create({
+      data: {
+        studentId: id,
+        kind,
+        name: file.originalname,
+        mime: file.mimetype,
+        size: file.size,
+        path: file.path,
+      },
+    });
+
+    if (kind === "MEDICAL_CERT") {
+      await prisma.student.update({
+        where: { id },
+        data: { medicalCertificateStatus: "UPLOADED" },
+      });
+    }
+
+    return res.json({ success: true, document: doc });
+  } catch (e: any) {
+    console.error("upload document error", e);
+    return res.status(500).json({ success: false, message: "Erro ao enviar documento." });
+  }
+});
+
+// GET listar documentos do aluno
+app.get("/api/students/:id/documents", async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const docs = await prisma.document.findMany({ where: { studentId: id }, orderBy: { uploadedAt: "desc" } });
+  return res.json(docs);
+});
+
+// GET download de documento por id
+app.get("/api/documents/:docId/download", async (req: Request, res: Response) => {
+  const docId = Number(req.params.docId);
+  const doc = await prisma.document.findUnique({ where: { id: docId } });
+  if (!doc || !fs.existsSync(doc.path)) return res.status(404).send("Arquivo não encontrado");
+  res.setHeader("Content-Type", doc.mime);
+  res.setHeader("Content-Disposition", `attachment; filename="${doc.name}"`);
+  fs.createReadStream(doc.path).pipe(res);
+});
+
+FRONTEND (React + shadcn + RHF)
+1) Enviar questionário e exibir botão “Baixar” (PDF)
+
+Serviços
+
+// frontend/src/services/api/health.ts
+import axios from "axios";
+
+export type HealthAnswer = { key: string; question: string; value: boolean | string | null };
+
+export async function submitHealthQuestionnaire(studentId: number, answers: HealthAnswer[]) {
+  const { data } = await axios.post(`/api/students/${studentId}/health-questionnaire`, { answers });
+  return data as { success: boolean; risky: boolean; submittedAt: string };
+}
+
+export function downloadHealthPdf(studentId: number) {
+  window.location.href = `/api/students/${studentId}/health-questionnaire/pdf`;
+}
+
+export async function listDocuments(studentId: number) {
+  const { data } = await axios.get(`/api/students/${studentId}/documents`);
+  return data as Array<{ id: number; kind: string; name: string; size: number }>;
+}
+
+
+Componente do Questionário (envio + feedback + exigência do atestado)
+
+// frontend/src/components/onboarding/HealthQuestionnaire.tsx
+import { useState } from "react";
+import { submitHealthQuestionnaire, downloadHealthPdf } from "@/services/api/health";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+
+export default function HealthQuestionnaire({ studentId, questions }: { studentId: number; questions: Array<{ key: string; label: string; type: "yesno" | "text" }>}) {
+  const { toast } = useToast();
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [risky, setRisky] = useState(false);
+
+  function setAnswer(key: string, value: any) {
+    setAnswers((s) => ({ ...s, [key]: value }));
+  }
+
+  async function onSubmit() {
+    setSaving(true);
+    try {
+      const payload = questions.map(q => ({ key: q.key, question: q.label, value: answers[q.key] ?? null }));
+      const res = await submitHealthQuestionnaire(studentId, payload);
+      setSubmitted(true);
+      setRisky(res.risky);
+      toast({ title: "Questionário salvo", description: res.risky ? "Identificamos respostas que exigem atestado médico." : "Tudo certo!" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: "Não foi possível salvar o questionário.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {questions.map((q) => (
+        <div key={q.key}>
+          <p className="text-sm font-medium">{q.label}</p>
+          {q.type === "yesno" ? (
+            <div className="flex gap-2 mt-1">
+              <Button type="button" variant={answers[q.key] === true ? "default" : "outline"} onClick={() => setAnswer(q.key, true)}>Sim</Button>
+              <Button type="button" variant={answers[q.key] === false ? "default" : "outline"} onClick={() => setAnswer(q.key, false)}>Não</Button>
+            </div>
+          ) : (
+            <input className="border rounded px-3 py-2 w-full mt-1" onChange={(e)=> setAnswer(q.key, e.target.value)} />
+          )}
+        </div>
+      ))}
+
+      <div className="flex items-center gap-2">
+        <Button onClick={onSubmit} disabled={saving}>{saving ? "Salvando..." : "Salvar Questionário"}</Button>
+        {submitted && (
+          <Button type="button" variant="secondary" onClick={()=>downloadHealthPdf(studentId)}>
+            Baixar PDF
+          </Button>
+        )}
+      </div>
+
+      {submitted && risky && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-800">
+          Foi identificado que você **precisa anexar um Atestado Médico**. O status ficará <b>Pendente</b> até o envio.
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+Tela de Documentos (com botão Baixar do PDF e upload do atestado obrigatório)
+
+// frontend/src/components/onboarding/DocumentsBlock.tsx
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { listDocuments, downloadHealthPdf } from "@/services/api/health";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+
+export default function DocumentsBlock({ studentId, requiresMedical }: { studentId: number; requiresMedical: boolean }) {
+  const { toast } = useToast();
+  const [docs, setDocs] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  async function refresh() {
+    const d = await listDocuments(studentId);
+    setDocs(d);
+  }
+  useEffect(() => { refresh(); }, []);
+
+  async function uploadMedicalCert(file: File) {
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      await axios.post(`/api/students/${studentId}/documents/MEDICAL_CERT`, form, { headers: { "Content-Type": "multipart/form-data" } });
+      toast({ title: "Atestado enviado" });
+      refresh();
+    } catch {
+      toast({ title: "Erro ao enviar", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded border p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium">Questionário de Saúde</p>
+            <p className="text-sm text-muted-foreground">PDF com as respostas enviadas.</p>
+          </div>
+          <Button onClick={() => downloadHealthPdf(studentId)}>Baixar</Button>
+        </div>
+      </div>
+
+      <div className="rounded border p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="font-medium">Atestado Médico {requiresMedical ? "(Obrigatório)" : "(Opcional)"}</p>
+            <p className="text-sm text-muted-foreground">PDF, JPG ou PNG até 10MB.</p>
+          </div>
+          {requiresMedical && !docs.some(d => d.kind === "MEDICAL_CERT") && (
+            <span className="text-xs px-2 py-1 rounded bg-slate-200">Pendente</span>
+          )}
+        </div>
+
+        <label className="block border-2 border-dashed rounded p-6 text-center cursor-pointer hover:bg-muted">
+          <input type="file" className="hidden" accept="application/pdf,image/png,image/jpeg"
+            onChange={(e)=> e.target.files?.[0] && uploadMedicalCert(e.target.files[0])} />
+          {uploading ? "Enviando..." : "Clique para enviar ou arraste o arquivo"}
+        </label>
+
+        {/* lista de anexos */}
+        <div className="mt-3 space-y-2">
+          {docs.filter(d => d.kind === "MEDICAL_CERT").map((d) => (
+            <div key={d.id} className="flex items-center justify-between rounded bg-green-50 border border-green-200 px-3 py-2">
+              <div>
+                <p className="text-sm">{d.name}</p>
+                <p className="text-xs text-muted-foreground">{(d.size/1024).toFixed(1)} KB</p>
+              </div>
+              <Button variant="secondary" onClick={() => (window.location.href = `/api/documents/${d.id}/download`)}>Baixar</Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+Na sua tela Documentos (da matrícula/portal), troque o botão “Baixar” para chamar downloadHealthPdf(studentId) e exiba o badge Pendente quando requiresMedical for true e não houver documento MEDICAL_CERT.
+
+2) Finalização: instrução para checar e‑mail (link de assinatura)
+
+Depois do submit do questionário e upload dos documentos obrigatórios, ao finalizar a matrícula, mostre um “success card” com:
+
+“Matrícula realizada — verifique seu e‑mail: enviamos o link para assinatura eletrônica e dados de acesso.”
+
+Se você já envia e‑mail no backend, só garanta que esse passo dispare o template (não inclui aqui para não alongar); caso precise, chame seu serviço de e‑mail logo após saveHealthQuestionnaire ou depois que medicalCertificateStatus virar UPLOADED.
+
+Prompts ArkDev (cola no Replit)
+ArkDev — “Questionário de Saúde: persistir, PDF, pendências e uploads”
+ArkDev
+Contexto: SenseiSystem. Precisamos persistir o questionário de saúde com data/hora, gerar um PDF anexado ao cadastro, expor para download e tornar o Atestado Médico obrigatório quando houver respostas de risco. Também precisamos listar e baixar anexos. No final, instruir o aluno a checar e-mail do link de assinatura.
+
+Tarefas:
+1) DB/Prisma:
+   - Criar tabela HealthQuestionnaire (answersJson, submittedAt, risky, pdfPath, pdfSize).
+   - Em Student, adicionar requiresMedicalCertificate (bool) e medicalCertificateStatus ("PENDING" | "UPLOADED" | "WAIVED").
+   - Tabela Document (kind, name, mime, size, path, uploadedAt) se ainda não houver.
+
+2) Backend:
+   - utils/healthRisk.ts: função isRisky(answers).
+   - services/healthQuestionnairePdf.ts: gerar PDF (PDFKit).
+   - services/healthQuestionnaireService.ts: saveHealthQuestionnaire(studentId, answers) => upsert, gerar PDF, criar/atualizar Document(kind=HEALTH_FORM_PDF), ajustar requiresMedicalCertificate/medicalCertificateStatus.
+   - uploads com multer (routes.uploads.ts) e rotas:
+     POST /api/students/:id/health-questionnaire
+     GET  /api/students/:id/health-questionnaire/pdf
+     POST /api/students/:id/documents/:kind  (upload)
+     GET  /api/students/:id/documents        (listar)
+     GET  /api/documents/:docId/download     (download)
+   - STORAGE_ROOT configurável (.env).
+
+3) Frontend:
+   - services/api/health.ts (submit, download, listDocuments).
+   - components/onboarding/HealthQuestionnaire.tsx: salvar respostas, mostrar botão Baixar PDF e alerta “Atestado pendente” quando risky.
+   - components/onboarding/DocumentsBlock.tsx: exibir botão Baixar (PDF do questionário), upload do atestado (obrigatório quando requiresMedical=true), listar e baixar anexos.
+
+Critérios de aceitação:
+- Ao salvar o questionário, created/updated em HealthQuestionnaire com submittedAt e risky corretos.
+- PDF é gerado, anexado como Document(kind=HEALTH_FORM_PDF) e disponível no botão “Baixar”.
+- Se risky=true, Student.requiresMedicalCertificate=true e medicalCertificateStatus="PENDING"; após upload do atestado => "UPLOADED".
+- Na tela Documentos, status “Pendente” aparece até o upload.
+- Ao concluir, a UI instrui: “Confira o e-mail com o link para assinatura e dados de acesso”.
+
+ArkDev — “QA”
+ArkDev
+Cenários:
+- Todas respostas "Não" => risky=false, atestado opcional (status "WAIVED"), PDF disponível.
+- Uma resposta "Sim" nas chaves de risco => risky=true, status "PENDING", badge Pendente visível. Após upload do atestado => status "UPLOADED".
+- Baixar PDF do questionário funciona.
+- Limites de arquivo respeitados (10MB, PDF/JPG/PNG).
+- Em mobile/desktop, botões visíveis e responsivos.
+
+
+quer que eu te mande também um .env exemplo com STORAGE_ROOT=./storage já setado? Se sim, eu solto aqui pra você copiar e colar.

@@ -14,6 +14,13 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import BeltFilter from '@/components/ui/BeltFilter';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Eye, Edit2, Ban, CheckCircle, Undo } from "lucide-react";
 
 const Students: React.FC = () => {
   const { toast } = useToast();
@@ -22,12 +29,164 @@ const Students: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
+
+  // Componente de Ações para Mobile e Desktop
+  const StudentActions = ({ student, isMobile = false }: { student: any, isMobile?: boolean }) => {
+    if (isMobile) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-4 w-4 text-gray-400" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedStudent(student);
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Ver perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                setStudentToEdit(student);
+                setIsEditStudentOpen(true);
+              }}
+            >
+              <Edit2 className="mr-2 h-4 w-4" />
+              Editar dados
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleStudentStatus({
+                  studentId: student.id,
+                  userId: student.user.id,
+                  newStatus: !student.user.active
+                });
+              }}
+              disabled={isTogglingStatus}
+            >
+              {student.user.active ? (
+                <>
+                  <Ban className="mr-2 h-4 w-4" />
+                  Bloquear aluno
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Liberar aluno
+                </>
+              )}
+            </DropdownMenuItem>
+            {student.user.active && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  revertApprovalMutation.mutate(student.user.id);
+                }}
+                disabled={revertApprovalMutation.isPending}
+              >
+                <Undo className="mr-2 h-4 w-4" />
+                Reverter para pendente
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    // Versão Desktop (atual)
+    return (
+      <div className="flex items-center space-x-1">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0"
+          title="Ver perfil completo"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedStudent(student);
+          }}
+        >
+          <span className="material-icons text-blue-500 text-sm">visibility</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0"
+          title="Editar dados do aluno"
+          onClick={(e) => {
+            e.stopPropagation();
+            setStudentToEdit(student);
+            setIsEditStudentOpen(true);
+          }}
+        >
+          <span className="material-icons text-gray-500 text-sm">edit</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
+          disabled={isTogglingStatus}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleStudentStatus({
+              studentId: student.id,
+              userId: student.user.id,
+              newStatus: !student.user.active
+            });
+          }}
+        >
+          {student.user.active ? (
+            <span className="material-icons text-red-500 text-sm">block</span>
+          ) : (
+            <span className="material-icons text-green-500 text-sm">check_circle</span>
+          )}
+        </Button>
+        {student.user.active && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            title="Reverter para pendente"
+            onClick={(e) => {
+              e.stopPropagation();
+              revertApprovalMutation.mutate(student.user.id);
+            }}
+            disabled={revertApprovalMutation.isPending}
+          >
+            <span className="material-icons text-orange-500 text-sm">undo</span>
+          </Button>
+        )}
+      </div>
+    );
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [beltFilter, setBeltFilter] = useState("all");
   const [financialFilter, setFinancialFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar se é mobile
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch students data
   const { data, isLoading } = useQuery({
@@ -356,21 +515,31 @@ const Students: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
+                      {isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 w-12"></th>}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                      {!isMobile && (
+                        <>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                        </>
+                      )}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>
+                      {!isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {getFilteredStudents("all").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
+                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => setSelectedStudent(student) : undefined}>
+                        {isMobile && (
+                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                            <StudentActions student={student} isMobile={true} />
+                          </td>
+                        )}
                         <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
@@ -442,82 +611,11 @@ const Students: React.FC = () => {
                             {student.user.active ? 'Ativo' : 'Inativo'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Ver perfil completo"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(student);
-                              }}
-                            >
-                              <span className="material-icons text-blue-500 text-sm">visibility</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Editar dados do aluno"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setStudentToEdit(student); setIsEditStudentOpen(true);
-                              }}
-                            >
-                              <span className="material-icons text-gray-500 text-sm">edit</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
-                              disabled={isTogglingStatus}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStudentStatus({
-                                  studentId: student.id,
-                                  userId: student.user.id,
-                                  newStatus: !student.user.active
-                                });
-                              }}
-                            >
-                              {student.user.active ? (
-                                <span className="material-icons text-red-500 text-sm">block</span>
-                              ) : (
-                                <span className="material-icons text-green-500 text-sm">check_circle</span>
-                              )}
-                            </Button>
-                            {student.user.active && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0"
-                                title="Reverter para pendente"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  revertApprovalMutation.mutate(student.user.id);
-                                }}
-                                disabled={revertApprovalMutation.isPending}
-                              >
-                                <span className="material-icons text-orange-500 text-sm">undo</span>
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Mais ações"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Menu de ações
-                              }}
-                            >
-                              <span className="material-icons text-gray-400 text-sm">more_vert</span>
-                            </Button>
-                          </div>
-                        </td>
+                        {!isMobile ? (
+                          <td className="py-3 px-4 text-right">
+                            <StudentActions student={student} isMobile={false} />
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>
@@ -538,16 +636,21 @@ const Students: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
+                      {isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 w-12"></th>}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                      {!isMobile && (
+                        <>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                        </>
+                      )}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>
+                      {!isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -624,82 +727,11 @@ const Students: React.FC = () => {
                             {student.user.active ? 'Ativo' : 'Inativo'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Ver perfil completo"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(student);
-                              }}
-                            >
-                              <span className="material-icons text-blue-500 text-sm">visibility</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Editar dados do aluno"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setStudentToEdit(student); setIsEditStudentOpen(true);
-                              }}
-                            >
-                              <span className="material-icons text-gray-500 text-sm">edit</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
-                              disabled={isTogglingStatus}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStudentStatus({
-                                  studentId: student.id,
-                                  userId: student.user.id,
-                                  newStatus: !student.user.active
-                                });
-                              }}
-                            >
-                              {student.user.active ? (
-                                <span className="material-icons text-red-500 text-sm">block</span>
-                              ) : (
-                                <span className="material-icons text-green-500 text-sm">check_circle</span>
-                              )}
-                            </Button>
-                            {student.user.active && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0"
-                                title="Reverter para pendente"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  revertApprovalMutation.mutate(student.user.id);
-                                }}
-                                disabled={revertApprovalMutation.isPending}
-                              >
-                                <span className="material-icons text-orange-500 text-sm">undo</span>
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Mais ações"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Menu de ações
-                              }}
-                            >
-                              <span className="material-icons text-gray-400 text-sm">more_vert</span>
-                            </Button>
-                          </div>
-                        </td>
+                        {!isMobile ? (
+                          <td className="py-3 px-4 text-right">
+                            <StudentActions student={student} isMobile={false} />
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>
@@ -720,16 +752,21 @@ const Students: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
+                      {isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 w-12"></th>}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                      {!isMobile && (
+                        <>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                        </>
+                      )}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>
+                      {!isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -826,82 +863,11 @@ const Students: React.FC = () => {
                             {student.user.active ? 'Ativo' : 'Inativo'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Ver perfil completo"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(student);
-                              }}
-                            >
-                              <span className="material-icons text-blue-500 text-sm">visibility</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Editar dados do aluno"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setStudentToEdit(student); setIsEditStudentOpen(true);
-                              }}
-                            >
-                              <span className="material-icons text-gray-500 text-sm">edit</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
-                              disabled={isTogglingStatus}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStudentStatus({
-                                  studentId: student.id,
-                                  userId: student.user.id,
-                                  newStatus: !student.user.active
-                                });
-                              }}
-                            >
-                              {student.user.active ? (
-                                <span className="material-icons text-red-500 text-sm">block</span>
-                              ) : (
-                                <span className="material-icons text-green-500 text-sm">check_circle</span>
-                              )}
-                            </Button>
-                            {student.user.active && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0"
-                                title="Reverter para pendente"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  revertApprovalMutation.mutate(student.user.id);
-                                }}
-                                disabled={revertApprovalMutation.isPending}
-                              >
-                                <span className="material-icons text-orange-500 text-sm">undo</span>
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Mais ações"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Menu de ações
-                              }}
-                            >
-                              <span className="material-icons text-gray-400 text-sm">more_vert</span>
-                            </Button>
-                          </div>
-                        </td>
+                        {!isMobile ? (
+                          <td className="py-3 px-4 text-right">
+                            <StudentActions student={student} isMobile={false} />
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>

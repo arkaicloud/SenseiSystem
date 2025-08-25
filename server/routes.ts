@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(beltLevels)
         .where(eq(beltLevels.active, true))
         .orderBy(beltLevels.order);
-      
+
       res.json({ belts });
     } catch (error) {
       console.error('❌ Error fetching belt levels:', error);
@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/belts", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const validatedData = insertBeltLevelSchema.parse(req.body);
-      
+
       const [newBelt] = await db
         .insert(beltLevels)
         .values({
@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date()
         })
         .returning();
-      
+
       res.json({ belt: newBelt });
     } catch (error) {
       console.error('❌ Error creating belt level:', error);
@@ -160,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const validatedData = insertBeltLevelSchema.partial().parse(req.body);
-      
+
       const [updatedBelt] = await db
         .update(beltLevels)
         .set({
@@ -169,11 +169,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(beltLevels.id, parseInt(id)))
         .returning();
-      
+
       if (!updatedBelt) {
         return res.status(404).json({ message: "Belt level not found" });
       }
-      
+
       res.json({ belt: updatedBelt });
     } catch (error) {
       console.error('❌ Error updating belt level:', error);
@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/belts/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Soft delete by setting active to false
       const [deletedBelt] = await db
         .update(beltLevels)
@@ -194,11 +194,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(beltLevels.id, parseInt(id)))
         .returning();
-      
+
       if (!deletedBelt) {
         return res.status(404).json({ message: "Belt level not found" });
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error('❌ Error deleting belt level:', error);
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date();
       const month = today.getMonth() + 1; // getMonth() returns 0-11
       const day = today.getDate();
-      
+
       const birthdayStudents = await db
         .select({
           id: users.id,
@@ -244,17 +244,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/student/profile", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
-      
+
       // Only students can access this endpoint
       if (requestUser.role !== 'student') {
         return res.status(403).json({ error: 'Access denied' });
       }
-      
+
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
       }
-      
+
       res.json({
         id: student.id,
         beltLevel: student.beltLevel,
@@ -273,16 +273,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const userIdNumber = parseInt(userId);
-      
+
       if (isNaN(userIdNumber)) {
         return res.status(400).json({ error: 'Invalid user ID' });
       }
-      
+
       const student = await storage.getStudentByUserId(userIdNumber);
       if (!student) {
         return res.status(404).json({ error: 'Student not found' });
       }
-      
+
       res.json({ student });
     } catch (error) {
       console.error('Error fetching student profile:', error);
@@ -294,34 +294,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/student/attendance-current-month", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
-      
+
       // Only students can access this endpoint
       if (requestUser.role !== 'student') {
         return res.status(403).json({ error: 'Access denied' });
       }
-      
+
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
       }
-      
+
       // Get current month attendance count
       const currentDate = new Date();
       const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      
+
       // Get attendance records for current month
       const attendances = await storage.getAttendanceByStudent(student.id);
       const currentMonthAttendances = attendances.filter(att => {
         const attDate = new Date(att.date);
         return attDate >= firstDay && attDate <= lastDay && att.status === 'present';
       });
-      
+
       // Calculate total available classes this month (rough estimate)
       const daysInMonth = lastDay.getDate();
       const weekdaysInMonth = Math.floor(daysInMonth * 5 / 7); // Rough estimate of weekdays
       const availableClasses = Math.min(weekdaysInMonth, 20); // Cap at 20 classes per month
-      
+
       res.json({
         attendanceCount: currentMonthAttendances.length,
         totalClasses: availableClasses,
@@ -338,27 +338,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const userIdNumber = parseInt(userId);
-      
+
       if (isNaN(userIdNumber)) {
         return res.status(400).json({ error: 'Invalid user ID' });
       }
-      
+
       const student = await storage.getStudentByUserId(userIdNumber);
       if (!student) {
         return res.status(404).json({ error: 'Student not found' });
       }
-      
+
       // Get current month attendance count
       const currentDate = new Date();
       const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      
+
       const attendances = await storage.getAttendanceByStudent(student.id);
       const currentMonthAttendances = attendances.filter(att => {
         const attDate = new Date(att.date);
         return attDate >= firstDay && attDate <= lastDay && att.status === 'present';
       });
-      
+
       res.json({ 
         attendanceCount: currentMonthAttendances.length,
         totalClasses: 20 // Default estimate
@@ -374,35 +374,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { classId } = req.params;
       const requestUser = (req as any).user;
-      
+
       const classIdNumber = parseInt(classId);
-      
+
       if (isNaN(classIdNumber)) {
         return res.status(400).json({ error: 'Invalid class ID' });
       }
-      
+
       // Only students can confirm their own attendance
       if (requestUser.role !== 'student') {
         return res.status(403).json({ error: 'Only students can confirm attendance' });
       }
-      
+
       // Get student data from the logged user
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
       }
-      
+
       // Check if class exists
       const classSession = await storage.getClass(classIdNumber);
       if (!classSession) {
         return res.status(404).json({ error: 'Class not found' });
       }
-      
+
       // Check if attendance already exists for today
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-      
+
       const existingAttendances = await storage.getAttendanceByStudent(student.id);
       const todayAttendance = existingAttendances.find(att => {
         const attDate = new Date(att.date);
@@ -410,11 +410,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                attDate >= startOfDay && 
                attDate < endOfDay;
       });
-      
+
       if (todayAttendance) {
         return res.json({ success: true, message: 'Attendance already confirmed for this class today' });
       }
-      
+
       // Create attendance record
       const attendanceData = {
         studentId: student.id,
@@ -423,10 +423,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'present' as const,
         checkedInBy: requestUser.id
       };
-      
+
       console.log('Creating attendance record:', attendanceData);
       await storage.createAttendance(attendanceData);
-      
+
       res.json({ success: true, message: 'Attendance confirmed successfully' });
     } catch (error) {
       console.error('Error confirming attendance:', error);
@@ -439,18 +439,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeRange = "30d" } = req.query;
       const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
-      
+
       // Get payment data for the specified period
       const payments = await storage.getStudentPaymentsWithDetails();
       const today = new Date();
-      
+
       // Generate chart data for each day in the period
       const chartData = [];
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
-        
+
         // Calculate received and pending amounts for this date
         const dayPayments = payments.filter(payment => {
           if (payment.paidDate) {
@@ -459,22 +459,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return false;
         });
-        
+
         const received = dayPayments
           .filter(p => p.status === 'paid')
           .reduce((sum, p) => sum + p.amount, 0);
-        
+
         const pending = payments
           .filter(p => p.status === 'pending' && p.dueDate && new Date(p.dueDate).toISOString().split('T')[0] <= dateStr)
           .reduce((sum, p) => sum + p.amount, 0);
-        
+
         chartData.push({
           date: dateStr,
           received,
           pending: Math.max(0, pending)
         });
       }
-      
+
       res.json(chartData);
     } catch (error) {
       console.error("Erro ao buscar dados do gráfico financeiro:", error);
@@ -487,20 +487,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeRange = "30d" } = req.query;
       const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
-      
+
       // Get all students for enrollment data
       const students = await storage.getStudents();
       const today = new Date();
-      
+
       // Generate chart data for enrollment trends
       const chartData = [];
       let cumulativeTotal = 0;
-      
+
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
-        
+
         // Count new students registered on this date
         const newStudents = students.filter(student => {
           if (student.createdAt) {
@@ -509,9 +509,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return false;
         }).length;
-        
+
         cumulativeTotal += newStudents;
-        
+
         // Calculate total active students up to this date
         const totalStudents = students.filter(student => {
           if (student.createdAt) {
@@ -520,14 +520,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return false;
         }).length;
-        
+
         chartData.push({
           date: dateStr,
           newStudents,
           totalStudents: Math.max(totalStudents, cumulativeTotal)
         });
       }
-      
+
       res.json(chartData);
     } catch (error) {
       console.error("Erro ao buscar dados do gráfico de matrículas:", error);
@@ -542,12 +542,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const students = await storage.getStudents();
       const payments = await storage.getStudentPaymentsWithDetails();
       const paymentPlans = await storage.getPaymentPlans();
-      
+
       // Calcular métricas financeiras
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
-      
+
       // Receita recebida este mês
       const thisMonthPayments = payments.filter(payment => {
         if (payment.status === 'paid' && payment.paidDate) {
@@ -557,11 +557,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return false;
       });
       const totalReceived = thisMonthPayments.reduce((sum, payment) => sum + payment.amount, 0);
-      
+
       // Pagamentos pendentes
       const pendingPayments = payments.filter(payment => payment.status === 'pending');
       const pendingAmount = pendingPayments.reduce((sum, payment) => sum + payment.amount, 0);
-      
+
       // Pagamentos em atraso
       const overduePayments = payments.filter(payment => {
         if (payment.status === 'overdue') return true;
@@ -572,15 +572,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return false;
       });
       const overdueAmount = overduePayments.reduce((sum, payment) => sum + payment.amount, 0);
-      
+
       // Receita recorrente mensal estimada
       const activeStudents = students.filter(student => student.active !== false);
       const monthlyRecurring = activeStudents.length > 0 ? 
         activeStudents.length * (paymentPlans.length > 0 ? paymentPlans[0].amount : 150) : 0;
-      
+
       // Crescimento da receita (simulado por enquanto)
       const revenueGrowth = Math.random() * 20 - 5; // Entre -5% e +15%
-      
+
       const stats = {
         totalReceived,
         pendingAmount,
@@ -589,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         revenueGrowth,
         totalStudents: activeStudents.length
       };
-      
+
       res.json(stats);
     } catch (error) {
       console.error("Erro ao buscar estatísticas financeiras:", error);
@@ -605,7 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // =====Stats/Dashboard Routes=====
+  // ===== Stats/Dashboard Routes=====
   app.get("/api/stats", isAuthenticated, async (req, res) => {
     try {
       // Dados básicos que serão usados para todos os tipos de usuário
@@ -776,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getUsers();
       // Only return inactive users
       const pendingUsers = users.filter(u => !u.active);
-      
+
       // Include student data for each pending user
       const usersWithStudentData = await Promise.all(
         pendingUsers.map(async (user) => {
@@ -797,7 +797,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         })
       );
-      
+
       res.json({ users: usersWithStudentData });
     } catch (error) {
       console.error("Error fetching pending users:", error);
@@ -889,7 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const asaasService = new AsaasService();
 
                 console.log('🎯 ARKAIDEV: Processando aprovação individual com anti-duplicata:', user.firstName, user.lastName);
-                
+
                 // Prepare student data for ASAAS with responsavel data
                 const alunoData = {
                   ...student,
@@ -901,6 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   complement: user.complement,
                   neighborhood: user.neighborhood,
                   zipCode: user.zipCode,
+                  preferredDueDate: student.preferredDueDate || 5, // Incluir data de vencimento preferida
                   responsavel: {
                     nome: student.financialResponsibleName,
                     name: student.financialResponsibleName,
@@ -919,14 +920,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     city: user.city || ''
                   }
                 };
-                
+
                 // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
                 console.log('🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...');
-                
+
                 // First get or create the customer
                 const { customer, created } = await asaasService.getOrCreateAsaasCustomer(alunoData);
                 console.log(`🏢 Cliente ASAAS: ${customer.id} (${created ? 'criado' : 'existente'})`);
-                
+
                 // Then create or sync the payment
                 const payment = await asaasService.createOrSyncCobranca(customer.id, alunoData, plan);
                 console.log(`✅ Processo concluído - Payment ID: ${payment.id}, Customer: ${payment.customer}`);
@@ -1015,7 +1016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (student) {
         await storage.deleteStudent(student.id);
       }
-      
+
       await storage.deleteUser(user.id);
 
       // Create activity log for rejection
@@ -1174,6 +1175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentPlanId,
         medicalObservations,
         planObservations,
+        preferredDueDate // Added preferredDueDate
       } = updateData;
 
       // Don't allow role changes unless admin
@@ -1191,7 +1193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const student = await storage.getStudentByUserId(userId);
         if (student) {
           const studentUpdateData: Record<string, any> = {};
-          
+
           // Only update fields that are actually provided and exist in schema
           if (beltLevel !== undefined && beltLevel !== null) {
             studentUpdateData.beltLevel = beltLevel;
@@ -1222,6 +1224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           if (planObservations !== undefined) {
             studentUpdateData.planObservations = planObservations;
+          }
+          if (preferredDueDate !== undefined) { // Update preferredDueDate
+            studentUpdateData.preferredDueDate = preferredDueDate;
           }
 
           // Only update if there's data to update
@@ -1271,18 +1276,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/students", isAuthenticated, async (req, res) => {
     try {
       const studentData = req.body;
+      console.log('📥 Received student data:', JSON.stringify(studentData, null, 2));
 
-      // Preparar dados do usuário sem usar o schema parse para evitar problemas com timestamp
+      // Validate required fields
+      if (!studentData.firstName || !studentData.lastName || !studentData.email) {
+        return res.status(400).json({ message: "Nome, sobrenome e email são obrigatórios" });
+      }
+
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(studentData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+
+      // Generate username from email if not provided
+      const username = studentData.username || studentData.email.split('@')[0].toLowerCase();
+
+      // Create user without birthDate first to avoid timestamp issues
       const userData = {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
-        username: studentData.username,
+        username: username,
         email: studentData.email,
         password: studentData.password || 'temporaryPassword123',
         role: "student" as const,
-        active: true,
+        active: true, // Active by default during registration
         phone: studentData.phone || null,
+        cpf: studentData.cpf || null, // Add user's CPF
+        rg: studentData.rg || null, // Add user's RG
         emergencyContact: studentData.emergencyContact || null,
+        emergencyPhone: studentData.emergencyPhone || null, // Add emergency phone
         street: studentData.street || null,
         number: studentData.number || null,
         city: studentData.city || null,
@@ -1290,44 +1313,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         zipCode: studentData.zipCode || null,
         complement: studentData.complement || null,
         neighborhood: studentData.neighborhood || null,
-        birthDate: studentData.birthDate || null,
         status: "active" as const,
         currentStreak: 0,
         longestStreak: 0,
         totalLogins: 0
       };
 
-      // Criar o usuário primeiro
       const user = await storage.createUser(userData);
 
-      // Dados específicos do aluno
+      // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
+      if (studentData.birthDate) {
+        await db.execute(sql`
+          UPDATE users SET birth_date = ${new Date(studentData.birthDate)} WHERE id = ${user.id}
+        `);
+      }
+
+      // Student specific data - remove null timestamp fields to avoid Drizzle errors
       const studentInfo = insertStudentSchema.parse({
         userId: user.id,
         beltLevel: studentData.beltLevel || "white",
         stripes: studentData.stripes || 0,
-        lastPromotionDate: null,
-        attendanceRate: null,
+        // Remove lastPromotionDate to use database default (NULL)
+        attendanceRate: studentData.attendanceRate || 0,
         notes: studentData.notes || null,
-        avatarColor: null,
-        avatarStyle: null,
-        avatarImage: null,
-        // Financial responsibility data
-        financialResponsibleName: studentData.financialResponsibleName || null,
-        financialResponsibleEmail: studentData.financialResponsibleEmail || null,
-        financialResponsiblePhone: studentData.financialResponsiblePhone || null,
-        financialResponsibleCpf: studentData.financialResponsibleCpf || null,
-        financialResponsibleRelation: studentData.financialResponsibleRelation || null,
-        asaasCustomerId: null, // Will be filled after ASAAS customer creation
+        avatarColor: studentData.avatarColor || null,
+        avatarStyle: studentData.avatarStyle || null,
+        avatarImage: studentData.avatarImage || null,
+        // Financial responsibility data - handle "self" vs "other" logic
+        financialResponsibleName: studentData.financialResponsibleRelationship === "self" 
+          ? `${studentData.firstName} ${studentData.lastName}` 
+          : (studentData.financialResponsibleName || `${studentData.firstName} ${studentData.lastName}`),
+        financialResponsibleEmail: studentData.financialResponsibleRelationship === "self" 
+          ? studentData.email 
+          : (studentData.financialResponsibleEmail || studentData.email),
+        financialResponsiblePhone: studentData.financialResponsibleRelationship === "self" 
+          ? studentData.phone 
+          : (studentData.financialResponsiblePhone || studentData.phone),
+        financialResponsibleCpf: studentData.financialResponsibleRelationship === "self" 
+          ? studentData.cpf 
+          : (studentData.financialResponsibleCpf || null),
+        financialResponsibleRelation: studentData.financialResponsibleRelationship || "self",
+        asaasCustomerId: null,
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
         preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5
       });
 
-      // Criar o registro do aluno
+      // Create student record
       const student = await storage.createStudent(studentInfo);
 
       // ASAAS integration will be done after user approval, not during registration
 
-      // Se um plano de pagamento foi selecionado, criar o pagamento
+      // If a payment plan was selected, create the payment
       if (studentData.paymentPlanId) {
         const paymentPlan = await storage.getPaymentPlan(studentData.paymentPlanId);
         if (paymentPlan) {
@@ -1343,7 +1379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Log da atividade
+      // Log the activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -1367,7 +1403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para buscar o estudante pelo ID do usuário (precisa vir ANTES da rota genérica /:id)
+  // Route to fetch student by user ID (must come BEFORE the generic /:id route)
   app.get("/api/students/by-user/:userId", isAuthenticated, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -1377,7 +1413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Estudante não encontrado" });
       }
 
-      // Apenas o próprio aluno ou um admin/instrutor pode ver os dados do aluno
+      // Only the student themselves or an admin/instructor can view student data
       const requestUser = (req as any).user;
       if (requestUser.id !== Number(userId) && 
           requestUser.role !== 'admin' && 
@@ -1391,7 +1427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota genérica para buscar estudante por ID
+  // Generic route to fetch student by ID
   app.get("/api/students/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
@@ -1452,7 +1488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota específica para atualizar o avatar do aluno
+  // Route to update student's avatar
   app.put("/api/students/:id/avatar", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
@@ -1462,7 +1498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Aluno não encontrado" });
       }
 
-      // Apenas o próprio aluno ou um admin/instrutor pode atualizar o avatar
+      // Only the student themselves or an admin/instructor can update the avatar
       const requestUser = (req as any).user;
       if (requestUser.id !== student.userId && 
           requestUser.role !== 'admin' && 
@@ -1478,7 +1514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avatarImage 
       });
 
-      // Log de atividade
+      // Log activity
       const user = await storage.getUser(student.userId);
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -1493,7 +1529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para converter estudante em bolsista
+  // Route to convert student to scholarship
   app.post("/api/students/:id/scholarship", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
@@ -1504,19 +1540,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Estudante não encontrado" });
       }
 
-      // Verificar se o plano de bolsista existe
+      // Verify if the scholarship plan exists
       const scholarshipPlan = await storage.getPaymentPlan(scholarshipPlanId);
       if (!scholarshipPlan || !scholarshipPlan.isScholarship) {
         return res.status(400).json({ message: "Plano de bolsista inválido" });
       }
 
-      // Atualizar estudante para bolsista
+      // Update student to scholarship
       const updatedStudent = await storage.updateStudent(Number(id), {
         isScholarship: true,
         scholarshipReason: reason || null
       });
 
-      // Criar um pagamento gratuito para o bolsista
+      // Create a free payment for the scholarship student
       await storage.createStudentPayment({
         studentId: Number(id),
         planId: scholarshipPlanId,
@@ -1527,7 +1563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: `Plano de bolsista: ${reason || 'Convertido pelo administrador'}`
       });
 
-      // Log da atividade
+      // Log activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -1561,15 +1597,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Buscar todas as aulas em vez de apenas as de hoje para debug
       const allClasses = await storage.getClassesWithInstructors();
-      
+
       // Para debug, vamos retornar todas as aulas
       const today = new Date();
       const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-      
+
       console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeek}`);
       console.log(`Total de aulas encontradas: ${allClasses.length}`);
-      
-      // Filtrar aulas para hoje (por enquanto retornando todas para debug)
+
+      // Filtrar aulas para hoje (por enquanto incluindo todas as aulas ativas)
       const todaysClasses = allClasses.filter(classItem => {
         // Por enquanto, incluir todas as aulas ativas
         return classItem.isActive !== false;
@@ -1765,7 +1801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota específica para alunos confirmarem presença com controle de limites
+  // Route for students to confirm attendance with limit controls
   app.post("/api/attendance/confirm", isAuthenticated, async (req, res) => {
     try {
       const { classId, date } = req.body;
@@ -1777,34 +1813,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Class ID is required" });
       }
 
-      // Verificar se a aula existe
+      // Check if class exists
       const classItem = await storage.getClass(classId);
       if (!classItem) {
         return res.status(404).json({ message: "Class not found" });
       }
 
-      // Buscar o estudante pelo userId do usuário logado
+      // Get student by logged user's ID
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ message: "Student profile not found" });
       }
 
-      // Garantir que a data seja válida
+      // Ensure date is valid
       let classDate;
       try {
         classDate = date ? new Date(date) : new Date();
-        // Verificar se a data é válida
+        // Check if date is valid
         if (isNaN(classDate.getTime())) {
           throw new Error('Invalid date');
         }
       } catch (error) {
-        console.error('Erro na data fornecida:', date);
-        classDate = new Date(); // Usar data atual se a fornecida for inválida
+        console.error('Invalid date provided:', date);
+        classDate = new Date(); // Use current date if provided date is invalid
       }
-      
+
       const classDateStr = classDate.toISOString().split('T')[0];
 
-      // Verificar limite de alunos por aula
+      // Check class student limit
       if (classItem.maxStudents && classItem.maxStudents > 0) {
         const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
         const confirmedCount = existingAttendances.filter(att => 
@@ -1819,7 +1855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Verificar se já existe presença para esta data
+      // Check if attendance already exists for this date
       const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
@@ -1830,17 +1866,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Presença já registrada para esta data" });
       }
 
-      // Verificar limite de confirmações para esta aula
+      // Check limit for confirmations for this class
       const changes = await storage.getAttendanceChanges(student.id, classId, classDate);
       const confirmations = changes.filter(change => change.changeType === 'confirm');
-      
+
       if (confirmations.length >= 2) {
         return res.status(400).json({ 
           message: "Você atingiu o limite de alterações. Fale com o Sensei." 
         });
       }
 
-      // Criar registro de presença
+      // Create attendance record
       const attendanceData = {
         studentId: student.id,
         classId: classId,
@@ -1851,7 +1887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const attendance = await storage.createAttendance(attendanceData);
 
-      // Registrar a mudança na tabela de controle
+      // Record the change in the control table
       await storage.createAttendanceChange({
         studentId: student.id,
         classId: classId,
@@ -1859,7 +1895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         changeType: 'confirm'
       });
 
-      // Log da atividade
+      // Log the activity
       await storage.createActivityLog({
         activity: `Aluno confirmou presença na aula: ${classItem.name}`,
         userId: requestUser.id,
@@ -1875,7 +1911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para cancelar presença com controle de limites
+  // Route to cancel attendance with limit controls
   app.delete("/api/attendance/cancel", isAuthenticated, async (req, res) => {
     try {
       const { classId, date } = req.body;
@@ -1885,7 +1921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Class ID is required" });
       }
 
-      // Buscar o estudante pelo userId do usuário logado
+      // Get student by logged user's ID
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ message: "Student profile not found" });
@@ -1894,7 +1930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classDate = date ? new Date(date) : new Date();
       const classDateStr = classDate.toISOString().split('T')[0];
 
-      // Buscar presença existente para a data especificada
+      // Get existing attendance for the specified date
       const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
@@ -1905,24 +1941,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Nenhuma presença encontrada para esta data" });
       }
 
-      // Verificar limite de cancelamentos para esta aula
+      // Check limit for cancellations for this class
       const changes = await storage.getAttendanceChanges(student.id, classId, classDate);
       const cancellations = changes.filter(change => change.changeType === 'cancel');
-      
+
       if (cancellations.length >= 2) {
         return res.status(400).json({ 
           message: "Você atingiu o limite de alterações. Fale com o Sensei." 
         });
       }
 
-      // Cancelar presença
+      // Cancel attendance
       const success = await storage.deleteAttendance(existingAttendance.id);
 
       if (!success) {
         return res.status(400).json({ message: "Falha ao cancelar presença" });
       }
 
-      // Registrar a mudança na tabela de controle
+      // Record the change in the control table
       await storage.createAttendanceChange({
         studentId: student.id,
         classId: classId,
@@ -1930,7 +1966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         changeType: 'cancel'
       });
 
-      // Log da atividade
+      // Log the activity
       await storage.createActivityLog({
         activity: `Aluno cancelou presença na aula ID: ${classId}`,
         userId: requestUser.id,
@@ -1948,7 +1984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Rota para verificar alterações de presença
+  // Route to check attendance changes
   app.get("/api/attendance/changes/:studentId/:classId", isAuthenticated, async (req, res) => {
     try {
       const { studentId, classId } = req.params;
@@ -1959,13 +1995,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Student ID e Class ID são obrigatórios" });
       }
 
-      // Verificar permissões
+      // Verify permissions
       const student = await storage.getStudent(Number(studentId));
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
       }
 
-      // Alunos só podem ver suas próprias alterações
+      // Students can only see their own changes
       if (requestUser.role === 'student') {
         const studentUser = await storage.getUser(student.userId);
         if (!studentUser || studentUser.id !== requestUser.id) {
@@ -2006,7 +2042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota específica para buscar planos de bolsistas
+  // Route to fetch scholarship plans
   app.get("/api/payment-plans/scholarships", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const plans = await storage.getPaymentPlans();
@@ -2017,24 +2053,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para criar plano de bolsista
+  // Route to create a scholarship plan
   app.post("/api/payment-plans/scholarship", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { name, description } = req.body;
-      
+
       if (!name) {
         return res.status(400).json({ message: "Nome do plano é obrigatório" });
       }
 
       const scholarshipPlan = await storage.createPaymentPlan({
         name: name,
-        amount: 0, // Planos de bolsista são gratuitos
+        amount: 0, // Scholarship plans are free
         frequency: "monthly",
         description: description || "Plano de bolsista - gratuito",
         isScholarship: true
       });
 
-      // Log da atividade
+      // Log activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -2084,11 +2120,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Plano de pagamento não encontrado" });
       }
 
-      // Validar dados
+      // Validate data
       const planData = req.body;
       const updatedPlan = await storage.updatePaymentPlan(plan.id, planData);
 
-      // Registrar atividade
+      // Log activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -2115,7 +2151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Plano de pagamento não encontrado" });
       }
 
-      // Verificar se há alunos utilizando esse plano antes de excluí-lo
+      // Check if any students are using this plan before deleting
       const payments = await storage.getStudentPaymentsByPlan(Number(id));
       if (payments && payments.length > 0) {
         return res.status(400).json({ 
@@ -2130,7 +2166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Falha ao excluir o plano de pagamento" });
       }
 
-      // Registrar atividade
+      // Log activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -2158,11 +2194,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/student-payments/overdue", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const overduePayments = await storage.getOverduePayments();
-      
-      // Separar bolsistas dos inadimplentes
+
+      // Separate scholars from delinquents
       const scholars = [];
       const delinquents = [];
-      
+
       for (const payment of overduePayments) {
         if (payment.student?.isScholarship) {
           scholars.push(payment);
@@ -2251,7 +2287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const paymentData = { ...req.body };
-      
+
       // Convert date strings to Date objects
       if (paymentData.dueDate && typeof paymentData.dueDate === 'string') {
         paymentData.dueDate = new Date(paymentData.dueDate);
@@ -2270,7 +2306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const student = await storage.getStudent(payment.studentId);
         const user = student ? await storage.getUser(student.userId) : null;
-        
+
         await storage.createActivityLog({
           userId: requestUser.id,
           activity: `${requestUser.firstName} ${requestUser.lastName} updated payment for ${user?.firstName || 'Unknown'} ${user?.lastName || 'User'}`,
@@ -2292,7 +2328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para marcar pagamento como inadimplente e bloquear acesso
+  // Route to mark payment as overdue and block access
   app.post("/api/student-payments/:id/mark-overdue", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
@@ -2302,7 +2338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Pagamento não encontrado" });
       }
 
-      // Não aplicar a estudantes bolsistas
+      // Do not apply to scholarship students
       const student = await storage.getStudent(payment.studentId);
       if (student?.isScholarship) {
         return res.status(400).json({ 
@@ -2310,18 +2346,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Marcar como inadimplente e desativar o usuário
+      // Mark as overdue and deactivate the user
       await storage.updateStudentPayment(Number(id), {
         status: 'overdue',
         overdueAt: new Date()
       });
 
-      // Desativar o usuário do estudante
+      // Deactivate the student user
       if (student) {
         await storage.updateUser(student.userId, { active: false });
       }
 
-      // Log da atividade
+      // Log the activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -2338,7 +2374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para reativar estudante após pagamento
+  // Route to reactivate student after payment
   app.post("/api/student-payments/:id/reactivate", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
@@ -2348,20 +2384,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Pagamento não encontrado" });
       }
 
-      // Marcar como pago e reativar o usuário
+      // Mark as paid and reactivate the user
       await storage.updateStudentPayment(Number(id), {
         status: 'paid',
         paidDate: new Date(),
         overdueAt: null
       });
 
-      // Reativar o usuário do estudante
+      // Reactivate the student user
       const student = await storage.getStudent(payment.studentId);
       if (student) {
         await storage.updateUser(student.userId, { active: true });
       }
 
-      // Log da atividade
+      // Log the activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
@@ -2389,18 +2425,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rota para dashboard de aniversários
+  // Route for birthday dashboard
   app.get("/api/birthdays", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const { month } = req.query;
-      
+
       const students = await storage.getStudentsWithUsers();
       const currentMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
-      
-      // Filtrar estudantes que fazem aniversário no mês especificado
+
+      // Filter students who have birthdays in the specified month
       const birthdayStudents = students.filter(student => {
         if (!student.user?.birthDate) return false;
-        
+
         const birthDate = new Date(student.user.birthDate);
         return birthDate.getMonth() + 1 === currentMonth;
       }).map(student => ({
@@ -2603,7 +2639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       res.setHeader('Content-Type', 'application/json');
       const config = await storage.getSchoolConfig();
-      
+
       // Return only public information
       const publicInfo = {
         schoolName: config?.schoolName || "Academia de Jiu-Jitsu",
@@ -2613,7 +2649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         website: config?.website || null,
         logoUrl: config?.logoUrl || null
       };
-      
+
       res.json(publicInfo);
     } catch (error) {
       res.setHeader('Content-Type', 'application/json');
@@ -2625,7 +2661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/belts", async (req, res) => {
     try {
       res.setHeader('Content-Type', 'application/json');
-      
+
       // Get all active belt levels
       const belts = await db
         .select({
@@ -2650,12 +2686,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Password Reset Routes =====
-  
+
   // Forgot Password - Send reset email
   app.post("/api/auth/forgot-password", async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ 
           message: "E-mail é obrigatório" 
@@ -2667,7 +2703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user exists
       const user = await storage.getUserByEmail(email);
-      
+
       if (!user) {
         // Don't reveal that email doesn't exist
         console.log(`⚠️ Password reset requested for non-existent email: ${email}`);
@@ -2694,9 +2730,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `${user.firstName} ${user.lastName}`,
           resetToken
         );
-        
+
         console.log(`✅ Password reset email sent to: ${email}`);
-        
+
         // Log activity
         await storage.createActivityLog({
           userId: user.id,
@@ -2705,7 +2741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           entityId: user.id,
           timestamp: new Date()
         });
-        
+
       } catch (emailError) {
         console.error('❌ Failed to send reset email:', emailError);
         // Don't reveal email sending failure to user
@@ -2725,7 +2761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/reset-password", async (req, res) => {
     try {
       const { token, newPassword, confirmPassword } = req.body;
-      
+
       if (!token || !newPassword || !confirmPassword) {
         return res.status(400).json({ 
           message: "Token, nova senha e confirmação são obrigatórios" 
@@ -2746,7 +2782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find and validate token
       const resetToken = await storage.getPasswordResetToken(token);
-      
+
       if (!resetToken) {
         return res.status(400).json({ 
           message: "Token inválido, expirado ou já utilizado" 
@@ -2797,7 +2833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/validate-reset-token/:token", async (req, res) => {
     try {
       const { token } = req.params;
-      
+
       if (!token) {
         return res.status(400).json({ 
           valid: false, 
@@ -2807,7 +2843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if token is valid
       const resetToken = await storage.getPasswordResetToken(token);
-      
+
       if (!resetToken) {
         return res.json({ 
           valid: false, 
@@ -2843,10 +2879,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Ensure proper JSON response headers
       res.setHeader('Content-Type', 'application/json');
-      
+
       // Clean and validate the data manually to avoid schema issues
       const cleanData: any = {};
-      
+
       // School basic info
       if (req.body.schoolName !== undefined) cleanData.schoolName = String(req.body.schoolName || "");
       if (req.body.logoUrl !== undefined) {
@@ -2871,7 +2907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.logoDarkUrl !== undefined) cleanData.logoDarkUrl = req.body.logoDarkUrl ? String(req.body.logoDarkUrl) : null;
       if (req.body.welcomeMessage !== undefined) cleanData.welcomeMessage = req.body.welcomeMessage ? String(req.body.welcomeMessage) : null;
       if (req.body.congratsMessage !== undefined) cleanData.congratsMessage = req.body.congratsMessage ? String(req.body.congratsMessage) : null;
-      
+
       // ASAAS configuration
       if (req.body.asaasApiKey !== undefined) cleanData.asaasApiKey = req.body.asaasApiKey ? String(req.body.asaasApiKey) : null;
       if (req.body.asaasCustomerId !== undefined) cleanData.asaasCustomerId = req.body.asaasCustomerId ? String(req.body.asaasCustomerId) : null;
@@ -3004,14 +3040,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const threshold = parseInt(req.query.threshold as string) || 60;
       const studentsAtRisk: any[] = [];
-      
+
       // Get all students with their attendance data
       const students = await storage.getStudents();
-      
+
       if (!students || students.length === 0) {
         return res.json({ students: [] });
       }
-      
+
       for (const student of students) {
         try {
           // Get user data for this student
@@ -3024,17 +3060,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Calculate attendance rate for this student
           const studentAttendances = await storage.getAttendanceByStudent(student.id);
           const totalClasses = await storage.getClasses();
-          
+
           const attendanceRate = totalClasses.length > 0 ? 
             Math.round((studentAttendances.length / totalClasses.length) * 100) : 0;
-          
+
           // Calculate days since last attendance
           const lastAttendance = studentAttendances.length > 0 ?
             studentAttendances.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
-          
+
           const daysSinceLastAttendance = lastAttendance ? 
             Math.floor((Date.now() - new Date(lastAttendance.date).getTime()) / (1000 * 60 * 60 * 24)) : 999;
-          
+
           // Determine risk level
           let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
           if (attendanceRate < 30 || daysSinceLastAttendance > 21) {
@@ -3044,7 +3080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else if (attendanceRate < threshold || daysSinceLastAttendance > 7) {
             riskLevel = 'medium';
           }
-          
+
           // Only include students at risk
           if (attendanceRate < threshold || daysSinceLastAttendance > 7) {
             studentsAtRisk.push({
@@ -3073,7 +3109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Continue processing other students
         }
       }
-      
+
       // Sort by risk level and attendance rate
       studentsAtRisk.sort((a, b) => {
         const riskOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
@@ -3082,7 +3118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         return a.attendanceRate - b.attendanceRate;
       });
-      
+
       res.json({ students: studentsAtRisk });
     } catch (error) {
       console.error("Erro ao buscar alunos em risco:", error);
@@ -3095,17 +3131,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { notes } = req.body;
-      
+
       if (!notes || typeof notes !== 'string') {
         return res.status(400).json({ message: "Observação é obrigatória" });
       }
 
       const updated = await storage.updateStudent(Number(id), { notes });
-      
+
       if (!updated) {
         return res.status(404).json({ message: "Aluno não encontrado" });
       }
-      
+
       // Log the action
       const user = (req as any).user;
       if (user) {
@@ -3117,7 +3153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date()
         });
       }
-      
+
       res.json({ student: updated });
     } catch (error) {
       console.error("Erro ao atualizar observações do aluno:", error);
@@ -3139,7 +3175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scheduledDate: req.body.scheduledDate ? new Date(req.body.scheduledDate) : null,
         createdBy: user.id
       };
-      
+
       // Log the action
       await storage.createActivityLog({
         userId: user.id,
@@ -3148,7 +3184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: actionData.studentId,
         timestamp: new Date()
       });
-      
+
       res.status(201).json({ action: actionData });
     } catch (error) {
       console.error("Erro ao criar ação de risco:", error);
@@ -3171,29 +3207,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== ASAAS Integration Routes =====
-  
-  // Webhook para receber notificações do ASAAS
+
+  // Webhook to receive notifications from ASAAS
   app.post("/webhooks/asaas", async (req, res) => {
     try {
       console.log('🔔 ASAAS Webhook received:', req.body);
-      
+
       const event = req.body;
-      
-      // Validar se é um evento válido
+
+      // Validate if it's a valid event
       if (!event || !event.event || !event.payment) {
         return res.status(400).json({ message: "Invalid webhook payload" });
       }
 
       const { payment } = event;
-      
-      // Buscar o pagamento pelo ID do ASAAS
+
+      // Find the payment by ASAAS ID
       const schoolPayment = await storage.getSchoolPaymentByAsaasId(payment.id);
       if (!schoolPayment) {
         console.log(`⚠️ Payment not found for ASAAS ID: ${payment.id}`);
         return res.status(404).json({ message: "Payment not found" });
       }
 
-      // Processar diferentes tipos de eventos
+      // Process different event types
       let newStatus = 'pending';
       let paidAt: Date | null = null;
 
@@ -3215,13 +3251,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           break;
       }
 
-      // Atualizar status do pagamento
+      // Update payment status
       const updatedPayment = await storage.updateSchoolPayment(schoolPayment.id, {
         status: newStatus as any,
         paidAt
       });
 
-      // Se foi pago, reativar a escola
+      // If paid, reactivate the school
       if (newStatus === 'paid') {
         await storage.updateSchoolConfig({
           active: true
@@ -3229,12 +3265,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('✅ School reactivated after payment');
       }
 
-      // Se está em atraso há mais de 10 dias, bloquear a escola
+      // If overdue for more than 10 days, block the school
       if (newStatus === 'overdue') {
         const dueDate = new Date(schoolPayment.dueDate);
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays > 10) {
           await storage.updateSchoolConfig({
             active: false
@@ -3245,14 +3281,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`✅ Payment ${payment.id} updated to status: ${newStatus}`);
       res.json({ success: true, payment: updatedPayment });
-      
+
     } catch (error) {
       console.error('❌ Error processing ASAAS webhook:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Obter pagamentos da escola
+  // Get school payments
   app.get("/api/school-payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const config = await storage.getSchoolConfig();
@@ -3268,7 +3304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Criar pagamento manual
+  // Create manual payment
   app.post("/api/school-payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const config = await storage.getSchoolConfig();
@@ -3302,9 +3338,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   // ===== Login Streak Tracking Routes =====
-  
+
   // Get user's streak statistics
   app.get("/api/streak/stats", isAuthenticated, async (req: any, res) => {
     try {
@@ -3346,7 +3381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const achievementId = parseInt(req.params.id);
       const success = await storage.markAchievementAsRead(achievementId);
-      
+
       if (success) {
         res.json({ message: 'Achievement marked as read' });
       } else {
@@ -3372,59 +3407,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====Student Financial Panel Routes=====
-  // Endpoint para buscar dados financeiros do aluno logado
+  // Endpoint to fetch logged-in student's financial data
   app.get("/api/student/financial", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
-      
+
       // Only students can access this endpoint
       if (requestUser.role !== 'student') {
         return res.status(403).json({ error: 'Access denied' });
       }
-      
-      // Buscar dados do estudante
+
+      // Fetch student data
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: "Student profile not found" });
       }
-      
-      // Verificar se o usuário é o responsável financeiro
+
+      // Check if the user is the financial responsible
       const isFinancialResponsible = student.financialResponsibleCpf === requestUser.cpf;
-      
+
       if (!isFinancialResponsible) {
         return res.json({
           isFinancialResponsible: false,
           message: "Você não é o responsável financeiro"
         });
       }
-      
-      // Se for responsável financeiro, buscar dados de pagamento
+
+      // If financial responsible, fetch payment data
       let asaasData = null;
       let localPayments = [];
-      
+
       try {
-        // Buscar configuração do ASAAS
+        // Fetch ASAAS configuration
         const config = await storage.getSchoolConfig();
         if (config?.asaasApiKey && student.asaasCustomerId) {
           const asaasService = new AsaasService(config.asaasApiKey, true);
-          
-          // Buscar faturas do cliente no ASAAS
+
+          // Fetch invoices from ASAAS for the customer
           const invoices = await asaasService.getCustomerInvoices(student.asaasCustomerId);
           asaasData = {
             invoices,
             customerId: student.asaasCustomerId
           };
         }
-        
-        // Buscar pagamentos locais como fallback
+
+        // Fetch local payments as a fallback
         const studentPayments = await storage.getStudentPaymentsByStudent(student.id);
         localPayments = studentPayments;
-        
+
       } catch (error) {
-        console.error('Erro ao buscar dados financeiros:', error);
-        // Continue mesmo com erro no ASAAS, usar dados locais
+        console.error('Error fetching financial data:', error);
+        // Continue even with ASAAS error, use local data
       }
-      
+
       res.json({
         isFinancialResponsible: true,
         student: {
@@ -3435,108 +3470,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
         asaasData,
         localPayments
       });
-      
+
     } catch (error) {
-      console.error('Erro ao buscar dados financeiros:', error);
+      console.error('Error fetching financial data:', error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // Endpoint para verificar se aluno é responsável financeiro e buscar dados (by ID)
+  // Endpoint to check if student is financial responsible and fetch data (by ID)
   app.get("/api/student/financial/:studentId", isAuthenticated, async (req, res) => {
     try {
       const studentId = parseInt(req.params.studentId);
       const userId = req.user?.id;
-      
-      // Buscar dados do estudante
+
+      // Fetch student data to validate access
       const student = await storage.getStudent(studentId);
       if (!student) {
         return res.status(404).json({ error: "Estudante não encontrado" });
       }
-      
-      // Verificar se o usuário logado tem permissão para ver os dados financeiros
+
+      // Check if logged-in user has permission to view financial data
       if (req.user?.role === 'student' && student.userId !== req.user.id) {
         return res.status(403).json({ error: "Acesso negado" });
       }
-      
-      // Verificar se o estudante tem CPF como responsável financeiro
+
+      // Check if student has CPF as financial responsible
       const isFinancialResponsible = student.financialResponsibleCpf && 
         student.financialResponsibleRelation === 'self';
-      
+
       if (!isFinancialResponsible) {
         return res.json({ 
           isFinancialResponsible: false,
           message: "Este aluno não é responsável financeiro"
         });
       }
-      
-      // Buscar dados financeiros do ASAAS se disponível
+
+      // Fetch ASAAS financial data if available
       let asaasData = null;
       if (student.asaasCustomerId) {
         try {
-          // Simular dados do ASAAS para demonstração
+          // Simulate ASAAS data for demonstration
           asaasData = {
             invoices: [],
             customerId: student.asaasCustomerId
           };
         } catch (error) {
-          console.warn("Erro ao buscar dados do ASAAS:", error);
+          console.warn("Error fetching ASAAS data:", error);
         }
       }
-      
-      // Buscar pagamentos locais do estudante
+
+      // Fetch student's local payments
       const studentPayments = await storage.getStudentPaymentsByStudent(studentId);
-      
+
       res.json({
         isFinancialResponsible: true,
         student: {
           id: student.id,
-          name: `${student.userId}`, // We'll get the name from user data
+          name: `${student.userId}`, // Name will be fetched from user data
           financialResponsibleCpf: student.financialResponsibleCpf,
         },
         asaasData,
         localPayments: studentPayments
       });
-      
+
     } catch (error) {
       console.error('Erro ao buscar dados financeiros:', error);
       res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
-  
+
   // =====Student Attendance History Routes=====
-  // Endpoint para buscar histórico de presenças do aluno logado
+  // Endpoint to fetch logged-in student's attendance history
   app.get("/api/student/attendance-history", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
       const { month, year } = req.query;
-      
+
       // Only students can access this endpoint
       if (requestUser.role !== 'student') {
         return res.status(403).json({ error: 'Access denied' });
       }
-      
+
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: "Student profile not found" });
       }
-      
-      // Buscar todas as presenças do aluno
+
+      // Fetch all attendance records for the student
       const attendances = await storage.getAttendanceByStudent(student.id);
-      
-      // Filtrar por mês/ano se fornecido
+
+      // Filter by month/year if provided
       let filteredAttendances = attendances;
       if (month && year) {
         const targetMonth = parseInt(month as string);
         const targetYear = parseInt(year as string);
-        
+
         filteredAttendances = attendances.filter(att => {
           const attDate = new Date(att.date);
           return attDate.getMonth() + 1 === targetMonth && attDate.getFullYear() === targetYear;
         });
       }
-      
-      // Buscar detalhes das aulas para cada presença
+
+      // Fetch class details for each attendance
       const attendanceWithDetails = await Promise.all(
         filteredAttendances.map(async (attendance) => {
           const classData = await storage.getClass(attendance.classId);
@@ -3553,12 +3588,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         })
       );
-      
-      // Calcular estatísticas do período
+
+      // Calculate period statistics
       const totalClasses = attendanceWithDetails.length;
       const presentCount = attendanceWithDetails.filter(att => att.status === 'present').length;
       const attendanceRate = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
-      
+
       res.json({
         attendances: attendanceWithDetails,
         statistics: {
@@ -3568,47 +3603,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
           attendanceRate
         }
       });
-      
+
     } catch (error) {
       console.error('Error fetching attendance history:', error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // Endpoint para buscar histórico de presenças do aluno (by ID for admins)
+  // Endpoint to fetch student attendance history (by ID for admins)
   app.get("/api/student/attendance-history/:studentId", isAuthenticated, async (req, res) => {
     try {
       const studentId = parseInt(req.params.studentId);
       const userId = req.user?.id;
       const { month, year } = req.query;
-      
-      // Buscar dados do estudante para validar acesso
+
+      // Fetch student data to validate access
       const student = await storage.getStudent(studentId);
       if (!student) {
         return res.status(404).json({ error: "Estudante não encontrado" });
       }
-      
-      // Verificar permissões - estudantes só podem ver seus próprios dados
+
+      // Check permissions - students can only view their own data
       if (req.user?.role === 'student' && student.userId !== req.user.id) {
         return res.status(403).json({ error: "Acesso negado" });
       }
-      
-      // Buscar todas as presenças do aluno
+
+      // Fetch all attendance records for the student
       const attendances = await storage.getAttendanceByStudent(studentId);
-      
-      // Filtrar por mês/ano se fornecido
+
+      // Filter by month/year if provided
       let filteredAttendances = attendances;
       if (month && year) {
         const targetMonth = parseInt(month as string);
         const targetYear = parseInt(year as string);
-        
+
         filteredAttendances = attendances.filter(att => {
           const attDate = new Date(att.date);
           return attDate.getMonth() + 1 === targetMonth && attDate.getFullYear() === targetYear;
         });
       }
-      
-      // Buscar detalhes das aulas para cada presença
+
+      // Fetch class details for each attendance
       const attendanceWithDetails = await Promise.all(
         filteredAttendances.map(async (attendance) => {
           const classData = await storage.getClass(attendance.classId);
@@ -3625,12 +3660,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         })
       );
-      
-      // Calcular estatísticas do período
+
+      // Calculate period statistics
       const totalClasses = attendanceWithDetails.length;
       const presentCount = attendanceWithDetails.filter(att => att.status === 'present').length;
       const attendanceRate = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
-      
+
       res.json({
         attendances: attendanceWithDetails,
         stats: {
@@ -3641,7 +3676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         period: month && year ? { month: parseInt(month as string), year: parseInt(year as string) } : null
       });
-      
+
     } catch (error) {
       console.error('Erro ao buscar histórico de presenças:', error);
       res.status(500).json({ error: "Erro interno do servidor" });
@@ -3653,16 +3688,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { classId } = req.params;
       const classIdNumber = parseInt(classId);
-      
+
       if (isNaN(classIdNumber)) {
         return res.status(400).json({ error: 'Invalid class ID' });
       }
-      
+
       // Get today's date range
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-      
+
       // Get all attendance records with details
       const attendances = await storage.getAttendanceWithDetails();
       const todayConfirmedAttendances = attendances.filter(att => {
@@ -3672,7 +3707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                attDate < endOfDay &&
                att.attendance.status === 'present';
       });
-      
+
       // Get student details for each confirmed attendance
       const confirmedStudents = await Promise.all(
         todayConfirmedAttendances.map(async (attRecord) => {
@@ -3693,10 +3728,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return null;
         })
       );
-      
+
       // Filter out null values and get instructor-marked attendance to check status
       const validStudents = confirmedStudents.filter(s => s !== null);
-      
+
       // Check if instructor has already marked attendance for any of these students
       const instructorAttendances = attendances.filter(att => {
         const attDate = new Date(att.attendance.date);
@@ -3705,7 +3740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                attDate < endOfDay &&
                att.attendance.checkedInBy !== att.attendance.studentId; // Marked by instructor, not self-confirmed
       });
-      
+
       // Update student status based on instructor attendance
       validStudents.forEach(student => {
         const instructorMarked = instructorAttendances.find(att => att.attendance.studentId === student.id);
@@ -3714,15 +3749,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           student.instructorStatus = instructorMarked.attendance.status;
         }
       });
-      
+
       console.log(`Found ${validStudents.length} students who confirmed attendance for class ${classIdNumber}`);
-      
+
       res.json({
         classId: classIdNumber,
         confirmedStudents: validStudents,
         totalConfirmed: validStudents.length
       });
-      
+
     } catch (error) {
       console.error('Error fetching confirmed students:', error);
       res.status(500).json({ error: 'Failed to fetch confirmed students' });
@@ -3730,24 +3765,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== ASAAS Integration Routes =====
-  
-  // Aprovar aluno e criar cobrança no ASAAS
+
+  // Approve student and create ASAAS charge
   app.post("/api/admin/student/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const studentId = parseInt(id);
-      
+
       if (isNaN(studentId)) {
         return res.status(400).json({ error: 'Invalid student ID' });
       }
 
       // Use static AsaasService import
       const asaasService = new AsaasService();
-      
-      // Buscar dados do aluno
+
+      // Get student and user data
       const student = await storage.getStudentByUserId(studentId);
       const user = await storage.getUser(studentId);
-      
+
       if (!student || !user) {
         return res.status(404).json({ error: 'Student not found' });
       }
@@ -3756,62 +3791,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Student already approved' });
       }
 
-      // Verificar se responsável financeiro tem dados necessários
+      // Check if financial responsible has necessary data
       if (!student.financialResponsibleCpf || !student.financialResponsibleName) {
         return res.status(400).json({ 
-          error: 'Dados do responsável financeiro incompletos. CPF e nome são obrigatórios.' 
+          error: 'Incomplete financial responsible data. CPF and name are mandatory.' 
         });
       }
 
-      // Verificar se ASAAS está configurado
+      // Check if ASAAS is configured
       const isAsaasConfigured = await asaasService.isConfigured();
       if (!isAsaasConfigured) {
         return res.status(400).json({ 
-          error: 'Integração ASAAS não configurada. Configure a API Key nas configurações da escola.' 
+          error: 'ASAAS integration not configured. Please configure the API Key in school settings.' 
         });
       }
 
-      // Dados do cliente para ASAAS
+      // Customer data for ASAAS
       const customerData = {
         name: student.financialResponsibleName,
-        cpfCnpj: student.financialResponsibleCpf.replace(/\D/g, ''), // Remove formatação
+        cpfCnpj: student.financialResponsibleCpf.replace(/\D/g, ''), // Remove formatting
         email: student.financialResponsibleEmail || user.email,
         mobilePhone: student.financialResponsiblePhone || user.phone,
-        // Endereço se disponível
+        // Address if available
         postalCode: user.zipCode?.replace(/\D/g, ''),
         addressNumber: user.number,
         addressComplement: user.complement
       };
 
-      // Criar ou buscar cliente no ASAAS
+      // Create or find customer in ASAAS
       const asaasCustomer = await asaasService.createOrGetCustomer(customerData);
-      
-      // Atualizar student com asaasCustomerId
+
+      // Update student with asaasCustomerId
       await storage.updateStudent(student.id, {
         asaasCustomerId: asaasCustomer.id
       });
 
-      // Buscar plano de pagamento
+      // Get payment plan
       const paymentPlan = student.paymentPlanId ? 
         await storage.getPaymentPlan(student.paymentPlanId) : 
-        await storage.getPaymentPlans().then(plans => plans[0]); // Primeiro plano disponível
+        await storage.getPaymentPlans().then(plans => plans[0]); // First available plan
 
       if (!paymentPlan) {
-        return res.status(400).json({ error: 'Nenhum plano de pagamento encontrado' });
+        return res.status(400).json({ error: 'No payment plan found' });
       }
 
-      // Calcular data de vencimento
+      // Calculate due date
       const dueDate = new Date();
-      dueDate.setDate(student.preferredDueDate || 5); // Dia preferido ou dia 5
+      dueDate.setDate(student.preferredDueDate || 5); // Preferred day or day 5
       if (dueDate < new Date()) {
-        dueDate.setMonth(dueDate.getMonth() + 1); // Próximo mês se já passou
+        dueDate.setMonth(dueDate.getMonth() + 1); // Next month if already passed
       }
 
-      // Criar pagamento no ASAAS
+      // Create payment in ASAAS
       const paymentData = {
         customer: asaasCustomer.id,
         billingType: 'BOLETO' as const,
-        value: paymentPlan.amount / 100, // Converter centavos para reais
+        value: paymentPlan.amount / 100, // Convert cents to reais
         dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD
         description: `Mensalidade - ${user.firstName} ${user.lastName}`,
         externalReference: `student_${student.id}_${new Date().getTime()}`
@@ -3819,14 +3854,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const asaasPayment = await asaasService.createPayment(paymentData);
 
-      // Criar conta a receber no sistema
+      // Create accounts receivable in the system
       const contaReceber = await storage.createContaReceber({
         studentId: student.id,
         asaasPaymentId: asaasPayment.id,
         asaasCustomerId: asaasCustomer.id,
         status: asaasPayment.status,
         billingType: paymentData.billingType,
-        value: paymentPlan.amount, // Em centavos
+        value: paymentPlan.amount, // In cents
         netValue: asaasPayment.netValue ? Math.round(asaasPayment.netValue * 100) : null,
         dueDate: dueDate,
         description: paymentData.description,
@@ -3837,21 +3872,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pixCopyAndPaste: asaasPayment.pixCopyAndPaste
       });
 
-      // Aprovar aluno
+      // Approve student
       await storage.updateUser(studentId, { status: 'active' });
 
-      // Log da atividade
+      // Log activity
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
-        activity: `${requestUser.firstName} ${requestUser.lastName} aprovou o aluno ${user.firstName} ${user.lastName} e criou cobrança no ASAAS`,
+        activity: `${requestUser.firstName} ${requestUser.lastName} approved student ${user.firstName} ${user.lastName} and created ASAAS charge`,
         entityType: 'student',
         entityId: student.id
       });
 
       res.json({
         success: true,
-        message: 'Aluno aprovado e cobrança criada com sucesso',
+        message: 'Student approved and charge created successfully',
         student: { ...user, status: 'active' },
         payment: {
           id: contaReceber.id,
@@ -3866,20 +3901,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error approving student:', error);
       res.status(500).json({
-        error: 'Erro ao aprovar aluno e criar cobrança',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: 'Error approving student and creating charge',
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
 
-  // Buscar contas a receber de um aluno
+  // Get student's accounts receivable
   app.get("/api/student/:id/payments", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const studentUserId = parseInt(id);
       const requestUser = (req as any).user;
-      
-      // Verificar se é o próprio aluno ou um admin/instructor
+
+      // Check if it's the student themselves or an admin/instructor
       if (requestUser.role === 'student' && requestUser.id !== studentUserId) {
         return res.status(403).json({ error: 'Access denied' });
       }
@@ -3889,7 +3924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Student not found' });
       }
 
-      const payments = await storage.getContasReceberByStudent(student.id);
+      const payments = await storage.getContasReceberByStudentId(student.id);
       res.json({ payments });
 
     } catch (error) {
@@ -3898,24 +3933,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Webhook do ASAAS para atualizar status de pagamentos
+  // ASAAS webhook to update payment statuses
   app.post("/api/webhook/asaas", async (req, res) => {
     try {
       const { event, payment } = req.body;
-      
+
       if (!payment?.id) {
         return res.status(400).json({ error: 'Invalid webhook data' });
       }
 
-      // Buscar conta a receber pelo ID do ASAAS
+      // Find accounts receivable by ASAAS ID
       const contaReceber = await storage.getContaReceberByAsaasId(payment.id);
-      
+
       if (!contaReceber) {
         console.log('Payment not found in system:', payment.id);
         return res.status(200).json({ message: 'Payment not found, ignoring' });
       }
 
-      // Atualizar status baseado no evento
+      // Update status based on the event
       const updateData: any = {
         status: payment.status,
         lastWebhookReceived: new Date(),
@@ -3943,12 +3978,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Student Payment Routes =====
-  
+
   // Get student payments by user ID
   app.get("/api/student/:userId/payments", isAuthenticated, isSelfOrStaff, async (req, res) => {
     try {
       const { userId } = req.params;
-      
+
       // Get student by user ID
       const student = await storage.getStudentByUserId(Number(userId));
       if (!student) {
@@ -3957,7 +3992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all receivables for this student
       const receivables = await storage.getContasReceberByStudentId(student.id);
-      
+
       // Format payments for the frontend
       const payments = receivables.map(receivable => ({
         id: receivable.id,
@@ -3990,7 +4025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const studentData = req.body;
       console.log('📥 Received student data:', JSON.stringify(studentData, null, 2));
-      
+
       // Validate required fields
       if (!studentData.firstName || !studentData.lastName || !studentData.email) {
         return res.status(400).json({ message: "Nome, sobrenome e email são obrigatórios" });
@@ -4015,10 +4050,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: "student" as const,
         active: false, // Pending approval
         phone: studentData.phone || null,
-        cpf: studentData.cpf || null, // Adicionar CPF do usuário
-        rg: studentData.rg || null, // Adicionar RG do usuário
+        cpf: studentData.cpf || null, // Add user's CPF
+        rg: studentData.rg || null, // Add user's RG
         emergencyContact: studentData.emergencyContact || null,
-        emergencyPhone: studentData.emergencyPhone || null, // Adicionar telefone de emergência
+        emergencyPhone: studentData.emergencyPhone || null, // Add emergency phone
         street: studentData.street || null,
         number: studentData.number || null,
         city: studentData.city || null,
@@ -4097,7 +4132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/users/batch-approve', isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { userIds } = req.body;
-      
+
       if (!Array.isArray(userIds) || userIds.length === 0) {
         return res.status(400).json({ message: "Lista de IDs de usuários é obrigatória" });
       }
@@ -4147,7 +4182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          // Don't activate user yet - wait for ASAAS confirmation
+          // Don't activate user immediately - wait for ASAAS confirmation
           let asaasError: string | null = null;
           let asaasSuccess = false;
 
@@ -4160,7 +4195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const asaasService = new AsaasService();
 
                 console.log(`🎯 ARKAIDEV: Processando aluno com verificação anti-duplicata: ${user.firstName} ${user.lastName}`);
-                
+
                 // Prepare student data for ASAAS with responsavel data
                 const alunoData = {
                   ...student,
@@ -4172,6 +4207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   complement: user.complement,
                   neighborhood: user.neighborhood,
                   zipCode: user.zipCode,
+                  preferredDueDate: student.preferredDueDate || 5, // Include preferred due date
                   responsavel: {
                     nome: student.financialResponsibleName,
                     name: student.financialResponsibleName,
@@ -4190,7 +4226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     city: user.city || ''
                   }
                 };
-                
+
                 // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
                 console.log(`🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...`);
                 const payment = await asaasService.createOrSyncCobranca(alunoData, plan);
@@ -4232,7 +4268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.error(`❌ ASAAS error for user ${userId}:`, error);
                 const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na integração ASAAS';
                 asaasError = errorMessage;
-                
+
                 // Extract specific ASAAS error message
                 if (errorMessage.includes('O CPF/CNPJ informado é inválido')) {
                   asaasError = 'O CPF/CNPJ informado é inválido';
@@ -4300,7 +4336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`❌ Error in batch approval for user ${userId}:`, error);
           const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido';
           results.errors.push(`Usuário ${userId}: ${errorMsg}`);
-          
+
           // Try to get user name for error reporting
           let userName = 'Usuário desconhecido';
           try {
@@ -4311,7 +4347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } catch (e) {
             // Ignore error getting user name
           }
-          
+
           results.userResults.push({
             userId,
             userName,
@@ -4340,7 +4376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/asaas/test-connection', isAuthenticated, isAdmin, async (req, res) => {
     try {
       console.log('🧪 Testing ASAAS connection...');
-      
+
       // Get API Key from school config
       const config = await storage.getSchoolConfig();
       if (!config?.asaasApiKey) {
@@ -4353,7 +4389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Test connection with real API Key
       const asaasService = new AsaasService(config.asaasApiKey);
       const result = await asaasService.testConnection();
-      
+
       if (!result.success) {
         console.error("❌ ASAAS Connection Test Failed:", result);
         return res.status(200).json({
@@ -4366,7 +4402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hint: "Se sua chave começar com algo como '_hmlg' use ASAAS_ENV=sandbox (URL sandbox). Chaves de produção pedem ASAAS_ENV=production (URL prod).",
         });
       }
-      
+
       return res.json({
         success: true,
         message: "Conexão ASAAS OK",
@@ -4387,7 +4423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/asaas/sync-customers', isAuthenticated, isAdmin, async (req, res) => {
     try {
       console.log('🔄 Syncing customers from ASAAS...');
-      
+
       // Get API Key from school config
       const config = await storage.getSchoolConfig();
       if (!config?.asaasApiKey) {
@@ -4402,7 +4438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all customers from ASAAS
       const customersResponse = await asaasService.getCustomers(100);
       const customers = customersResponse.data || [];
-      
+
       let syncedCount = 0;
       let errors = [];
 
@@ -4410,7 +4446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Check if student already exists by email
           const existingUserByEmail = await storage.getUserByEmail(customer.email);
-          
+
           if (existingUserByEmail) {
             console.log(`📝 Customer ${customer.name} already exists, skipping...`);
             continue;
@@ -4431,7 +4467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
 
           const newUser = await storage.createUser(userData);
-          
+
           // Create student record
           const studentData = {
             userId: newUser.id,
@@ -4446,7 +4482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createStudent(studentData);
           syncedCount++;
           console.log(`✅ Synced customer: ${customer.name} -> Student ID: ${newUser.id}`);
-          
+
         } catch (studentError: any) {
           console.error(`❌ Error syncing customer ${customer.name}:`, studentError);
           errors.push(`${customer.name}: ${studentError.message}`);
@@ -4468,7 +4504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.error('❌ Error syncing ASAAS customers:', error);
 
-      // Devolve mensagem mais útil para erro de ambiente
+      // Return more helpful message for environment errors
       if (status === 401 && code === 'invalid_environment') {
         return res.status(502).json({
           success: false,
@@ -4495,12 +4531,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? new AsaasPaymentsService(config.asaasApiKey, false)
         : new AsaasPaymentsService();
       const limit = parseInt(req.query.limit as string) || 100;
-      
+
       console.log('🔄 Fetching ASAAS payments for financial panel...');
-      
+
       // Get payments with customer data
       const paymentsWithCustomers = await asaasService.getPaymentsWithCustomers(limit);
-      
+
       // Calculate metrics
       const payments = paymentsWithCustomers.map(p => ({
         id: p.id,
@@ -4518,20 +4554,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientPaymentDate: p.clientPaymentDate,
         externalReference: p.externalReference,
       }));
-      
+
       const metrics = asaasService.calculateMetrics(paymentsWithCustomers);
-      
+
       console.log(`✅ Financial data fetched: ${payments.length} payments, metrics calculated`);
-      
+
       res.json({
         payments,
         metrics,
         totalCount: payments.length
       });
-      
+
     } catch (error: any) {
       console.error('❌ Error fetching financial data:', error);
-      
+
       // Return mock data in case of API failure for development
       const mockData = {
         payments: [
@@ -4597,13 +4633,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         totalCount: 3
       };
-      
+
       // Add new fields to mock data
       mockData.metrics.averageTicket = mockData.metrics.receivedThisMonth / Math.max(1, mockData.metrics.totalPaymentsThisMonth);
       mockData.metrics.revenueVariation = 12.5; // Mock 12.5% increase
       mockData.metrics.previousMonthRevenue = mockData.metrics.receivedThisMonth * 0.89; // Mock previous month
       mockData.metrics.payingStudentsCount = Math.floor(mockData.metrics.totalPaymentsThisMonth * 0.8);
-      
+
       console.log('⚠️ Using mock financial data due to API error');
       res.json(mockData);
     }
@@ -4613,19 +4649,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/financial/refresh", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const asaasService = new AsaasPaymentsService();
-      
+
       console.log('🔄 Force refreshing ASAAS financial data...');
-      
+
       const paymentsWithCustomers = await asaasService.getPaymentsWithCustomers(100);
       const metrics = asaasService.calculateMetrics(paymentsWithCustomers);
-      
+
       res.json({
         success: true,
         message: 'Dados financeiros atualizados com sucesso',
         paymentsCount: paymentsWithCustomers.length,
         metrics
       });
-      
+
     } catch (error: any) {
       console.error('❌ Error refreshing financial data:', error);
       res.status(500).json({
@@ -4637,36 +4673,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====ARKAIDEV Enhancement: Manual ASAAS Sync Routes=====
-  
+
   // Sync student with ASAAS (manual resync in case of lost link)
   app.post("/api/students/:id/sync-asaas", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const asaasService = new AsaasService();
-      
+
       console.log(`🔄 Manual ASAAS sync requested for student ID: ${id}`);
-      
+
       // Get student and user data
       const student = await storage.getStudent(Number(id));
       if (!student) {
         return res.status(404).json({ message: "Aluno não encontrado" });
       }
-      
+
       const user = await storage.getUser(student.userId);
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      
+
       if (!student.financialResponsibleCpf && !student.financialResponsibleEmail) {
         return res.status(400).json({ 
           message: "CPF ou e-mail do responsável financeiro é necessário para sincronização" 
         });
       }
-      
+
       // Try to sync existing ASAAS data
       const cpfOrEmail = student.financialResponsibleCpf || student.financialResponsibleEmail;
-      const syncResult = await asaasService.syncExistingAsaasData(cpfOrEmail);
-      
+      const syncResult = await asaasService.syncExistingAsaasData(
+        (cpfOrEmail as string) // Ensure it's treated as a string
+      );
+
       if (!syncResult.customer) {
         return res.json({
           success: false,
@@ -4675,12 +4713,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           payments: []
         });
       }
-      
+
       // Update student with found customer ID
       await storage.updateStudent(student.id, { 
         asaasCustomerId: syncResult.customer.id 
       });
-      
+
       // Save or update payments found
       let savedPayments = 0;
       for (const payment of syncResult.payments) {
@@ -4710,9 +4748,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Erro ao salvar pagamento ${payment.id}:`, error);
         }
       }
-      
+
       console.log(`✅ Sincronização concluída: Cliente ${syncResult.customer.id}, ${savedPayments} novos pagamentos salvos`);
-      
+
       res.json({
         success: true,
         message: `Sincronização concluída com sucesso`,
@@ -4720,7 +4758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payments: syncResult.payments,
         savedPayments
       });
-      
+
     } catch (error: any) {
       console.error('❌ Erro na sincronização manual:', error);
       res.status(500).json({
@@ -4734,28 +4772,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/asaas/check-customer", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { cpf, email } = req.query;
-      
+
       if (!cpf && !email) {
         return res.status(400).json({ 
           message: "CPF ou e-mail é obrigatório" 
         });
       }
-      
+
       const asaasService = new AsaasService();
-      
+
       console.log(`🔍 Verificando cliente ASAAS - CPF: ${cpf}, Email: ${email}`);
-      
+
       const syncResult = await asaasService.syncExistingAsaasData(
-        (cpf as string) || (email as string)
+        (cpf as string) || (email as string) // Ensure it's treated as a string
       );
-      
+
       res.json({
         exists: !!syncResult.customer,
         customer: syncResult.customer,
         payments: syncResult.payments,
         paymentsCount: syncResult.payments.length
       });
-      
+
     } catch (error: any) {
       console.error('❌ Erro na verificação do cliente:', error);
       res.status(500).json({

@@ -193,14 +193,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
     );
   };
 
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   // Get user initials for avatar safely
   const userInitials = user && user.firstName && user.lastName 

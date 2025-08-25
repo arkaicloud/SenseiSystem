@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { SchoolConfig } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Sun, Moon, Settings, Building2, User, UserCheck, ChevronDown } from "lucide-react";
+import { Sun, Moon, LogOut, Building2, User, UserCheck, ChevronDown } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
@@ -204,7 +204,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     }}
                     className="flex items-center space-x-2 text-red-600 focus:text-red-600"
                   >
-                    <Settings className="w-4 h-4" />
+                    <LogOut className="w-4 h-4" />
                     <span>Sair</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -317,7 +317,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     }}
                     className="flex items-center space-x-2 text-red-600 focus:text-red-600"
                   >
-                    <Settings className="w-4 h-4" />
+                    <LogOut className="w-4 h-4" />
                     <span>Sair</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

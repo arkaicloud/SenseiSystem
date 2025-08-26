@@ -70,8 +70,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!response.ok) {
         // Handle specific error messages from the server
-        const errorMessage = data.message || 'Login failed';
+        const errorMessage = data.message || 'Email ou senha incorretos';
         throw new Error(errorMessage);
+      }
+      
+      if (!data.user) {
+        throw new Error('Email ou senha incorretos');
       }
       
       setUser(data.user);
@@ -80,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       
       // Check if user is pending and redirect to awaiting approval
-      if (data.user.status === 'pending') {
+      if (data.user && data.user.status === 'pending') {
         window.location.href = '/awaiting-approval';
         return;
       }

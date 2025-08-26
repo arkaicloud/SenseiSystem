@@ -95,8 +95,12 @@ export function setupAuth(app: Express) {
         try {
           const user = await storage.getUserByEmail(email);
           
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false, { message: "Incorrect email or password" });
+          if (!user) {
+            return done(null, false, { message: "Email ou senha incorretos" });
+          }
+          
+          if (!(await comparePasswords(password, user.password))) {
+            return done(null, false, { message: "Email ou senha incorretos" });
           }
           
           // Auto-approve admin users if they are pending
@@ -247,7 +251,7 @@ export function setupAuth(app: Express) {
       
       if (!user) {
         console.log('❌ Authentication failed:', info?.message || "No user found");
-        return res.status(401).json({ message: info?.message || "Email ou senha incorretos" });
+        return res.status(401).json({ message: "Email ou senha incorretos" });
       }
       
       console.log('✅ User authenticated:', user.email);

@@ -46,31 +46,47 @@ export default function LoginPage() {
     retry: false,
   });
 
-  // Login mutation
+  // Login mutation using auth provider
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
-      const response = await apiRequest('POST', '/api/login', {
-        email: credentials.username,
-        password: credentials.password,
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: credentials.username,
+          password: credentials.password,
+        }),
       });
-      return response.json();
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Email ou senha incorretos");
+      }
+      
+      return data;
     },
     onSuccess: (data) => {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Bem-vindo, ${data.user.firstName}!`,
-      });
-      
-      // Store auth token and redirect
-      localStorage.setItem('token', 'authenticated');
-      
-      // Use setTimeout to allow toast to show before redirect
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1000);
+      if (data.user) {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo, ${data.user.firstName}!`,
+        });
+        
+        // Store auth token and redirect
+        localStorage.setItem('token', 'authenticated');
+        
+        // Use setTimeout to allow toast to show before redirect
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1000);
+      }
     },
     onError: (error: any) => {
-      setError(error.message || "Erro ao fazer login");
+      setError(error.message || "Email ou senha incorretos");
     },
   });
 

@@ -70,11 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!response.ok) {
         // Handle specific error messages from the server
-        const errorMessage = data.message || 'Email ou senha incorretos';
+        const errorMessage = data?.message || 'Email ou senha incorretos';
         throw new Error(errorMessage);
       }
       
-      if (!data.user) {
+      if (!data || !data.user) {
         throw new Error('Email ou senha incorretos');
       }
       

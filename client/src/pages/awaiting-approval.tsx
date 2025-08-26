@@ -64,7 +64,7 @@ export default function AwaitingApprovalPage() {
 
           {/* Welcome Message */}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Olá, {user?.name || user?.email?.split('@')[0]}!
+            Olá, {user?.firstName || user?.email?.split('@')[0]}!
           </h1>
           
           <p className="text-lg text-gray-600">
@@ -124,7 +124,7 @@ export default function AwaitingApprovalPage() {
                 Falar com a diretoria
               </Button>
             </div>
-          )}</div>
+          )}
 
           {/* Additional Information */}
           <div className="bg-gray-50 rounded-lg p-4 text-center">

@@ -20,12 +20,15 @@ export default function AwaitingApprovalPage() {
   };
 
   const handleContactSchool = () => {
-    const phone = schoolConfig?.whatsappNumber || schoolConfig?.phone;
+    const phone = schoolConfig?.whatsapp || schoolConfig?.phone;
     if (phone) {
       const message = encodeURIComponent(
-        `Olá! Sou ${user?.name || user?.email} e gostaria de saber sobre o status da minha matrícula.`
+        `Olá! Sou ${user?.firstName} ${user?.lastName} e gostaria de saber sobre o status da minha matrícula.`
       );
-      window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+      // Remove formatação e adiciona código do Brasil se necessário
+      const cleanPhone = phone.replace(/\D/g, '');
+      const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
     }
   };
 
@@ -61,7 +64,7 @@ export default function AwaitingApprovalPage() {
 
           {/* Welcome Message */}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Olá, {user?.name || user?.email?.split('@')[0]}!
+            Olá, {user?.firstName || user?.email?.split('@')[0]}!
           </h1>
           
           <p className="text-lg text-gray-600">
@@ -110,7 +113,7 @@ export default function AwaitingApprovalPage() {
           </div>
 
           {/* Contact Button */}
-          {(schoolConfig?.whatsappNumber || schoolConfig?.phone) && (
+          {(schoolConfig?.whatsapp || schoolConfig?.phone) && (
             <div className="pt-4">
               <Button 
                 onClick={handleContactSchool}
@@ -118,7 +121,7 @@ export default function AwaitingApprovalPage() {
                 size="lg"
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
-                Falar com a secretaria
+                Falar com a diretoria
               </Button>
             </div>
           )}

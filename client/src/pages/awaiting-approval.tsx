@@ -20,12 +20,15 @@ export default function AwaitingApprovalPage() {
   };
 
   const handleContactSchool = () => {
-    const phone = schoolConfig?.whatsappNumber || schoolConfig?.phone;
+    const phone = schoolConfig?.whatsapp || schoolConfig?.phone;
     if (phone) {
       const message = encodeURIComponent(
-        `Olá! Sou ${user?.name || user?.email} e gostaria de saber sobre o status da minha matrícula.`
+        `Olá! Sou ${user?.firstName} ${user?.lastName} e gostaria de saber sobre o status da minha matrícula.`
       );
-      window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+      // Remove formatação e adiciona código do Brasil se necessário
+      const cleanPhone = phone.replace(/\D/g, '');
+      const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
     }
   };
 
@@ -110,7 +113,7 @@ export default function AwaitingApprovalPage() {
           </div>
 
           {/* Contact Button */}
-          {(schoolConfig?.whatsappNumber || schoolConfig?.phone) && (
+          {(schoolConfig?.whatsapp || schoolConfig?.phone) && (
             <div className="pt-4">
               <Button 
                 onClick={handleContactSchool}
@@ -118,10 +121,10 @@ export default function AwaitingApprovalPage() {
                 size="lg"
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
-                Falar com a secretaria
+                Falar com a diretoria
               </Button>
             </div>
-          )}
+          )}</div>
 
           {/* Additional Information */}
           <div className="bg-gray-50 rounded-lg p-4 text-center">

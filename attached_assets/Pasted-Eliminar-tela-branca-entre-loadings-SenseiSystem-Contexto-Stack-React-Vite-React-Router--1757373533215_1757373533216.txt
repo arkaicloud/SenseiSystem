@@ -1,0 +1,226 @@
+Eliminar “tela branca” entre loadings (SenseiSystem)
+Contexto
+
+Stack: React + Vite + React Router + Tailwind + (React Query/Zustand).
+
+Sintoma: após o primeiro loading full-screen, aparece um intervalo branco e só depois um segundo loading dentro do Dashboard (sidebar já montada).
+
+Objetivo: um único loading overlay no nível raiz; pré-carregar dados e chunk do Dashboard antes de esconder o overlay; nenhum segundo loader de página.
+
+Hipóteses técnicas (causas comuns)
+
+Dupla fonte de loading (guard raiz + loader local da página).
+
+Code-splitting do Dashboard: o chunk ainda não chegou quando o overlay some → aparece branco.
+
+return null/condicionais em AppLayout ou página, causando frame sem render.
+
+Suspense fallback diferente ou aninhado → um frame sem fallback visível.
+
+BG padrão branco em body/#root no instante da troca.
+
+StrictMode duplicando effects e resetando estado do boot.
+
+Tarefas (executar em ordem)
+1) Instrumentar e confirmar o gap (1h)
+
+Adicionar performance.mark() nos pontos:
+
+showOverlay (montou overlay), hideOverlay (sumiu overlay),
+
+layoutMounted, dashboardFirstPaint.
+
+Logar no console performance.measure() para ver se há delta > 16ms entre hideOverlay e layoutMounted ou dashboardFirstPaint.
+
+2) Overlay único, raiz, com crossfade (obrigatório)
+
+Criar src/components/loading/AppLoadingOverlay.tsx (full-screen, position: fixed; inset: 0; z-50;), mesmo visual do seu loading atual.
+
+Esse overlay fica visível enquanto isBooting === true.
+
+Ao terminar, fade-out (200–300ms) e só então desmonta (evitar “hard cut” que revela branco).
+
+// AppLoadingOverlay.tsx
+import { motion, AnimatePresence } from "framer-motion";
+
+export function AppLoadingOverlay({ visible, progress, quote }:{
+  visible: boolean; progress?: number; quote?: string;
+}) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          key="overlay"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100"
+          role="status" aria-live="polite"
+        >
+          {/* Coloque aqui seu spinner, barra e frase (reaproveite do AppLoadingScreen) */}
+          {/* ... */}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+3) Guard raiz controla tudo (sem loader no Dashboard)
+
+O RootGuard controla o boot. Enquanto isBooting: renderize apenas o AppLoadingOverlay.
+
+Quando terminar: renderize AppLayout + rotas direto (sem return null intermediário).
+
+Remover loaders/grandes spinners de Dashboard — deixar só skeletons se faltar algo.
+
+// routes/index.tsx
+import { Outlet, Navigate } from "react-router-dom";
+import AppLayout from "@/components/layout/AppLayout";
+import { AppLoadingOverlay } from "@/components/loading/AppLoadingOverlay";
+import { useBootLoader } from "@/hooks/useBootLoader";
+import { useAuth } from "@/stores/auth";
+
+function RootGuard() {
+  const { isBooting, progress, quote } = useBootLoader();
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated && !isBooting) return <Navigate to="/login" replace />;
+
+  return (
+    <>
+      <AppLoadingOverlay visible={isBooting} progress={progress} quote={quote} />
+      {(!isBooting && isAuthenticated) ? (
+        <AppLayout><Outlet /></AppLayout>
+      ) : null}
+    </>
+  );
+}
+
+4) Pré-carregar o chunk do Dashboard antes de esconder o overlay
+
+Se Dashboard é lazy(() => import(...)), então importe o chunk no boot.
+
+Só oculte o overlay depois que dados + chunk estiverem prontos.
+
+// hooks/useBootLoader.ts
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { resolveSession } from "@/services/auth";
+import { api } from "@/services/api";
+
+export function useBootLoader() {
+  const [isBooting, setIsBooting] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [quote, setQuote] = useState<string | undefined>(undefined);
+  const started = useRef(false);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (started.current) return; // idempotente p/ StrictMode
+    started.current = true;
+
+    performance.mark("showOverlay");
+
+    (async () => {
+      try {
+        setProgress(10);
+        await resolveSession();
+        setProgress(35);
+
+        // Prefetch de DADOS usados pelo Dashboard
+        await Promise.all([
+          qc.prefetchQuery({ queryKey: ["me"], queryFn: api.me, staleTime: 60_000 }),
+          qc.prefetchQuery({ queryKey: ["dashboardSummary"], queryFn: api.dashboardSummary, staleTime: 30_000 }),
+        ]);
+        setProgress(65);
+
+        // **Pré-carregar o CHUNK do Dashboard**
+        await import("@/pages/Dashboard");
+        setProgress(85);
+
+        // delay mínimo p/ evitar flash
+        await new Promise(r => setTimeout(r, 600));
+        setProgress(100);
+      } finally {
+        setQuote(pickQuote()); // opcional
+        setIsBooting(false);
+        requestAnimationFrame(() => performance.mark("hideOverlay"));
+      }
+    })();
+  }, [qc]);
+
+  return { isBooting, progress, quote };
+}
+
+5) Remover “loader interno” do Dashboard e garantir fallback visível
+
+Dentro do Dashboard.tsx, não retornar spinner de página.
+
+Se data ainda não chegou (primeiro render sem cache), exiba skeletons.
+
+Configure React Query: refetchOnMount:false, refetchOnWindowFocus:false.
+
+// pages/Dashboard.tsx
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/services/api";
+import { DashboardSkeleton } from "./DashboardSkeleton";
+
+export default function Dashboard() {
+  const { data: summary } = useQuery({
+    queryKey: ["dashboardSummary"],
+    queryFn: api.dashboardSummary,
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  if (!summary) return <DashboardSkeleton />;
+
+  return <YourDashboardContent data={summary} />;
+}
+
+6) Garantir que nada retorna null no meio
+
+Procurar por return null em:
+
+AppLayout, Sidebar, Header, providers e wrappers de rota.
+
+Substituir por conteúdo determinístico ou skeleton (nunca “buraco” visual).
+
+7) CSS global para zerar “flash branco”
+
+Deixar o fundo padrão escuro no app todo (mesma paleta do overlay) e ocupar 100% da altura.
+
+/* src/styles/globals.css */
+html, body, #root { height: 100%; }
+body { background: #0b1220; /* ou sua var Tailwind */ }
+
+
+Se usa Tailwind: adicione class="min-h-screen bg-slate-950" no wrapper raiz do app.
+
+8) Suspense unificado (se houver lazy em várias rotas)
+
+Um único <Suspense fallback={<AppLoadingOverlay visible={true} />}> no topo, não crie fallbacks locais que substituam o overlay por branco.
+
+Critérios de Aceite
+
+ Após login, apenas 1 loading full-screen (overlay) é mostrado.
+
+ Nunca há frame branco entre esconder o overlay e montar AppLayout + Dashboard.
+
+ O Dashboard aparece já com dados (prefetch), no máximo skeletons finos enquanto “refresca”.
+
+ Logs de performance mostram hideOverlay → layoutMounted → dashboardFirstPaint sem gaps visíveis (>16ms sem fallback).
+
+ AppLoadingOverlay só existe no nível raiz; nenhuma página exibe loader próprio de tela inteira.
+
+Observações finais
+
+Se o branco persistir, verifique se há transição de rota (ex.: Navigate) antes do overlay sair — mude o Navigate para ocorrer depois do isBooting=false.
+
+Em produção, confirme que o chunk do Dashboard está realmente sendo pré-carregado (rede → 200 (from disk cache)/prefetch).
+
+StrictMode: o guard started.current torna o boot idempotente e evita resets que podem expor o “vazio”.
+
+Aplique exatamente as mudanças acima e rode o fluxo completo. O objetivo é “overlay por cima de tudo” até dados + chunk estarem prontos, e então crossfade direto para o layout já renderizado — sem qualquer tela branca ou segundo loader.

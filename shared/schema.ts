@@ -380,20 +380,16 @@ export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCu
 export const insertRiskActionSchema = createInsertSchema(riskActions).omit({ id: true, createdAt: true });
 export const insertRiskSettingsSchema = createInsertSchema(riskSettings).omit({ id: true, updatedAt: true });
 export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBeltLevelSchema = createInsertSchema(beltLevels).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertStreakAchievementSchema = createInsertSchema(streakAchievements).omit({ id: true, earnedDate: true });
+export const insertDailyLoginRecordSchema = createInsertSchema(dailyLoginRecords).omit({ id: true, createdAt: true });
+export const insertContaReceberSchema = createInsertSchema(contasReceber).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Student = typeof students.$inferSelect;
-export type StudentWithUser = {
-  id: number;
-  userId: number;
-  firstName: string;
-  lastName: string;
-  cpf: string;
-  active: boolean;
-};
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 
 export type SchoolConfig = typeof schoolConfig.$inferSelect;
@@ -438,6 +434,18 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
+export type BeltLevel = typeof beltLevels.$inferSelect;
+export type InsertBeltLevel = z.infer<typeof insertBeltLevelSchema>;
+
+export type StreakAchievement = typeof streakAchievements.$inferSelect;
+export type InsertStreakAchievement = z.infer<typeof insertStreakAchievementSchema>;
+
+export type DailyLoginRecord = typeof dailyLoginRecords.$inferSelect;
+export type InsertDailyLoginRecord = z.infer<typeof insertDailyLoginRecordSchema>;
+
+export type ContaReceber = typeof contasReceber.$inferSelect;
+export type InsertContaReceber = z.infer<typeof insertContaReceberSchema>;
+
 
 // Custom extended types for frontend use
 export type StudentWithUser = Student & {
@@ -456,6 +464,16 @@ export type AttendanceWithDetails = Attendance & {
 export type StudentPaymentWithDetails = StudentPayment & {
   student: StudentWithUser;
   plan: PaymentPlan;
+};
+
+export type UserWithStreakData = User & {
+  recentAchievements: StreakAchievement[];
+  loginStreak: {
+    current: number;
+    longest: number;
+    totalLogins: number;
+    lastLogin: Date | null;
+  };
 };
 
 // Define table relations

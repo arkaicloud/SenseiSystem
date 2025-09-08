@@ -68,14 +68,6 @@ export function FinancialCard() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between text-base">
-          <span>Visão Financeira</span>
-          <Badge variant="outline" className="text-xs">
-            {stats.totalStudents} alunos
-          </Badge>
-        </CardTitle>
-      </CardHeader>
       <CardContent className="space-y-4">
       </CardContent>
     </Card>

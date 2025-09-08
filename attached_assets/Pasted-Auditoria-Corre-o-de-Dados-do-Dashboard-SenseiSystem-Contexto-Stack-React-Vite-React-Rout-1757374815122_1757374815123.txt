@@ -1,0 +1,232 @@
+Auditoria & Correção de Dados do Dashboard (SenseiSystem)
+Contexto
+
+Stack: React (Vite) + React Router + Tailwind + (React Query/Zustand) + API Node/Express + Postgres (Neon/Supabase/VPS) + Drizzle/Prisma.
+
+Tela alvo: Dashboard Administrativo com cards (pelo print):
+
+Alunos Ativos
+
+Aulas Realizadas
+
+Taxa de Presença (%)
+
+Receita Mensal
+
+Alunos em Risco
+
+Inadimplência
+
+Aulas de Hoje (lista)
+
+Visão Financeira (Cobrança/Relatório)
+
+Aprovações Pendentes
+
+Aniversariantes
+
+Faixas Adulto / Faixas Infantil
+
+Objetivo
+
+Mapear e validar a fonte de dados real de cada card (endpoint/hook/SQL).
+
+Eliminar placeholders/constantes e unificar a leitura num único endpoint /api/dashboard/summary (com CTE/queries eficientes) + um hook useDashboardSummary().
+
+Garantir multitenancy (filtro por tenant_id/school_id) e janela temporal correta (hoje, mês atual, etc.).
+
+Adicionar testes (unit + e2e da API) que travem regressões.
+
+Gerar documentação “Card → Fonte → Lógica de cálculo → Última atualização”.
+
+Entregáveis
+
+docs/dashboard-data-map.md (tabela mapeando cada card para sua fonte e lógica).
+
+Endpoint unificado: GET /api/dashboard/summary.
+
+Hook: src/hooks/useDashboardSummary.ts.
+
+Testes:
+
+server/tests/dashboard.summary.spec.ts (Vitest/Jest)
+
+src/pages/__tests__/Dashboard.data.spec.tsx (mocks de QueryClient)
+
+Linter/fix: remoção de hardcodes e retornos 0 sem justificativa.
+
+Flag de diagnóstico: rota GET /api/diagnostics/dashboard-sources (opcional, somente dev) retornando as queries usadas.
+
+Passo a passo (faça na ordem)
+1) Inventário automático (detectar hardcodes)
+
+Vasculhar o código do Dashboard e serviços:
+
+src/pages/Dashboard.tsx, src/components/dashboard/**, src/services/api.ts, src/server/routes/**, src/db/**.
+
+Procurar padrões suspeitos:
+
+Números literais nas props dos cards (0, 0.00, toFixed() em constantes).
+
+Uso de mocks/fixtures em produção (USE_MOCK_DATA, process.env.NODE_ENV !== 'production' com retorno fake).
+
+return null/gaps que possam “zerar” métricas.
+
+Gerar relatório docs/dashboard-data-map.md com colunas:
+Card | QueryKey/Hook | Endpoint | Fonte (SQL/Tabela) | Filtros (tenant_id, datas) | Transformações | Observações
+
+2) Unificar em um endpoint robusto
+
+Criar/ajustar server/routes/dashboard.ts com GET /api/dashboard/summary.
+
+Implementar em uma ida ao DB (Postgres) usando CTEs e COUNT(*) FILTER/SUM(..) FILTER:
+
+Alunos Ativos: students WHERE tenant_id=$1 AND status='ACTIVE'.
+
+Aulas Realizadas (Mês Atual?): classes WHERE date BETWEEN first_day_of_month..today AND status='DONE'.
+
+Taxa de Presença: present_attendances / expected_attendances (definir base: últimos 30 dias ou mês corrente).
+
+Receita Mensal: SUM(invoices.amount) WHERE paid=true AND paid_at in current_month.
+
+Alunos em Risco: regra parametrizável (ex.: last_attendance_at > X dias ou attendance_rate < Y).
+
+Inadimplência: COUNT(invoices) WHERE status='OVERDUE' AND due_date < now().
+
+Aulas de Hoje: SELECT * FROM classes WHERE date = today.
+
+Aprovações Pendentes: origem (ex.: enrollments WHERE status='PENDING').
+
+Aniversariantes: students WHERE EXTRACT(MONTH/DAY FROM birthdate)=hoje (ou intervalo semanal).
+
+Faixas Adulto/Infantil: contagem por faixa etária/nível; garantir filtro por turma/idade.
+
+Obrigatório: filtrar por tenant_id/school_id do usuário autenticado (RLS ou where).
+
+Payload exemplo:
+
+{
+  "generatedAt": "2025-09-08T19:05:00-03:00",
+  "period": {"type":"month","from":"2025-09-01","to":"2025-09-30"},
+  "metrics": {
+    "activeStudents": 0,
+    "classesHeld": 0,
+    "attendanceRate": 0.0,
+    "monthlyRevenue": 0,
+    "atRiskStudents": 0,
+    "delinquency": 0,
+    "pendingApprovals": 13
+  },
+  "today": {
+    "classes": [],
+    "birthdays": []
+  },
+  "belts": {
+    "adult": {"count": 0},
+    "kids": {"count": 0}
+  }
+}
+
+
+Tipar com Zod ou typescript DashboardSummary e validar na borda da API.
+
+3) Hook único no front
+
+src/hooks/useDashboardSummary.ts usando React Query:
+
+export function useDashboardSummary() {
+  return useQuery({
+    queryKey: ["dashboardSummary"],
+    queryFn: api.dashboardSummary,
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+
+Em src/pages/Dashboard.tsx, consumir somente este hook.
+
+Remover outros fetches redundantes e qualquer número hardcoded.
+
+4) Regras de cálculo & parâmetros
+
+Centralizar constantes de negócio (risco, janela da receita, janela de presença) em src/config/businessRules.ts e no servidor server/config/businessRules.ts.
+
+Ler preferencialmente do DB Settings/TENANT_SETTINGS (se existir).
+
+Documentar no docs/dashboard-data-map.md a definição de cada métrica (ex.: “Taxa de Presença = presenças confirmadas / presenças esperadas no mês corrente”).
+
+5) Testes (travando regressão)
+
+API (server/tests/dashboard.summary.spec.ts):
+
+cria fixtures (tenants, alunos, aulas, presenças, faturas) e valida os agregados.
+
+casos: mês sem dados, com dados, com inadimplência, com risco.
+
+Front (src/pages/__tests__/Dashboard.data.spec.tsx):
+
+mock do api.dashboardSummary e snapshot dos cards exibindo os valores corretos.
+
+garante que não renderiza valores default quando API retorna erro (exibe estado de erro/skeleton).
+
+Adicionar npm scripts para testes e checagens:
+
+"test": "vitest run",
+"lint": "eslint . --ext .ts,.tsx",
+"typecheck": "tsc --noEmit"
+
+6) Segurança de dados & multitenancy
+
+Validar em cada query a presença de tenant_id/school_id.
+
+Se usar RLS (Supabase), políticas por tenant_id.
+
+Logar alerta se qualquer agregação vier sem filtro de tenant.
+
+Adicionar teste que simula dois tenants para garantir não-vazamento entre escolas.
+
+7) Data freshness & UX
+
+Incluir em cada card um tooltip “Atualizado às HH:mm:ss” com generatedAt.
+
+Se stale > 5min, exibir badge “atualize” e permitir refresh manual.
+
+Nunca renderizar número hardcoded enquanto carrega: mostrar skeleton.
+
+8) Auditoria final (automática)
+
+Criar scripts/audit-dashboard.ts (Node) que:
+
+Verifica se Dashboard.tsx consome apenas useDashboardSummary.
+
+Scaneia o bundle por literais suspeitos nos cards.
+
+Confere presença do filtro tenant_id no SQL do endpoint.
+
+Gera/atualiza docs/dashboard-data-map.md com as fontes detectadas.
+
+Critérios de Aceite
+
+ Todos os cards leem exclusivamente do hook useDashboardSummary() (ou seletor derivado dele).
+
+ Zero números hardcoded nos cards.
+
+ Endpoint /api/dashboard/summary retorna todas as métricas com filtro de tenant e janelas de tempo corretas.
+
+ Testes passando e cobrindo: sem dados, dados normais, risco, inadimplência, multitenant.
+
+ docs/dashboard-data-map.md completo e versionado.
+
+ Tooltip de data freshness disponível nos cards.
+
+ Lint + typecheck sem erros.
+
+Observações
+
+Se o front ainda buscar fontes diversas (ex.: “Aulas de Hoje” via outro endpoint), padronize: o endpoint unificado retorna a lista e o front usa somente o summary.
+
+Se performance exigir, mantenha summary + endpoints específicos, mas os cards devem priorizar o summary para consistência.
+
+Implementar tudo acima e me devolver: diff dos arquivos alterados, o docs/dashboard-data-map.md, o output dos testes e uma nota breve de qualquer ponto onde a definição de métrica tenha sido ambígua e precise de validação de negócio.

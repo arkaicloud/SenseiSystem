@@ -380,9 +380,6 @@ export const insertDashboardCustomizationSchema = createInsertSchema(dashboardCu
 export const insertRiskActionSchema = createInsertSchema(riskActions).omit({ id: true, createdAt: true });
 export const insertRiskSettingsSchema = createInsertSchema(riskSettings).omit({ id: true, updatedAt: true });
 export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertBeltLevelSchema = createInsertSchema(beltLevels).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertStreakAchievementSchema = createInsertSchema(streakAchievements).omit({ id: true, earnedDate: true });
-export const insertDailyLoginRecordSchema = createInsertSchema(dailyLoginRecords).omit({ id: true, createdAt: true });
 export const insertContaReceberSchema = createInsertSchema(contasReceber).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
@@ -434,15 +431,6 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
-export type BeltLevel = typeof beltLevels.$inferSelect;
-export type InsertBeltLevel = z.infer<typeof insertBeltLevelSchema>;
-
-export type StreakAchievement = typeof streakAchievements.$inferSelect;
-export type InsertStreakAchievement = z.infer<typeof insertStreakAchievementSchema>;
-
-export type DailyLoginRecord = typeof dailyLoginRecords.$inferSelect;
-export type InsertDailyLoginRecord = z.infer<typeof insertDailyLoginRecordSchema>;
-
 export type ContaReceber = typeof contasReceber.$inferSelect;
 export type InsertContaReceber = z.infer<typeof insertContaReceberSchema>;
 
@@ -464,16 +452,6 @@ export type AttendanceWithDetails = Attendance & {
 export type StudentPaymentWithDetails = StudentPayment & {
   student: StudentWithUser;
   plan: PaymentPlan;
-};
-
-export type UserWithStreakData = User & {
-  recentAchievements: StreakAchievement[];
-  loginStreak: {
-    current: number;
-    longest: number;
-    totalLogins: number;
-    lastLogin: Date | null;
-  };
 };
 
 // Define table relations
@@ -589,14 +567,18 @@ export const dailyLoginRecordsRelations = relations(dailyLoginRecords, ({ one })
 
 // TypeScript types for new tables
 export type StreakAchievement = typeof streakAchievements.$inferSelect;
-export type InsertStreakAchievement = typeof streakAchievements.$inferInsert;
+export type InsertStreakAchievement = z.infer<typeof insertStreakAchievementSchema>;
 
 export type DailyLoginRecord = typeof dailyLoginRecords.$inferSelect;
-export type InsertDailyLoginRecord = typeof dailyLoginRecords.$inferInsert;
+export type InsertDailyLoginRecord = z.infer<typeof insertDailyLoginRecordSchema>;
 
 // Belt levels types
 export type BeltLevel = typeof beltLevels.$inferSelect;
-export type InsertBeltLevel = typeof beltLevels.$inferInsert;
+export type InsertBeltLevel = z.infer<typeof insertBeltLevelSchema>;
+
+// Insert schemas for new tables
+export const insertStreakAchievementSchema = createInsertSchema(streakAchievements).omit({ id: true, earnedDate: true });
+export const insertDailyLoginRecordSchema = createInsertSchema(dailyLoginRecords).omit({ id: true, createdAt: true });
 export const insertBeltLevelSchema = createInsertSchema(beltLevels).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Streak achievement with relations
@@ -611,8 +593,13 @@ export type DailyLoginRecordWithUser = DailyLoginRecord & {
 
 // Updated user type with streak data
 export type UserWithStreakData = User & {
-  streakAchievements?: StreakAchievement[];
-  dailyLoginRecords?: DailyLoginRecord[];
+  recentAchievements: StreakAchievement[];
+  loginStreak: {
+    current: number;
+    longest: number;
+    totalLogins: number;
+    lastLogin: Date | null;
+  };
 };
 
 // Update users relations to include new tables (replace the original)

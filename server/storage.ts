@@ -30,7 +30,31 @@ import {
   type ContaReceber,
   type DailyLoginRecord,
   type StreakAchievement,
+  type UserWithStreakData,
+  type ClassWithInstructor,
+  type StudentWithUser,
+  type AttendanceWithDetails,
+  type StudentPaymentWithDetails,
+  type AttendanceChanges,
+  type RiskAction,
+  type RiskSettings,
   insertStudentSchema,
+  insertUserSchema,
+  insertSchoolEventSchema,
+  insertClassSchema,
+  insertAttendanceSchema,
+  insertAttendanceChangesSchema,
+  insertPaymentPlanSchema,
+  insertStudentPaymentSchema,
+  insertActivityLogSchema,
+  insertSchoolPaymentSchema,
+  insertDashboardCustomizationSchema,
+  insertRiskActionSchema,
+  insertRiskSettingsSchema,
+  insertStreakAchievementSchema,
+  insertDailyLoginRecordSchema,
+  insertBeltLevelSchema,
+  insertContaReceberSchema,
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, or, gt, isNull, lt, asc, sql } from "drizzle-orm";
 
@@ -1122,7 +1146,6 @@ export class MemStorage implements IStorage {
 import connectPgSimple from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, desc, sql, asc, gte, lte, gt, isNull, lt } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import * as schema from "@shared/schema";
 

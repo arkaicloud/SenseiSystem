@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { prefetchDashboard } from "@/services/prefetch";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/hooks/use-auth";
 
 export function useBootLoader() {
   const [isBooting, setIsBooting] = useState(true);

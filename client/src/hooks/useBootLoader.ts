@@ -37,10 +37,10 @@ export function useBootLoader() {
           return;
         }
         
-        setProgress(50);
+        setProgress(40);
         
-        // Prefetch real das mesmas queries que o Dashboard usa
-        await Promise.all([
+        // Prefetch mais rápido das queries essenciais
+        const prefetchPromises = [
           queryClient.prefetchQuery({
             queryKey: ['/api/user'],
             queryFn: () => fetch('/api/user').then(res => {
@@ -73,17 +73,21 @@ export function useBootLoader() {
             }),
             staleTime: 30_000,
           }),
-        ]);
+        ];
+
+        // Executar prefetch com progresso em tempo real
+        await Promise.all(prefetchPromises.map(async (promise, index) => {
+          await promise;
+          if (!canceled) {
+            setProgress(40 + (index + 1) * 15); // 40, 55, 70, 85
+          }
+        }));
         
         if (canceled) return;
-        setProgress(90);
         
-        // Pequeno delay para garantir que os dados foram processados
-        await new Promise(r => setTimeout(r, 200));
+        // Aguardar um momento para o React processar os dados
+        await new Promise(r => setTimeout(r, 50));
         setProgress(100);
-        
-        // Delay mínimo para evitar flash
-        await new Promise(r => setTimeout(r, 100));
         
       } catch (error) {
         console.error('Erro no boot loader:', error);

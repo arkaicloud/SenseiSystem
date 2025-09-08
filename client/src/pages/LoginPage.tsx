@@ -84,17 +84,16 @@ export default function LoginPage() {
         setShowLoadingScreen(true);
         setLoadingProgress(10);
         
-        // Simular progresso de loading
-        setTimeout(() => setLoadingProgress(30), 100);
-        setTimeout(() => setLoadingProgress(50), 300);
-        setTimeout(() => setLoadingProgress(70), 500);
-        setTimeout(() => setLoadingProgress(85), 700);
-        setTimeout(() => setLoadingProgress(100), 900);
+        // Progresso mais rápido e suave
+        setTimeout(() => setLoadingProgress(30), 50);
+        setTimeout(() => setLoadingProgress(60), 150);
+        setTimeout(() => setLoadingProgress(85), 250);
+        setTimeout(() => setLoadingProgress(100), 350);
         
-        // Redirect diretamente para dashboard após 100%
+        // Redirect mais rápido para dashboard
         setTimeout(() => {
           window.location.href = "/dashboard";
-        }, 1100);
+        }, 450);
       }
     },
     onError: (error: any) => {

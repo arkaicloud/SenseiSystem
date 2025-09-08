@@ -42,18 +42,18 @@ export function useBootLoader() {
         
         if (canceled) return;
         
-        // Garantir duração mínima de 600ms para evitar flash
-        const elapsed = Date.now() - startTime;
-        const minDuration = 600;
+        // Remover duração mínima para transição mais rápida quando vindo do login
+        // const elapsed = Date.now() - startTime;
+        // const minDuration = 600;
         
-        if (elapsed < minDuration) {
-          await new Promise(r => setTimeout(r, minDuration - elapsed));
-        }
+        // if (elapsed < minDuration) {
+        //   await new Promise(r => setTimeout(r, minDuration - elapsed));
+        // }
         
         setProgress(100);
         
-        // Pequeno delay para mostrar 100% antes de terminar
-        await new Promise(r => setTimeout(r, 200));
+        // Pequeno delay reduzido para transição mais rápida
+        await new Promise(r => setTimeout(r, 50));
         
       } catch (error) {
         console.error('Erro no boot loader:', error);

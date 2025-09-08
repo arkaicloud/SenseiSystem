@@ -77,17 +77,21 @@ export default function LoginPage() {
         // Store auth token
         localStorage.setItem('token', 'authenticated');
         
-        // Simular progresso de loading
-        setLoadingProgress(30);
-        setTimeout(() => setLoadingProgress(50), 200);
-        setTimeout(() => setLoadingProgress(70), 400);
-        setTimeout(() => setLoadingProgress(85), 600);
-        setTimeout(() => setLoadingProgress(100), 800);
+        // Mostrar loading screen apenas após sucesso da autenticação
+        setShowLoadingScreen(true);
+        setLoadingProgress(10);
         
-        // Redirect after loading simulation
+        // Simular progresso de loading
+        setTimeout(() => setLoadingProgress(30), 100);
+        setTimeout(() => setLoadingProgress(50), 300);
+        setTimeout(() => setLoadingProgress(70), 500);
+        setTimeout(() => setLoadingProgress(85), 700);
+        setTimeout(() => setLoadingProgress(100), 900);
+        
+        // Redirect diretamente para dashboard após 100%
         setTimeout(() => {
           window.location.href = "/dashboard";
-        }, 1200);
+        }, 1100);
       }
     },
     onError: (error: any) => {
@@ -106,10 +110,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Mostrar loading screen imediatamente
-    setShowLoadingScreen(true);
-    setLoadingProgress(10);
-
+    // Não mostrar loading imediatamente, aguardar sucesso da autenticação
     loginMutation.mutate(loginData);
   };
 

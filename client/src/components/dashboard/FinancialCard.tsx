@@ -77,17 +77,6 @@ export function FinancialCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Botões de Ação - Responsivos */}
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <Button size="sm" variant="outline" className="flex-1 text-xs">
-            <Receipt className="h-3 w-3 mr-1" />
-            Cobrança
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1 text-xs">
-            <BarChart3 className="h-3 w-3 mr-1" />
-            Relatório
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

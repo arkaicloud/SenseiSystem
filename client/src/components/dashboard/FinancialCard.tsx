@@ -68,8 +68,6 @@ export function FinancialCard() {
 
   return (
     <Card>
-      <CardContent className="space-y-4">
-      </CardContent>
     </Card>
   );
 }

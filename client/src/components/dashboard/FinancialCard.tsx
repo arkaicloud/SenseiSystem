@@ -74,23 +74,6 @@ export function FinancialCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Ticket Médio */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Ticket Médio</span>
-            <Badge variant="outline" className="text-xs">
-              {stats.payingStudentsCount || 0} pagantes
-            </Badge>
-          </div>
-          <div className="text-xl font-semibold text-blue-600">
-            {centsToBRL(stats.averageTicket || 0)}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Valor médio por aluno com pagamento confirmado
-          </div>
-        </div>
-
-
         {/* Taxa de Inadimplência */}
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">

@@ -1,0 +1,212 @@
+Corrigir “duplo loading” e tela branca (SenseiSystem)
+Objetivo
+
+Remover a tela branca e o segundo loading dentro do Dashboard.
+
+Exibir apenas um loading full-screen antes do layout montar.
+
+Ao finalizar o boot, montar AppLayout + Sidebar + Dashboard já com dados prefetchados (sem flicker).
+
+Se algum card ainda precisar carregar, usar skeletons, não um segundo loader em card grande.
+
+Estratégia
+
+Subir o guard para a raiz das rotas: enquanto useBootLoader() estiver ativo, renderizamos só AppLoadingScreen. Quando terminar, montamos AppLayout e as páginas.
+
+Prefetch no useBootLoader() das mesmas queries que o Dashboard usa (ex.: ["me"], ["dashboardSummary"]), com staleTime para evitar refetch imediato.
+
+Desligar “loaders internos” do Dashboard (retornos condicionais que mostram spinner/cartão de loading). Em vez disso, mostrar skeletons apenas se não houver dados no cache.
+
+Evitar “return null” em qualquer camada intermediária. Sempre renderizar ou o AppLoadingScreen ou o layout/página.
+
+Config React Query nos hooks do Dashboard: refetchOnMount: false, refetchOnWindowFocus: false, staleTime > 30s.
+
+1) Guard raiz de rotas (elimina tela branca + duplo loading)
+
+Atualize o arquivo de rotas para que o guard englobe AppLayout + Outlet. Remova qualquer verificação de loading no AppLayout.
+
+// src/routes/index.tsx
+import { Route, Routes, Navigate, Outlet } from "react-router-dom";
+import AppLayout from "@/components/layout/AppLayout";
+import AppLoadingScreen from "@/components/loading/AppLoadingScreen";
+import { useBootLoader } from "@/hooks/useBootLoader";
+import { useAuth } from "@/stores/auth";
+import Dashboard from "@/pages/Dashboard";
+
+function RootGuard() {
+  const { isBooting, progress } = useBootLoader();
+  const { isAuthenticated } = useAuth();
+
+  if (isBooting) return <AppLoadingScreen progress={progress} />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  // Só monta o layout quando o boot acabou
+  return (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  );
+}
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<YourLoginPage />} />
+      <Route element={<RootGuard />}>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        {/* demais rotas autenticadas */}
+      </Route>
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
+
+Importante: Garanta que não existe nenhum outro “guard” ou return null no AppLayout ou no Dashboard que possa reintroduzir a tela branca.
+
+2) Prefetch real no boot (usa React Query para evitar refetch)
+
+Atualize o hook para preencher o cache das queries que o Dashboard consome.
+
+// src/hooks/useBootLoader.ts
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { resolveSession } from "@/services/auth";
+import { api } from "@/services/api"; // implemente api.me e api.dashboardSummary
+
+export function useBootLoader() {
+  const [isBooting, setIsBooting] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    let canceled = false;
+    (async () => {
+      try {
+        setProgress(10);
+        await resolveSession(); // valida token/usuário
+        if (canceled) return;
+
+        setProgress(40);
+        // Prefetch das MESMAS chaves usadas no Dashboard
+        await Promise.all([
+          qc.prefetchQuery({
+            queryKey: ["me"],
+            queryFn: api.me,
+            staleTime: 60_000,
+          }),
+          qc.prefetchQuery({
+            queryKey: ["dashboardSummary"],
+            queryFn: api.dashboardSummary,
+            staleTime: 30_000,
+          }),
+        ]);
+
+        setProgress(90);
+        // trava mínima pra evitar flash
+        await new Promise(r => setTimeout(r, 600));
+        setProgress(100);
+      } finally {
+        if (!canceled) setIsBooting(false);
+      }
+    })();
+
+    return () => { canceled = true; };
+  }, [qc]);
+
+  return { isBooting, progress };
+}
+
+3) Remover loaders internos e usar skeletons
+
+Abra o Dashboard.tsx e remova qualquer trecho do tipo:
+
+// ❌ NÃO FAÇA ISSO:
+if (isLoading) return <BigLoaderInsidePage />;
+
+
+Use as mesmas keys do prefetch e configure para não refetchar ao montar.
+Mostre skeletons somente se não houver data (primeiro render sem cache).
+
+// src/pages/Dashboard.tsx
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/services/api";
+import { DashboardSkeleton } from "./DashboardSkeleton";
+
+export default function Dashboard() {
+  const { data: me } = useQuery({
+    queryKey: ["me"],
+    queryFn: api.me,
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: summary, isFetching } = useQuery({
+    queryKey: ["dashboardSummary"],
+    queryFn: api.dashboardSummary,
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Se ainda não tem dados (1º render sem cache), usa skeleton
+  if (!summary) return <DashboardSkeleton />;
+
+  // Com dados do cache (prefetch), renderiza direto o conteúdo
+  return (
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold">Bem-vindo, {me?.name || "Administrador"}!</h1>
+      <YourCards data={summary} isRefreshing={isFetching} />
+      {/* ... */}
+    </div>
+  );
+}
+
+
+Opcional: dentro de YourCards, se isRefreshing for true, aplique skeletons parciais (shimmer) nos números — sem substituir tudo por outro loader.
+
+4) AppLayout sem lógica de loading
+
+Garanta que o AppLayout não verifica auth/loading. Ele apenas renderiza o Sidebar + Header + Main. Nada de return null.
+
+// src/components/layout/AppLayout.tsx
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
+      <Sidebar />
+      <main className="flex-1 p-4 md:p-6">{children}</main>
+    </div>
+  );
+}
+
+5) Varredura de segurança (evitar regressão)
+
+Buscar por AppLoadingScreen no projeto: deve aparecer só no guard raiz.
+
+Buscar por return null em páginas/layouts: troque por skeletons ou conteúdo de fallback visível.
+
+Desativar loaders de página que dupliquem o comportamento do guard.
+
+StrictMode: nosso useBootLoader já é idempotente; sem side effects duplicados.
+
+Critérios de Aceite
+
+ Ao logar, aparece um loading full-screen.
+
+ Ao terminar o boot, o layout inteiro (Sidebar + Header + Dashboard) aparece direto, sem tela branca e sem novo loader grande.
+
+ Dashboard usa dados do cache (prefetch) no primeiro paint; no máximo skeletons parciais enquanto “refresca”.
+
+ Sem return null intermediário.
+
+ refetchOnMount desabilitado para as queries prefetchadas.
+
+Observações
+
+Se você não usa React Query, substitua o prefetch por gravação em um store global (Zustand) durante o boot (ex.: setMe(), setSummary()), e no Dashboard apenas consuma do store — sem loaders.
+
+Caso use Suspense, mantenha um único <Suspense fallback={<AppLoadingScreen />}> no nível raiz, nunca dentro do Dashboard.
+
+Implementar exatamente como acima. O resultado deve eliminar o “loading dentro do Dashboard” e o “flash de tela branca”, mantendo uma transição única, suave e previsível do boot para o layout.

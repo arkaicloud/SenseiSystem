@@ -4,7 +4,6 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import MainLayout from "@/components/layouts/MainLayout";
 import Dashboard from "@/pages/dashboard/index";
 import Students from "@/pages/students";
 import PendingUsers from "@/pages/pending-users";
@@ -32,6 +31,7 @@ import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PendingRouteGuard } from "@/lib/pending-route-guard";
+import { RootGuard } from "@/components/guards/RootGuard";
 
 function Router() {
   return (
@@ -139,9 +139,9 @@ function App() {
               <div className="w-full h-full min-h-screen m-0 p-0">
                 <Toaster />
                 <PendingRouteGuard>
-                  <MainLayout>
+                  <RootGuard>
                     <Router />
-                  </MainLayout>
+                  </RootGuard>
                 </PendingRouteGuard>
               </div>
             </ThemeProvider>

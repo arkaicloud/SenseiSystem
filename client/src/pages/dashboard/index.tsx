@@ -15,7 +15,7 @@ export default function DashboardPage() {
   // No auth check needed - handled by ProtectedRoute
   
   if (!user) {
-    return null; // Fallback, should not happen due to guards
+    return <div className="min-h-screen bg-slate-950" />; // Fallback skeleton, should not happen due to guards
   }
   
   // Render different dashboard based on user role

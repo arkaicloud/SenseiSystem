@@ -74,25 +74,6 @@ export function FinancialCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Taxa de Inadimplência */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Taxa de inadimplência</span>
-            <span className="font-medium">{defaultRate.toFixed(1)}%</span>
-          </div>
-          
-          {/* Barra de progresso */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                defaultRate > 15 ? 'bg-red-500' : 
-                defaultRate > 8 ? 'bg-orange-500' : 'bg-blue-500'
-              }`}
-              style={{ width: `${Math.min(defaultRate, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-
         {/* Botões de Ação - Responsivos */}
         <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button size="sm" variant="outline" className="flex-1 text-xs">

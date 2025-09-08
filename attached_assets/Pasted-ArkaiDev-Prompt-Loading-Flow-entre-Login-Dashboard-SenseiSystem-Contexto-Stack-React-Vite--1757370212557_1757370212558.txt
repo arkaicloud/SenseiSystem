@@ -1,0 +1,251 @@
+ArkaiDev Prompt — Loading Flow entre Login → Dashboard (SenseiSystem)
+Contexto
+
+Stack: React + Vite + React Router + Tailwind CSS + (opcional) React Query/Zustand para estado de autenticação.
+
+Problema atual: Após login, a UI fica tela branca por alguns segundos até o Dashboard montar.
+
+Objetivo: Exibir um Loading Screen moderno (logo/ícone, micro-animação + frases rotativas sobre artes marciais) durante:
+
+validação do token/usuário
+
+pré-carregamento mínimo do Dashboard (ex.: perfil, permissões, contadores iniciais)
+
+montagem do layout
+
+Entrega esperada
+
+Novo componente AppLoadingScreen.tsx com:
+
+Logo/ícone do SenseiSystem (ou fallback com “SS”/emoji 🥋).
+
+Micro-animação (Framer Motion) + “pulse” do Tailwind.
+
+Frases rotativas de mestres das artes marciais (lista fornecida abaixo).
+
+A11y: role="status", aria-live="polite", foco gestionado.
+
+Hook de estado de boot useBootLoader():
+
+Aguarda auth.resolveSession() + prefetchDashboard() (mínimo viável).
+
+Expõe { isBooting, progress, quote }.
+
+Rota/guard: proteger /dashboard com AuthGuard:
+
+Enquanto isBooting === true, renderizar AppLoadingScreen.
+
+Em erro de sessão → redirecionar para /login.
+
+Skeletons no Dashboard (cards/tabelas) para transição suave pós-loading.
+
+Barra de progresso no topo (opcional) com CSS puro (sem libs pesadas).
+
+Teste manual: login válido → nunca ver tela branca; fluxo 3G lento simulado deve manter loading até o layout estar pronto.
+
+Regras de UX
+
+Loading mín. 600ms (evita flash) e máx. 10s (então mostra mensagem “quase lá…”).
+
+Rotacionar uma nova frase a cada 2,5–3s (ou ao atingir 25%/50%/75% do progress).
+
+Responsivo mobile-first; fundo com gradiente suave; alto contraste (modo dark ok).
+
+Não travar a thread: animações leves; nada que exija request extra só para animar.
+
+Passos (técnicos)
+
+Criar src/components/loading/AppLoadingScreen.tsx
+
+Criar src/hooks/useBootLoader.ts
+
+Criar src/services/prefetch.ts com prefetchDashboard() simulando batidas essenciais (perfil/metricas).
+
+Atualizar rotas em src/routes/index.tsx (ou onde estiver) adicionando AuthGuard.
+
+Adicionar skeletons no Dashboard (ex.: DashboardSkeleton.tsx).
+
+Adicionar barra de progresso CSS (opcional) em AppLoadingScreen.
+
+Especificações de implementação
+a) Frases (use esta lista inicial)
+export const MARTIAL_QUOTES = [
+  "A suprema arte da guerra é derrotar o inimigo sem lutar. — Sun Tzu",
+  "Não temo o homem que praticou 10.000 chutes uma vez, mas o que praticou um chute 10.000 vezes. — Bruce Lee",
+  "Cair sete vezes, levantar oito. — Provérbio japonês",
+  "A rapidez e a técnica vencem a força bruta. — Jigoro Kano",
+  "A verdadeira vitória é sobre si mesmo. — Morihei Ueshiba",
+  "Disciplina é a ponte entre metas e conquistas. — Jim Rohn",
+  "Treine duro, lute fácil. — Ditado do dojo",
+];
+
+b) Componente AppLoadingScreen.tsx (exemplo)
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { MARTIAL_QUOTES } from "@/constants/quotes";
+
+type Props = { progress?: number; };
+
+export default function AppLoadingScreen({ progress = 0 }: Props) {
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const i = setInterval(() => setIdx(v => (v + 1) % MARTIAL_QUOTES.length), 2800);
+    return () => clearInterval(i);
+  }, []);
+
+  const quote = useMemo(() => MARTIAL_QUOTES[idx], [idx]);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100 px-6">
+      {/* Logo / Marca */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="mb-8 flex items-center gap-3"
+        role="status" aria-live="polite"
+      >
+        <div className="h-12 w-12 rounded-2xl bg-slate-800/70 backdrop-blur flex items-center justify-center text-2xl">
+          🥋
+        </div>
+        <div className="text-2xl font-semibold tracking-tight">SenseiSystem</div>
+      </motion.div>
+
+      {/* Spinner / Micro animação */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="relative h-16 w-16"
+      >
+        <div className="absolute inset-0 rounded-full border-4 border-slate-700 border-t-slate-200 animate-spin" />
+      </motion.div>
+
+      {/* Barra de progresso */}
+      <div className="mt-6 w-full max-w-md">
+        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-slate-200 transition-[width] duration-300 ease-out"
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
+        <p className="mt-3 text-center text-sm text-slate-300">{Math.round(progress)}%</p>
+      </div>
+
+      {/* Frase rotativa */}
+      <motion.p
+        key={idx}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="mt-6 max-w-xl text-center text-slate-300"
+      >
+        {quote}
+      </motion.p>
+
+      {/* Dica de fallback */}
+      <p className="sr-only">Carregando seu painel. Quase lá…</p>
+    </div>
+  );
+}
+
+c) Hook useBootLoader.ts
+import { useEffect, useState } from "react";
+import { prefetchDashboard } from "@/services/prefetch";
+import { resolveSession } from "@/services/auth"; // implemente conforme seu auth
+
+export function useBootLoader() {
+  const [isBooting, setIsBooting] = useState(true);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let canceled = false;
+
+    (async () => {
+      try {
+        setProgress(10);
+        await resolveSession(); // valida token / busca usuário
+        if (canceled) return;
+
+        setProgress(40);
+        await prefetchDashboard({ onStep: p => setProgress(prev => Math.max(prev, p)) });
+        if (canceled) return;
+
+        // trava mínima de 600ms para não “piscar”
+        await new Promise(r => setTimeout(r, 600));
+        setProgress(100);
+      } finally {
+        if (!canceled) setIsBooting(false);
+      }
+    })();
+
+    return () => { canceled = true; };
+  }, []);
+
+  return { isBooting, progress };
+}
+
+d) Prefetch mínimo services/prefetch.ts
+type PrefetchOpts = { onStep?: (p: number) => void };
+export async function prefetchDashboard(opts?: PrefetchOpts) {
+  const step = (p: number) => opts?.onStep?.(p);
+  // Ex.: pegar perfil e contagens iniciais
+  step(55);
+  await fetch("/api/me", { credentials: "include" });
+  step(75);
+  await fetch("/api/dashboard/summary", { credentials: "include" });
+  step(90);
+}
+
+e) Guard de rota (React Router)
+import { Outlet, Navigate } from "react-router-dom";
+import AppLoadingScreen from "@/components/loading/AppLoadingScreen";
+import { useBootLoader } from "@/hooks/useBootLoader";
+import { useAuth } from "@/stores/auth"; // seu store/context
+
+export function AuthGuard() {
+  const { user, isAuthenticated } = useAuth();
+  const { isBooting, progress } = useBootLoader();
+
+  if (!isAuthenticated && !isBooting) return <Navigate to="/login" replace />;
+  if (isBooting) return <AppLoadingScreen progress={progress} />;
+
+  return <Outlet />;
+}
+
+f) Skeleton do Dashboard (exemplo rápido)
+export function DashboardSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-2xl p-4 bg-slate-900 border border-slate-800">
+          <div className="h-5 w-24 bg-slate-800 rounded mb-3 animate-pulse" />
+          <div className="h-7 w-32 bg-slate-800 rounded animate-pulse" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+Critérios de aceite
+
+ Nunca ver tela branca entre login e dashboard.
+
+ Carregamento exibe animação + frase rotativa + progresso.
+
+ Duração mínima 600ms; se passar de 10s, mostrar mensagem “quase lá…”.
+
+ Dashboard monta com skeletons (nada “pula” bruscamente).
+
+ Acessibilidade válida (sem foco preso, role="status").
+
+ Sem dependências pesadas (somente Framer Motion opcional; se indisponível, use apenas Tailwind animações).
+
+Observações
+
+Se você usa React Query, pode ligar o prefetchQuery no prefetchDashboard para aquecer o cache.
+
+Se usa Next.js no futuro, adaptar para Route Groups + Suspense com loading.tsx.
+
+Implementar exatamente como descrito, mantendo o código limpo, tipado e compatível com a base atual do SenseiSystem.

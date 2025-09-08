@@ -1,15 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
+import { MARTIAL_QUOTES } from "@/constants/quotes";
 
 export function useBootLoader() {
   const [isBooting, setIsBooting] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [quote, setQuote] = useState<string | undefined>(undefined);
   const { user, isLoading } = useAuth();
   const queryClient = useQueryClient();
+  const started = useRef(false);
 
   useEffect(() => {
-    let canceled = false;
+    if (started.current) return; // idempotente para StrictMode
+    started.current = true;
+
+    performance.mark("showOverlay");
 
     (async () => {
       try {
@@ -24,12 +30,11 @@ export function useBootLoader() {
         setProgress(10);
         
         // Aguardar autenticação resolver
-        while (isLoading && !canceled) {
+        while (isLoading && !started.current) {
           await new Promise(r => setTimeout(r, 100));
         }
         
-        if (canceled) return;
-        setProgress(30);
+        setProgress(35);
         
         // Se não está autenticado, não precisa fazer prefetch
         if (!user) {
@@ -37,10 +42,8 @@ export function useBootLoader() {
           return;
         }
         
-        setProgress(40);
-        
-        // Prefetch mais rápido das queries essenciais
-        const prefetchPromises = [
+        // Prefetch de DADOS usados pelo Dashboard
+        await Promise.all([
           queryClient.prefetchQuery({
             queryKey: ['/api/user'],
             queryFn: () => fetch('/api/user').then(res => {
@@ -73,45 +76,38 @@ export function useBootLoader() {
             }),
             staleTime: 30_000,
           }),
-        ];
+        ]);
+        
+        setProgress(65);
 
-        // Executar prefetch com progresso em tempo real
-        await Promise.all(prefetchPromises.map(async (promise, index) => {
-          await promise;
-          if (!canceled) {
-            setProgress(40 + (index + 1) * 15); // 40, 55, 70, 85
-          }
-        }));
-        
-        if (canceled) return;
-        
-        // Aguardar um momento para o React processar os dados
-        await new Promise(r => setTimeout(r, 50));
+        // **Pré-carregar o CHUNK do Dashboard**
+        await import("@/pages/dashboard/index");
+        setProgress(85);
+
+        // delay mínimo para evitar flash
+        await new Promise(r => setTimeout(r, 600));
         setProgress(100);
         
       } catch (error) {
         console.error('Erro no boot loader:', error);
         // Mesmo com erro, continuar para não travar na loading screen
       } finally {
-        if (!canceled) {
-          setIsBooting(false);
-        }
+        setQuote(MARTIAL_QUOTES[Math.floor(Math.random() * MARTIAL_QUOTES.length)]);
+        setIsBooting(false);
+        requestAnimationFrame(() => performance.mark("hideOverlay"));
       }
     })();
 
     // Timeout de segurança para evitar loading infinito
     const timeout = setTimeout(() => {
-      if (!canceled) {
-        console.warn('Boot loader timeout - forçando conclusão');
-        setIsBooting(false);
-      }
+      console.warn('Boot loader timeout - forçando conclusão');
+      setIsBooting(false);
     }, 10000);
 
     return () => { 
-      canceled = true;
       clearTimeout(timeout);
     };
   }, [user, isLoading, queryClient]);
 
-  return { isBooting, progress };
+  return { isBooting, progress, quote };
 }

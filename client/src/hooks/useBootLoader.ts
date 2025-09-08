@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { prefetchDashboard } from "@/services/prefetch";
 import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useBootLoader() {
   const [isBooting, setIsBooting] = useState(true);
   const [progress, setProgress] = useState(0);
   const { user, isLoading } = useAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let canceled = false;
-    let startTime = Date.now();
 
     (async () => {
       try {
@@ -37,34 +37,57 @@ export function useBootLoader() {
           return;
         }
         
-        setProgress(40);
+        setProgress(50);
         
-        // Fazer prefetch dos dados essenciais
-        await prefetchDashboard({ 
-          onStep: (p) => {
-            if (!canceled) {
-              setProgress(prev => Math.max(prev, p));
-            }
-          }
-        });
+        // Prefetch real das mesmas queries que o Dashboard usa
+        await Promise.all([
+          queryClient.prefetchQuery({
+            queryKey: ['/api/user'],
+            queryFn: () => fetch('/api/user').then(res => {
+              if (!res.ok) throw new Error('Failed to fetch user');
+              return res.json();
+            }),
+            staleTime: 60_000,
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ['/api/dashboard/metrics'],
+            queryFn: () => fetch('/api/dashboard/metrics').then(res => {
+              if (!res.ok) throw new Error('Failed to fetch metrics');
+              return res.json();
+            }),
+            staleTime: 30_000,
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ['/api/school-config'],
+            queryFn: () => fetch('/api/school-config').then(res => {
+              if (!res.ok) throw new Error('Failed to fetch school config');
+              return res.json();
+            }),
+            staleTime: 60_000,
+          }),
+          queryClient.prefetchQuery({
+            queryKey: ['/api/financial-stats'],
+            queryFn: () => fetch('/api/financial-stats').then(res => {
+              if (!res.ok) throw new Error('Failed to fetch financial stats');
+              return res.json();
+            }),
+            staleTime: 30_000,
+          }),
+        ]);
         
         if (canceled) return;
+        setProgress(90);
         
-        // Remover duração mínima para transição mais rápida quando vindo do login
-        // const elapsed = Date.now() - startTime;
-        // const minDuration = 600;
-        
-        // if (elapsed < minDuration) {
-        //   await new Promise(r => setTimeout(r, minDuration - elapsed));
-        // }
-        
+        // Pequeno delay para garantir que os dados foram processados
+        await new Promise(r => setTimeout(r, 200));
         setProgress(100);
         
-        // Pequeno delay reduzido para transição mais rápida
-        await new Promise(r => setTimeout(r, 50));
+        // Delay mínimo para evitar flash
+        await new Promise(r => setTimeout(r, 100));
         
       } catch (error) {
         console.error('Erro no boot loader:', error);
+        // Mesmo com erro, continuar para não travar na loading screen
       } finally {
         if (!canceled) {
           setIsBooting(false);
@@ -84,7 +107,7 @@ export function useBootLoader() {
       canceled = true;
       clearTimeout(timeout);
     };
-  }, [user, isLoading]);
+  }, [user, isLoading, queryClient]);
 
   return { isBooting, progress };
 }

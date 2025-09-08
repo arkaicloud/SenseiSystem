@@ -89,17 +89,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return <div className="w-full h-full min-h-screen m-0 p-0">{children}</div>;
   }
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center w-full h-full min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 m-0 p-0">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-white mx-auto mb-4" />
-          <p className="text-slate-300 dark:text-slate-400">{t('loading')}</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove loading check - handled by RootGuard now
 
   // Get user initials for avatar if authenticated
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";

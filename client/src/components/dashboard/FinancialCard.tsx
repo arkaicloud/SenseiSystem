@@ -21,6 +21,9 @@ import { centsToBRL } from "@shared/money";
 export function FinancialCard() {
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['/api/financial-stats'],
+    staleTime: 30_000, // 30 seconds
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     refetchInterval: 300000, // 5 minutes
   });
 

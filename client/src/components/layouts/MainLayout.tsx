@@ -86,7 +86,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const isPublicRoute = publicRoutes.some(route => location === route || location.startsWith(route));
   
   if (isAuthPage || isPublicRoute || !user) {
-    return <div className="w-full h-full min-h-screen m-0 p-0">{children}</div>;
+    return <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">{children}</div>;
   }
 
   // Remove loading check - handled by RootGuard now

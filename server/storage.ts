@@ -55,6 +55,24 @@ import {
   insertDailyLoginRecordSchema,
   insertBeltLevelSchema,
   insertContaReceberSchema,
+  type InsertUser,
+  type InsertStudent,
+  type InsertSchoolEvent,
+  type InsertClass,
+  type InsertAttendance,
+  type InsertAttendanceChanges,
+  type InsertPaymentPlan,
+  type InsertStudentPayment,
+  type InsertActivityLog,
+  type InsertSchoolPayment,
+  type InsertDashboardCustomization,
+  type InsertRiskAction,
+  type InsertRiskSettings,
+  type InsertStreakAchievement,
+  type InsertDailyLoginRecord,
+  type InsertBeltLevel,
+  type InsertContaReceber,
+  attendanceChanges,
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, or, gt, isNull, lt, asc, sql } from "drizzle-orm";
 
@@ -300,7 +318,15 @@ export class MemStorage implements IStorage {
       state: null,
       zipCode: null,
       joinDate: new Date(),
-      active: true
+      active: true,
+      cpf: null,
+      rg: null,
+      emergencyPhone: null,
+      status: 'active',
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLoginDate: null,
+      totalLogins: 0
     };
     this.users.set(adminUser.id, adminUser);
 
@@ -324,7 +350,15 @@ export class MemStorage implements IStorage {
       state: null,
       zipCode: null,
       joinDate: new Date(),
-      active: true
+      active: true,
+      cpf: null,
+      rg: null,
+      emergencyPhone: null,
+      status: 'active',
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLoginDate: null,
+      totalLogins: 0
     };
     this.users.set(instructorUser.id, instructorUser);
 
@@ -334,7 +368,8 @@ export class MemStorage implements IStorage {
       name: "Individual",
       amount: 11000, // R$ 110.00
       frequency: "monthly",
-      description: "Plano individual - aulas ilimitadas"
+      description: "Plano individual - aulas ilimitadas",
+      isScholarship: false
     };
     this.paymentPlans.set(individualPlan.id, individualPlan);
 
@@ -343,7 +378,8 @@ export class MemStorage implements IStorage {
       name: "Familiar",
       amount: 22000, // R$ 220.00
       frequency: "monthly",
-      description: "Plano familiar - aulas ilimitadas para a família"
+      description: "Plano familiar - aulas ilimitadas para a família",
+      isScholarship: false
     };
     this.paymentPlans.set(familyPlan.id, familyPlan);
 
@@ -356,7 +392,8 @@ export class MemStorage implements IStorage {
       dayOfWeek: 2, // Tuesday
       startTime: "18:00", // 6:00 PM
       duration: 60,
-      maxCapacity: 20
+      maxCapacity: 20,
+      maxStudents: 20
     };
     this.classes.set(fundamentalsClass.id, fundamentalsClass);
 
@@ -368,7 +405,8 @@ export class MemStorage implements IStorage {
       dayOfWeek: 2, // Tuesday
       startTime: "19:30", // 7:30 PM
       duration: 90,
-      maxCapacity: 15
+      maxCapacity: 15,
+      maxStudents: 15
     };
     this.classes.set(advancedClass.id, advancedClass);
   }

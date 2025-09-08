@@ -1,7 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { useBootLoader } from "@/hooks/useBootLoader";
 import { Redirect, Route } from "wouter";
-import AppLoadingScreen from "@/components/loading/AppLoadingScreen";
 
 type AllowedRoles = "admin" | "instructor" | "student" | "any";
 
@@ -16,17 +14,7 @@ export function ProtectedRoute({
   component: Component,
   allowedRoles = ["any"]
 }: ProtectedRouteProps) {
-  const { user, isLoading: authLoading } = useAuth();
-  const { isBooting, progress } = useBootLoader();
-
-  // Show modern loading screen during authentication or boot
-  if (authLoading || isBooting) {
-    return (
-      <Route path={path}>
-        <AppLoadingScreen progress={progress} />
-      </Route>
-    );
-  }
+  const { user } = useAuth();
 
   // Redirect to login page if not authenticated
   if (!user) {

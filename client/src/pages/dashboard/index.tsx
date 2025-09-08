@@ -8,27 +8,14 @@ import InstructorDashboard from './instructor';
 import StudentDashboardNew from './StudentDashboardNew';
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslations();
-  const [_, navigate] = useLocation();
   
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/login');
-    }
-  }, [isLoading, user, navigate]);
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900">
-        <div className="text-white text-xl">{t('common.loading')}</div>
-      </div>
-    );
-  }
+  // No loading check needed - handled by RootGuard
+  // No auth check needed - handled by ProtectedRoute
   
   if (!user) {
-    return null; // Will redirect to login
+    return null; // Fallback, should not happen due to guards
   }
   
   // Render different dashboard based on user role

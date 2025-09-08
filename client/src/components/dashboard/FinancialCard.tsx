@@ -90,28 +90,6 @@ export function FinancialCard() {
           </div>
         </div>
 
-        {/* Variação de Receita */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Variação de Receita</span>
-            {(stats.revenueVariation || 0) > 0 ? (
-              <TrendingUp className="h-3 w-3 text-green-500" />
-            ) : (stats.revenueVariation || 0) < 0 ? (
-              <TrendingUp className="h-3 w-3 text-red-500 rotate-180" />
-            ) : (
-              <BarChart3 className="h-3 w-3 text-yellow-500" />
-            )}
-          </div>
-          <div className={`text-lg font-semibold ${
-            (stats.revenueVariation || 0) > 0 ? 'text-green-600' :
-            (stats.revenueVariation || 0) < 0 ? 'text-red-600' : 'text-yellow-600'
-          }`}>
-            {(stats.revenueVariation || 0) > 0 ? '+' : ''}{(stats.revenueVariation || 0).toFixed(1)}%
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Comparado ao mês anterior
-          </div>
-        </div>
 
         {/* Taxa de Inadimplência */}
         <div className="space-y-3">

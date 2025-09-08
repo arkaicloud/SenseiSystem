@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +27,18 @@ const ONBOARDING_CACHE_KEY = "senseisystem_onboarding_cache";
 const ONBOARDING_STEP_KEY = "senseisystem_onboarding_step";
 
 export default function OnboardingPage() {
+  const { toast } = useToast();
+
+  // Fetch school configuration
+  const { data: schoolConfig } = useQuery<{
+    config: {
+      schoolName: string;
+    };
+  }>({
+    queryKey: ['/api/school-config'],
+    retry: false,
+  });
+
   // Função para limpar cache ao inicializar
   const clearCacheOnInit = () => {
     try {
@@ -58,7 +70,6 @@ export default function OnboardingPage() {
   const [success, setSuccess] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [registrationError, setRegistrationError] = useState<string>("");
-  const { toast } = useToast();
 
   // Student registration mutation
   const { mutate: registerStudent, isPending: isSubmitting, error } = useMutation({
@@ -225,16 +236,21 @@ export default function OnboardingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-primary">Matrícula SenseiSystem</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-primary">
+                Matrícula {schoolConfig?.config?.schoolName || "SenseiSystem"}
+              </h1>
               <p className="text-xs sm:text-sm text-muted-foreground">Complete sua inscrição em apenas 3 etapas</p>
             </div>
-            <button 
-              onClick={() => window.close()} 
-              className="text-muted-foreground hover:text-foreground"
-              title="Fechar"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => window.location.href = '/'}
+                className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors"
+                title="Voltar ao Login"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm hidden sm:inline">Voltar ao Login</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>

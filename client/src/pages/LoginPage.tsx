@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import AppLoadingScreen from "@/components/loading/AppLoadingScreen";
 
 // Types
 interface SchoolConfig {
@@ -33,6 +34,8 @@ export default function LoginPage() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Fetch school configuration
   const { data: schoolConfig } = useQuery<SchoolConfig>({
@@ -71,21 +74,25 @@ export default function LoginPage() {
     },
     onSuccess: (data) => {
       if (data.user) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${data.user.firstName}!`,
-        });
-        
-        // Store auth token and redirect
+        // Store auth token
         localStorage.setItem('token', 'authenticated');
         
-        // Use setTimeout to allow toast to show before redirect
+        // Simular progresso de loading
+        setLoadingProgress(30);
+        setTimeout(() => setLoadingProgress(50), 200);
+        setTimeout(() => setLoadingProgress(70), 400);
+        setTimeout(() => setLoadingProgress(85), 600);
+        setTimeout(() => setLoadingProgress(100), 800);
+        
+        // Redirect after loading simulation
         setTimeout(() => {
           window.location.href = "/dashboard";
-        }, 1000);
+        }, 1200);
       }
     },
     onError: (error: any) => {
+      setShowLoadingScreen(false);
+      setLoadingProgress(0);
       setError(error.message || "Email ou senha incorretos");
     },
   });
@@ -98,6 +105,10 @@ export default function LoginPage() {
       setError("Por favor, preencha todos os campos");
       return;
     }
+
+    // Mostrar loading screen imediatamente
+    setShowLoadingScreen(true);
+    setLoadingProgress(10);
 
     loginMutation.mutate(loginData);
   };
@@ -154,6 +165,11 @@ export default function LoginPage() {
     }
     return numbers;
   };
+
+  // Mostrar tela de loading se estiver em processo de login
+  if (showLoadingScreen) {
+    return <AppLoadingScreen progress={loadingProgress} />;
+  }
 
   return (
     <div className="w-full h-full min-h-screen min-w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 m-0 p-0">

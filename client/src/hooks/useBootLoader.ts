@@ -13,6 +13,14 @@ export function useBootLoader() {
 
     (async () => {
       try {
+        // Se vem do login, não mostrar loading (evitar loading duplo)
+        const fromLogin = localStorage.getItem('fromLogin');
+        if (fromLogin) {
+          localStorage.removeItem('fromLogin');
+          setIsBooting(false);
+          return;
+        }
+
         setProgress(10);
         
         // Aguardar autenticação resolver

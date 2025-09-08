@@ -77,6 +77,9 @@ export default function LoginPage() {
         // Store auth token
         localStorage.setItem('token', 'authenticated');
         
+        // Marcar que vem do login para evitar loading duplo
+        localStorage.setItem('fromLogin', 'true');
+        
         // Mostrar loading screen apenas após sucesso da autenticação
         setShowLoadingScreen(true);
         setLoadingProgress(10);

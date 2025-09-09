@@ -1170,8 +1170,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Payment plan is required for student approval" });
       }
 
-      // Activate the user
-      const updatedUser = await storage.updateUser(user.id, { active: true });
+      // Activate the user and set status to active
+      const updatedUser = await storage.updateUser(user.id, { 
+        active: true, 
+        status: 'active' 
+      });
 
       // If it's a student, create a student payment and ASAAS integration
       if (user.role === 'student' && planId) {

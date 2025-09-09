@@ -45,10 +45,6 @@ export class DashboardMetricsService {
     return metrics;
   }
 
-  async refreshCache(): Promise<DashboardMetrics> {
-    this.clearCache();
-    return await this.getMetrics();
-  }
 
   private async calculateMetrics(): Promise<DashboardMetrics> {
     const now = new Date();
@@ -215,10 +211,6 @@ export class DashboardMetricsService {
     }
   }
 
-  async refreshCache(): Promise<DashboardMetrics> {
-    this.clearCache();
-    return await this.getMetrics();
-  }
 }
 
 // Export singleton instance

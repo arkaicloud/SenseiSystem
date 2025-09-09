@@ -1004,7 +1004,7 @@ export default function StudentEditDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {[5, 10, 15, 20, 25, 30].map((day) => (
+                              {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                                 <SelectItem key={day} value={day.toString()}>
                                   Dia {day}
                                 </SelectItem>

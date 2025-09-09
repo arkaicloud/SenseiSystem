@@ -1788,12 +1788,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           beltLevel: student.beltLevel,
           graduationDate: student.lastPromotionDate
         },
-        // Dados do questionário de saúde
-        healthQuestionnaireCompletedAt: student.healthQuestionnaireCompletedAt,
-        agreedToHealthTerms: student.agreedToHealthTerms,
-        healthTermsAgreedAt: student.healthTermsAgreedAt,
-        requiresMedicalCertificate: student.requiresMedicalCertificate,
-        medicalCertificateStatus: student.medicalCertificateStatus,
+        // Dados do questionário de saúde (acessando campos em snake_case do banco)
+        healthQuestionnaireCompletedAt: (student as any).health_questionnaire_completed_at,
+        agreedToHealthTerms: (student as any).agreed_to_health_terms,
+        healthTermsAgreedAt: (student as any).health_terms_agreed_at,
+        requiresMedicalCertificate: (student as any).requires_medical_certificate,
+        medicalCertificateStatus: (student as any).medical_certificate_status,
         financialResponsible: {
           relation: student.financialResponsibleRelation || null
         },

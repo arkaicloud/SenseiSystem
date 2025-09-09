@@ -3,12 +3,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { BeltWithLabel } from "@/components/ui/belt";
-import StudentForm from "@/components/students/StudentForm";
 import StudentEditDialog from "@/components/students/StudentEditDialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -27,7 +25,6 @@ const Students: React.FC = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
 
@@ -50,7 +47,8 @@ const Students: React.FC = () => {
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedStudent(student);
+                setStudentToEdit(student);
+                setIsEditStudentOpen(true);
               }}
             >
               <Eye className="mr-2 h-4 w-4" />
@@ -116,7 +114,8 @@ const Students: React.FC = () => {
           title="Ver perfil completo"
           onClick={(e) => {
             e.stopPropagation();
-            setSelectedStudent(student);
+            setStudentToEdit(student);
+            setIsEditStudentOpen(true);
           }}
         >
           <span className="material-icons text-blue-500 text-sm">visibility</span>
@@ -227,7 +226,6 @@ const Students: React.FC = () => {
         title: "Sucesso",
         description: "Aluno atualizado com sucesso",
       });
-      setSelectedStudent(null);
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
     },
     onError: (error) => {
@@ -494,7 +492,7 @@ const Students: React.FC = () => {
                   </thead>
                   <tbody>
                     {getFilteredStudents("all").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => setSelectedStudent(student) : undefined}>
+                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}>
                         {isMobile && (
                           <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                             <StudentActions student={student} isMobile={true} />
@@ -665,7 +663,7 @@ const Students: React.FC = () => {
                   </thead>
                   <tbody>
                     {getFilteredStudents("inactive").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => setSelectedStudent(student) : undefined}>
+                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}>
                         {isMobile && (
                           <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                             <StudentActions student={student} isMobile={true} />
@@ -768,29 +766,6 @@ const Students: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-      {/* View Student Dialog */}
-      {selectedStudent && (
-        <Dialog open={true} onOpenChange={(open) => !open && setSelectedStudent(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Visualizar Aluno</DialogTitle>
-            <StudentForm 
-              defaultValues={{
-                firstName: selectedStudent.user.firstName,
-                lastName: selectedStudent.user.lastName,
-                email: selectedStudent.user.email,
-                username: selectedStudent.user.username,
-                beltLevel: selectedStudent.beltLevel,
-                stripes: selectedStudent.stripes,
-                emergencyContact: selectedStudent.user.emergencyContact || '',
-                notes: selectedStudent.notes || '',
-                phone: selectedStudent.user.phone || '',
-              }}
-              onSubmit={handleUpdateStudent}
-              isLoading={isUpdatingStudent}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Edit Student Dialog - New Complete Interface */}
       {studentToEdit && (

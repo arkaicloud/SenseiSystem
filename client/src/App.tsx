@@ -11,7 +11,7 @@ import StudentsAtRisk from "@/pages/students-at-risk";
 import AsaasPayments from "@/pages/asaas-payments";
 import FinancialDashboard from "@/pages/financial-dashboard";
 import Classes from "@/pages/classes";
-import Attendance from "@/pages/attendance";
+import NewAttendance from "@/pages/new-attendance";
 import Payments from "@/pages/payments";
 import PaymentPlans from "@/pages/payment-plans";
 import Reports from "@/pages/reports";
@@ -71,7 +71,8 @@ function Router() {
       />
       <ProtectedRoute
         path="/attendance"
-        component={() => <Attendance />}
+        component={() => <NewAttendance />}
+        allowedRoles={["admin", "instructor"]}
       />
       <ProtectedRoute
         path="/classes"

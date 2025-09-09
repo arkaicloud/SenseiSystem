@@ -223,7 +223,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
-              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
+              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">
                 {user?.firstName} {user?.lastName}
               </span>
             </div>

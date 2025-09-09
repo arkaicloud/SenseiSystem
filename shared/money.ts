@@ -59,6 +59,18 @@ export function centsToBRL(cents: number): string {
 }
 
 /**
+ * Formats any number as BRL currency
+ * @param amount - amount in reais (e.g., 110.50)
+ * @returns formatted string (e.g., "R$ 110,50")
+ */
+export function formatBRL(amount: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(amount);
+}
+
+/**
  * Formats BRL input for better UX (optional)
  * @param value - current input value
  * @returns formatted input value

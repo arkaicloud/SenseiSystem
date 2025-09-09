@@ -1001,7 +1001,10 @@ export default function StudentEditDialog({
                               {paymentPlans.length > 0 ? (
                                 paymentPlans.map((plan: any) => (
                                   <SelectItem key={plan.id} value={plan.id.toString()}>
-                                    {plan.name} - R$ {(plan.amount / 100).toFixed(2)}
+                                    {plan.name} - {new Intl.NumberFormat('pt-BR', {
+                                      style: 'currency',
+                                      currency: 'BRL'
+                                    }).format(plan.amount / 100)}
                                   </SelectItem>
                                 ))
                               ) : (

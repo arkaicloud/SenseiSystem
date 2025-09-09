@@ -204,7 +204,10 @@ export default function PaymentPanel() {
                     </span>
                     <span className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
-                      R$ {(payment.value / 100).toFixed(2)}
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(payment.value / 100)}
                     </span>
                   </CardDescription>
                 </div>

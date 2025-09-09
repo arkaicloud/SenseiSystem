@@ -1,0 +1,359 @@
+Dashboard 100% funcional (SenseiSystem)
+Contexto
+
+Stack: React 18 + TS + Vite + Tailwind + React Query
+
+Backend: Node + Express + TS
+
+DB: Postgres (Neon) + Drizzle ORM
+
+Tabelas: users, students, classes, attendance, student_payments
+
+Requisito: Fonte única /api/dashboard/metrics (sem loaders duplicados).
+
+Renomear card “Alunos em Risco” → “Engajamento em Baixa” (mesma métrica).
+
+1) Types & esquema de resposta (compartilhado)
+// shared/schemas/dashboard.ts
+import { z } from "zod";
+
+export const DashboardSchema = z.object({
+  generatedAt: z.string(),
+  period: z.object({
+    type: z.enum(["month"]),
+    from: z.string(),
+    to: z.string()
+  }),
+  metrics: z.object({
+    activeStudents: z.number().int().nonnegative(),
+    classesHeld: z.number().int().nonnegative(),          // Aulas realizadas (mês)
+    attendanceRate: z.number().min(0).max(1),             // 0..1
+    monthlyRevenue: z.number().int().nonnegative(),       // centavos
+    lowEngagement: z.number().int().nonnegative(),        // Engajamento em baixa
+    delinquency: z.number().int().nonnegative(),          // Inadimplência (títulos vencidos)
+    pendingApprovals: z.number().int().nonnegative(),     // se já existir
+  }),
+  today: z.object({
+    classes: z.array(z.object({
+      id: z.number(),
+      name: z.string(),
+      start_time: z.string(), // "HH:mm"
+      duration: z.number().int().nonnegative()
+    })),
+    birthdays: z.array(z.object({
+      user_id: z.number(),
+      name: z.string(),
+      birth_date: z.string(),
+    }))
+  }),
+  belts: z.object({
+    adult: z.record(z.string(), z.number().int().nonnegative()),
+    kids:  z.record(z.string(), z.number().int().nonnegative())
+  })
+});
+
+export type DashboardDTO = z.infer<typeof DashboardSchema>;
+
+2) Service (Drizzle/SQL) — fonte de verdade
+// server/services/dashboardMetrics.ts
+import { db } from "../db";
+import { sql } from "drizzle-orm";
+import { startOfMonth, endOfMonth } from "date-fns";
+
+export async function getDashboardMetrics(tenantId: string, now = new Date()) {
+  const from = startOfMonth(now);
+  const to   = endOfMonth(now);
+
+  // 1) Alunos ativos
+  const [{ count: activeStudents }] = await db.execute<{count:number}>(sql`
+    SELECT COUNT(*)::int AS count
+    FROM students s
+    JOIN users u ON u.id = s.user_id
+    WHERE u.active = true
+      AND u.status = 'active'
+      AND u.role = 'student'
+      AND u.tenant_id = ${tenantId};
+  `);
+
+  // 2) Aulas realizadas (mês): sessões com presença (present/late) — proxy de realização
+  const [{ count: classesHeld }] = await db.execute<{count:number}>(sql`
+    SELECT COUNT(DISTINCT (a.class_id, DATE(a.date)))::int AS count
+    FROM attendance a
+    JOIN students s ON s.id = a.student_id
+    JOIN users u ON u.id = s.user_id
+    WHERE a.status IN ('present','late')
+      AND a.date BETWEEN ${from} AND ${to}
+      AND u.tenant_id = ${tenantId};
+  `);
+
+  // 3) Taxa de presença (mês) = presenças / (presenças + faltas)
+  const [{ rate }] = await db.execute<{rate:number}>(sql`
+    WITH m AS (
+      SELECT a.status
+      FROM attendance a
+      JOIN students s ON s.id = a.student_id
+      JOIN users u ON u.id = s.user_id
+      WHERE a.date BETWEEN ${from} AND ${to}
+        AND u.tenant_id = ${tenantId}
+    )
+    SELECT CASE WHEN COUNT(*)=0 THEN 0
+      ELSE SUM(CASE WHEN status IN ('present','late') THEN 1 ELSE 0 END)::float / COUNT(*)::float
+    END AS rate
+    FROM m;
+  `);
+
+  // 4) Receita mensal (centavos) — pagos no mês
+  const [{ cents: monthlyRevenue }] = await db.execute<{cents:number}>(sql`
+    SELECT COALESCE(SUM(sp.amount),0)::int AS cents
+    FROM student_payments sp
+    JOIN students s ON s.id = sp.student_id
+    JOIN users u ON u.id = s.user_id
+    WHERE sp.status = 'paid'
+      AND sp.paid_date BETWEEN ${from} AND ${to}
+      AND u.tenant_id = ${tenantId};
+  `);
+
+  // 5) Engajamento em baixa (alunos sem presença > X dias) — renomeia card no front
+  const riskDays = 21; // TODO: ler de settings
+  const [{ count: lowEngagement }] = await db.execute<{count:number}>(sql`
+    WITH last_att AS (
+      SELECT s.id AS student_id, MAX(a.date) AS last_date
+      FROM students s
+      LEFT JOIN attendance a ON a.student_id = s.id
+      JOIN users u ON u.id = s.user_id
+      WHERE u.tenant_id = ${tenantId} AND u.role = 'student' AND u.active = true
+      GROUP BY s.id
+    )
+    SELECT COUNT(*)::int AS count
+    FROM last_att
+    WHERE (NOW()::date - COALESCE(last_date::date, DATE '1900-01-01')) > ${riskDays};
+  `);
+
+  // 6) Inadimplência — títulos vencidos
+  const [{ count: delinquency }] = await db.execute<{count:number}>(sql`
+    SELECT COUNT(*)::int AS count
+    FROM student_payments sp
+    JOIN students s ON s.id = sp.student_id
+    JOIN users u ON u.id = s.user_id
+    WHERE sp.status = 'overdue'
+      AND sp.due_date < NOW()
+      AND u.tenant_id = ${tenantId};
+  `);
+
+  // 7) Aulas de hoje (lista com botão Acessar)
+  const [{ dow }] = await db.execute<{dow:number}>(sql`SELECT EXTRACT(DOW FROM NOW())::int AS dow;`);
+  const todayClasses = await db.execute(sql`
+    SELECT c.id, c.name, c.start_time, c.duration
+    FROM classes c
+    JOIN users u ON u.id = c.instructor_id
+    WHERE c.day_of_week = ${Number((await dow) ?? 0)}
+      AND u.tenant_id = ${tenantId}
+    ORDER BY c.start_time ASC;
+  `);
+
+  // 8) Aniversariantes — SOMENTE hoje
+  const birthdays = await db.execute(sql`
+    SELECT u.id AS user_id, (u.first_name || ' ' || u.last_name) AS name, u.birth_date
+    FROM users u
+    JOIN students s ON s.user_id = u.id
+    WHERE u.tenant_id = ${tenantId}
+      AND u.role = 'student'
+      AND to_char(u.birth_date, 'MM-DD') = to_char(NOW(), 'MM-DD');
+  `);
+
+  // 9) Faixas (adulto 18+, infantil <18)
+  const beltsAdult = await db.execute(sql`
+    SELECT s.belt_level, COUNT(*)::int AS count
+    FROM students s
+    JOIN users u ON u.id = s.user_id
+    WHERE u.tenant_id = ${tenantId}
+      AND AGE(NOW(), u.birth_date) >= INTERVAL '18 years'
+    GROUP BY s.belt_level;
+  `);
+  const beltsKids = await db.execute(sql`
+    SELECT s.belt_level, COUNT(*)::int AS count
+    FROM students s
+    JOIN users u ON u.id = s.user_id
+    WHERE u.tenant_id = ${tenantId}
+      AND AGE(NOW(), u.birth_date) < INTERVAL '18 years'
+    GROUP BY s.belt_level;
+  `);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    period: { type: "month", from: from.toISOString(), to: to.toISOString() },
+    metrics: {
+      activeStudents,
+      classesHeld,
+      attendanceRate: Number(rate ?? 0),
+      monthlyRevenue: Number(monthlyRevenue ?? 0),
+      lowEngagement,
+      delinquency
+    },
+    today: {
+      classes: todayClasses.rows as any[],
+      birthdays: birthdays.rows as any[]
+    },
+    belts: {
+      adult: Object.fromEntries((beltsAdult.rows as any[]).map(r => [r.belt_level, r.count])),
+      kids:  Object.fromEntries((beltsKids.rows  as any[]).map(r => [r.belt_level, r.count]))
+    }
+  };
+}
+
+3) Rota API consolidada
+// server/routes/dashboard.ts
+import { Router } from "express";
+import { authenticateJWT } from "../auth";
+import { DashboardSchema } from "../../shared/schemas/dashboard";
+import { getDashboardMetrics } from "../services/dashboardMetrics";
+
+export const dashboardRouter = Router();
+
+dashboardRouter.get("/metrics", authenticateJWT, async (req, res) => {
+  const tenantId = (req.user as any).tenant_id;
+  const data = await getDashboardMetrics(tenantId);
+  const parsed = DashboardSchema.parse(data);
+  res.json(parsed);
+});
+
+
+Obs.: garanta índices: attendance(date), student_payments(status, due_date, paid_date), users(tenant_id, role, status, active).
+
+4) Hook único no front
+// src/hooks/useDashboard.ts
+import { useQuery } from "@tanstack/react-query";
+export function useDashboard() {
+  return useQuery({
+    queryKey: ["dashboard-metrics"],
+    queryFn: async () => (await api.get("/dashboard/metrics")).data,
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+5) Mapeamento dos cards + “Aulas de Hoje”
+// src/pages/Dashboard.tsx
+import { useDashboard } from "@/hooks/useDashboard";
+import { Link } from "react-router-dom";
+import { DashboardSkeleton } from "./DashboardSkeleton";
+import { currencyBRL } from "@/utils/fmt";
+
+export default function Dashboard() {
+  const { data, isLoading } = useDashboard();
+  if (!data) return <DashboardSkeleton />;
+
+  const m = data.metrics;
+
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Alunos Ativos" value={m.activeStudents} icon="users" />
+        <StatCard title="Aulas Realizadas (mês)" value={m.classesHeld} icon="calendar-check" />
+        <StatCard title="Taxa de Presença" value={`${Math.round(m.attendanceRate*100)}%`} icon="user-check" variant={m.attendanceRate < 0.6 ? "danger" : "success"} />
+        <StatCard title="Receita Mensal" value={currencyBRL(m.monthlyRevenue)} icon="dollar-sign" />
+        <StatCard title="Engajamento em Baixa" value={m.lowEngagement} icon="alert-triangle" /> {/* renomeado */}
+        <StatCard title="Inadimplência" value={m.delinquency} icon="alert-octagon" />
+      </section>
+
+      {/* Aulas de Hoje */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Aulas de Hoje" subtitle={`${data.today.classes.length} aulas`} />
+          <CardBody>
+            {data.today.classes.length === 0 ? (
+              <EmptyState icon="calendar">Nenhuma aula programada para hoje</EmptyState>
+            ) : (
+              <ul className="divide-y divide-slate-200/30">
+                {data.today.classes.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between py-3">
+                    <div>
+                      <div className="font-medium">{c.name}</div>
+                      <div className="text-sm text-slate-500">{c.start_time} · {c.duration} min</div>
+                    </div>
+                    <Link to={`/aulas/${c.id}`} className="btn btn-primary">Acessar</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Aniversariantes — apenas HOJE */}
+        <Card>
+          <CardHeader title="Aniversariantes" />
+          <CardBody>
+            {data.today.birthdays.length === 0 ? (
+              <EmptyState icon="gift">Nenhum aniversariante hoje</EmptyState>
+            ) : (
+              <ul className="space-y-2">
+                {data.today.birthdays.map((b) => (
+                  <li key={b.user_id} className="px-3 py-2 rounded-lg bg-rose-50 text-rose-700">
+                    🎂 {b.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardBody>
+        </Card>
+      </section>
+
+      {/* Faixas */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <BeltsCard title="Faixas Adulto" data={data.belts.adult} />
+        <BeltsCard title="Faixas Infantil" data={data.belts.kids} />
+      </section>
+    </div>
+  );
+}
+
+
+Utilitários:
+
+// src/utils/fmt.ts
+export const currencyBRL = (cents: number) =>
+  (cents/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+6) UI rename (card e tooltip)
+
+Substituir o texto do card de “Alunos em Risco” para “Engajamento em Baixa”.
+
+Tooltip: “Alunos com última presença > 21 dias (configurável)”.
+
+7) Critérios de aceite
+
+ Cards populam a partir de /api/dashboard/metrics (única chamada).
+
+ Alunos Ativos: conta bate com DB (users.role=student, status=active, active=true).
+
+ Aulas Realizadas (mês): conta de sessões únicas via attendance (present/late).
+
+ Taxa de Presença: % = presentes/(presentes+faltas) no mês.
+
+ Receita Mensal: soma de student_payments.paid no mês (centavos).
+
+ Engajamento em Baixa: sem presença > 21 dias.
+
+ Inadimplência: nº de títulos overdue com due_date < now().
+
+ Aniversariantes: somente quem faz aniversário hoje.
+
+ Faixas Adulto/Infantil: contagem por belt_level separando 18+ e <18.
+
+ Aulas de Hoje: lista com name, start_time, duration e botão Acessar → /aulas/:id.
+
+ Nenhum número hardcoded; skeletons no 1º paint; sem segundo loading.
+
+8) Observações & extensões
+
+Se você quiser contar aulas realizadas mesmo sem presença, crie uma tabela class_sessions(id, class_id, date, status) e migre a métrica para ela; até lá, attendance é um bom proxy.
+
+Parametrize riskDays por tenant em risk_settings.
+
+Garanta filtros por tenant_id em todas as queries.
+
+Adicione índices (se faltarem):
+CREATE INDEX ON attendance(date);
+CREATE INDEX ON student_payments(status, due_date, paid_date);
+CREATE INDEX ON users(tenant_id, role, status, active);

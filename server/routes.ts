@@ -4237,8 +4237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if ASAAS is configured
-      const isAsaasConfigured = await asaasService.isConfigured();
-      if (!isAsaasConfigured) {
+      if (!asaasService.isServiceConfigured()) {
         return res.status(400).json({ 
           error: 'ASAAS integration not configured. Please configure the API Key in school settings.' 
         });
@@ -4257,7 +4256,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Create or find customer in ASAAS
-      const asaasCustomer = await asaasService.createOrGetCustomer(customerData);
+      const { customer: asaasCustomer } = await asaasService.getOrCreateAsaasCustomer({
+        financialResponsibleName: customerData.name,
+        financialResponsibleCpf: customerData.cpfCnpj,
+        financialResponsibleEmail: customerData.email,
+        financialResponsiblePhone: customerData.mobilePhone
+      });
 
       // Update student with asaasCustomerId
       await storage.updateStudent(student.id, {
@@ -4290,7 +4294,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         externalReference: `student_${student.id}_${new Date().getTime()}`
       };
 
-      const asaasPayment = await asaasService.createPayment(paymentData);
+      const asaasPayment = await asaasService.createPaymentForStudent(asaasCustomer.id, {
+        user_id: student.id,
+        first_name: user.firstName,
+        last_name: user.lastName,
+        preferredDueDate: student.preferredDueDate || 5
+      }, paymentPlan);
 
       // Create accounts receivable in the system
       const contaReceber = await storage.createContaReceber({

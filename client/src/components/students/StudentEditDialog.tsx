@@ -105,7 +105,7 @@ export default function StudentEditDialog({
     queryFn: () => fetch(`/api/students/${studentId}?include=all`).then(res => res.json()),
     enabled: open && !!studentId,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
   });
 
   // Buscar planos de pagamento

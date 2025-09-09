@@ -1,35 +1,126 @@
-import React, { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { BeltWithLabel } from "@/components/ui/belt";
+import { usePaginated } from "@/hooks/usePaginated";
+import { Pagination } from "@/components/ui/Pagination";
+import { PageSizeSelect } from "@/components/ui/PageSizeSelect";
+import { TabsFilter } from "@/components/ui/TabsFilter";
+import { ResultsInfo } from "@/components/ui/ResultsInfo";
 import StudentEditDialog from "@/components/students/StudentEditDialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
-import BeltFilter from '@/components/ui/BeltFilter';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit2, Ban, CheckCircle, Undo } from "lucide-react";
+import { MoreHorizontal, Eye, Edit2, Ban, CheckCircle, Undo, Search } from "lucide-react";
+
+interface Student {
+  id: number;
+  userId: number;
+  beltLevel: string;
+  stripes: number;
+  medicalObservations?: string;
+  notes?: string;
+  attendanceRate?: number;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    active: boolean;
+    status: string;
+    createdAt: string;
+    joinDate?: string;
+  };
+}
 
 const Students: React.FC = () => {
   const { toast } = useToast();
-  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Componente de Ações para Mobile e Desktop
-  const StudentActions = ({ student, isMobile = false }: { student: any, isMobile?: boolean }) => {
+  // Use the paginated hook
+  const { data, isFetching, page, pageSize, setParam, status, q } =
+    usePaginated<Student>({
+      key: "students",
+      endpoint: "/api/students",
+    });
+
+  // Check mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Sync search input with query parameter
+  useEffect(() => {
+    setSearchInput(q);
+  }, [q]);
+
+  // Toggle student status mutation (block/unblock)
+  const { mutate: toggleStudentStatus, isPending: isTogglingStatus } = useMutation({
+    mutationFn: async ({ userId, newStatus }: { studentId: number, userId: number, newStatus: boolean }) => {
+      const res = await apiRequest('PUT', `/api/users/${userId}`, { active: newStatus });
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Sucesso",
+        description: variables.newStatus ? "Aluno liberado com sucesso" : "Aluno bloqueado com sucesso",
+      });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao alterar status do aluno: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Revert approval mutation
+  const { mutate: revertApprovalMutation } = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest('PUT', `/api/users/${userId}`, { 
+        status: 'pending',
+        active: false 
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Aluno revertido para pendente com sucesso",
+      });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+  });
+
+  // Handle search
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setParam("q", searchInput);
+    }
+  };
+
+  // Student Actions Component
+  const StudentActions = ({ student, isMobile = false }: { student: Student, isMobile?: boolean }) => {
     if (isMobile) {
       return (
         <DropdownMenu>
@@ -38,15 +129,13 @@ const Students: React.FC = () => {
               size="sm"
               variant="ghost"
               className="h-8 w-8 p-0"
-              onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontal className="h-4 w-4 text-gray-400" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
             <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 setStudentToEdit(student);
                 setIsEditStudentOpen(true);
               }}
@@ -55,8 +144,7 @@ const Students: React.FC = () => {
               Ver perfil
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 setStudentToEdit(student);
                 setIsEditStudentOpen(true);
               }}
@@ -65,14 +153,11 @@ const Students: React.FC = () => {
               Editar dados
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleStudentStatus({
-                  studentId: student.id,
-                  userId: student.user.id,
-                  newStatus: !student.user.active
-                });
-              }}
+              onClick={() => toggleStudentStatus({
+                studentId: student.id,
+                userId: student.user.id,
+                newStatus: !student.user.active
+              })}
               disabled={isTogglingStatus}
             >
               {student.user.active ? (
@@ -89,11 +174,7 @@ const Students: React.FC = () => {
             </DropdownMenuItem>
             {student.user.active && (
               <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  revertApprovalMutation.mutate(student.user.id);
-                }}
-                disabled={revertApprovalMutation.isPending}
+                onClick={() => revertApprovalMutation.mutate(student.user.id)}
               >
                 <Undo className="mr-2 h-4 w-4" />
                 Reverter para pendente
@@ -104,7 +185,7 @@ const Students: React.FC = () => {
       );
     }
 
-    // Versão Desktop (atual)
+    // Desktop version
     return (
       <div className="flex items-center space-x-1">
         <Button
@@ -112,26 +193,24 @@ const Students: React.FC = () => {
           variant="ghost"
           className="h-8 w-8 p-0"
           title="Ver perfil completo"
-          onClick={(e) => {
-            e.stopPropagation();
+          onClick={() => {
             setStudentToEdit(student);
             setIsEditStudentOpen(true);
           }}
         >
-          <span className="material-icons text-blue-500 text-sm">visibility</span>
+          <Eye className="h-4 w-4 text-blue-500" />
         </Button>
         <Button
           size="sm"
           variant="ghost"
           className="h-8 w-8 p-0"
           title="Editar dados do aluno"
-          onClick={(e) => {
-            e.stopPropagation();
+          onClick={() => {
             setStudentToEdit(student);
             setIsEditStudentOpen(true);
           }}
         >
-          <span className="material-icons text-gray-500 text-sm">edit</span>
+          <Edit2 className="h-4 w-4 text-gray-500" />
         </Button>
         <Button
           size="sm"
@@ -139,19 +218,16 @@ const Students: React.FC = () => {
           className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
           title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
           disabled={isTogglingStatus}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleStudentStatus({
-              studentId: student.id,
-              userId: student.user.id,
-              newStatus: !student.user.active
-            });
-          }}
+          onClick={() => toggleStudentStatus({
+            studentId: student.id,
+            userId: student.user.id,
+            newStatus: !student.user.active
+          })}
         >
           {student.user.active ? (
-            <span className="material-icons text-red-500 text-sm">block</span>
+            <Ban className="h-4 w-4 text-red-500" />
           ) : (
-            <span className="material-icons text-green-500 text-sm">check_circle</span>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           )}
         </Button>
         {student.user.active && (
@@ -160,614 +236,180 @@ const Students: React.FC = () => {
             variant="ghost"
             className="h-8 w-8 p-0"
             title="Reverter para pendente"
-            onClick={(e) => {
-              e.stopPropagation();
-              revertApprovalMutation.mutate(student.user.id);
-            }}
-            disabled={revertApprovalMutation.isPending}
+            onClick={() => revertApprovalMutation.mutate(student.user.id)}
           >
-            <span className="material-icons text-orange-500 text-sm">undo</span>
+            <Undo className="h-4 w-4 text-gray-500" />
           </Button>
         )}
       </div>
     );
   };
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [beltFilter, setBeltFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
-  const [sortOrder, setSortOrder] = useState("asc");
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detectar se é mobile
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Fetch students data
-  const { data, isLoading } = useQuery({
-    queryKey: ['/api/students'],
-    refetchInterval: false,
-  });
-
-  // Add student mutation
-  const { mutate: addStudent, isPending: isAddingStudent } = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest('POST', '/api/students', data);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Aluno cadastrado com sucesso",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao cadastrar aluno: ${error}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update student mutation
-  const { mutate: updateStudent, isPending: isUpdatingStudent } = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: any }) => {
-      const res = await apiRequest('PUT', `/api/students/${id}`, data);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Aluno atualizado com sucesso",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao atualizar aluno: ${error}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Toggle student status mutation (block/unblock)
-  const { mutate: toggleStudentStatus, isPending: isTogglingStatus } = useMutation({
-    mutationFn: async ({ userId, newStatus }: { studentId: number, userId: number, newStatus: boolean }) => {
-      // Only update user status - this will cascade to student
-      const res = await apiRequest('PUT', `/api/users/${userId}`, { active: newStatus });
-      return res.json();
-    },
-    onSuccess: (data, variables) => {
-      toast({
-        title: "Sucesso",
-        description: variables.newStatus ? "Aluno liberado com sucesso" : "Aluno bloqueado com sucesso",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao alterar status do aluno: ${error}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Mutation para reverter aprovação
-  const revertApprovalMutation = useMutation({
-    mutationFn: async (userId: number) => {
-      const response = await fetch(`/api/users/${userId}/revert-approval`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          reason: 'Reversão solicitada pelo administrador' 
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao reverter aprovação');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Aprovação revertida",
-        description: "Aluno retornado ao status pendente",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const students = (data as any)?.students || [];
-
-
-  const getFilteredStudents = (tabFilter: string) => {
-    let filteredStudents = students.filter((student: any) => {
-      const name = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();
-      const email = student.user.email.toLowerCase();
-      const query = searchTerm.toLowerCase();
-
-      // Filtro de busca por nome/email
-      const matchesSearch = !query || name.includes(query) || email.includes(query);
-
-      // Filtro de status baseado na aba
-      let matchesStatus = true;
-      if (tabFilter === "active") {
-        matchesStatus = student.user.active;
-      } else if (tabFilter === "inactive") {
-        matchesStatus = !student.user.active;
-      }
-
-      // Filtro de faixa
-      const matchesBelt = beltFilter === "all" || student.beltLevel === beltFilter;
-
-      // Remover filtro financeiro
-      const matchesFinancial = true;
-
-      return matchesSearch && matchesStatus && matchesBelt && matchesFinancial;
-    });
-
-    // Ordenação
-    filteredStudents.sort((a: any, b: any) => {
-      let valueA, valueB;
-
-      switch (sortBy) {
-        case "name":
-          valueA = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
-          valueB = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
-          break;
-        case "belt":
-          const beltOrder = { white: 1, blue: 2, purple: 3, brown: 4, black: 5 };
-          valueA = beltOrder[a.beltLevel as keyof typeof beltOrder] || 0;
-          valueB = beltOrder[b.beltLevel as keyof typeof beltOrder] || 0;
-          break;
-        case "status":
-          valueA = a.user.active ? 1 : 0;
-          valueB = b.user.active ? 1 : 0;
-          break;
-        default:
-          valueA = a.id;
-          valueB = b.id;
-      }
-
-      if (sortOrder === "asc") {
-        return valueA > valueB ? 1 : -1;
-      } else {
-        return valueA < valueB ? 1 : -1;
-      }
-    });
-
-    return filteredStudents;
-  };
-
-  const filteredStudents = getFilteredStudents(activeTab);
-
-
-  const handleUpdateStudent = (data: any) => {
-    if (selectedStudent) {
-      const studentData = {
-        beltLevel: data.beltLevel,
-        stripes: data.stripes,
-        notes: data.notes,
-      };
-
-      const userData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        emergencyContact: data.emergencyContact,
-      };
-
-      // Update student data
-      updateStudent({ id: selectedStudent.id, data: studentData });
-
-      // Update user data
-      apiRequest('PUT', `/api/users/${selectedStudent.user.id}`, userData)
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-        })
-        .catch((error) => {
-          toast({
-            title: "Error",
-            description: `Failed to update user data: ${error}`,
-            variant: "destructive",
-          });
-        });
-    }
-  };
 
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-        <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Alunos</h1>
-          <p className="text-gray-600">Gerencie os alunos da escola</p>
-        </div>
-        <div className="mt-4 md:mt-0 flex">
-          <div className="relative mr-2">
-            <Input
-              placeholder="Buscar aluno..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-            <div className="absolute left-3 top-2.5 text-gray-400">
-              <span className="material-icons text-sm">search</span>
-            </div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="font-montserrat font-bold text-2xl text-primary">Alunos</h1>
+            <p className="text-gray-600">Gerencie os alunos da escola</p>
           </div>
           <Button 
-            className="bg-secondary hover:bg-secondary-dark text-white font-medium"
+            className="mt-4 md:mt-0 bg-secondary hover:bg-secondary-dark text-white font-medium"
             onClick={() => setLocation('/onboarding')}
           >
-            <span className="material-icons mr-1 text-sm">add</span>
             + Novo Aluno
           </Button>
         </div>
-      </div>
-      {/* Filtros e Ordenação */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-2 flex-1">
-          <BeltFilter 
-            value={beltFilter}
-            onValueChange={setBeltFilter}
-            placeholder="Filtrar por faixa"
-            className="w-full sm:w-[160px]"
+
+        {/* Filtros superiores */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <TabsFilter
+            value={status}
+            onChange={(v) => setParam("status", v)}
+            items={[
+              { value: "all", label: "Todas" },
+              { value: "active", label: "Ativos" },
+              { value: "pending", label: "Pendentes" },
+              { value: "inactive", label: "Inativos" },
+            ]}
           />
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                className="pl-10 w-56"
+                placeholder="Buscar por nome/email"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={handleSearch}
+              />
+            </div>
+            <PageSizeSelect 
+              value={pageSize} 
+              onChange={(n) => setParam("pageSize", n)} 
+            />
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Nome</SelectItem>
-              <SelectItem value="belt">Faixa</SelectItem>
-              <SelectItem value="status">Status</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="w-full sm:w-auto"
-          >
-            {sortOrder === "asc" ? "↑ Crescente" : "↓ Decrescente"}
-          </Button>
+
+        {/* Tabela */}
+        <div className="overflow-x-auto rounded-xl border bg-white">
+          {isFetching && (
+            <div className="text-center py-8 text-gray-500">
+              Carregando alunos...
+            </div>
+          )}
+          
+          {!isFetching && (!data?.items.length) && (
+            <div className="text-center py-8 text-gray-500">
+              Nenhum aluno encontrado
+            </div>
+          )}
+
+          {!isFetching && data?.items.length && (
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr className="[&>th]:px-3 [&>th]:py-3 text-left">
+                  {isMobile && <th className="w-12"></th>}
+                  <th>ID</th>
+                  <th>Aluno</th>
+                  {!isMobile && (
+                    <>
+                      <th>Faixa</th>
+                      <th>Email</th>
+                      <th>Telefone</th>
+                    </>
+                  )}
+                  <th>Status</th>
+                  {!isMobile && <th className="text-right">Ações</th>}
+                </tr>
+              </thead>
+              <tbody className="[&>tr>td]:px-3 [&>tr>td]:py-3">
+                {data.items.map((student) => (
+                  <tr 
+                    key={student.id} 
+                    className="border-t hover:bg-gray-50"
+                    onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}
+                  >
+                    {isMobile && (
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <StudentActions student={student} isMobile={true} />
+                      </td>
+                    )}
+                    <td className="text-gray-900 font-medium">{student.id}</td>
+                    <td>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-700">
+                              {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {student.user.firstName} {student.user.lastName}
+                          </div>
+                          {isMobile && (
+                            <div className="text-sm text-gray-500">{student.user.email}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    {!isMobile && (
+                      <>
+                        <td>
+                          <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
+                        </td>
+                        <td className="text-gray-500">{student.user.email}</td>
+                        <td className="text-gray-500">{student.user.phone || 'Não informado'}</td>
+                      </>
+                    )}
+                    <td>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        student.user.active ? 'bg-green-100 text-green-800' : 
+                        student.user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                          student.user.active ? 'bg-green-400' : 
+                          student.user.status === 'pending' ? 'bg-yellow-400' :
+                          'bg-red-400'
+                        }`}></div>
+                        {student.user.active ? 'Ativo' : 
+                         student.user.status === 'pending' ? 'Pendente' : 'Inativo'}
+                      </span>
+                    </td>
+                    {!isMobile && (
+                      <td className="text-right">
+                        <StudentActions student={student} isMobile={false} />
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
+
+        {/* Footer da paginação */}
+        {data && (
+          <div className="flex items-center justify-between">
+            <ResultsInfo 
+              page={data.page} 
+              pageSize={data.pageSize} 
+              total={data.total} 
+            />
+            <Pagination
+              page={data.page}
+              totalPages={data.totalPages}
+              onPage={(p) => setParam("page", p)}
+            />
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">Todos os Alunos ({students.length})</TabsTrigger>
-            <TabsTrigger value="active">Ativos ({students.filter((s: any) => s.user.active).length})</TabsTrigger>
-            <TabsTrigger value="inactive">Inativos ({students.filter((s: any) => !s.user.active).length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all">
-            {isLoading ? (
-              <div className="text-center py-8">Carregando alunos...</div>
-            ) : getFilteredStudents("all").length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                {searchTerm ? "Nenhum aluno encontrado para sua busca" : "Nenhum aluno encontrado"}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      {isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 w-12"></th>}
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
-                      {!isMobile && (
-                        <>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Email</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Telefone</th>
-                        </>
-                      )}
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                      {!isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getFilteredStudents("all").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}>
-                        {isMobile && (
-                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                            <StudentActions student={student} isMobile={true} />
-                          </td>
-                        )}
-                        <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 h-8 w-8">
-                              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-700">
-                                  {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {student.user.firstName} {student.user.lastName}
-                              </div>
-                              <div className="text-sm text-gray-500">{student.user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        {!isMobile && (
-                          <>
-                            <td className="py-3 px-4">
-                              <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                              {student.user.email}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                              {student.user.phone || 'Não informado'}
-                            </td>
-                          </>
-                        )}
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              student.user.active ? 'bg-green-400' : 'bg-red-400'
-                            }`}></div>
-                            {student.user.active ? 'Ativo' : 'Inativo'}
-                          </span>
-                        </td>
-                        {!isMobile ? (
-                          <td className="py-3 px-4 text-right">
-                            <StudentActions student={student} isMobile={false} />
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="active">
-            {isLoading ? (
-              <div className="text-center py-8">Carregando alunos...</div>
-            ) : getFilteredStudents("active").length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Nenhum aluno ativo encontrado
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      {isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 w-12"></th>}
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
-                      {!isMobile && (
-                        <>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Email</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Telefone</th>
-                        </>
-                      )}
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                      {!isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getFilteredStudents("active").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 h-8 w-8">
-                              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-700">
-                                  {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {student.user.firstName} {student.user.lastName}
-                              </div>
-                              <div className="text-sm text-gray-500">{student.user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        {!isMobile && (
-                          <>
-                            <td className="py-3 px-4">
-                              <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                              {student.user.email}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                              {student.user.phone || 'Não informado'}
-                            </td>
-                          </>
-                        )}
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              student.user.active ? 'bg-green-400' : 'bg-red-400'
-                            }`}></div>
-                            {student.user.active ? 'Ativo' : 'Inativo'}
-                          </span>
-                        </td>
-                        {!isMobile ? (
-                          <td className="py-3 px-4 text-right">
-                            <StudentActions student={student} isMobile={false} />
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="inactive">
-            {isLoading ? (
-              <div className="text-center py-8">Carregando alunos...</div>
-            ) : getFilteredStudents("inactive").length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Nenhum aluno inativo encontrado
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      {isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 w-12"></th>}
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">ID</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Nome do Aluno</th>
-                      {!isMobile && (
-                        <>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Email</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Telefone</th>
-                        </>
-                      )}
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                      {!isMobile && <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Ações</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getFilteredStudents("inactive").map((student: any) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}>
-                        {isMobile && (
-                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                            <StudentActions student={student} isMobile={true} />
-                          </td>
-                        )}
-                        <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 h-8 w-8">
-                              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-700">
-                                  {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {student.user.firstName} {student.user.lastName}
-                              </div>
-                              <div className="text-sm text-gray-500">{student.user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        {!isMobile && (
-                          <>
-                            <td className="py-3 px-4">
-                              <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                              {student.user.email}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-500">
-                              {student.user.phone || 'Não informado'}
-                            </td>
-                          </>
-                        )}
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              student.user.active ? 'bg-green-400' : 'bg-red-400'
-                            }`}></div>
-                            {student.user.active ? 'Ativo' : 'Inativo'}
-                          </span>
-                        </td>
-                        {!isMobile ? (
-                          <td className="py-3 px-4 text-right">
-                            <StudentActions student={student} isMobile={false} />
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Paginação */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="flex items-center text-sm text-gray-600">
-                    Mostrando {filteredStudents.length} de {filteredStudents.length} resultados
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" disabled>
-                      <span className="material-icons text-sm">chevron_left</span>
-                    </Button>
-                    <Button variant="outline" size="sm" className="bg-primary text-white">
-                      1
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      2
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      3
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      4
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      5
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <span className="material-icons text-sm">chevron_right</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="active">
-            <div className="text-center py-8 text-gray-500">
-              Funcionalidade de filtro em breve
-            </div>
-          </TabsContent>
-
-          <TabsContent value="inactive">
-            <div className="text-center py-8 text-gray-500">
-              Funcionalidade de filtro em breve
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Edit Student Dialog - New Complete Interface */}
+      {/* Edit Student Dialog */}
       {studentToEdit && (
         <StudentEditDialog
           studentId={studentToEdit.id}

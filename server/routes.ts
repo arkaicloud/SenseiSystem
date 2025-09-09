@@ -1573,10 +1573,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Student Routes =====
   app.get("/api/students", isAuthenticated, async (req, res) => {
     try {
-      console.log('🔍 Fetching students with users...');
-      const students = await storage.getStudentsWithUsers();
-      console.log('✅ Students found:', students.length);
-      res.json({ students });
+      console.log('🔍 Fetching students with pagination...');
+      
+      // Parse query parameters
+      const page = Math.max(parseInt((req.query.page as string) || "1"), 1);
+      const pageSizeRaw = parseInt((req.query.pageSize as string) || "10");
+      const pageSize = [10, 25, 50, 100].includes(pageSizeRaw) ? pageSizeRaw : 10;
+      
+      const status = (req.query.status as string) || "all"; // all|active|pending|inactive
+      const q = (req.query.q as string) || "";
+      const sortRaw = (req.query.sort as string) || "createdAt:desc";
+      const [sortField, sortDir] = sortRaw.split(":");
+      
+      // Build filters
+      const conditions = [];
+      
+      // Status filters
+      if (status === "active") {
+        conditions.push(eq(users.active, true));
+      } else if (status === "pending") {
+        conditions.push(eq(users.status, "pending"));
+      } else if (status === "inactive") {
+        conditions.push(eq(users.active, false));
+      }
+      
+      // Search filter - search in first name, last name, or email
+      let searchCondition = null;
+      if (q) {
+        searchCondition = sql`(LOWER(${users.firstName}) LIKE ${`%${q.toLowerCase()}%`} OR LOWER(${users.lastName}) LIKE ${`%${q.toLowerCase()}%`} OR LOWER(${users.email}) LIKE ${`%${q.toLowerCase()}%`})`;
+      }
+      
+      // Combine all conditions
+      const whereCondition = and(
+        eq(users.role, 'student'),
+        ...(conditions.length > 0 ? conditions : []),
+        ...(searchCondition ? [searchCondition] : [])
+      );
+      
+      // Count total records
+      const totalCountResult = await db
+        .select({ count: count() })
+        .from(students)
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(whereCondition);
+      
+      const total = totalCountResult[0]?.count || 0;
+      const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+      
+      // Get paginated data
+      const offset = (page - 1) * pageSize;
+      
+      // Build order by
+      let orderBy;
+      if (sortField === "firstName") {
+        orderBy = sortDir === "asc" ? users.firstName : desc(users.firstName);
+      } else if (sortField === "lastName") {
+        orderBy = sortDir === "asc" ? users.lastName : desc(users.lastName);
+      } else if (sortField === "email") {
+        orderBy = sortDir === "asc" ? users.email : desc(users.email);
+      } else {
+        orderBy = sortDir === "asc" ? users.createdAt : desc(users.createdAt);
+      }
+      
+      const studentsData = await db
+        .select({
+          id: students.id,
+          userId: students.userId,
+          beltLevel: students.beltLevel,
+          stripes: students.stripes,
+          medicalObservations: students.medicalObservations,
+          notes: students.notes,
+          attendanceRate: students.attendanceRate,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            phone: users.phone,
+            active: users.active,
+            status: users.status,
+            createdAt: users.createdAt,
+            joinDate: users.joinDate
+          }
+        })
+        .from(students)
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(whereCondition)
+        .orderBy(orderBy)
+        .limit(pageSize)
+        .offset(offset);
+      
+      console.log(`✅ Found ${studentsData.length} students (page ${page}/${totalPages}, total: ${total})`);
+      
+      res.json({
+        items: studentsData,
+        page,
+        pageSize,
+        total,
+        totalPages
+      });
     } catch (error) {
       console.error('❌ Error fetching students:', error);
       res.status(500).json({ message: "Internal server error" });

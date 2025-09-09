@@ -3570,12 +3570,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          // Only consider students who have been active for at least 30 days (1 month)
-          const joinDate = new Date(studentUser.joinDate || Date.now());
-          const daysSinceJoining = Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
+          // Get student data to check enrollment date
+          const studentData = await storage.getStudent(student.id);
+          if (!studentData || !studentData.enrollmentDate) {
+            console.warn(`Student ${student.id} has no enrollment date, skipping`);
+            continue;
+          }
           
-          if (daysSinceJoining < 30) {
-            // Skip students who joined less than 30 days ago
+          // Only consider students who have been enrolled for at least 30 days (1 month)
+          const enrollmentDate = new Date(studentData.enrollmentDate);
+          const daysSinceEnrollment = Math.floor((Date.now() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysSinceEnrollment < 30) {
+            // Skip students who enrolled less than 30 days ago
             continue;
           }
 

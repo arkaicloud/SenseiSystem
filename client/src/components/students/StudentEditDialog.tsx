@@ -47,6 +47,7 @@ const studentEditSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Sobrenome é obrigatório"),
   birthDate: z.string().nullable(),
+  enrollmentDate: z.string().nullable(),
   sex: z.string().nullable(),
   cpf: z.string().nullable(),
   rg: z.string().nullable(),
@@ -125,6 +126,7 @@ export default function StudentEditDialog({
       firstName: "",
       lastName: "",
       birthDate: null,
+      enrollmentDate: null,
       sex: null,
       cpf: null,
       rg: null,
@@ -167,6 +169,7 @@ export default function StudentEditDialog({
         firstName: data.firstName,
         lastName: data.lastName,
         birthDate: data.birthDate,
+        enrollmentDate: data.enrollmentDate,
         cpf: data.cpf,
         rg: data.rg,
         sex: data.sex,
@@ -248,6 +251,7 @@ export default function StudentEditDialog({
         firstName: studentData.firstName || "",
         lastName: studentData.lastName || "",
         birthDate: studentData.birthDate ? new Date(studentData.birthDate).toISOString().split('T')[0] : null,
+        enrollmentDate: studentData.enrollmentDate ? new Date(studentData.enrollmentDate).toISOString().split('T')[0] : null,
         sex: studentData.sex || null,
         cpf: studentData.cpf || null,
         rg: studentData.rg || null,
@@ -420,6 +424,25 @@ export default function StudentEditDialog({
                               disabled={readOnly}
                               value={field.value || ""}
                               placeholder="dd/mm/aaaa"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="enrollmentDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Matrícula</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              disabled={readOnly}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />

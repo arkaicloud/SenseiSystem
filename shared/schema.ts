@@ -131,6 +131,8 @@ export const students = pgTable("students", {
   healthQuestionnaireCompletedAt: timestamp("health_questionnaire_completed_at"),
   agreedToHealthTerms: boolean("agreed_to_health_terms").default(false),
   healthTermsAgreedAt: timestamp("health_terms_agreed_at"),
+  // Data de matrícula específica do aluno (diferente da data de cadastro no sistema)
+  enrollmentDate: timestamp("enrollment_date").defaultNow(),
 });
 
 // School Configuration table (tenant information)

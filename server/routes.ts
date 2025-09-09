@@ -1788,6 +1788,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           beltLevel: student.beltLevel,
           graduationDate: student.lastPromotionDate
         },
+        // Dados do questionário de saúde
+        healthQuestionnaireCompletedAt: student.healthQuestionnaireCompletedAt,
+        agreedToHealthTerms: student.agreedToHealthTerms,
+        healthTermsAgreedAt: student.healthTermsAgreedAt,
+        requiresMedicalCertificate: student.requiresMedicalCertificate,
+        medicalCertificateStatus: student.medicalCertificateStatus,
         financialResponsible: {
           relation: student.financialResponsibleRelation || null
         },

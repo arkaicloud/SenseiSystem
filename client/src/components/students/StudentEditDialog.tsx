@@ -71,6 +71,11 @@ const studentEditSchema = z.object({
   preferredDueDate: z.number().nullable(),
   medicalObservations: z.string().nullable(),
   planObservations: z.string().nullable(),
+  // Campos do questionário de saúde
+  healthQuestionnaireCompletedAt: z.string().nullable(),
+  agreedToHealthTerms: z.boolean().nullable(),
+  healthTermsAgreedAt: z.string().nullable(),
+  requiresMedicalCertificate: z.boolean().nullable(),
 });
 
 type StudentEditFormData = z.infer<typeof studentEditSchema>;
@@ -142,6 +147,11 @@ export default function StudentEditDialog({
       preferredDueDate: 5,
       medicalObservations: null,
       planObservations: null,
+      // Questionário de saúde
+      healthQuestionnaireCompletedAt: null,
+      agreedToHealthTerms: null,
+      healthTermsAgreedAt: null,
+      requiresMedicalCertificate: null,
     },
   });
 
@@ -254,6 +264,11 @@ export default function StudentEditDialog({
         preferredDueDate: studentData.billing?.preferredDueDay || 5,
         medicalObservations: studentData.health?.notes || null,
         planObservations: null,
+        // Questionário de saúde
+        healthQuestionnaireCompletedAt: studentData.healthQuestionnaireCompletedAt || null,
+        agreedToHealthTerms: studentData.agreedToHealthTerms || null,
+        healthTermsAgreedAt: studentData.healthTermsAgreedAt || null,
+        requiresMedicalCertificate: studentData.requiresMedicalCertificate || null,
       });
     }
   }, [studentData, open, form]);
@@ -721,6 +736,92 @@ export default function StudentEditDialog({
                       </FormItem>
                     )}
                   />
+
+                  {/* Seção de Assinatura Eletrônica do Questionário de Saúde */}
+                  {(studentData?.healthQuestionnaireCompletedAt || studentData?.agreedToHealthTerms) && (
+                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Questionário de Saúde (PAR-Q+) - Assinatura Eletrônica
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {studentData.healthQuestionnaireCompletedAt && (
+                          <div>
+                            <span className="font-medium text-blue-700 dark:text-blue-300">Data de Preenchimento:</span>
+                            <p className="text-blue-600 dark:text-blue-400">
+                              {new Date(studentData.healthQuestionnaireCompletedAt).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {studentData.agreedToHealthTerms && (
+                          <div>
+                            <span className="font-medium text-blue-700 dark:text-blue-300">Termos Aceitos:</span>
+                            <p className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              Sim, concordou com os termos
+                            </p>
+                          </div>
+                        )}
+                        
+                        {studentData.healthTermsAgreedAt && (
+                          <div>
+                            <span className="font-medium text-blue-700 dark:text-blue-300">Assinatura Eletrônica:</span>
+                            <p className="text-blue-600 dark:text-blue-400">
+                              {new Date(studentData.healthTermsAgreedAt).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {studentData.requiresMedicalCertificate !== null && (
+                          <div>
+                            <span className="font-medium text-blue-700 dark:text-blue-300">Atestado Médico:</span>
+                            <p className={`flex items-center gap-1 ${studentData.requiresMedicalCertificate ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                              {studentData.requiresMedicalCertificate ? (
+                                <>
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                  Necessário
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                  Não necessário
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {studentData.medicalCertificateStatus && (
+                          <div>
+                            <span className="font-medium text-blue-700 dark:text-blue-300">Status do Atestado:</span>
+                            <p className={`${
+                              studentData.medicalCertificateStatus === 'UPLOADED' ? 'text-green-600 dark:text-green-400' :
+                              studentData.medicalCertificateStatus === 'PENDING' ? 'text-orange-600 dark:text-orange-400' :
+                              'text-gray-600 dark:text-gray-400'
+                            }`}>
+                              {studentData.medicalCertificateStatus === 'UPLOADED' ? 'Enviado' :
+                               studentData.medicalCertificateStatus === 'PENDING' ? 'Pendente' :
+                               studentData.medicalCertificateStatus === 'WAIVED' ? 'Dispensado' : studentData.medicalCertificateStatus}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
+                        <p>📋 Esta assinatura eletrônica comprova que o aluno preencheu e concordou com os termos do Questionário de Saúde PAR-Q+ conforme a Lei Geral de Proteção de Dados (LGPD).</p>
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* Financeiro */}

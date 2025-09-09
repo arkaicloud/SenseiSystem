@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: userRoleEnum("role").notNull().default('student'),
   phone: text("phone"),
+  sex: text("sex"), // Campo para sexo/gênero
   cpf: text("cpf"), // Campo CPF para o usuário
   rg: text("rg"), // Campo RG para o usuário
   emergencyContact: text("emergency_contact"),
@@ -87,6 +88,8 @@ export const students = pgTable("students", {
   // Health questionnaire status
   requiresMedicalCertificate: boolean("requires_medical_certificate").default(false),
   medicalCertificateStatus: medicalCertificateStatusEnum("medical_certificate_status").default('PENDING'),
+  medicalObservations: text("medical_observations"), // Observações médicas
+  isScholarship: boolean("is_scholarship").default(false), // Indica se é bolsista
   healthQuestionnaireCompletedAt: timestamp("health_questionnaire_completed_at"),
   agreedToHealthTerms: boolean("agreed_to_health_terms").default(false),
   healthTermsAgreedAt: timestamp("health_terms_agreed_at"),
@@ -433,6 +436,9 @@ export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSc
 
 export type ContaReceber = typeof contasReceber.$inferSelect;
 export type InsertContaReceber = z.infer<typeof insertContaReceberSchema>;
+
+export type BeltLevel = typeof beltLevels.$inferSelect;
+export type InsertBeltLevel = z.infer<typeof insertBeltLevelSchema>;
 
 
 // Custom extended types for frontend use

@@ -102,7 +102,7 @@ const BeltsCard = ({ title, data }: { title: string; data: Record<string, number
                     className="w-4 h-4 rounded-full border"
                     style={{ backgroundColor: beltColors[belt] || '#9ca3af' }}
                   />
-                  <span className="capitalize">{belt}</span>
+                  <span>{belt}</span>
                 </div>
                 <span className="font-medium">{count}</span>
               </li>

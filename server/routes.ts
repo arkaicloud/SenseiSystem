@@ -1636,26 +1636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const studentsData = await db
-        .select({
-          id: students.id,
-          userId: students.userId,
-          beltLevel: students.beltLevel,
-          stripes: students.stripes,
-          medicalObservations: students.medicalObservations,
-          notes: students.notes,
-          attendanceRate: students.attendanceRate,
-          user: {
-            id: users.id,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            email: users.email,
-            phone: users.phone,
-            active: users.active,
-            status: users.status,
-            createdAt: users.createdAt,
-            joinDate: users.joinDate
-          }
-        })
+        .select()
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
         .where(whereCondition)
@@ -1663,10 +1644,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(pageSize)
         .offset(offset);
       
-      console.log(`✅ Found ${studentsData.length} students (page ${page}/${totalPages}, total: ${total})`);
+      // Transform the data to match the expected structure
+      const transformedData = studentsData.map((row: any) => ({
+        id: row.students.id,
+        userId: row.students.userId,
+        beltLevel: row.students.beltLevel,
+        stripes: row.students.stripes,
+        medicalObservations: row.students.medicalObservations,
+        notes: row.students.notes,
+        attendanceRate: row.students.attendanceRate,
+        user: {
+          id: row.users.id,
+          firstName: row.users.firstName,
+          lastName: row.users.lastName,
+          email: row.users.email,
+          phone: row.users.phone,
+          active: row.users.active,
+          status: row.users.status,
+          createdAt: row.users.createdAt,
+          joinDate: row.users.joinDate
+        }
+      }));
+      
+      console.log(`✅ Found ${transformedData.length} students (page ${page}/${totalPages}, total: ${total})`);
       
       res.json({
-        items: studentsData,
+        items: transformedData,
         page,
         pageSize,
         total,

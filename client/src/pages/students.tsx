@@ -664,92 +664,47 @@ const Students: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredStudents.map((student: any, index: number) => (
-                      <tr 
-                        key={student.id} 
-                        className="border-b hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelectedStudent(student)}
-                      >
+                    {getFilteredStudents("inactive").map((student: any) => (
+                      <tr key={student.id} className="border-b hover:bg-gray-50" onClick={isMobile ? () => setSelectedStudent(student) : undefined}>
+                        {isMobile && (
+                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                            <StudentActions student={student} isMobile={true} />
+                          </td>
+                        )}
+                        <td className="py-3 px-4 text-sm text-gray-900">{student.id}</td>
                         <td className="py-3 px-4">
-                          <span className="text-sm font-medium text-gray-600">
-                            #STU{String(student.id).padStart(3, '0')}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-medium mr-3">
-                              {student.user.firstName.charAt(0)}{student.user.lastName.charAt(0)}
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium text-gray-700">
+                                  {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
+                                </span>
+                              </div>
                             </div>
-                            <span className="text-sm font-medium text-gray-900">
-                              {student.user.firstName} {student.user.lastName}
-                            </span>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {student.user.firstName} {student.user.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">{student.user.email}</div>
+                            </div>
                           </div>
                         </td>
+                        {!isMobile && (
+                          <>
+                            <td className="py-3 px-4">
+                              <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">
+                              {student.user.email}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">
+                              {student.user.phone || 'Não informado'}
+                            </td>
+                          </>
+                        )}
                         <td className="py-3 px-4">
-                          <div className="text-sm text-gray-900">
-                            <BeltWithLabel level={student.beltLevel} size="sm" />
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm text-gray-600">
-                            {student.user.street || 'Não informado'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <span className="material-icons text-xs mr-1">access_time</span>
-                            <span title={`Última atividade: ${new Date(student.user.joinDate).toLocaleDateString('pt-BR')}`}>
-                              {(() => {
-                                const joinDate = new Date(student.user.joinDate);
-                                const now = new Date();
-                                const diffMs = now.getTime() - joinDate.getTime();
-                                const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                                if (diffMinutes < 60) {
-                                  return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
-                                } else if (diffHours < 24) {
-                                  return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
-                                } else if (diffDays === 1) {
-                                  return 'Ontem';
-                                } else {
-                                  return joinDate.toLocaleDateString('pt-BR');
-                                }
-                              })()}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-sm">
-                            <div className="font-medium text-gray-900">Individual</div>
-                            <div className="text-gray-500">R$ 120,00 - PIX</div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            Math.random() > 0.3 
-                              ? 'bg-green-100 text-green-800'
-                              : Math.random() > 0.5
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
-                            }`}></div>
-                            {Math.random() > 0.3 ? 'Em dia' : Math.random() > 0.5 ? 'Pendente' : 'Atrasado'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-sm text-gray-600">
-                            {student.user.phone || 'Não informado'}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            student.user.active 
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
                             <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
                               student.user.active ? 'bg-green-400' : 'bg-red-400'

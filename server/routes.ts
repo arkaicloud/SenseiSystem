@@ -1465,6 +1465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         city: updateData.city,
         state: updateData.state,
         zipCode: updateData.zipCode,
+        active: updateData.active, // Add active field for blocking/unblocking users
       };
 
       // Remove undefined values

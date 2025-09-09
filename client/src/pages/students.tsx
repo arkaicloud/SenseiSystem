@@ -241,11 +241,9 @@ const Students: React.FC = () => {
 
   // Toggle student status mutation (block/unblock)
   const { mutate: toggleStudentStatus, isPending: isTogglingStatus } = useMutation({
-    mutationFn: async ({ studentId, userId, newStatus }: { studentId: number, userId: number, newStatus: boolean }) => {
-      // Update user status first
-      await apiRequest('PUT', `/api/users/${userId}`, { active: newStatus });
-      // Then update student record
-      const res = await apiRequest('PUT', `/api/students/${studentId}`, { active: newStatus });
+    mutationFn: async ({ userId, newStatus }: { studentId: number, userId: number, newStatus: boolean }) => {
+      // Only update user status - this will cascade to student
+      const res = await apiRequest('PUT', `/api/users/${userId}`, { active: newStatus });
       return res.json();
     },
     onSuccess: (data, variables) => {

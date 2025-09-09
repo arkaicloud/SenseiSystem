@@ -119,7 +119,7 @@ export async function getDashboardMetrics(now = new Date()) {
     SELECT bl.name AS belt_name, COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
-    JOIN belt_levels bl ON bl.level_key = s.belt_level
+    JOIN belt_levels bl ON bl.level_key = s.belt_level::text
     WHERE AGE(NOW(), u.birth_date) >= INTERVAL '18 years'
       AND bl.category = 'adult'
       AND u.active = true
@@ -131,7 +131,7 @@ export async function getDashboardMetrics(now = new Date()) {
     SELECT bl.name AS belt_name, COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
-    JOIN belt_levels bl ON bl.level_key = s.belt_level
+    JOIN belt_levels bl ON bl.level_key = s.belt_level::text
     WHERE AGE(NOW(), u.birth_date) < INTERVAL '18 years'
       AND bl.category = 'child'
       AND u.active = true

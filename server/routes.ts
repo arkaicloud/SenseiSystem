@@ -1623,26 +1623,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get paginated data
       const offset = (page - 1) * pageSize;
       
-      // Build order by
-      let orderBy;
-      if (sortField === "firstName") {
-        orderBy = sortDir === "asc" ? users.firstName : desc(users.firstName);
-      } else if (sortField === "lastName") {
-        orderBy = sortDir === "asc" ? users.lastName : desc(users.lastName);
-      } else if (sortField === "email") {
-        orderBy = sortDir === "asc" ? users.email : desc(users.email);
-      } else {
-        orderBy = sortDir === "asc" ? users.createdAt : desc(users.createdAt);
-      }
-      
-      const studentsData = await db
+      // Simplify query to avoid complex orderBy issues for now
+      let studentsQuery = db
         .select()
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
         .where(whereCondition)
-        .orderBy(orderBy)
         .limit(pageSize)
         .offset(offset);
+
+      // Apply ordering based on sort field and direction
+      if (sortField === "firstName") {
+        studentsQuery = sortDir === "asc" 
+          ? studentsQuery.orderBy(users.firstName)
+          : studentsQuery.orderBy(desc(users.firstName));
+      } else if (sortField === "lastName") {
+        studentsQuery = sortDir === "asc" 
+          ? studentsQuery.orderBy(users.lastName)
+          : studentsQuery.orderBy(desc(users.lastName));
+      } else if (sortField === "email") {
+        studentsQuery = sortDir === "asc" 
+          ? studentsQuery.orderBy(users.email)
+          : studentsQuery.orderBy(desc(users.email));
+      } else {
+        // Default to createdAt
+        studentsQuery = sortDir === "asc" 
+          ? studentsQuery.orderBy(users.createdAt)
+          : studentsQuery.orderBy(desc(users.createdAt));
+      }
+      
+      const studentsData = await studentsQuery;
       
       // Transform the data to match the expected structure
       const transformedData = studentsData.map((row: any) => ({

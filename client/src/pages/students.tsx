@@ -300,13 +300,13 @@ const Students: React.FC = () => {
             </div>
           )}
           
-          {!isFetching && (!data?.items.length) && (
+          {!isFetching && (!data?.items || data.items.length === 0) && (
             <div className="text-center py-8 text-gray-500">
               Nenhum aluno encontrado
             </div>
           )}
 
-          {!isFetching && data?.items.length && (
+          {!isFetching && data?.items && data.items.length > 0 && (
             <table className="w-full text-sm">
               <thead className="bg-slate-50">
                 <tr className="[&>th]:px-3 [&>th]:py-3 text-left">

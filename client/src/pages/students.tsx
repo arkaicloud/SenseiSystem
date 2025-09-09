@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,7 +26,7 @@ import { MoreHorizontal, Eye, Edit2, Ban, CheckCircle, Undo } from "lucide-react
 const Students: React.FC = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [, setLocation] = useLocation();
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
@@ -205,7 +206,6 @@ const Students: React.FC = () => {
         title: "Sucesso",
         description: "Aluno cadastrado com sucesso",
       });
-      setIsAddStudentOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
     },
     onError: (error) => {
@@ -380,9 +380,6 @@ const Students: React.FC = () => {
 
   const filteredStudents = getFilteredStudents(activeTab);
 
-  const handleAddStudent = (data: any) => {
-    addStudent(data);
-  };
 
   const handleUpdateStudent = (data: any) => {
     if (selectedStudent) {
@@ -437,18 +434,13 @@ const Students: React.FC = () => {
               <span className="material-icons text-sm">search</span>
             </div>
           </div>
-          <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
-                <span className="material-icons mr-1 text-sm">add</span>
-                + Novo Aluno
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Adicionar Novo Aluno</DialogTitle>
-              <StudentForm onSubmit={handleAddStudent} isLoading={isAddingStudent} />
-            </DialogContent>
-          </Dialog>
+          <Button 
+            className="bg-secondary hover:bg-secondary-dark text-white font-medium"
+            onClick={() => setLocation('/onboarding')}
+          >
+            <span className="material-icons mr-1 text-sm">add</span>
+            + Novo Aluno
+          </Button>
         </div>
       </div>
       {/* Filtros e Ordenação */}

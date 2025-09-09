@@ -3,6 +3,44 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+// Dashboard Schemas
+export const DashboardSchema = z.object({
+  generatedAt: z.string(),
+  period: z.object({
+    type: z.enum(["month"]),
+    from: z.string(),
+    to: z.string()
+  }),
+  metrics: z.object({
+    activeStudents: z.number().int().nonnegative(),
+    classesHeld: z.number().int().nonnegative(),          // Aulas realizadas (mês)
+    attendanceRate: z.number().min(0).max(1),             // 0..1
+    monthlyRevenue: z.number().int().nonnegative(),       // centavos
+    lowEngagement: z.number().int().nonnegative(),        // Engajamento em baixa
+    delinquency: z.number().int().nonnegative(),          // Inadimplência (títulos vencidos)
+    pendingApprovals: z.number().int().nonnegative(),     // se já existir
+  }),
+  today: z.object({
+    classes: z.array(z.object({
+      id: z.number(),
+      name: z.string(),
+      start_time: z.string(), // "HH:mm"
+      duration: z.number().int().nonnegative()
+    })),
+    birthdays: z.array(z.object({
+      user_id: z.number(),
+      name: z.string(),
+      birth_date: z.string(),
+    }))
+  }),
+  belts: z.object({
+    adult: z.record(z.string(), z.number().int().nonnegative()),
+    kids:  z.record(z.string(), z.number().int().nonnegative())
+  })
+});
+
+export type DashboardDTO = z.infer<typeof DashboardSchema>;
+
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student']);
 export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'brown', 'black']);

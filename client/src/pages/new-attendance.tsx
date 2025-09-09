@@ -15,6 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 interface ClassWithStats {
   id: number;
   name: string;
+  type: string;
   startTime: string;
   duration: number;
   maxStudents: number;
@@ -288,7 +289,7 @@ export default function NewAttendancePage() {
                       {selectedClass.name}
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400">
-                      {formatDate(selectedDate)} — {selectedClass.startTime} ({selectedClass.duration} min)
+                      <span className="capitalize font-medium text-slate-600 dark:text-slate-300">{selectedClass.type}</span> • {formatDate(selectedDate)} — {selectedClass.startTime} ({selectedClass.duration} min)
                       {selectedClass.instructor && ` • ${selectedClass.instructor.name}`}
                     </p>
                   </div>

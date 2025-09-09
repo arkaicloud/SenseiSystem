@@ -33,6 +33,7 @@ const classFormSchema = z.object({
   }),
   duration: z.number().min(15, { message: "Duração deve ser de pelo menos 15 minutos" }),
   maxCapacity: z.number().optional().nullable(),
+  type: z.enum(['masculino', 'feminino', 'misto', 'infantil']).default('misto'),
 });
 
 type ClassFormValues = z.infer<typeof classFormSchema>;
@@ -65,6 +66,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
       startTime: "18:00",
       duration: 60,
       maxCapacity: 20,
+      type: "misto",
       ...defaultValues,
     },
   });
@@ -77,6 +79,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
     { value: 4, label: "Quinta-feira" },
     { value: 5, label: "Sexta-feira" },
     { value: 6, label: "Sábado" },
+  ];
+
+  const classTypes = [
+    { value: "masculino", label: "Masculino" },
+    { value: "feminino", label: "Feminino" },
+    { value: "misto", label: "Misto" },
+    { value: "infantil", label: "Infantil" },
   ];
 
   return (
@@ -175,6 +184,36 @@ const ClassForm: React.FC<ClassFormProps> = ({
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo da Aula</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {classTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="startTime"

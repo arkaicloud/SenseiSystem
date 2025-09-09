@@ -2,6 +2,7 @@ interface ClassCardProps {
   class: {
     id: number;
     name: string;
+    type: string;
     startTime: string;
     instructor: { name: string } | null;
     maxStudents: number;
@@ -27,8 +28,13 @@ export function ClassCard({ class: c, onOpen }: ClassCardProps) {
       data-testid={`class-card-${c.id}`}
     >
       <div className="flex justify-between items-start mb-2">
-        <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
-          {c.name}
+        <div>
+          <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+            {c.name}
+          </div>
+          <div className="text-xs text-slate-600 dark:text-slate-300 capitalize">
+            {c.type}
+          </div>
         </div>
         <div className="text-xs text-slate-500 dark:text-slate-400">
           {c.startTime} • {c.instructor?.name || 'Sem instrutor'}

@@ -437,9 +437,6 @@ export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSc
 export type ContaReceber = typeof contasReceber.$inferSelect;
 export type InsertContaReceber = z.infer<typeof insertContaReceberSchema>;
 
-export type BeltLevel = typeof beltLevels.$inferSelect;
-export type InsertBeltLevel = z.infer<typeof insertBeltLevelSchema>;
-
 
 // Custom extended types for frontend use
 export type StudentWithUser = Student & {

@@ -2107,6 +2107,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const targetDate = new Date(date);
         const dayOfWeek = targetDate.getDay();
         
+        console.log(`🔍 API /classes - Date: ${date}, dayOfWeek: ${dayOfWeek}`);
+        
         const classesWithStats = await db
           .select({
             id: classes.id,
@@ -2140,6 +2142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ))
           .groupBy(classes.id, users.id);
         
+        console.log(`📊 Found ${classesWithStats.length} classes for ${date} (day ${dayOfWeek})`);
         res.json(classesWithStats);
       } else {
         // Return all classes (existing behavior)

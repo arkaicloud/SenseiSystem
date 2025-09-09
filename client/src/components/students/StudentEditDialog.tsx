@@ -47,6 +47,7 @@ const studentEditSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Sobrenome é obrigatório"),
   birthDate: z.string().nullable(),
+  sex: z.string().nullable(),
   cpf: z.string().nullable(),
   rg: z.string().nullable(),
   email: z.string().email("E-mail inválido").nullable(),
@@ -124,6 +125,7 @@ export default function StudentEditDialog({
       firstName: "",
       lastName: "",
       birthDate: null,
+      sex: null,
       cpf: null,
       rg: null,
       email: null,
@@ -167,7 +169,7 @@ export default function StudentEditDialog({
         birthDate: data.birthDate,
         cpf: data.cpf,
         rg: data.rg,
-        sex: null, // Mapeado do gender se necessário
+        sex: data.sex,
         contact: {
           email: data.email,
           phone: data.phone
@@ -246,6 +248,7 @@ export default function StudentEditDialog({
         firstName: studentData.firstName || "",
         lastName: studentData.lastName || "",
         birthDate: studentData.birthDate ? new Date(studentData.birthDate).toISOString().split('T')[0] : null,
+        sex: studentData.sex || null,
         cpf: studentData.cpf || null,
         rg: studentData.rg || null,
         email: studentData.contact?.email || "",
@@ -419,6 +422,32 @@ export default function StudentEditDialog({
                               placeholder="dd/mm/aaaa"
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sex"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gênero</FormLabel>
+                          <Select
+                            disabled={readOnly}
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o gênero" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="masculino">Masculino</SelectItem>
+                              <SelectItem value="feminino">Feminino</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

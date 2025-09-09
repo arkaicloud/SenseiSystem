@@ -1600,14 +1600,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply filters
       let filteredStudents = allStudents;
       
-      // Status filter - corrigir lógica de filtragem
+      // Status filter - lógica corrigida
       if (status === "active") {
-        filteredStudents = filteredStudents.filter((s: any) => s.user.active === true);
+        // Ativos: usuários ativos que não estão pendentes de aprovação
+        filteredStudents = filteredStudents.filter((s: any) => 
+          s.user.active === true && s.user.status !== "pending"
+        );
       } else if (status === "pending") {
-        // Pendentes são apenas aqueles com status "pending" (vêm da matrícula)
+        // Pendentes: apenas usuários aguardando aprovação (status=pending, não importa active)
         filteredStudents = filteredStudents.filter((s: any) => s.user.status === "pending");
       } else if (status === "inactive") {
-        // Inativos são aqueles que foram bloqueados manualmente (active = false, mas não pending)
+        // Inativos: usuários bloqueados (active=false e status não é pending)
         filteredStudents = filteredStudents.filter((s: any) => 
           s.user.active === false && s.user.status !== "pending"
         );

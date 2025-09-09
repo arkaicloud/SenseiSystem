@@ -7,13 +7,12 @@ export async function getDashboardMetrics(now = new Date()) {
   const from = startOfMonth(now);
   const to = endOfMonth(now);
 
-  // 1) Alunos ativos
+  // 1) Alunos ativos (considera todos com active=true, independente de aprovação)
   const activeStudentsResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
     WHERE u.active = true
-      AND u.status = 'active'
       AND u.role = 'student';
   `);
   const activeStudents = (activeStudentsResult.rows[0] as any)?.count || 0;
@@ -123,7 +122,6 @@ export async function getDashboardMetrics(now = new Date()) {
     WHERE AGE(NOW(), u.birth_date) >= INTERVAL '18 years'
       AND bl.category = 'adult'
       AND u.active = true
-      AND u.status = 'active'
     GROUP BY bl.name, bl.order
     ORDER BY bl.order;
   `);
@@ -135,7 +133,6 @@ export async function getDashboardMetrics(now = new Date()) {
     WHERE AGE(NOW(), u.birth_date) < INTERVAL '18 years'
       AND bl.category = 'child'
       AND u.active = true
-      AND u.status = 'active'
     GROUP BY bl.name, bl.order
     ORDER BY bl.order;
   `);

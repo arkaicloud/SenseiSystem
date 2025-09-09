@@ -63,6 +63,7 @@ const studentEditSchema = z.object({
   state: z.string().nullable(),
   zipCode: z.string().nullable(),
   beltLevel: z.string(),
+  stripes: z.number().nullable(),
   lastPromotionDate: z.string().nullable(),
   financialResponsibleName: z.string().nullable(),
   financialResponsibleCpf: z.string().nullable(),
@@ -142,6 +143,7 @@ export default function StudentEditDialog({
       state: null,
       zipCode: null,
       beltLevel: "white",
+      stripes: 0,
       lastPromotionDate: null,
       financialResponsibleName: null,
       financialResponsibleCpf: null,
@@ -206,6 +208,7 @@ export default function StudentEditDialog({
         },
         graduation: {
           beltLevel: data.beltLevel,
+          stripes: data.stripes,
           graduationDate: data.lastPromotionDate
         }
       };
@@ -267,6 +270,7 @@ export default function StudentEditDialog({
         state: studentData.address?.state || null,
         zipCode: studentData.address?.zip || null,
         beltLevel: studentData.graduation?.beltLevel || "white",
+        stripes: studentData.graduation?.stripes || 0,
         lastPromotionDate: studentData.graduation?.graduationDate ? new Date(studentData.graduation.graduationDate).toISOString().split('T')[0] : null,
         financialResponsibleName: studentData.financialResponsibleName || null,
         financialResponsibleCpf: studentData.financialResponsibleCpf || null,
@@ -760,6 +764,37 @@ export default function StudentEditDialog({
                       )}
                     />
 
+                    <FormField
+                      control={form.control}
+                      name="stripes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grau (Listras)</FormLabel>
+                          <Select
+                            disabled={readOnly}
+                            value={field.value?.toString() || "0"}
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o grau" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0">0 listras</SelectItem>
+                              <SelectItem value="1">1 listra</SelectItem>
+                              <SelectItem value="2">2 listras</SelectItem>
+                              <SelectItem value="3">3 listras</SelectItem>
+                              <SelectItem value="4">4 listras</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
                     <FormField
                       control={form.control}
                       name="lastPromotionDate"

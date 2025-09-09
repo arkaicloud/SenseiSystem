@@ -272,6 +272,15 @@ export const classes = pgTable("classes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Class enrollments table (reservas/inscrições em aulas)
+export const classEnrollments = pgTable("class_enrollments", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  classId: integer("class_id").references(() => classes.id, { onDelete: 'cascade' }).notNull(),
+  enrolledAt: timestamp("enrolled_at").defaultNow(),
+  isActive: boolean("is_active").default(true), // Permite cancelar inscrição
+});
+
 // Attendance table
 export const attendance = pgTable("attendance", {
   id: serial("id").primaryKey(),
@@ -614,11 +623,15 @@ export const dailyLoginRecordsRelations = relations(dailyLoginRecords, ({ one })
 }));
 
 // Insert schemas for new tables
+export const insertClassEnrollmentSchema = createInsertSchema(classEnrollments).omit({ id: true, enrolledAt: true });
 export const insertStreakAchievementSchema = createInsertSchema(streakAchievements).omit({ id: true, earnedDate: true });
 export const insertDailyLoginRecordSchema = createInsertSchema(dailyLoginRecords).omit({ id: true, createdAt: true });
 export const insertBeltLevelSchema = createInsertSchema(beltLevels).omit({ id: true, createdAt: true, updatedAt: true });
 
 // TypeScript types for new tables
+export type ClassEnrollment = typeof classEnrollments.$inferSelect;
+export type InsertClassEnrollment = z.infer<typeof insertClassEnrollmentSchema>;
+
 export type StreakAchievement = typeof streakAchievements.$inferSelect;
 export type InsertStreakAchievement = z.infer<typeof insertStreakAchievementSchema>;
 

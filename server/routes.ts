@@ -1590,13 +1590,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply filters
       let filteredStudents = allStudents;
       
-      // Status filter
+      // Status filter - corrigir lógica de filtragem
       if (status === "active") {
         filteredStudents = filteredStudents.filter((s: any) => s.user.active === true);
       } else if (status === "pending") {
-        filteredStudents = filteredStudents.filter((s: any) => s.user.status === "pending");
+        // Pendentes são apenas aqueles com status pending E que não estão ativos
+        filteredStudents = filteredStudents.filter((s: any) => 
+          s.user.status === "pending" && s.user.active === false
+        );
       } else if (status === "inactive") {
-        filteredStudents = filteredStudents.filter((s: any) => s.user.active === false);
+        // Inativos são aqueles que não estão ativos E não são pendentes (foram bloqueados)
+        filteredStudents = filteredStudents.filter((s: any) => 
+          s.user.active === false && s.user.status !== "pending"
+        );
       }
       
       // Search filter

@@ -116,18 +116,28 @@ export async function getDashboardMetrics(now = new Date()) {
 
   // 10) Faixas (adulto 18+, infantil <18)
   const beltsAdult = await db.execute(sql`
-    SELECT s.belt_level, COUNT(*)::int AS count
+    SELECT bl.name AS belt_name, COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
+    JOIN belt_levels bl ON bl.level_key = s.belt_level
     WHERE AGE(NOW(), u.birth_date) >= INTERVAL '18 years'
-    GROUP BY s.belt_level;
+      AND bl.category = 'adult'
+      AND u.active = true
+      AND u.status = 'active'
+    GROUP BY bl.name, bl.order
+    ORDER BY bl.order;
   `);
   const beltsKids = await db.execute(sql`
-    SELECT s.belt_level, COUNT(*)::int AS count
+    SELECT bl.name AS belt_name, COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
+    JOIN belt_levels bl ON bl.level_key = s.belt_level
     WHERE AGE(NOW(), u.birth_date) < INTERVAL '18 years'
-    GROUP BY s.belt_level;
+      AND bl.category = 'child'
+      AND u.active = true
+      AND u.status = 'active'
+    GROUP BY bl.name, bl.order
+    ORDER BY bl.order;
   `);
 
   return {
@@ -147,8 +157,8 @@ export async function getDashboardMetrics(now = new Date()) {
       birthdays: (birthdays.rows as any[]) || []
     },
     belts: {
-      adult: Object.fromEntries(((beltsAdult.rows as any[]) || []).map(r => [r.belt_level, r.count])),
-      kids:  Object.fromEntries(((beltsKids.rows as any[]) || []).map(r => [r.belt_level, r.count]))
+      adult: Object.fromEntries(((beltsAdult.rows as any[]) || []).map(r => [r.belt_name, r.count])),
+      kids:  Object.fromEntries(((beltsKids.rows as any[]) || []).map(r => [r.belt_name, r.count]))
     }
   };
 }

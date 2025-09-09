@@ -54,19 +54,13 @@ export default function NewAttendancePage() {
   // Fetch classes for selected date with stats
   const { data: classes = [], isLoading: classesLoading } = useQuery<ClassWithStats[]>({
     queryKey: ['/api/classes', dateString],
-    queryFn: async () => {
-      const response = await apiRequest(`/api/classes?date=${dateString}`);
-      return Array.isArray(response) ? response : [];
-    },
+    queryFn: () => apiRequest(`/api/classes?date=${dateString}`),
   });
 
   // Fetch roster when class is selected
   const { data: rosterData = [], isLoading: rosterLoading } = useQuery<RosterStudent[]>({
     queryKey: ['/api/classes', selectedClass?.id, 'roster', dateString],
-    queryFn: async () => {
-      const response = await apiRequest(`/api/classes/${selectedClass?.id}/roster?date=${dateString}`);
-      return Array.isArray(response) ? response : [];
-    },
+    queryFn: () => apiRequest(`/api/classes/${selectedClass?.id}/roster?date=${dateString}`),
     enabled: !!selectedClass,
   });
 
@@ -162,7 +156,7 @@ export default function NewAttendancePage() {
           .map(s => ({ studentId: s.student_id, status: 'absent' }));
         break;
       case 'clear-all':
-        updates = roster.map(s => ({ studentId: s.student_id, status: null as const }));
+        updates = roster.map(s => ({ studentId: s.student_id, status: null }));
         break;
     }
 

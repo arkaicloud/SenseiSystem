@@ -47,6 +47,7 @@ interface PendingUser {
   phone?: string;
   joinDate: string;
   student?: {
+    id: number;
     financialResponsibleName?: string;
     financialResponsibleCpf?: string;
     financialResponsibleEmail?: string;
@@ -623,11 +624,11 @@ export default function PendingApprovalsBatch() {
                       </Button>
                       
                       {/* Edit Button - shows when data is incomplete */}
-                      {!validation.isValid && (
+                      {!validation.isValid && user.student?.id && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setEditingStudent(user.id)}
+                          onClick={() => setEditingStudent(user.student!.id)}
                           className="text-blue-600 border-blue-200 hover:bg-blue-50"
                         >
                           <Edit className="h-4 w-4" />

@@ -1582,83 +1582,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const status = (req.query.status as string) || "all"; // all|active|pending|inactive
       const q = (req.query.q as string) || "";
-      const sortRaw = (req.query.sort as string) || "createdAt:desc";
-      const [sortField, sortDir] = sortRaw.split(":");
       
-      // Build filters
-      const conditions = [];
+      // Get all students using the working method
+      const allStudents = await storage.getStudentsWithUsers();
+      console.log('✅ Students found:', allStudents.length);
       
-      // Status filters
+      // Apply filters
+      let filteredStudents = allStudents;
+      
+      // Status filter
       if (status === "active") {
-        conditions.push(eq(users.active, true));
+        filteredStudents = filteredStudents.filter((s: any) => s.user.active === true);
       } else if (status === "pending") {
-        conditions.push(eq(users.status, "pending"));
+        filteredStudents = filteredStudents.filter((s: any) => s.user.status === "pending");
       } else if (status === "inactive") {
-        conditions.push(eq(users.active, false));
+        filteredStudents = filteredStudents.filter((s: any) => s.user.active === false);
       }
       
-      // Search filter - search in first name, last name, or email
-      let searchCondition = null;
+      // Search filter
       if (q) {
-        searchCondition = sql`(LOWER(${users.firstName}) LIKE ${`%${q.toLowerCase()}%`} OR LOWER(${users.lastName}) LIKE ${`%${q.toLowerCase()}%`} OR LOWER(${users.email}) LIKE ${`%${q.toLowerCase()}%`})`;
+        const searchTerm = q.toLowerCase();
+        filteredStudents = filteredStudents.filter((s: any) => 
+          s.user.firstName.toLowerCase().includes(searchTerm) ||
+          s.user.lastName.toLowerCase().includes(searchTerm) ||
+          s.user.email.toLowerCase().includes(searchTerm)
+        );
       }
       
-      // Combine all conditions
-      const whereCondition = and(
-        eq(users.role, 'student'),
-        ...(conditions.length > 0 ? conditions : []),
-        ...(searchCondition ? [searchCondition] : [])
-      );
-      
-      // Count total records
-      const totalCountResult = await db
-        .select({ count: count() })
-        .from(students)
-        .innerJoin(users, eq(students.userId, users.id))
-        .where(whereCondition);
-      
-      const total = totalCountResult[0]?.count || 0;
+      // Calculate pagination
+      const total = filteredStudents.length;
       const totalPages = Math.max(Math.ceil(total / pageSize), 1);
-      
-      // Get paginated data
       const offset = (page - 1) * pageSize;
       
-      // Get paginated data without complex ordering for now
-      const studentsData = await db
-        .select()
-        .from(students)
-        .innerJoin(users, eq(students.userId, users.id))
-        .where(whereCondition)
-        .orderBy(users.createdAt) // Simple ordering by created date
-        .limit(pageSize)
-        .offset(offset);
+      // Apply pagination
+      const paginatedStudents = filteredStudents.slice(offset, offset + pageSize);
       
-      // Transform the data to match the expected structure
-      const transformedData = studentsData.map((row: any) => ({
-        id: row.students.id,
-        userId: row.students.userId,
-        beltLevel: row.students.beltLevel,
-        stripes: row.students.stripes,
-        medicalObservations: row.students.medicalObservations,
-        notes: row.students.notes,
-        attendanceRate: row.students.attendanceRate,
-        user: {
-          id: row.users.id,
-          firstName: row.users.firstName,
-          lastName: row.users.lastName,
-          email: row.users.email,
-          phone: row.users.phone,
-          active: row.users.active,
-          status: row.users.status,
-          createdAt: row.users.createdAt,
-          joinDate: row.users.joinDate
-        }
-      }));
-      
-      console.log(`✅ Found ${transformedData.length} students (page ${page}/${totalPages}, total: ${total})`);
+      console.log(`✅ Found ${paginatedStudents.length} students (page ${page}/${totalPages}, total: ${total})`);
       
       res.json({
-        items: transformedData,
+        items: paginatedStudents,
         page,
         pageSize,
         total,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -28,6 +29,7 @@ const ONBOARDING_STEP_KEY = "senseisystem_onboarding_step";
 
 export default function OnboardingPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch school configuration
   const { data: schoolConfig } = useQuery<{
@@ -227,11 +229,22 @@ export default function OnboardingPage() {
     );
   }
 
+  // Detectar se usuário é admin para mudar comportamento do botão voltar
+  const handleMobileBack = () => {
+    if (user && user.role === 'admin') {
+      // Se for admin, redirecionar para o dashboard
+      window.location.href = '/dashboard';
+    } else {
+      // Se não for admin, fechar a aba
+      window.close();
+    }
+  };
+
   // Usar versão mobile se for dispositivo móvel
   if (isMobile) {
     return (
       <MobileStudentOnboarding 
-        onBack={() => window.close()}
+        onBack={handleMobileBack}
         onSuccess={() => setSuccess(true)}
       />
     );

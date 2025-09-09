@@ -51,32 +51,14 @@ export default function NewAttendancePage() {
 
   const dateString = selectedDate.toISOString().split('T')[0];
 
-  console.log('🔍 NEW ATTENDANCE PAGE - Debug Info:');
-  console.log('📅 Selected Date:', selectedDate);
-  console.log('📅 Date String:', dateString);
-  console.log('🔄 Will query:', `/api/classes?date=${dateString}`);
-
   // Fetch classes for selected date with stats
-  const { data: classes = [], isLoading: classesLoading, error: classesError } = useQuery<ClassWithStats[]>({
-    queryKey: ['/api/classes', dateString],
-    queryFn: () => {
-      console.log('🚀 Executing API call for classes...');
-      return apiRequest(`/api/classes?date=${dateString}`);
-    },
-    onSuccess: (data) => {
-      console.log('✅ Classes API Success:', data);
-    },
-    onError: (error) => {
-      console.error('❌ Classes API Error:', error);
-    }
+  const { data: classes = [], isLoading: classesLoading } = useQuery<ClassWithStats[]>({
+    queryKey: [`/api/classes?date=${dateString}`],
   });
-
-  console.log('📊 Current state - Classes:', classes, 'Loading:', classesLoading, 'Error:', classesError);
 
   // Fetch roster when class is selected
   const { data: rosterData = [], isLoading: rosterLoading } = useQuery<RosterStudent[]>({
-    queryKey: ['/api/classes', selectedClass?.id, 'roster', dateString],
-    queryFn: () => apiRequest(`/api/classes/${selectedClass?.id}/roster?date=${dateString}`),
+    queryKey: [`/api/classes/${selectedClass?.id}/roster?date=${dateString}`],
     enabled: !!selectedClass,
   });
 
@@ -88,7 +70,11 @@ export default function NewAttendancePage() {
   // Individual attendance mutation
   const attendanceMutation = useMutation({
     mutationFn: async ({ classId, studentId, status }: { classId: number; studentId: number; status: string | null }) => {
-      return apiRequest(`/api/attendance/${classId}/${studentId}`, 'PATCH', { date: dateString, status });
+      const response = await apiRequest('PATCH', `/api/attendance/${classId}/${studentId}`, { date: dateString, status });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
     },
     onSuccess: () => {
       setAutoSaveStatus("Salvo automaticamente ✓");
@@ -108,7 +94,11 @@ export default function NewAttendancePage() {
   // Bulk attendance mutation
   const bulkMutation = useMutation({
     mutationFn: async (updates: { studentId: number; status: string | null }[]) => {
-      return apiRequest('/api/attendance/bulk', 'POST', { date: dateString, classId: selectedClass?.id, updates });
+      const response = await apiRequest('POST', '/api/attendance/bulk', { date: dateString, classId: selectedClass?.id, updates });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
     },
     onSuccess: () => {
       setAutoSaveStatus("Ações em lote salvas ✓");
@@ -127,7 +117,13 @@ export default function NewAttendancePage() {
 
   // Start class mutation
   const startClassMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/classes/${selectedClass?.id}/start`, 'POST', { date: dateString }),
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/classes/${selectedClass?.id}/start`, { date: dateString });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
     onSuccess: () => {
       setIsClassStarted(true);
       toast({ title: "Aula iniciada", description: "Chamada liberada para preenchimento" });
@@ -136,7 +132,13 @@ export default function NewAttendancePage() {
 
   // Finish class mutation  
   const finishClassMutation = useMutation({
-    mutationFn: (finalizeAbsentRest: boolean = false) => apiRequest(`/api/classes/${selectedClass?.id}/finish`, 'POST', { date: dateString, finalizeAbsentRest }),
+    mutationFn: async (finalizeAbsentRest: boolean = false) => {
+      const response = await apiRequest('POST', `/api/classes/${selectedClass?.id}/finish`, { date: dateString, finalizeAbsentRest });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
     onSuccess: () => {
       setIsClassStarted(false);
       toast({ title: "Aula encerrada", description: "Presença finalizada com sucesso" });

@@ -44,6 +44,9 @@ const personalInfoSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Sobrenome é obrigatório"),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
+  sex: z.enum(["M", "F"], {
+    errorMap: () => ({ message: "Selecione o gênero" })
+  }),
   email: z.string().email("E-mail inválido"),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
   cpf: z.string()
@@ -128,6 +131,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
       firstName: "",
       lastName: "",
       birthDate: "",
+      sex: "M" as "M" | "F",
       email: "",
       phone: "",
       cpf: "",
@@ -231,7 +235,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   // Campos por etapa
   const getFieldsForStep = (step: number): (keyof PersonalInfoData)[] => {
     switch (step) {
-      case 1: return ["firstName", "lastName", "birthDate", "cpf", "rg"];
+      case 1: return ["firstName", "lastName", "birthDate", "sex", "cpf", "rg"];
       case 2: return ["email", "phone"];
       case 3: return ["emergencyContact", "emergencyPhone"];
       case 4: return ["financialResponsibleRelationship", "paymentPlanId", "dueDate"];
@@ -279,7 +283,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <FormField
               control={form.control}
               name="birthDate"
@@ -289,6 +293,27 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="sex"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gênero *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="M">Masculino</SelectItem>
+                      <SelectItem value="F">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

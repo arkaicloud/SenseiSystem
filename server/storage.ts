@@ -342,7 +342,7 @@ export class MemStorage implements IStorage {
       role: "instructor",
       phone: "555-234-5678",
       sex: null,
-      emergencyContact: ""
+      emergencyContact: "",
       birthDate: null,
       street: null,
       number: null,

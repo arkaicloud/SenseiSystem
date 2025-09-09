@@ -2,13 +2,14 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, students, beltLevels, attendance, classes, studentPayments, contasReceber } from "@shared/schema";
+import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber } from "@shared/schema";
 import { eq, and, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
 import { z } from "zod";
 import { 
   insertUserSchema, 
   insertStudentSchema, 
   insertClassSchema,
+  insertClassEnrollmentSchema,
   insertAttendanceSchema,
   insertAttendanceChangesSchema,
   insertPaymentPlanSchema,
@@ -2211,6 +2212,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== CLASS ENROLLMENT ENDPOINTS ==========
+  
+  // Get enrollments for a class
+  app.get("/api/classes/:id/enrollments", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      
+      const enrollments = await db
+        .select({
+          enrollment_id: classEnrollments.id,
+          student_id: students.id,
+          name: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('name'),
+          belt_level: students.beltLevel,
+          enrolled_at: classEnrollments.enrolledAt,
+          is_active: classEnrollments.isActive
+        })
+        .from(classEnrollments)
+        .innerJoin(students, eq(classEnrollments.studentId, students.id))
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(and(
+          eq(classEnrollments.classId, classId),
+          eq(classEnrollments.isActive, true),
+          eq(users.active, true)
+        ))
+        .orderBy(sql`${users.firstName} || ' ' || ${users.lastName}`);
+      
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Error fetching class enrollments:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Enroll student in a class
+  app.post("/api/classes/:id/enroll", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { studentId } = req.body;
+      
+      if (!studentId) {
+        return res.status(400).json({ message: "Student ID is required" });
+      }
+      
+      // Check if already enrolled
+      const existing = await db
+        .select()
+        .from(classEnrollments)
+        .where(and(
+          eq(classEnrollments.classId, classId),
+          eq(classEnrollments.studentId, studentId),
+          eq(classEnrollments.isActive, true)
+        ))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        return res.status(400).json({ message: "Student already enrolled in this class" });
+      }
+      
+      // Check class capacity
+      const classInfo = await db
+        .select()
+        .from(classes)
+        .where(eq(classes.id, classId))
+        .limit(1);
+      
+      if (classInfo.length === 0) {
+        return res.status(404).json({ message: "Class not found" });
+      }
+      
+      const currentEnrollments = await db
+        .select({ count: count() })
+        .from(classEnrollments)
+        .where(and(
+          eq(classEnrollments.classId, classId),
+          eq(classEnrollments.isActive, true)
+        ));
+      
+      const enrollmentCount = currentEnrollments[0]?.count || 0;
+      if (classInfo[0].maxStudents && enrollmentCount >= classInfo[0].maxStudents) {
+        return res.status(400).json({ message: "Class is full" });
+      }
+      
+      // Create enrollment
+      const [enrollment] = await db
+        .insert(classEnrollments)
+        .values({
+          classId,
+          studentId,
+          isActive: true
+        })
+        .returning();
+      
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Error enrolling student:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Unenroll student from a class
+  app.delete("/api/classes/:id/enroll/:studentId", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const studentId = parseInt(req.params.studentId);
+      
+      await db
+        .update(classEnrollments)
+        .set({ isActive: false })
+        .where(and(
+          eq(classEnrollments.classId, classId),
+          eq(classEnrollments.studentId, studentId)
+        ));
+      
+      res.json({ message: "Student unenrolled successfully" });
+    } catch (error) {
+      console.error("Error unenrolling student:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get roster for specific class and date
   app.get("/api/classes/:id/roster", isAuthenticated, async (req, res) => {
     try {
@@ -2231,6 +2352,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
+        .innerJoin(classEnrollments, and(
+          eq(classEnrollments.studentId, students.id),
+          eq(classEnrollments.classId, classId),
+          eq(classEnrollments.isActive, true)
+        ))
         .leftJoin(attendance, and(
           eq(attendance.studentId, students.id),
           eq(attendance.classId, classId),

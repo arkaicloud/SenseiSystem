@@ -1,5 +1,6 @@
 import { db } from "../db";
 import { sql } from "drizzle-orm";
+import { students, users, attendance, studentPayments, classes } from "../../shared/schema";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export async function getDashboardMetrics(now = new Date()) {
@@ -7,7 +8,7 @@ export async function getDashboardMetrics(now = new Date()) {
   const to = endOfMonth(now);
 
   // 1) Alunos ativos
-  const [{ count: activeStudents }] = await db.execute<{count:number}>(sql`
+  const activeStudentsResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
@@ -15,9 +16,10 @@ export async function getDashboardMetrics(now = new Date()) {
       AND u.status = 'active'
       AND u.role = 'student';
   `);
+  const activeStudents = (activeStudentsResult.rows[0] as any)?.count || 0;
 
   // 2) Aulas realizadas (mês): sessões com presença (present/late) — proxy de realização
-  const [{ count: classesHeld }] = await db.execute<{count:number}>(sql`
+  const classesHeldResult = await db.execute(sql`
     SELECT COUNT(DISTINCT (a.class_id, DATE(a.date)))::int AS count
     FROM attendance a
     JOIN students s ON s.id = a.student_id
@@ -25,9 +27,10 @@ export async function getDashboardMetrics(now = new Date()) {
     WHERE a.status IN ('present','late')
       AND a.date BETWEEN ${from} AND ${to};
   `);
+  const classesHeld = (classesHeldResult.rows[0] as any)?.count || 0;
 
   // 3) Taxa de presença (mês) = presenças / (presenças + faltas)
-  const [{ rate }] = await db.execute<{rate:number}>(sql`
+  const attendanceRateResult = await db.execute(sql`
     WITH m AS (
       SELECT a.status
       FROM attendance a
@@ -40,9 +43,10 @@ export async function getDashboardMetrics(now = new Date()) {
     END AS rate
     FROM m;
   `);
+  const rate = (attendanceRateResult.rows[0] as any)?.rate || 0;
 
   // 4) Receita mensal (centavos) — pagos no mês
-  const [{ cents: monthlyRevenue }] = await db.execute<{cents:number}>(sql`
+  const monthlyRevenueResult = await db.execute(sql`
     SELECT COALESCE(SUM(sp.amount),0)::int AS cents
     FROM student_payments sp
     JOIN students s ON s.id = sp.student_id
@@ -50,10 +54,11 @@ export async function getDashboardMetrics(now = new Date()) {
     WHERE sp.status = 'paid'
       AND sp.paid_date BETWEEN ${from} AND ${to};
   `);
+  const monthlyRevenue = (monthlyRevenueResult.rows[0] as any)?.cents || 0;
 
   // 5) Engajamento em baixa (alunos sem presença > X dias) — renomeia card no front
   const riskDays = 21; // TODO: ler de settings
-  const [{ count: lowEngagement }] = await db.execute<{count:number}>(sql`
+  const lowEngagementResult = await db.execute(sql`
     WITH last_att AS (
       SELECT s.id AS student_id, MAX(a.date) AS last_date
       FROM students s
@@ -66,9 +71,10 @@ export async function getDashboardMetrics(now = new Date()) {
     FROM last_att
     WHERE (NOW()::date - COALESCE(last_date::date, DATE '1900-01-01')) > ${riskDays};
   `);
+  const lowEngagement = (lowEngagementResult.rows[0] as any)?.count || 0;
 
   // 6) Inadimplência — títulos vencidos
-  const [{ count: delinquency }] = await db.execute<{count:number}>(sql`
+  const delinquencyResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM student_payments sp
     JOIN students s ON s.id = sp.student_id
@@ -76,23 +82,26 @@ export async function getDashboardMetrics(now = new Date()) {
     WHERE sp.status = 'overdue'
       AND sp.due_date < NOW();
   `);
+  const delinquency = (delinquencyResult.rows[0] as any)?.count || 0;
 
   // 7) Aprovações pendentes
-  const [{ count: pendingApprovals }] = await db.execute<{count:number}>(sql`
+  const pendingApprovalsResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM users u
     WHERE u.active = false
       AND u.status = 'pending'
       AND u.role = 'student';
   `);
+  const pendingApprovals = (pendingApprovalsResult.rows[0] as any)?.count || 0;
 
   // 8) Aulas de hoje (lista com botão Acessar)
-  const [{ dow }] = await db.execute<{dow:number}>(sql`SELECT EXTRACT(DOW FROM NOW())::int AS dow;`);
+  const dowResult = await db.execute(sql`SELECT EXTRACT(DOW FROM NOW())::int AS dow;`);
+  const dow = (dowResult.rows[0] as any)?.dow || 0;
   const todayClasses = await db.execute(sql`
     SELECT c.id, c.name, c.start_time, c.duration
     FROM classes c
     JOIN users u ON u.id = c.instructor_id
-    WHERE c.day_of_week = ${Number(dow ?? 0)}
+    WHERE c.day_of_week = ${Number(dow)}
     ORDER BY c.start_time ASC;
   `);
 

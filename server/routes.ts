@@ -339,11 +339,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // =====Dashboard Metrics Route (Legacy - for backward compatibility)=====
+  // =====New Dashboard Metrics Route (Unified)=====
   app.get("/api/dashboard/metrics", isAuthenticated, async (req, res) => {
     try {
-      const metrics = await dashboardMetricsService.getMetrics();
-      res.json(metrics);
+      const { getDashboardMetrics } = await import("./services/dashboardMetricsNew");
+      const { DashboardSchema } = await import("../shared/schema");
+      
+      const data = await getDashboardMetrics();
+      const parsed = DashboardSchema.parse(data);
+      res.json(parsed);
     } catch (error) {
       console.error('❌ Error fetching dashboard metrics:', error);
       res.status(500).json({ message: "Failed to fetch dashboard metrics" });

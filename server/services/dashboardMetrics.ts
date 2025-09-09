@@ -100,7 +100,7 @@ export class DashboardMetricsService {
       
       const attendanceRate = Number(attendanceRateResult[0]?.avgRate || 0);
 
-      // Students at Risk - critérios corretos
+      // Students at Risk - critérios corretos usando data de matrícula
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
@@ -113,7 +113,7 @@ export class DashboardMetricsService {
             eq(users.status, 'active'),
             eq(users.active, true),
             lt(students.attendanceRate, 60), // Threshold configurável
-            lte(users.joinDate, thirtyDaysAgo) // Pelo menos 30 dias de matrícula
+            lte(students.enrollmentDate, thirtyDaysAgo) // Pelo menos 30 dias desde a matrícula
           )
         );
       
@@ -129,7 +129,7 @@ export class DashboardMetricsService {
             eq(users.status, 'active'),
             eq(users.active, true),
             lt(students.attendanceRate, 30), // Risco crítico
-            lte(users.joinDate, thirtyDaysAgo)
+            lte(students.enrollmentDate, thirtyDaysAgo) // Pelo menos 30 dias desde a matrícula
           )
         );
       

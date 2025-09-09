@@ -91,10 +91,10 @@ export async function getDashboardMetrics(now = new Date()) {
   // 8) Aulas de hoje (lista com botão Acessar)
   const dowResult = await db.execute(sql`SELECT EXTRACT(DOW FROM NOW())::int AS dow;`);
   const dow = (dowResult.rows[0] as any)?.dow || 0;
+  
   const todayClasses = await db.execute(sql`
     SELECT c.id, c.name, c.start_time, c.duration
     FROM classes c
-    JOIN users u ON u.id = c.instructor_id
     WHERE c.day_of_week = ${Number(dow)}
     ORDER BY c.start_time ASC;
   `);

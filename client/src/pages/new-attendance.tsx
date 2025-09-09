@@ -53,9 +53,9 @@ export default function NewAttendancePage() {
 
   // Fetch classes for selected date with stats
   const { data: classes = [], isLoading: classesLoading } = useQuery<ClassWithStats[]>({
-    queryKey: ['/api/attendance/classes', dateString],
+    queryKey: ['/api/classes', dateString],
     queryFn: async () => {
-      const response = await apiRequest(`/api/attendance/classes?date=${dateString}`);
+      const response = await apiRequest(`/api/classes?date=${dateString}`);
       return Array.isArray(response) ? response : [];
     },
   });

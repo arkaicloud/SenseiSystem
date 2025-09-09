@@ -308,6 +308,7 @@ export class MemStorage implements IStorage {
       password: "$2b$10$nyKIage48tmqXthsjlVCZeGOoXlDa9.rW4iR3D8IcL5U/IjIk3sO2", // "12345678"
       role: "admin",
       phone: "555-123-4567",
+      sex: null,
       emergencyContact: "",
       birthDate: null,
       street: null,
@@ -340,7 +341,8 @@ export class MemStorage implements IStorage {
       password: "$2b$10$O9hGnkb7dxHSHo5.jtffc.mUTQsQtMkj/K4GrP/NQFyukf8eZuU5G", // "password"
       role: "instructor",
       phone: "555-234-5678",
-      emergencyContact: "",
+      sex: null,
+      emergencyContact: ""
       birthDate: null,
       street: null,
       number: null,

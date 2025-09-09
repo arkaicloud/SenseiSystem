@@ -55,20 +55,15 @@ export async function getDashboardMetrics(now = new Date()) {
   `);
   const monthlyRevenue = (monthlyRevenueResult.rows[0] as any)?.cents || 0;
 
-  // 5) Engajamento em baixa (alunos sem presença > X dias) — renomeia card no front
-  const riskDays = 21; // TODO: ler de settings
+  // 5) Engajamento em baixa (alunos com attendance_rate < threshold)
+  const frequencyThreshold = 60; // Padrão de 60%, igual à tela de engajamento
   const lowEngagementResult = await db.execute(sql`
-    WITH last_att AS (
-      SELECT s.id AS student_id, MAX(a.date) AS last_date
-      FROM students s
-      LEFT JOIN attendance a ON a.student_id = s.id
-      JOIN users u ON u.id = s.user_id
-      WHERE u.role = 'student' AND u.active = true
-      GROUP BY s.id
-    )
     SELECT COUNT(*)::int AS count
-    FROM last_att
-    WHERE (NOW()::date - COALESCE(last_date::date, DATE '1900-01-01')) > ${riskDays};
+    FROM students s
+    JOIN users u ON u.id = s.user_id
+    WHERE u.active = true
+      AND u.role = 'student'
+      AND s.attendance_rate < ${frequencyThreshold};
   `);
   const lowEngagement = (lowEngagementResult.rows[0] as any)?.count || 0;
 

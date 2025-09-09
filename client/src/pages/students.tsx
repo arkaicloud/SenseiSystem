@@ -368,16 +368,16 @@ const Students: React.FC = () => {
                     <td>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         student.user.active ? 'bg-green-100 text-green-800' : 
-                        student.user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        (!student.user.active && student.user.status === 'pending') ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
                       }`}>
                         <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
                           student.user.active ? 'bg-green-400' : 
-                          student.user.status === 'pending' ? 'bg-yellow-400' :
+                          (!student.user.active && student.user.status === 'pending') ? 'bg-yellow-400' :
                           'bg-red-400'
                         }`}></div>
                         {student.user.active ? 'Ativo' : 
-                         student.user.status === 'pending' ? 'Pendente' : 'Inativo'}
+                         (!student.user.active && student.user.status === 'pending') ? 'Pendente' : 'Inativo'}
                       </span>
                     </td>
                     {!isMobile && (

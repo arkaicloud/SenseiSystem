@@ -1835,7 +1835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (payload.firstName) userUpdateData.firstName = payload.firstName;
         if (payload.lastName) userUpdateData.lastName = payload.lastName;
-        if (payload.birthDate) userUpdateData.birthDate = payload.birthDate;
+        if (payload.birthDate) userUpdateData.birthDate = new Date(payload.birthDate);
         if (payload.cpf) userUpdateData.cpf = payload.cpf;
         if (payload.rg) userUpdateData.rg = payload.rg;
         
@@ -1874,7 +1874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (payload.graduation?.graduationDate) {
-        studentUpdateData.lastPromotionDate = payload.graduation.graduationDate;
+        studentUpdateData.lastPromotionDate = new Date(payload.graduation.graduationDate);
       }
       
       if (payload.financialResponsible) {

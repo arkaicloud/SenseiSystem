@@ -624,7 +624,10 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                     <SelectContent>
                       {paymentPlans.map((plan) => (
                         <SelectItem key={plan.id} value={plan.id.toString()}>
-                          {plan.name} - R$ {(plan.amount / 100).toFixed(2).replace('.', ',')}
+                          {plan.name} - {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(plan.amount / 100)}
                         </SelectItem>
                       ))}
                     </SelectContent>

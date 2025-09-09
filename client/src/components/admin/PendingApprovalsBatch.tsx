@@ -333,7 +333,10 @@ export default function PendingApprovalsBatch() {
   const getPaymentPlanName = (planId?: number) => {
     if (!planId || !paymentPlans?.plans) return "Não definido";
     const plan = paymentPlans.plans.find(p => p.id === planId);
-    return plan ? `${plan.name} - R$ ${(plan.amount / 100).toFixed(2)}` : "Não definido";
+    return plan ? `${plan.name} - ${new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(plan.amount / 100)}` : "Não definido";
   };
 
   const getStatusBadge = (user: PendingUser) => {

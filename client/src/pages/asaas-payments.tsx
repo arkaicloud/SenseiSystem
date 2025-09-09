@@ -246,7 +246,10 @@ export default function AsaasPayments() {
                 id="planValue"
                 type="number"
                 step="0.01"
-                value={(asaasConfig.planValue / 100).toFixed(2)}
+                value={new Intl.NumberFormat('pt-BR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                }).format(asaasConfig.planValue / 100)}
                 onChange={(e) => setAsaasConfig(prev => ({ 
                   ...prev, 
                   planValue: Math.round(parseFloat(e.target.value) * 100) 

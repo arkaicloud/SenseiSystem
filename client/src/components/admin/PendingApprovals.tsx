@@ -103,7 +103,10 @@ export default function PendingApprovals() {
   const getPaymentPlanName = (planId?: number): string => {
     if (!planId || !paymentPlans?.plans) return 'Plano não definido';
     const plan = paymentPlans.plans.find((p: PaymentPlan) => p.id === planId);
-    return plan ? `${plan.name} - R$ ${(plan.amount / 100).toFixed(2)}` : 'Plano não encontrado';
+    return plan ? `${plan.name} - ${new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(plan.amount / 100)}` : 'Plano não encontrado';
   };
 
   const validateStudentData = (user: PendingUser): { isValid: boolean; issues: string[] } => {

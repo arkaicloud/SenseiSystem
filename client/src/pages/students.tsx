@@ -176,7 +176,6 @@ const Students: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [beltFilter, setBeltFilter] = useState("all");
-  const [financialFilter, setFinancialFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [isMobile, setIsMobile] = useState(false);
@@ -304,14 +303,6 @@ const Students: React.FC = () => {
 
   const students = (data as any)?.students || [];
 
-  // Função para obter status financeiro consistente baseado no ID do aluno
-  const getFinancialStatus = (studentId: number) => {
-    // Usar o ID do aluno para gerar um status consistente
-    const seed = studentId % 3;
-    if (seed === 0) return "upToDate";
-    if (seed === 1) return "pending";
-    return "overdue";
-  };
 
   const getFilteredStudents = (tabFilter: string) => {
     let filteredStudents = students.filter((student: any) => {
@@ -333,9 +324,8 @@ const Students: React.FC = () => {
       // Filtro de faixa
       const matchesBelt = beltFilter === "all" || student.beltLevel === beltFilter;
 
-      // Filtro financeiro consistente
-      const financialStatus = getFinancialStatus(student.id);
-      const matchesFinancial = financialFilter === "all" || financialStatus === financialFilter;
+      // Remover filtro financeiro
+      const matchesFinancial = true;
 
       return matchesSearch && matchesStatus && matchesBelt && matchesFinancial;
     });
@@ -353,11 +343,6 @@ const Students: React.FC = () => {
           const beltOrder = { white: 1, blue: 2, purple: 3, brown: 4, black: 5 };
           valueA = beltOrder[a.beltLevel as keyof typeof beltOrder] || 0;
           valueB = beltOrder[b.beltLevel as keyof typeof beltOrder] || 0;
-          break;
-        case "financial":
-          const statusOrder = { upToDate: 1, pending: 2, overdue: 3 };
-          valueA = statusOrder[getFinancialStatus(a.id) as keyof typeof statusOrder];
-          valueB = statusOrder[getFinancialStatus(b.id) as keyof typeof statusOrder];
           break;
         case "status":
           valueA = a.user.active ? 1 : 0;
@@ -452,17 +437,6 @@ const Students: React.FC = () => {
             placeholder="Filtrar por faixa"
             className="w-full sm:w-[160px]"
           />
-          <Select value={financialFilter} onValueChange={setFinancialFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Situação financeira" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas situações</SelectItem>
-              <SelectItem value="upToDate">Em dia</SelectItem>
-              <SelectItem value="pending">Pendente</SelectItem>
-              <SelectItem value="overdue">Atrasado</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -472,7 +446,6 @@ const Students: React.FC = () => {
             <SelectContent>
               <SelectItem value="name">Nome</SelectItem>
               <SelectItem value="belt">Faixa</SelectItem>
-              <SelectItem value="financial">Situação $</SelectItem>
               <SelectItem value="status">Status</SelectItem>
             </SelectContent>
           </Select>
@@ -513,11 +486,8 @@ const Students: React.FC = () => {
                       {!isMobile && (
                         <>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Email</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Telefone</th>
                         </>
                       )}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
@@ -550,49 +520,19 @@ const Students: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
-                          <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-500">
-                          <div>Rua A, 123</div>
-                          <div className="text-xs text-gray-400">São Paulo, SP</div>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-500">
-                          {(() => {
-                            const joinDate = new Date(student.user.createdAt || Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
-                            const now = new Date();
-                            const diffMs = now.getTime() - joinDate.getTime();
-                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                            if (diffMinutes < 60) {
-                              return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
-                            } else if (diffHours < 24) {
-                              return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
-                            } else if (diffDays === 1) {
-                              return 'Ontem';
-                            } else {
-                              return joinDate.toLocaleDateString('pt-BR');
-                            }
-                          })()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-500">Mensal - R$ 150</td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            Math.random() > 0.3 ? 'bg-green-100 text-green-800' : Math.random() > 0.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
-                            }`}></div>
-                            {Math.random() > 0.3 ? 'Em dia' : Math.random() > 0.5 ? 'Pendente' : 'Atrasado'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-sm text-gray-600">
-                            {student.user.firstName} {student.user.lastName}
-                          </div>
-                        </td>
+                        {!isMobile && (
+                          <>
+                            <td className="py-3 px-4">
+                              <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">
+                              {student.user.email}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">
+                              {student.user.phone || 'Não informado'}
+                            </td>
+                          </>
+                        )}
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -634,11 +574,8 @@ const Students: React.FC = () => {
                       {!isMobile && (
                         <>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Email</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Telefone</th>
                         </>
                       )}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
@@ -666,49 +603,19 @@ const Students: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
-                          <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-500">
-                          <div>Rua A, 123</div>
-                          <div className="text-xs text-gray-400">São Paulo, SP</div>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-500">
-                          {(() => {
-                            const joinDate = new Date(student.user.createdAt || Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
-                            const now = new Date();
-                            const diffMs = now.getTime() - joinDate.getTime();
-                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                            if (diffMinutes < 60) {
-                              return diffMinutes < 5 ? 'Agora mesmo' : `${diffMinutes} minutos atrás`;
-                            } else if (diffHours < 24) {
-                              return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
-                            } else if (diffDays === 1) {
-                              return 'Ontem';
-                            } else {
-                              return joinDate.toLocaleDateString('pt-BR');
-                            }
-                          })()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-500">Mensal - R$ 150</td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            Math.random() > 0.3 ? 'bg-green-100 text-green-800' : Math.random() > 0.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              Math.random() > 0.3 ? 'bg-green-400' : Math.random() > 0.5 ? 'bg-yellow-400' : 'bg-red-400'
-                            }`}></div>
-                            {Math.random() > 0.3 ? 'Em dia' : Math.random() > 0.5 ? 'Pendente' : 'Atrasado'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-sm text-gray-600">
-                            {student.user.firstName} {student.user.lastName}
-                          </div>
-                        </td>
+                        {!isMobile && (
+                          <>
+                            <td className="py-3 px-4">
+                              <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">
+                              {student.user.email}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-500">
+                              {student.user.phone || 'Não informado'}
+                            </td>
+                          </>
+                        )}
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             student.user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -750,11 +657,8 @@ const Students: React.FC = () => {
                       {!isMobile && (
                         <>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Faixa / Graduação</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Endereço</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Última Atividade</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Plano</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Situação $</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Responsável</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Email</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Telefone</th>
                         </>
                       )}
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>

@@ -4458,6 +4458,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create student record
       const student = await storage.createStudent(studentInfo);
 
+      // ===== PROCESSAR QUESTIONÁRIO DE SAÚDE SE FORNECIDO =====
+      if (studentData.healthAnswers && Array.isArray(studentData.healthAnswers) && studentData.healthAnswers.length > 0) {
+        try {
+          console.log('📋 Processing health questionnaire for student:', student.id);
+          
+          // Verificar se há respostas de risco
+          const riskKeys = new Set([
+            "hasHeartProblem", "hasChestPain", "hasBreathingProblem",
+            "hasBloodPressureProblem", "hasBoneProblem", "hasOtherHealthProblem", 
+            "takeMedication", "doctorRecommendation"
+          ]);
+          
+          const isRisky = studentData.healthAnswers.some((answer: any) => 
+            riskKeys.has(answer.key) && answer.value === "yes"
+          );
+
+          // Gerar observações médicas para respostas "Sim"
+          const medicalObservations: string[] = [];
+          studentData.healthAnswers.forEach((answer: any) => {
+            if (answer.value === "yes") {
+              medicalObservations.push(`⚠️ SAÚDE: ${answer.question} - Resposta: SIM`);
+            }
+          });
+
+          // Criar notas médicas se houver observações
+          let studentNotes = studentInfo.notes || "";
+          if (medicalObservations.length > 0) {
+            const healthSection = [
+              "=== QUESTIONÁRIO DE SAÚDE (PAR-Q+) ===",
+              `Data do preenchimento: ${new Date().toLocaleString('pt-BR')}`,
+              `Assinatura eletrônica: ${studentData.healthTermsAgreedAt || new Date().toISOString()}`,
+              "",
+              ...medicalObservations,
+              "",
+              "Observações registradas automaticamente do questionário de saúde.",
+              "=============================================="
+            ];
+            
+            studentNotes = studentNotes 
+              ? `${studentNotes}\n\n${healthSection.join('\n')}`
+              : healthSection.join('\n');
+          }
+
+          // Atualizar dados do aluno com informações de saúde
+          await storage.updateStudent(student.id, {
+            requiresMedicalCertificate: isRisky,
+            medicalCertificateStatus: isRisky ? "PENDING" : "WAIVED",
+            healthQuestionnaireCompletedAt: new Date(),
+            agreedToHealthTerms: studentData.agreedToHealthTerms || false,
+            healthTermsAgreedAt: studentData.healthTermsAgreedAt ? new Date(studentData.healthTermsAgreedAt) : new Date(),
+            notes: studentNotes
+          });
+
+          console.log(`✅ Health questionnaire processed - Risk: ${isRisky}, Medical observations: ${medicalObservations.length}`);
+          
+        } catch (healthError) {
+          console.error('❌ Error processing health questionnaire:', healthError);
+          // Não falhar o cadastro por erro no questionário, apenas logar
+        }
+      }
+
       console.log('✅ Student registration completed:', user.firstName, user.lastName, '- Pending approval');
 
       res.json({ 

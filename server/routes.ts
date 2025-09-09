@@ -1446,6 +1446,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
       console.log('📝 Updating user data:', JSON.stringify(updateData, null, 2));
 
+      // Se está bloqueando um usuário (active = false), marcar como "blocked" para diferenciá-lo de "pending"
+      if (updateData.active === false && user.status !== "pending") {
+        updateData.status = "blocked";
+      }
+      // Se está reativando um usuário (active = true), voltar para "approved"
+      else if (updateData.active === true && user.status === "blocked") {
+        updateData.status = "approved";
+      }
+
       // Separate user data from student data
       // Extract only fields that exist in the users table
       const userFields = {
@@ -1466,6 +1475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         state: updateData.state,
         zipCode: updateData.zipCode,
         active: updateData.active, // Add active field for blocking/unblocking users
+        status: updateData.status, // Add status field for tracking blocked users
       };
 
       // Remove undefined values
@@ -1594,12 +1604,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status === "active") {
         filteredStudents = filteredStudents.filter((s: any) => s.user.active === true);
       } else if (status === "pending") {
-        // Pendentes são apenas aqueles com status pending E que não estão ativos
-        filteredStudents = filteredStudents.filter((s: any) => 
-          s.user.status === "pending" && s.user.active === false
-        );
+        // Pendentes são apenas aqueles com status "pending" (vêm da matrícula)
+        filteredStudents = filteredStudents.filter((s: any) => s.user.status === "pending");
       } else if (status === "inactive") {
-        // Inativos são aqueles que não estão ativos E não são pendentes (foram bloqueados)
+        // Inativos são aqueles que foram bloqueados manualmente (active = false, mas não pending)
         filteredStudents = filteredStudents.filter((s: any) => 
           s.user.active === false && s.user.status !== "pending"
         );

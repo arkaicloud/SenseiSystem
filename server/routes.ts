@@ -2110,6 +2110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .select({
             id: classes.id,
             name: classes.name,
+            type: classes.type,
             instructorId: classes.instructorId,
             instructor: {
               id: users.id,

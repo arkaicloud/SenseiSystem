@@ -570,22 +570,29 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Visão geral da sua escola</p>
         </div>
         
-        {/* Botões de ação - layout responsivo */}
-        <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3">
-          {/* Grupo de botões principais */}
-          <div className="flex flex-wrap gap-2 flex-1 sm:flex-initial">
-            <Button onClick={handleNewStudent} className="flex-1 sm:flex-initial">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Aluno
+        {/* Botões de ação - layout otimizado para mobile */}
+        <div className="flex flex-col w-full lg:w-auto gap-3">
+          {/* Layout mobile: 3 botões em uma linha horizontal */}
+          <div className="grid grid-cols-3 gap-2 w-full md:flex md:gap-3 md:w-auto">
+            <Button 
+              onClick={handleNewStudent} 
+              className="flex-1 md:flex-initial text-xs md:text-sm px-2 md:px-4 py-2 md:py-2 min-w-0"
+              size="sm"
+            >
+              <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0" />
+              <span className="truncate">Novo Aluno</span>
             </Button>
-            <Button variant="outline" onClick={handleScheduleClass} className="flex-1 sm:flex-initial">
-              <Calendar className="h-4 w-4 mr-2" />
-              Agendar Aula
+            
+            <Button 
+              variant="outline" 
+              onClick={handleScheduleClass} 
+              className="flex-1 md:flex-initial text-xs md:text-sm px-2 md:px-4 py-2 md:py-2 min-w-0"
+              size="sm"
+            >
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0" />
+              <span className="truncate">Agendar Aula</span>
             </Button>
-          </div>
-          
-          {/* Botão de reload - sempre à direita */}
-          <div className="flex justify-end">
+            
             <Button 
               variant="outline" 
               size="sm"
@@ -594,14 +601,11 @@ export default function AdminDashboard() {
                 fetchEngagementMetrics();
               }} 
               disabled={metricsLoading}
-              className="min-w-[140px] sm:min-w-[120px]"
+              className="flex-1 md:flex-initial text-xs md:text-sm px-2 md:px-4 py-2 md:py-2 min-w-0"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">
-                {metricsLoading ? 'Atualizando...' : 'Atualizar'}
-              </span>
-              <span className="sm:hidden">
-                {metricsLoading ? 'Carregando...' : 'Reload'}
+              <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0 ${metricsLoading ? 'animate-spin' : ''}`} />
+              <span className="truncate">
+                {metricsLoading ? 'Atualizando...' : 'Reload'}
               </span>
             </Button>
           </div>

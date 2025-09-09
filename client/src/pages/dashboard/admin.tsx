@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useDashboard } from '@/hooks/useDashboard';
+import { currencyBRL } from '@/utils/fmt';
 import { 
   Users, 
   Calendar, 
@@ -24,7 +26,8 @@ import {
   Eye,
   FileText,
   Settings,
-  RefreshCw
+  RefreshCw,
+  CalendarCheck
 } from 'lucide-react';
 import BeltSummaryWidget from '@/components/dashboard/BeltSummaryWidget';
 import BeltSummaryAdultWidget from '@/components/dashboard/BeltSummaryAdultWidget';
@@ -331,194 +334,200 @@ const BirthdaysCard = ({ birthdays }: { birthdays: Birthday[] }) => {
 
 
 
+// Dashboard Skeleton - Componente de loading
+const DashboardSkeleton = () => (
+  <div className="space-y-6">
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {[...Array(6)].map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-24"></div>
+                <div className="h-8 bg-gray-200 rounded w-16"></div>
+              </div>
+              <div className="h-10 w-10 bg-gray-200 rounded-lg"></div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </section>
+  </div>
+);
+
+// Card de estatística
+const StatCard = ({ title, value, icon: Icon, variant }: {
+  title: string;
+  value: string | number;
+  icon: any;
+  variant?: 'default' | 'success' | 'danger';
+}) => {
+  const variantClasses = {
+    default: 'text-blue-600 bg-blue-50',
+    success: 'text-green-600 bg-green-50',
+    danger: 'text-red-600 bg-red-50'
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+          </div>
+          <div className={`p-2 rounded-lg ${variantClasses[variant || 'default']}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Componente Empty State
+const EmptyState = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
+  <div className="text-center py-8 text-muted-foreground">
+    <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+    <p>{children}</p>
+  </div>
+);
+
+// Card para distribuição de faixas
+const BeltsCard = ({ title, data }: { title: string; data: Record<string, number> }) => {
+  const beltColors: Record<string, string> = {
+    white: '#f3f4f6',
+    blue: '#3b82f6',
+    purple: '#8b5cf6',
+    brown: '#a3681a',
+    black: '#1f2937'
+  };
+
+  const entries = Object.entries(data);
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base font-medium">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {entries.length === 0 ? (
+          <EmptyState icon={Users}>Nenhum aluno cadastrado</EmptyState>
+        ) : (
+          <ul className="space-y-2">
+            {entries.map(([belt, count]) => (
+              <li key={belt} className="flex items-center justify-between py-2">
+                <div className="flex items-center space-x-2">
+                  <div 
+                    className="w-4 h-4 rounded-full border"
+                    style={{ backgroundColor: beltColors[belt] || '#9ca3af' }}
+                  />
+                  <span className="capitalize">{belt}</span>
+                </div>
+                <span className="font-medium">{count}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function AdminDashboard() {
-  const { t } = useTranslations();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { data, isLoading } = useDashboard();
   
-  // Estado para métricas em tempo real
-  const [liveMetrics, setLiveMetrics] = useState<DashboardMetrics | null>(null);
-  const [metricsLoading, setMetricsLoading] = useState(false);
-  
-  // Estado para métricas de engajamento
-  const [engagementMetrics, setEngagementMetrics] = useState<{
-    attendanceRate: number;
-    overduePayments: number;
-  } | null>(null);
+  if (isLoading || !data) return <DashboardSkeleton />;
 
-  // Buscar métricas em tempo real do backend
-  const fetchLiveMetrics = async () => {
-    try {
-      setMetricsLoading(true);
-      const response = await fetch('/api/dashboard/metrics');
-      if (response.ok) {
-        const metrics = await response.json();
-        setLiveMetrics(metrics);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar métricas em tempo real:', error);
-    } finally {
-      setMetricsLoading(false);
-    }
-  };
+  const m = data.metrics;
 
-  // Buscar métricas de engajamento
-  const fetchEngagementMetrics = async () => {
-    try {
-      const response = await fetch('/api/admin/widgets/engagement');
-      if (response.ok) {
-        const metrics = await response.json();
-        setEngagementMetrics(metrics);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar métricas de engajamento:', error);
-    }
-  };
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Alunos Ativos" value={m.activeStudents} icon={Users} />
+        <StatCard title="Aulas Realizadas (mês)" value={m.classesHeld} icon={CalendarCheck} />
+        <StatCard 
+          title="Taxa de Presença" 
+          value={`${Math.round(m.attendanceRate*100)}%`} 
+          icon={UserCheck} 
+          variant={m.attendanceRate < 0.6 ? "danger" : "success"} 
+        />
+        <StatCard title="Receita Mensal" value={currencyBRL(m.monthlyRevenue)} icon={DollarSign} />
+        <StatCard 
+          title="Engajamento em Baixa" 
+          value={m.lowEngagement} 
+          icon={AlertTriangle}
+          variant={m.lowEngagement > 0 ? "danger" : "default"}
+        />
+        <StatCard 
+          title="Inadimplência" 
+          value={m.delinquency} 
+          icon={AlertTriangle}
+          variant={m.delinquency > 0 ? "danger" : "default"}
+        />
+      </section>
 
-  // Auto-refresh das métricas a cada 5 minutos
-  useEffect(() => {
-    fetchLiveMetrics(); // Buscar imediatamente
-    fetchEngagementMetrics(); // Buscar métricas de engajamento
-    
-    const metricsInterval = setInterval(fetchLiveMetrics, 5 * 60 * 1000); // 5 minutos
-    const engagementInterval = setInterval(fetchEngagementMetrics, 5 * 60 * 1000); // 5 minutos
-    
-    return () => {
-      clearInterval(metricsInterval);
-      clearInterval(engagementInterval);
-    };
-  }, []);
+      {/* Aulas de Hoje */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Aulas de Hoje</span>
+              <Badge variant="outline">{data.today.classes.length} aulas</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.today.classes.length === 0 ? (
+              <EmptyState icon={Calendar}>Nenhuma aula programada para hoje</EmptyState>
+            ) : (
+              <ul className="divide-y divide-slate-200/30">
+                {data.today.classes.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between py-3">
+                    <div>
+                      <div className="font-medium">{c.name}</div>
+                      <div className="text-sm text-slate-500">{c.start_time} · {c.duration} min</div>
+                    </div>
+                    <Button size="sm" onClick={() => window.location.href = `/aulas/${c.id}`}>
+                      Acessar
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
-  // Buscar dados reais da API
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/dash/admin'],
-  });
+        {/* Aniversariantes — apenas HOJE */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Gift className="h-4 w-4 mr-2" />
+              Aniversariantes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.today.birthdays.length === 0 ? (
+              <EmptyState icon={Gift}>Nenhum aniversariante hoje</EmptyState>
+            ) : (
+              <ul className="space-y-2">
+                {data.today.birthdays.map((b) => (
+                  <li key={b.user_id} className="px-3 py-2 rounded-lg bg-rose-50 text-rose-700">
+                    🎂 {b.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-  const { data: classes, isLoading: classesLoading } = useQuery({
-    queryKey: ['/api/classes'],
-  });
-
-  const { data: students, isLoading: studentsLoading } = useQuery({
-    queryKey: ['/api/students'],
-  });
-
-  const { data: pendingUsers } = useQuery({
-    queryKey: ['/api/users/pending'],
-  });
-
-
-
-  // Calcular estatísticas baseadas nos dados reais
-  const calculateStats = (): DashboardStats => {
-    if (!students?.students || !classes?.classes) {
-      return {
-        activeStudents: 0,
-        monthlyClasses: 0,
-        attendanceRate: 0,
-        monthlyRevenue: 0,
-        studentsAtRisk: 0,
-        overduePayments: 0,
-      };
-    }
-
-    const activeStudents = students.students.filter((s: any) => s.status === 'active').length;
-    const studentsAtRisk = students.students.filter((s: any) => s.attendanceRate && s.attendanceRate < 50).length;
-    const monthlyClasses = classes.classes.length * 4; // Assumindo 4 semanas por mês
-    
-    // Calcular taxa de presença média
-    const totalAttendanceRate = students.students.reduce((sum: number, student: any) => 
-      sum + (student.attendanceRate || 0), 0
-    );
-    const averageAttendanceRate = activeStudents > 0 ? Math.round(totalAttendanceRate / activeStudents) : 0;
-
-    // Simular receita baseada no número de alunos ativos
-    const averageMonthlyFee = 150; // R$ 150 por aluno
-    const monthlyRevenue = activeStudents * averageMonthlyFee;
-
-    // Simular inadimplência (5-10% dos alunos)
-    const overduePayments = Math.floor(activeStudents * 0.08);
-
-    return {
-      activeStudents,
-      monthlyClasses,
-      attendanceRate: averageAttendanceRate,
-      monthlyRevenue,
-      studentsAtRisk,
-      overduePayments,
-    };
-  };
-
-  const dashboardStats = calculateStats();
-  
-  // Usar métricas em tempo real se disponíveis, senão usar dados calculados
-  const activeMetrics = liveMetrics || {
-    activeStudents: dashboardStats.activeStudents,
-    totalStudents: dashboardStats.activeStudents,
-    classesThisMonth: dashboardStats.monthlyClasses,
-    attendanceRate: dashboardStats.attendanceRate,
-    monthlyRevenue: dashboardStats.monthlyRevenue,
-    studentsAtRisk: dashboardStats.studentsAtRisk,
-    criticalRiskStudents: 0,
-    overduePayments: dashboardStats.overduePayments,
-    newStudentsThisMonth: 0,
-    beltDistribution: {}
-  };
-
-  // Transformar dados reais de aulas em formato do dashboard
-  const getTodayClasses = (): TodayClass[] => {
-    if (!classes?.classes) return [];
-    
-    const today = new Date().getDay(); // 0 = domingo, 1 = segunda, etc.
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const currentDay = dayNames[today];
-    
-    return classes.classes
-      .filter((classItem: any) => classItem.dayOfWeek === currentDay)
-      .map((classItem: any) => ({
-        id: classItem.id,
-        name: classItem.name,
-        time: classItem.time,
-        instructor: classItem.instructorName || 'Instrutor',
-        confirmedStudents: Math.floor(Math.random() * (classItem.capacity * 0.8)), // Simular confirmações
-        totalCapacity: classItem.capacity,
-        status: 'scheduled' as const,
-      }));
-  };
-
-  const todayClasses = getTodayClasses();
-
-  // Calcular dados financeiros baseados nos alunos reais
-  const getFinancialData = (): FinancialData => {
-    const activeStudents = dashboardStats.activeStudents;
-    const averageMonthlyFee = 150;
-    const expectedRevenue = activeStudents * averageMonthlyFee;
-    const collectionRate = 0.92; // 92% de cobrança
-    
-    return {
-      receivedThisMonth: Math.floor(expectedRevenue * collectionRate),
-      pendingInvoices: Math.floor(expectedRevenue * 0.05), // 5% pendente
-      overdueAmount: Math.floor(expectedRevenue * 0.03), // 3% vencido
-      defaultRate: 7.8,
-    };
-  };
-
-  const financialData = getFinancialData();
-
-  // Transformar dados reais de alunos
-  const getRecentStudents = (): RecentStudent[] => {
-    if (!students?.students) return [];
-    
-    return students.students
-      .sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
-      .slice(0, 5)
-      .map((student: any) => ({
-        id: student.id,
-        name: student.name,
-        belt: student.beltLevel || 'white',
-        status: student.status || 'active',
-        attendanceRate: student.attendanceRate || Math.floor(Math.random() * 40) + 60, // 60-100%
-        joinDate: student.createdAt || new Date().toISOString(),
-      }));
+      {/* Faixas */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <BeltsCard title="Faixas Adulto" data={data.belts.adult} />
+        <BeltsCard title="Faixas Infantil" data={data.belts.kids} />
+      </section>
+    </div>
+  );
   };
 
   const recentStudents = getRecentStudents();

@@ -67,6 +67,7 @@ const studentEditSchema = z.object({
   financialResponsibleEmail: z.string().nullable(),
   financialResponsiblePhone: z.string().nullable(),
   financialResponsibleRelation: z.string().nullable(),
+  isStudentResponsible: z.boolean().default(true),
   paymentPlanId: z.number().nullable(),
   preferredDueDate: z.number().nullable(),
   medicalObservations: z.string().nullable(),
@@ -143,6 +144,7 @@ export default function StudentEditDialog({
       financialResponsibleEmail: null,
       financialResponsiblePhone: null,
       financialResponsibleRelation: null,
+      isStudentResponsible: true,
       paymentPlanId: null,
       preferredDueDate: 5,
       medicalObservations: null,
@@ -175,7 +177,11 @@ export default function StudentEditDialog({
           phone: data.emergencyContactPhone
         },
         financialResponsible: {
-          relation: data.financialResponsibleRelation
+          relation: data.financialResponsibleRelation,
+          name: data.isStudentResponsible ? `${data.firstName} ${data.lastName}` : data.financialResponsibleName,
+          cpf: data.isStudentResponsible ? data.cpf : data.financialResponsibleCpf,
+          email: data.isStudentResponsible ? data.email : data.financialResponsibleEmail,
+          phone: data.isStudentResponsible ? data.phone : data.financialResponsiblePhone
         },
         billing: {
           planId: data.paymentPlanId,
@@ -200,7 +206,7 @@ export default function StudentEditDialog({
       };
 
       const response = await fetch(`/api/students/${studentId}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -255,10 +261,14 @@ export default function StudentEditDialog({
         zipCode: studentData.address?.zip || null,
         beltLevel: studentData.graduation?.beltLevel || "white",
         lastPromotionDate: studentData.graduation?.graduationDate ? new Date(studentData.graduation.graduationDate).toISOString().split('T')[0] : null,
-        financialResponsibleName: null, // Será adicionado no futuro se necessário
-        financialResponsibleCpf: null, // Será adicionado no futuro se necessário
-        financialResponsibleEmail: null, // Será adicionado no futuro se necessário
-        financialResponsiblePhone: null, // Será adicionado no futuro se necessário
+        financialResponsibleName: studentData.financialResponsibleName || null,
+        financialResponsibleCpf: studentData.financialResponsibleCpf || null,
+        financialResponsibleEmail: studentData.financialResponsibleEmail || null,
+        financialResponsiblePhone: studentData.financialResponsiblePhone || null,
+        isStudentResponsible: !studentData.financialResponsibleName || 
+                              studentData.financialResponsibleName === `${studentData.firstName} ${studentData.lastName}` ||
+                              (studentData.financialResponsibleCpf === studentData.cpf &&
+                               studentData.financialResponsibleEmail === studentData.contact?.email),
         financialResponsibleRelation: studentData.financialResponsible?.relation || null,
         paymentPlanId: studentData.billing?.planId || null,
         preferredDueDate: studentData.billing?.preferredDueDay || 5,
@@ -826,82 +836,122 @@ export default function StudentEditDialog({
 
                 {/* Financeiro */}
                 <TabsContent value="financial" className="space-y-4">
+                  {/* Controle de Responsável Financeiro */}
+                  <FormField
+                    control={form.control}
+                    name="isStudentResponsible"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            disabled={readOnly}
+                            onChange={(e) => {
+                              field.onChange(e.target.checked);
+                              if (e.target.checked) {
+                                // Quando marca como "próprio aluno", limpa os campos específicos do responsável
+                                form.setValue("financialResponsibleName", null);
+                                form.setValue("financialResponsibleCpf", null);
+                                form.setValue("financialResponsibleEmail", null);
+                                form.setValue("financialResponsiblePhone", null);
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <FormLabel className="text-sm font-medium">
+                            O próprio aluno é o responsável financeiro
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Campos condicionais do Responsável Financeiro */}
+                  {!form.watch("isStudentResponsible") && (
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border">
+                      <h4 className="col-span-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Dados do Responsável Financeiro
+                      </h4>
+                      
+                      <FormField
+                        control={form.control}
+                        name="financialResponsibleName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome do Responsável</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                disabled={readOnly}
+                                value={field.value || ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="financialResponsibleCpf"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CPF do Responsável</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                disabled={readOnly}
+                                value={field.value || ""}
+                                placeholder="000.000.000-00"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="financialResponsibleEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>E-mail do Responsável</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                {...field}
+                                disabled={readOnly}
+                                value={field.value || ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="financialResponsiblePhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefone do Responsável</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                disabled={readOnly}
+                                value={field.value || ""}
+                                placeholder="(00) 00000-0000"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="financialResponsibleName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome do Responsável Financeiro</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              disabled={readOnly}
-                              value={field.value || ""}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="financialResponsibleCpf"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CPF do Responsável</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              disabled={readOnly}
-                              value={field.value || ""}
-                              placeholder="000.000.000-00"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="financialResponsibleEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>E-mail do Responsável</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              {...field}
-                              disabled={readOnly}
-                              value={field.value || ""}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="financialResponsiblePhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Telefone do Responsável</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              disabled={readOnly}
-                              value={field.value || ""}
-                              placeholder="(00) 00000-0000"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
                     <FormField
                       control={form.control}
                       name="paymentPlanId"

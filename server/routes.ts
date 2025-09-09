@@ -2099,9 +2099,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Class Routes =====
   app.get("/api/classes", isAuthenticated, async (req, res) => {
     try {
-      const classes = await storage.getClassesWithInstructors();
-      res.json({ classes });
+      const date = req.query.date as string;
+      
+      if (date) {
+        // Return classes with aggregated stats for specific date
+        const targetDate = new Date(date);
+        const dayOfWeek = targetDate.getDay();
+        
+        const classesWithStats = await db
+          .select({
+            id: classes.id,
+            name: classes.name,
+            instructorId: classes.instructorId,
+            instructor: {
+              id: users.id,
+              name: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('instructor_name')
+            },
+            startTime: classes.startTime,
+            duration: classes.duration,
+            maxStudents: classes.maxStudents,
+            stats: {
+              confirmed: sql<number>`COUNT(*) FILTER (WHERE ${attendance.status} = 'confirmed')`.as('confirmed'),
+              present: sql<number>`COUNT(*) FILTER (WHERE ${attendance.status} = 'present')`.as('present'),
+              late: sql<number>`COUNT(*) FILTER (WHERE ${attendance.status} = 'late')`.as('late'),
+              absent: sql<number>`COUNT(*) FILTER (WHERE ${attendance.status} = 'absent')`.as('absent'),
+              pending: sql<number>`COUNT(*) FILTER (WHERE ${attendance.status} IS NULL)`.as('pending')
+            }
+          })
+          .from(classes)
+          .leftJoin(users, eq(classes.instructorId, users.id))
+          .leftJoin(attendance, and(
+            eq(attendance.classId, classes.id),
+            sql`DATE(${attendance.date}) = ${date}`
+          ))
+          .where(and(
+            eq(classes.isActive, true),
+            eq(classes.dayOfWeek, dayOfWeek)
+          ))
+          .groupBy(classes.id, users.id);
+        
+        res.json(classesWithStats);
+      } else {
+        // Return all classes (existing behavior)
+        const classes = await storage.getClassesWithInstructors();
+        res.json({ classes });
+      }
     } catch (error) {
+      console.error("Error fetching classes:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -2162,6 +2206,222 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ classes: classesWithAttendance });
     } catch (error) {
       console.error("Erro na rota de aulas de hoje:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get roster for specific class and date
+  app.get("/api/classes/:id/roster", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const date = req.query.date as string;
+      
+      if (!date) {
+        return res.status(400).json({ message: "Date parameter is required" });
+      }
+      
+      const roster = await db
+        .select({
+          student_id: students.id,
+          name: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('name'),
+          belt_level: students.beltLevel,
+          confirmed: sql<boolean>`CASE WHEN ${attendance.status} = 'confirmed' THEN true ELSE false END`.as('confirmed'),
+          status: attendance.status
+        })
+        .from(students)
+        .innerJoin(users, eq(students.userId, users.id))
+        .leftJoin(attendance, and(
+          eq(attendance.studentId, students.id),
+          eq(attendance.classId, classId),
+          sql`DATE(${attendance.date}) = ${date}`
+        ))
+        .where(eq(users.active, true));
+        
+      res.json(roster);
+    } catch (error) {
+      console.error("Error fetching class roster:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Update individual attendance
+  app.patch("/api/attendance/:classId/:studentId", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.classId);
+      const studentId = parseInt(req.params.studentId);
+      const { date, status, note } = req.body;
+      
+      if (!date || !status) {
+        return res.status(400).json({ message: "Date and status are required" });
+      }
+      
+      const requestUser = (req as any).user;
+      
+      // Check if attendance record exists
+      const existing = await db
+        .select()
+        .from(attendance)
+        .where(and(
+          eq(attendance.classId, classId),
+          eq(attendance.studentId, studentId),
+          sql`DATE(${attendance.date}) = ${date}`
+        ))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        // Update existing record
+        await db
+          .update(attendance)
+          .set({
+            status: status,
+            checkedInBy: requestUser.id,
+            date: new Date(date)
+          })
+          .where(eq(attendance.id, existing[0].id));
+      } else {
+        // Insert new record
+        await db
+          .insert(attendance)
+          .values({
+            classId,
+            studentId,
+            status,
+            date: new Date(date),
+            checkedInBy: requestUser.id
+          });
+      }
+      
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error updating attendance:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Bulk attendance update
+  app.post("/api/attendance/bulk", isAuthenticated, async (req, res) => {
+    try {
+      const { date, classId, updates } = req.body;
+      
+      if (!date || !classId || !Array.isArray(updates)) {
+        return res.status(400).json({ message: "Date, classId and updates array are required" });
+      }
+      
+      const requestUser = (req as any).user;
+      
+      // Process each update
+      for (const update of updates) {
+        const { studentId, status } = update;
+        
+        if (!studentId || !status) continue;
+        
+        // Check if attendance record exists
+        const existing = await db
+          .select()
+          .from(attendance)
+          .where(and(
+            eq(attendance.classId, classId),
+            eq(attendance.studentId, studentId),
+            sql`DATE(${attendance.date}) = ${date}`
+          ))
+          .limit(1);
+        
+        if (existing.length > 0) {
+          // Update existing record
+          await db
+            .update(attendance)
+            .set({
+              status: status,
+              checkedInBy: requestUser.id,
+              date: new Date(date)
+            })
+            .where(eq(attendance.id, existing[0].id));
+        } else {
+          // Insert new record
+          await db
+            .insert(attendance)
+            .values({
+              classId,
+              studentId,
+              status,
+              date: new Date(date),
+              checkedInBy: requestUser.id
+            });
+        }
+      }
+      
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error updating bulk attendance:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Start class
+  app.post("/api/classes/:id/start", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { date } = req.body;
+      
+      if (!date) {
+        return res.status(400).json({ message: "Date is required" });
+      }
+      
+      // Update class as started (we could add a startedAt field to classes table if needed)
+      // For now, just return success - the UI will handle the "started" state
+      
+      res.json({ ok: true, message: "Class started successfully" });
+    } catch (error) {
+      console.error("Error starting class:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Finish class  
+  app.post("/api/classes/:id/finish", isAuthenticated, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { date, finalizeAbsentRest } = req.body;
+      
+      if (!date) {
+        return res.status(400).json({ message: "Date is required" });
+      }
+      
+      const requestUser = (req as any).user;
+      
+      if (finalizeAbsentRest) {
+        // Mark all students without attendance as absent
+        const studentsWithoutAttendance = await db
+          .select({ studentId: students.id })
+          .from(students)
+          .innerJoin(users, eq(students.userId, users.id))
+          .leftJoin(attendance, and(
+            eq(attendance.studentId, students.id),
+            eq(attendance.classId, classId),
+            sql`DATE(${attendance.date}) = ${date}`
+          ))
+          .where(and(
+            eq(users.active, true),
+            isNull(attendance.id)
+          ));
+        
+        // Insert absent records for students without attendance
+        for (const student of studentsWithoutAttendance) {
+          await db
+            .insert(attendance)
+            .values({
+              classId,
+              studentId: student.studentId,
+              status: 'absent',
+              date: new Date(date),
+              checkedInBy: requestUser.id
+            });
+        }
+      }
+      
+      res.json({ ok: true, message: "Class finished successfully" });
+    } catch (error) {
+      console.error("Error finishing class:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

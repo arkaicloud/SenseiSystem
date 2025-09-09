@@ -45,7 +45,7 @@ export type DashboardDTO = z.infer<typeof DashboardSchema>;
 export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student']);
 export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'brown', 'black']);
 export const paymentStatusEnum = pgEnum('payment_status', ['paid', 'pending', 'overdue']);
-export const attendanceStatusEnum = pgEnum('attendance_status', ['present', 'absent', 'late']);
+export const attendanceStatusEnum = pgEnum('attendance_status', ['confirmed', 'present', 'absent', 'late']);
 export const documentTypeEnum = pgEnum('document_type', ['health_form', 'graduation_certificate', 'medical_certificate', 'identification', 'contract', 'other']);
 export const medicalCertificateStatusEnum = pgEnum('medical_certificate_status', ['PENDING', 'UPLOADED', 'WAIVED']);
 export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
@@ -265,6 +265,9 @@ export const classes = pgTable("classes", {
   duration: integer("duration").notNull(), // in minutes
   maxCapacity: integer("max_capacity"),
   maxStudents: integer("max_students").default(20), // Limite máximo de alunos por aula
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Attendance table

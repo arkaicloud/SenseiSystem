@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BeltWithLabel } from "@/components/ui/belt";
 import { usePaginated } from "@/hooks/usePaginated";
-import { Pagination } from "@/components/ui/Pagination";
+import { Pagination } from "@/components/ui/pagination";
 import { PageSizeSelect } from "@/components/ui/PageSizeSelect";
 import { TabsFilter } from "@/components/ui/TabsFilter";
 import { ResultsInfo } from "@/components/ui/ResultsInfo";
@@ -174,7 +174,7 @@ const Students: React.FC = () => {
             </DropdownMenuItem>
             {student.user.active && (
               <DropdownMenuItem
-                onClick={() => revertApprovalMutation.mutate(student.user.id)}
+                onClick={() => revertApprovalMutation(student.user.id)}
               >
                 <Undo className="mr-2 h-4 w-4" />
                 Reverter para pendente
@@ -236,7 +236,7 @@ const Students: React.FC = () => {
             variant="ghost"
             className="h-8 w-8 p-0"
             title="Reverter para pendente"
-            onClick={() => revertApprovalMutation.mutate(student.user.id)}
+            onClick={() => revertApprovalMutation(student.user.id)}
           >
             <Undo className="h-4 w-4 text-gray-500" />
           </Button>
@@ -359,7 +359,7 @@ const Students: React.FC = () => {
                     {!isMobile && (
                       <>
                         <td>
-                          <BeltWithLabel belt={student.beltLevel} stripes={student.stripes} />
+                          <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
                         </td>
                         <td className="text-gray-500">{student.user.email}</td>
                         <td className="text-gray-500">{student.user.phone || 'Não informado'}</td>

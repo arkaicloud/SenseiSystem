@@ -110,6 +110,9 @@ const StudentsAtRisk: React.FC = () => {
             Engajamento em Baixa
           </h1>
           <p className="text-gray-600">Identifique e aja proativamente para melhorar o engajamento</p>
+          <p className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-md mt-2">
+            💡 Análise aplicada apenas a alunos com mais de 30 dias de matrícula
+          </p>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">

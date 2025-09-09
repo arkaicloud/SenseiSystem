@@ -7,7 +7,9 @@ export const businessRules = {
     // Attendance rate threshold below which student is at risk
     attendanceRateThreshold: 0.6, // 60%
     // Days since last payment to consider overdue
-    paymentOverdueDays: 7
+    paymentOverdueDays: 7,
+    // Minimum days since joining before considering for risk analysis
+    minimumDaysBeforeRiskAnalysis: 30 // 1 month
   },
   
   // Time windows for metrics calculation

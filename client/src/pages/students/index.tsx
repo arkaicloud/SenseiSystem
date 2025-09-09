@@ -7,7 +7,7 @@ import { queryClient } from '@/lib/queryClient';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { Student } from '@/types';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { 
   Table, 
   TableBody, 
@@ -31,7 +31,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import BeltIcon from '@/components/ui/belt-icon';
-import AddStudentModal from '@/components/modals/add-student-modal';
 import StudentEditDialog from '@/components/students/StudentEditDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Edit2 } from 'lucide-react';
@@ -41,7 +40,7 @@ export default function StudentsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [, setLocation] = useLocation();
   
   // Student edit dialog state
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -99,7 +98,6 @@ export default function StudentsPage() {
         title: t('student.addStudent'),
         description: 'Student created successfully',
       });
-      setIsAddStudentModalOpen(false);
     },
     onError: (error) => {
       toast({
@@ -118,10 +116,6 @@ export default function StudentsPage() {
       )
     : [];
   
-  // Handle adding a new student
-  const handleAddStudent = (data: any) => {
-    createStudentMutation.mutate(data);
-  };
   
   // Check if user has permission to add/edit students
   const canManageStudents = user && ['admin', 'manager'].includes(user.role);
@@ -157,7 +151,7 @@ export default function StudentsPage() {
               />
               
               {canManageStudents && (
-                <Button onClick={() => setIsAddStudentModalOpen(true)}>
+                <Button onClick={() => setLocation('/onboarding')}>
                   <i className="fas fa-plus mr-2"></i>
                   {t('student.addStudent')}
                 </Button>
@@ -282,12 +276,6 @@ export default function StudentsPage() {
         </Card>
       </div>
       
-      {/* Add Student Modal */}
-      <AddStudentModal 
-        isOpen={isAddStudentModalOpen} 
-        onClose={() => setIsAddStudentModalOpen(false)}
-        onSubmit={handleAddStudent}
-      />
 
       {/* Student Edit Dialog */}
       {selectedStudentId && (

@@ -51,11 +51,27 @@ export default function NewAttendancePage() {
 
   const dateString = selectedDate.toISOString().split('T')[0];
 
+  console.log('🔍 NEW ATTENDANCE PAGE - Debug Info:');
+  console.log('📅 Selected Date:', selectedDate);
+  console.log('📅 Date String:', dateString);
+  console.log('🔄 Will query:', `/api/classes?date=${dateString}`);
+
   // Fetch classes for selected date with stats
-  const { data: classes = [], isLoading: classesLoading } = useQuery<ClassWithStats[]>({
+  const { data: classes = [], isLoading: classesLoading, error: classesError } = useQuery<ClassWithStats[]>({
     queryKey: ['/api/classes', dateString],
-    queryFn: () => apiRequest(`/api/classes?date=${dateString}`),
+    queryFn: () => {
+      console.log('🚀 Executing API call for classes...');
+      return apiRequest(`/api/classes?date=${dateString}`);
+    },
+    onSuccess: (data) => {
+      console.log('✅ Classes API Success:', data);
+    },
+    onError: (error) => {
+      console.error('❌ Classes API Error:', error);
+    }
   });
+
+  console.log('📊 Current state - Classes:', classes, 'Loading:', classesLoading, 'Error:', classesError);
 
   // Fetch roster when class is selected
   const { data: rosterData = [], isLoading: rosterLoading } = useQuery<RosterStudent[]>({

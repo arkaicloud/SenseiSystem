@@ -148,8 +148,12 @@ export default function OnboardingPage() {
     setRegistrationError(""); // Limpar erro anterior
   };
 
-  const handleHealthFormSubmit = (data: any) => {
-    setOnboardingData((prev: Partial<OnboardingData>) => ({ ...prev, ...data }));
+  const handleHealthFormSubmit = (healthData: {
+    healthAnswers: any[];
+    agreedToHealthTerms: boolean;
+    healthTermsAgreedAt: string;
+  }) => {
+    setOnboardingData((prev: Partial<OnboardingData>) => ({ ...prev, ...healthData }));
     setCurrentStep(3);
     setRegistrationError(""); // Limpar erro anterior
   };
@@ -188,6 +192,10 @@ export default function OnboardingPage() {
       financialResponsibleRelationship: completeData.financialResponsibleRelationship || "self",
       paymentPlanId: completeData.paymentPlanId || null,
       dueDate: completeData.dueDate || null,
+      // Questionário de saúde - dados para processamento no backend
+      healthAnswers: (completeData as any).healthAnswers || [],
+      agreedToHealthTerms: (completeData as any).agreedToHealthTerms || false,
+      healthTermsAgreedAt: (completeData as any).healthTermsAgreedAt || null,
       // Note: File uploads are handled separately via form data, not in this JSON payload
       documentsCompleted: true
     };
@@ -339,10 +347,7 @@ export default function OnboardingPage() {
 
               {currentStep === 2 && (
                 <HealthFormStep 
-                  onNext={() => {
-                    setCurrentStep(3);
-                    setRegistrationError("");
-                  }}
+                  onNext={handleHealthFormSubmit}
                   onBack={() => setCurrentStep(1)}
                   defaultValues={onboardingData}
                 />

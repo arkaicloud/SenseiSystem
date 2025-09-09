@@ -9,9 +9,13 @@ import { CheckCircle, Heart, Activity, FileText, AlertTriangle } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 
 interface HealthFormStepProps {
-  onNext: () => void;
+  onNext: (healthData: {
+    healthAnswers: HealthAnswer[];
+    agreedToHealthTerms: boolean;
+    healthTermsAgreedAt: string;
+  }) => void;
   onPrevious: () => void;
-  studentId?: number;
+  defaultValues?: any;
 }
 
 export interface HealthAnswer {
@@ -55,11 +59,14 @@ const HEALTH_QUESTIONS: Omit<HealthAnswer, "value">[] = [
   },
 ];
 
-export default function HealthFormStep({ onNext, onPrevious, studentId }: HealthFormStepProps) {
+export default function HealthFormStep({ onNext, onPrevious, defaultValues }: HealthFormStepProps) {
   const [answers, setAnswers] = useState<HealthAnswer[]>(
-    HEALTH_QUESTIONS.map(q => ({ ...q, value: null }))
+    HEALTH_QUESTIONS.map(q => ({ 
+      ...q, 
+      value: defaultValues?.healthAnswers?.find((a: HealthAnswer) => a.key === q.key)?.value || null 
+    }))
   );
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(defaultValues?.agreedToHealthTerms || false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRiskWarning, setShowRiskWarning] = useState(false);
   const [allAnswered, setAllAnswered] = useState(false);
@@ -100,36 +107,23 @@ export default function HealthFormStep({ onNext, onPrevious, studentId }: Health
       return;
     }
 
-    if (!studentId) {
-      toast({
-        title: "Erro",
-        description: "ID do estudante não encontrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/students/${studentId}/health-questionnaire`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answers,
-          agreedToTerms: true,
-        }),
-      });
+      // Gerar timestamp da assinatura eletrônica
+      const healthTermsAgreedAt = new Date().toISOString();
 
-      const result = await response.json();
+      // Preparar dados do questionário para serem salvos com o registro do aluno
+      const healthData = {
+        healthAnswers: answers,
+        agreedToHealthTerms: true,
+        healthTermsAgreedAt
+      };
 
-      if (!response.ok) {
-        throw new Error(result.message || "Erro ao salvar questionário");
-      }
-
-      if (result.risky) {
+      // Verificar se há respostas de risco para mostrar aviso
+      const hasRisk = answers.some(answer => answer.value === "yes");
+      
+      if (hasRisk) {
         toast({
           title: "Atenção - Atestado Médico Necessário",
           description: "Devido às suas respostas, será necessário apresentar um atestado médico para participar das atividades.",
@@ -137,19 +131,19 @@ export default function HealthFormStep({ onNext, onPrevious, studentId }: Health
         });
       } else {
         toast({
-          title: "Questionário salvo com sucesso!",
-          description: "Suas informações de saúde foram registradas.",
+          title: "Questionário preenchido com sucesso!",
+          description: "Suas informações de saúde foram registradas. Continue para finalizar sua matrícula.",
         });
       }
 
-      // Avançar para próxima etapa
-      onNext();
+      // Passar dados para próxima etapa (serão salvos no registro final)
+      onNext(healthData);
 
     } catch (error: any) {
-      console.error("Erro ao salvar questionário:", error);
+      console.error("Erro ao processar questionário:", error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao salvar questionário de saúde.",
+        description: "Erro ao processar questionário de saúde.",
         variant: "destructive",
       });
     } finally {

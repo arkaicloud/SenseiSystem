@@ -1828,7 +1828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const payload = req.body;
       
       // Update user data
-      if (payload.firstName || payload.lastName || payload.birthDate || 
+      if (payload.firstName || payload.lastName || payload.birthDate || payload.sex ||
           payload.cpf || payload.rg || payload.contact || payload.emergency || payload.address) {
         
         const userUpdateData: any = {};
@@ -1836,6 +1836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (payload.firstName) userUpdateData.firstName = payload.firstName;
         if (payload.lastName) userUpdateData.lastName = payload.lastName;
         if (payload.birthDate) userUpdateData.birthDate = new Date(payload.birthDate);
+        if (payload.sex) userUpdateData.sex = payload.sex;
         if (payload.cpf) userUpdateData.cpf = payload.cpf;
         if (payload.rg) userUpdateData.rg = payload.rg;
         
@@ -4497,6 +4498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: "student" as const,
         active: false, // Pending approval
         phone: studentData.phone || null,
+        sex: studentData.sex || null, // Add gender field
         cpf: studentData.cpf || null, // Add user's CPF
         rg: studentData.rg || null, // Add user's RG
         emergencyContact: studentData.emergencyContact || null,

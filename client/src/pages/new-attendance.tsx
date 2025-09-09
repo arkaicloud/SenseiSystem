@@ -52,15 +52,21 @@ export default function NewAttendancePage() {
   const dateString = selectedDate.toISOString().split('T')[0];
 
   // Fetch classes for selected date with stats
-  const { data: classes = [], isLoading: classesLoading } = useQuery({
-    queryKey: ['/api/classes', dateString],
-    queryFn: () => apiRequest(`/api/classes?date=${dateString}`),
+  const { data: classes = [], isLoading: classesLoading } = useQuery<ClassWithStats[]>({
+    queryKey: ['/api/attendance/classes', dateString],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/attendance/classes?date=${dateString}`);
+      return Array.isArray(response) ? response : [];
+    },
   });
 
   // Fetch roster when class is selected
-  const { data: rosterData = [], isLoading: rosterLoading } = useQuery({
+  const { data: rosterData = [], isLoading: rosterLoading } = useQuery<RosterStudent[]>({
     queryKey: ['/api/classes', selectedClass?.id, 'roster', dateString],
-    queryFn: () => apiRequest(`/api/classes/${selectedClass?.id}/roster?date=${dateString}`),
+    queryFn: async () => {
+      const response = await apiRequest(`/api/classes/${selectedClass?.id}/roster?date=${dateString}`);
+      return Array.isArray(response) ? response : [];
+    },
     enabled: !!selectedClass,
   });
 
@@ -72,10 +78,7 @@ export default function NewAttendancePage() {
   // Individual attendance mutation
   const attendanceMutation = useMutation({
     mutationFn: async ({ classId, studentId, status }: { classId: number; studentId: number; status: string | null }) => {
-      return apiRequest(`/api/attendance/${classId}/${studentId}`, {
-        method: 'PATCH',
-        body: { date: dateString, status },
-      });
+      return apiRequest(`/api/attendance/${classId}/${studentId}`, 'PATCH', { date: dateString, status });
     },
     onSuccess: () => {
       setAutoSaveStatus("Salvo automaticamente ✓");
@@ -94,11 +97,8 @@ export default function NewAttendancePage() {
 
   // Bulk attendance mutation
   const bulkMutation = useMutation({
-    mutationFn: async (updates: { studentId: number; status: string }[]) => {
-      return apiRequest('/api/attendance/bulk', {
-        method: 'POST',
-        body: { date: dateString, classId: selectedClass?.id, updates },
-      });
+    mutationFn: async (updates: { studentId: number; status: string | null }[]) => {
+      return apiRequest('/api/attendance/bulk', 'POST', { date: dateString, classId: selectedClass?.id, updates });
     },
     onSuccess: () => {
       setAutoSaveStatus("Ações em lote salvas ✓");
@@ -117,10 +117,7 @@ export default function NewAttendancePage() {
 
   // Start class mutation
   const startClassMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/classes/${selectedClass?.id}/start`, {
-      method: 'POST',
-      body: { date: dateString },
-    }),
+    mutationFn: () => apiRequest(`/api/classes/${selectedClass?.id}/start`, 'POST', { date: dateString }),
     onSuccess: () => {
       setIsClassStarted(true);
       toast({ title: "Aula iniciada", description: "Chamada liberada para preenchimento" });
@@ -129,17 +126,14 @@ export default function NewAttendancePage() {
 
   // Finish class mutation  
   const finishClassMutation = useMutation({
-    mutationFn: (finalizeAbsentRest: boolean = false) => apiRequest(`/api/classes/${selectedClass?.id}/finish`, {
-      method: 'POST',
-      body: { date: dateString, finalizeAbsentRest },
-    }),
+    mutationFn: (finalizeAbsentRest: boolean = false) => apiRequest(`/api/classes/${selectedClass?.id}/finish`, 'POST', { date: dateString, finalizeAbsentRest }),
     onSuccess: () => {
       setIsClassStarted(false);
       toast({ title: "Aula encerrada", description: "Presença finalizada com sucesso" });
     }
   });
 
-  const handleStatusChange = (studentId: number, status: string | null) => {
+  const handleStatusChange = (studentId: number, status: 'confirmed' | 'present' | 'absent' | 'late' | null) => {
     // Update local state immediately for UI responsiveness
     setRoster(prev => prev.map(s => 
       s.student_id === studentId ? { ...s, status } : s
@@ -154,7 +148,7 @@ export default function NewAttendancePage() {
   };
 
   const handleBulkAction = (action: 'mark-confirmed-present' | 'mark-remaining-absent' | 'clear-all') => {
-    let updates: { studentId: number; status: string }[] = [];
+    let updates: { studentId: number; status: 'confirmed' | 'present' | 'absent' | 'late' | null }[] = [];
 
     switch (action) {
       case 'mark-confirmed-present':
@@ -168,7 +162,7 @@ export default function NewAttendancePage() {
           .map(s => ({ studentId: s.student_id, status: 'absent' }));
         break;
       case 'clear-all':
-        updates = roster.map(s => ({ studentId: s.student_id, status: null }));
+        updates = roster.map(s => ({ studentId: s.student_id, status: null as const }));
         break;
     }
 
@@ -176,7 +170,7 @@ export default function NewAttendancePage() {
       // Update local state
       setRoster(prev => prev.map(s => {
         const update = updates.find(u => u.studentId === s.student_id);
-        return update ? { ...s, status: update.status === null ? null : update.status as any } : s;
+        return update ? { ...s, status: update.status } : s;
       }));
       
       // Save to backend

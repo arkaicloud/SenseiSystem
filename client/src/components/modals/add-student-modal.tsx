@@ -44,6 +44,9 @@ export const AddStudentModal = ({
     name: z.string().min(1, { message: t('student.nameRequired') }),
     email: z.string().email({ message: t('student.invalidEmail') }).optional(),
     cpf: z.string().min(1, { message: t('student.cpfRequired') }),
+    sex: z.enum(['M', 'F'], { 
+      errorMap: () => ({ message: t('student.genderRequired') || 'Gênero é obrigatório' }) 
+    }),
     modality: z.enum(['Adulto', 'Feminino', 'Kids'], { 
       errorMap: () => ({ message: t('student.modalityRequired') }) 
     }),
@@ -55,6 +58,7 @@ export const AddStudentModal = ({
       name: '',
       email: '',
       cpf: '',
+      sex: 'M' as 'M' | 'F',
       modality: 'Adulto',
       street: '',
       city: '',
@@ -135,6 +139,28 @@ export const AddStudentModal = ({
                         className="bg-gray-900 border-gray-700 text-white"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="sex"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gênero</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                          <SelectValue placeholder="Selecione o gênero" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="M">Masculino</SelectItem>
+                        <SelectItem value="F">Feminino</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

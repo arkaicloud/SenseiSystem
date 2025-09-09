@@ -4864,14 +4864,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Don't activate user immediately - keep them pending with status info
+          // Activate user when ASAAS integration is successful
           if (asaasSuccess) {
-            // User stays pending but marked as successfully processed
+            // ASAAS integration successful - activate user
+            const updatedUser = await storage.updateUser(userId, { 
+              active: true, 
+              status: 'active' 
+            });
+
+            if (!updatedUser) {
+              const errorMsg = 'erro ao ativar usuário após sucesso ASAAS';
+              results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+              results.userResults.push({
+                userId,
+                userName: `${user.firstName} ${user.lastName}`,
+                status: 'error',
+                message: errorMsg
+              });
+              results.failed++;
+              continue;
+            }
+
             results.userResults.push({
               userId,
               userName: `${user.firstName} ${user.lastName}`,
               status: 'success',
-              message: 'Processado com sucesso - integração ASAAS completa. Aguardando confirmação final.'
+              message: 'Aprovado e ativado com sucesso - integração ASAAS completa'
             });
             results.successful++;
           } else if (asaasError) {

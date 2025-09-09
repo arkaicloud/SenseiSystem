@@ -1800,7 +1800,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         billing: {
           planId: student.paymentPlanId,
           preferredDueDay: student.preferredDueDate || 5
-        }
+        },
+        // Dados do responsável financeiro
+        financialResponsibleName: student.financialResponsibleName || null,
+        financialResponsibleCpf: student.financialResponsibleCpf || null,
+        financialResponsibleEmail: student.financialResponsibleEmail || null,
+        financialResponsiblePhone: student.financialResponsiblePhone || null,
       };
 
       res.json(studentDTO);
@@ -1819,10 +1824,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student not found" });
       }
 
-      // Validate input
-      const studentData = req.body;
+      // Extract structured data from DTO
+      const payload = req.body;
+      
+      // Update user data
+      if (payload.firstName || payload.lastName || payload.birthDate || 
+          payload.cpf || payload.rg || payload.contact || payload.emergency || payload.address) {
+        
+        const userUpdateData: any = {};
+        
+        if (payload.firstName) userUpdateData.firstName = payload.firstName;
+        if (payload.lastName) userUpdateData.lastName = payload.lastName;
+        if (payload.birthDate) userUpdateData.birthDate = payload.birthDate;
+        if (payload.cpf) userUpdateData.cpf = payload.cpf;
+        if (payload.rg) userUpdateData.rg = payload.rg;
+        
+        if (payload.contact) {
+          if (payload.contact.email) userUpdateData.email = payload.contact.email;
+          if (payload.contact.phone) userUpdateData.phone = payload.contact.phone;
+        }
+        
+        if (payload.emergency) {
+          if (payload.emergency.name) userUpdateData.emergencyContact = payload.emergency.name;
+          if (payload.emergency.phone) userUpdateData.emergencyPhone = payload.emergency.phone;
+        }
+        
+        if (payload.address) {
+          if (payload.address.zip) userUpdateData.zipCode = payload.address.zip;
+          if (payload.address.street) userUpdateData.street = payload.address.street;
+          if (payload.address.number) userUpdateData.number = payload.address.number;
+          if (payload.address.complement) userUpdateData.complement = payload.address.complement;
+          if (payload.address.district) userUpdateData.neighborhood = payload.address.district;
+          if (payload.address.city) userUpdateData.city = payload.address.city;
+          if (payload.address.state) userUpdateData.state = payload.address.state;
+        }
+        
+        await storage.updateUser(student.userId, userUpdateData);
+      }
+      
+      // Update student data
+      const studentUpdateData: any = {};
+      
+      if (payload.health?.notes !== undefined) {
+        studentUpdateData.medicalObservations = payload.health.notes;
+      }
+      
+      if (payload.graduation?.beltLevel) {
+        studentUpdateData.beltLevel = payload.graduation.beltLevel;
+      }
+      
+      if (payload.graduation?.graduationDate) {
+        studentUpdateData.lastPromotionDate = payload.graduation.graduationDate;
+      }
+      
+      if (payload.financialResponsible) {
+        if (payload.financialResponsible.relation) {
+          studentUpdateData.financialResponsibleRelation = payload.financialResponsible.relation;
+        }
+        if (payload.financialResponsible.name) {
+          studentUpdateData.financialResponsibleName = payload.financialResponsible.name;
+        }
+        if (payload.financialResponsible.cpf) {
+          studentUpdateData.financialResponsibleCpf = payload.financialResponsible.cpf;
+        }
+        if (payload.financialResponsible.email) {
+          studentUpdateData.financialResponsibleEmail = payload.financialResponsible.email;
+        }
+        if (payload.financialResponsible.phone) {
+          studentUpdateData.financialResponsiblePhone = payload.financialResponsible.phone;
+        }
+      }
+      
+      if (payload.billing) {
+        if (payload.billing.planId !== undefined) {
+          studentUpdateData.paymentPlanId = payload.billing.planId;
+        }
+        if (payload.billing.preferredDueDay !== undefined) {
+          studentUpdateData.preferredDueDate = payload.billing.preferredDueDay;
+        }
+      }
 
-      const updatedStudent = await storage.updateStudent(student.id, studentData);
+      const updatedStudent = await storage.updateStudent(student.id, studentUpdateData);
       const user = await storage.getUser(student.userId);
 
       // Log activity
@@ -1839,6 +1921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid student data", errors: error.errors });
       }
+      console.error("Error updating student:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

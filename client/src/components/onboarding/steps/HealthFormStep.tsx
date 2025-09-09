@@ -4,15 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Heart, Activity, FileText, AlertTriangle } from "lucide-react";
+import { CheckCircle, Heart, Activity, FileText, AlertTriangle, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useBeltLevels } from "@/hooks/useBeltLevels";
 
 interface HealthFormStepProps {
   onNext: (healthData: {
     healthAnswers: HealthAnswer[];
     agreedToHealthTerms: boolean;
     healthTermsAgreedAt: string;
+    beltLevel?: string;
+    stripes?: number;
   }) => void;
   onPrevious: () => void;
   defaultValues?: any;
@@ -70,7 +74,13 @@ export default function HealthFormStep({ onNext, onPrevious, defaultValues }: He
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRiskWarning, setShowRiskWarning] = useState(false);
   const [allAnswered, setAllAnswered] = useState(false);
+  
+  // Belt level states
+  const [selectedBeltLevel, setSelectedBeltLevel] = useState<string>(defaultValues?.beltLevel || 'white');
+  const [selectedStripes, setSelectedStripes] = useState<number>(defaultValues?.stripes || 0);
+  
   const { toast } = useToast();
+  const { beltOptions, isLoading: loadingBelts } = useBeltLevels(undefined, true);
 
   // Verifica se todas as perguntas foram respondidas
   useEffect(() => {
@@ -117,7 +127,9 @@ export default function HealthFormStep({ onNext, onPrevious, defaultValues }: He
       const healthData = {
         healthAnswers: answers,
         agreedToHealthTerms: true,
-        healthTermsAgreedAt
+        healthTermsAgreedAt,
+        beltLevel: selectedBeltLevel,
+        stripes: selectedStripes
       };
 
       // Verificar se há respostas de risco para mostrar aviso
@@ -227,6 +239,86 @@ export default function HealthFormStep({ onNext, onPrevious, defaultValues }: He
               </AlertDescription>
             </Alert>
           )}
+
+          <Separator />
+
+          {/* Seção de Graduação */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-blue-800">
+                <Award className="h-5 w-5" />
+                Graduação Atual
+              </CardTitle>
+              <CardDescription className="text-blue-600">
+                Informe sua graduação atual no Jiu-Jitsu (faixa e grau)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="belt-level" className="text-sm font-medium">
+                    Faixa Atual *
+                  </Label>
+                  <Select 
+                    value={selectedBeltLevel} 
+                    onValueChange={setSelectedBeltLevel}
+                    disabled={loadingBelts}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione sua faixa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingBelts ? (
+                        <SelectItem value="loading" disabled>
+                          Carregando faixas...
+                        </SelectItem>
+                      ) : (
+                        beltOptions.map((belt) => (
+                          <SelectItem key={belt.value} value={belt.value}>
+                            <span className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border border-gray-300" 
+                                style={{ backgroundColor: belt.color }}
+                              />
+                              {belt.label}
+                            </span>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="stripes" className="text-sm font-medium">
+                    Grau (Listras)
+                  </Label>
+                  <Select 
+                    value={selectedStripes.toString()} 
+                    onValueChange={(value) => setSelectedStripes(Number(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Número de listras" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[0, 1, 2, 3, 4].map((stripe) => (
+                        <SelectItem key={stripe} value={stripe.toString()}>
+                          {stripe} {stripe === 1 ? 'listra' : 'listras'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Alert>
+                <Activity className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Iniciante?</strong> Se você nunca praticou Jiu-Jitsu, mantenha selecionado "Faixa Branca" com "0 listras".
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
 
           <Separator />
 

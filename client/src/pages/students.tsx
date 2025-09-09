@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BeltWithLabel } from "@/components/ui/belt";
 import { usePaginated } from "@/hooks/usePaginated";
-import { Pagination } from "@/components/ui/pagination";
+import { Pagination } from "@/components/ui/Pagination";
 import { PageSizeSelect } from "@/components/ui/PageSizeSelect";
 import { TabsFilter } from "@/components/ui/TabsFilter";
 import { ResultsInfo } from "@/components/ui/ResultsInfo";
@@ -359,7 +359,7 @@ const Students: React.FC = () => {
                     {!isMobile && (
                       <>
                         <td>
-                          <BeltWithLabel level={student.beltLevel} stripes={student.stripes} />
+                          <BeltWithLabel level={student.beltLevel as any} stripes={student.stripes} />
                         </td>
                         <td className="text-gray-500">{student.user.email}</td>
                         <td className="text-gray-500">{student.user.phone || 'Não informado'}</td>
@@ -403,7 +403,7 @@ const Students: React.FC = () => {
             <Pagination
               page={data.page}
               totalPages={data.totalPages}
-              onPage={(p) => setParam("page", p)}
+              onPage={(p: number) => setParam("page", p)}
             />
           </div>
         )}

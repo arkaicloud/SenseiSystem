@@ -2229,6 +2229,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para agenda semanal do aluno com dados de confirmação
+  app.get("/api/students/:studentId/classes/week", isAuthenticated, async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const requestUser = (req as any).user;
+      
+      // Verificar se o usuário tem permissão para acessar os dados deste aluno
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student || student.id !== parseInt(studentId)) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      // Buscar todas as aulas ativas
+      const allClasses = await storage.getClassesWithInstructors();
+      
+      // Criar dados para a semana (próximos 7 dias)
+      const today = new Date();
+      const weekData = [];
+      
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(today);
+        currentDate.setDate(today.getDate() + i);
+        const currentDayOfWeek = currentDate.getDay(); // 0=domingo, 1=segunda, etc.
+        const dateStr = currentDate.toISOString().split('T')[0];
+        
+        // Filtrar aulas do dia da semana
+        const dayClasses = allClasses.filter(cls => cls.dayOfWeek === currentDayOfWeek);
+        
+        // Para cada aula, verificar se o aluno confirmou presença
+        const classesWithAttendance = await Promise.all(
+          dayClasses.map(async (classItem) => {
+            try {
+              const attendances = await storage.getAttendanceByClass(classItem.id);
+              
+              // Verificar se o aluno confirmou presença para este dia
+              const userAttendance = attendances.find(attendance => {
+                const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+                return attendance.studentId === student.id && 
+                       attendanceDate === dateStr && 
+                       (attendance.status === 'confirmed' || attendance.status === 'present');
+              });
+              
+              return {
+                ...classItem,
+                attendanceConfirmed: !!userAttendance,
+                canConfirm: i >= 0, // Pode confirmar hoje e no futuro
+                canCancel: !!userAttendance && i >= 0, // Só pode cancelar se confirmou
+                instructorName: classItem.instructor 
+                  ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
+                  : 'Sem instrutor'
+              };
+            } catch (error) {
+              console.error(`Erro ao buscar presença para aula ${classItem.id}:`, error);
+              return {
+                ...classItem,
+                attendanceConfirmed: false,
+                canConfirm: i >= 0,
+                canCancel: false,
+                instructorName: classItem.instructor 
+                  ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
+                  : 'Sem instrutor'
+              };
+            }
+          })
+        );
+        
+        weekData.push({
+          date: dateStr,
+          dayOfWeek: currentDayOfWeek,
+          classes: classesWithAttendance
+        });
+      }
+      
+      res.json({ weekData });
+    } catch (error) {
+      console.error("Error fetching week agenda:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ========== CLASS ENROLLMENT ENDPOINTS ==========
   
   // Get enrollments for a class

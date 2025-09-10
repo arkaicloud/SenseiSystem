@@ -26,6 +26,7 @@ import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashP
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
+import { toDayUTC, toDateString } from "./utils/date.js";
 import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
 import { saveHealthQuestionnaire } from "./services/healthQuestionnaireService";
@@ -3046,6 +3047,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao buscar alterações de presença:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // ========== IDEMPOTENT BOOKING ROUTES ==========
+  
+  // Idempotent route to confirm attendance
+  app.post("/api/students/:sid/classes/:classId/:date/confirm", isAuthenticated, async (req, res) => {
+    try {
+      const sid = Number(req.params.sid);
+      const classId = Number(req.params.classId);
+      const date = toDayUTC(req.params.date);
+      const requestUser = (req as any).user;
+
+      console.log("Idempotent confirmation attempt:", { sid, classId, date: toDateString(date) });
+
+      // Verify student access
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student || student.id !== sid) {
+        return res.status(403).json({ success: false, message: "Access denied" });
+      }
+
+      // Check if class exists
+      const classItem = await storage.getClass(classId);
+      if (!classItem) {
+        return res.status(404).json({ success: false, message: "Class not found" });
+      }
+
+      // Use upsert pattern: first try to find existing attendance
+      const existingAttendances = await storage.getAttendanceByClass(classId, date);
+      let existingAttendance = existingAttendances.find(att => 
+        att.studentId === student.id && 
+        new Date(att.date).toISOString().split('T')[0] === toDateString(date)
+      );
+
+      let booking;
+      if (existingAttendance) {
+        // Update existing record to confirmed status
+        if (existingAttendance.status !== 'confirmed') {
+          await db.update(attendance)
+            .set({ status: 'confirmed' })
+            .where(eq(attendance.id, existingAttendance.id));
+          
+          // Fetch updated record
+          const updatedAttendances = await storage.getAttendanceByClass(classId, date);
+          existingAttendance = updatedAttendances.find(att => att.id === existingAttendance.id);
+        }
+        booking = existingAttendance;
+      } else {
+        // Create new attendance record
+        const attendanceData = {
+          studentId: student.id,
+          classId: classId,
+          date: date,
+          status: 'confirmed' as const,
+          checkedInBy: requestUser.id
+        };
+        
+        booking = await storage.createAttendance(attendanceData);
+      }
+
+      // Set no-store cache headers
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      
+      return res.json({ success: true, booking });
+    } catch (error) {
+      console.error("Error in idempotent confirmation:", error);
+      return res.status(500).json({ success: false, message: "Erro ao confirmar presença." });
+    }
+  });
+
+  // Idempotent route to cancel attendance  
+  app.post("/api/students/:sid/classes/:classId/:date/cancel", isAuthenticated, async (req, res) => {
+    try {
+      const sid = Number(req.params.sid);
+      const classId = Number(req.params.classId);
+      const date = toDayUTC(req.params.date);
+      const requestUser = (req as any).user;
+
+      console.log("Idempotent cancellation attempt:", { sid, classId, date: toDateString(date) });
+
+      // Verify student access
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student || student.id !== sid) {
+        return res.status(403).json({ success: false, message: "Access denied" });
+      }
+
+      // Find existing attendance
+      const existingAttendances = await storage.getAttendanceByClass(classId, date);
+      let existingAttendance = existingAttendances.find(att => 
+        att.studentId === student.id && 
+        new Date(att.date).toISOString().split('T')[0] === toDateString(date)
+      );
+
+      let booking;
+      if (existingAttendance) {
+        // Update to cancelled status or delete the record
+        await db.update(attendance)
+          .set({ status: 'cancelled' })
+          .where(eq(attendance.id, existingAttendance.id));
+          
+        // Fetch updated record
+        const updatedAttendances = await storage.getAttendanceByClass(classId, date);
+        booking = updatedAttendances.find(att => att.id === existingAttendance.id);
+      } else {
+        // If no existing attendance, create a cancelled record for idempotency
+        const attendanceData = {
+          studentId: student.id,
+          classId: classId,
+          date: date,
+          status: 'cancelled' as const,
+          checkedInBy: requestUser.id
+        };
+        
+        booking = await storage.createAttendance(attendanceData);
+      }
+
+      // Set no-store cache headers
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      
+      return res.json({ success: true, booking });
+    } catch (error) {
+      console.error("Error in idempotent cancellation:", error);
+      return res.status(500).json({ success: false, message: "Erro ao cancelar presença." });
     }
   });
 

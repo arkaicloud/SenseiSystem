@@ -167,7 +167,7 @@ export default function AdminDashboard() {
                       <div className="font-medium">{c.name}</div>
                       <div className="text-sm text-slate-500">{c.start_time} · {c.duration} min</div>
                     </div>
-                    <Button size="sm" onClick={() => window.location.href = `/aulas/${c.id}`}>
+                    <Button size="sm" onClick={() => window.location.href = `/attendance?date=${new Date().toISOString().split('T')[0]}&class=${c.id}`}>
                       Acessar
                     </Button>
                   </li>

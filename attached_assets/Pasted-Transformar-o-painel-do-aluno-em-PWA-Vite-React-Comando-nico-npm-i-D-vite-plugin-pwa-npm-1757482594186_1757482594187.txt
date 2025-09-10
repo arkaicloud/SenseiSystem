@@ -1,0 +1,160 @@
+Transformar o painel do aluno em PWA (Vite + React)
+
+Comando único:
+
+npm i -D vite-plugin-pwa && npm i workbox-window
+
+
+vite.config.ts
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
+
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.svg","robots.txt","apple-touch-icon.png"],
+      manifest: {
+        name: "SenseiSystem - Aluno",
+        short_name: "Sensei Aluno",
+        description: "Painel do aluno da academia",
+        theme_color: "#1f2937",
+        background_color: "#ffffff",
+        display: "standalone",
+        scope: "/",
+        start_url: "/",
+        icons: [
+          { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },
+          { src: "/pwa-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+        ]
+      },
+      workbox: { globPatterns: ["**/*.{js,css,html,svg,png,woff2}"] }
+    })
+  ]
+});
+
+
+main.tsx – registra o SW:
+
+import { registerSW } from "virtual:pwa-register";
+registerSW({ immediate: true });
+
+
+index.html – metatags PWA:
+
+<meta name="theme-color" content="#1f2937" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+
+build/serve:
+
+npm run dev
+# para testar PWA com SW ativo, faça:
+npm run build && npm run preview
+
+2) Sidebar → Bottom Navigation no mobile (mantém sidebar em tablet/web)
+
+BottomNav.tsx
+
+import { Home, CalendarDays, Bell, User } from "lucide-react";
+import { NavLink } from "react-router-dom";
+
+export default function BottomNav() {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <ul className="grid grid-cols-4">
+        <li><NavLink to="/aluno" className="flex flex-col items-center py-2 text-sm gap-1 aria-[current=page]:text-primary"><Home size={20}/>Início</NavLink></li>
+        <li><NavLink to="/aluno/agenda" className="flex flex-col items-center py-2 text-sm gap-1 aria-[current=page]:text-primary"><CalendarDays size={20}/>Agenda</NavLink></li>
+        <li><NavLink to="/aluno/avisos" className="flex flex-col items-center py-2 text-sm gap-1 aria-[current=page]:text-primary"><Bell size={20}/>Avisos</NavLink></li>
+        <li><NavLink to="/aluno/perfil" className="flex flex-col items-center py-2 text-sm gap-1 aria-[current=page]:text-primary"><User size={20}/>Perfil</NavLink></li>
+      </ul>
+    </nav>
+  );
+}
+
+
+Layout do Aluno (troca condicional por breakpoint)
+
+import BottomNav from "@/components/BottomNav";
+
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-dvh bg-muted/10">
+      {/* header global */}
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
+        {/* ... saudação + sino ... */}
+      </header>
+
+      <div className="mx-auto w-full md:max-w-6xl">
+        <div className="flex">
+          {/* Sidebar só em ≥md */}
+          <aside className="hidden md:block w-64 border-r min-h-[calc(100dvh-56px)]">
+            {/* ...menu lateral atual... */}
+          </aside>
+
+          {/* Conteúdo ocupa 100% no mobile; adiciona espaçamento p/ bottom nav */}
+          <main className="flex-1 px-4 md:px-8 pb-20 md:pb-8">
+            {children}
+          </main>
+        </div>
+      </div>
+
+      {/* Bottom Navigation apenas mobile */}
+      <BottomNav />
+    </div>
+  );
+}
+
+
+pb-20 no <main> garante espaço para não ficar atrás da bottom-nav.
+
+3) Ajustes de responsividade (rápidos)
+
+Cards/Listas: use w-full, gap-3, e grids condicionais:
+
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"> ... </div>
+
+
+CTAs em mobile: w-full nos botões principais.
+
+Safe-area iOS: já incluí env(safe-area-inset-bottom) na bottom-nav.
+
+4) Mantém tablet/web como hoje
+
+Nada muda para ≥md:
+
+Sidebar continua visível.
+
+BottomNav some (md:hidden).
+
+5) (Opcional) Prompt ArkDev para colar no Replit
+ArkDev
+Objetivo: Transformar o painel do aluno em PWA e adaptar navegação para mobile com bottom navigation, mantendo sidebar em tablet/web.
+
+Tarefas:
+1) Instalar PWA:
+   - npm i -D vite-plugin-pwa && npm i workbox-window
+   - Configurar vite.config.ts com VitePWA (manifest, icons, autoUpdate).
+   - Adicionar registerSW no main.tsx e metatags no index.html.
+   - Adicionar ícones /pwa-192.png, /pwa-512.png, /pwa-maskable.png.
+
+2) Navegação responsiva:
+   - Criar components/BottomNav.tsx (4 abas: Início, Agenda, Avisos, Perfil).
+   - Atualizar StudentLayout: sidebar visível apenas em md+; incluir <BottomNav/> em mobile; aplicar padding-bottom no main.
+
+3) UX:
+   - Em telas pequenas, botões de ação = w-full.
+   - Conteúdos em grid responsivo (1 / 2 / 3 colunas).
+   - Testar iOS/Android como app instalado (standalone).
+
+Aceite:
+- App instalável (manifest + SW OK em Lighthouse).
+- Mobile: bottom-nav fixa; conteúdo não fica escondido.
+- Tablet/Web: sidebar normal, sem bottom-nav.

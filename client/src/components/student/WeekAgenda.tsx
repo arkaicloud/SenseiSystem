@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,8 +42,25 @@ interface WeekAgendaProps {
 
 export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = true }: WeekAgendaProps) => {
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
+  const [confirmedClasses, setConfirmedClasses] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Sincronizar estado local com dados da API
+  useEffect(() => {
+    if (weekClasses) {
+      const confirmed = new Set<string>();
+      weekClasses.forEach(day => {
+        day.classes.forEach(classItem => {
+          if (classItem.attendanceConfirmed) {
+            const key = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
+            confirmed.add(key);
+          }
+        });
+      });
+      setConfirmedClasses(confirmed);
+    }
+  }, [weekClasses]);
 
   // Query para buscar aulas da semana
   const { data: weekClasses, isLoading } = useQuery({
@@ -90,6 +107,11 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       return response.json();
     },
     onSuccess: (data, variables) => {
+      // Atualizar estado local imediatamente
+      const confirmKey = `${variables.classId}-${variables.date}`;
+      setConfirmedClasses(prev => new Set(prev).add(confirmKey));
+      
+      // Invalidar queries para sincronizar com servidor
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
       
@@ -100,7 +122,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       
       setLoadingActions(prev => {
         const newSet = new Set(prev);
-        newSet.delete(`${variables.classId}-${variables.date}`);
+        newSet.delete(confirmKey);
         return newSet;
       });
     },
@@ -135,6 +157,15 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       return response.json();
     },
     onSuccess: (data, variables) => {
+      // Atualizar estado local imediatamente
+      const confirmKey = `${variables.classId}-${variables.date}`;
+      setConfirmedClasses(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(confirmKey);
+        return newSet;
+      });
+      
+      // Invalidar queries para sincronizar com servidor
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
       
@@ -145,7 +176,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       
       setLoadingActions(prev => {
         const newSet = new Set(prev);
-        newSet.delete(`${variables.classId}-${variables.date}`);
+        newSet.delete(confirmKey);
         return newSet;
       });
     },
@@ -243,6 +274,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                     {day.classes.map((classItem) => {
                       const actionKey = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
                       const isActionLoading = loadingActions.has(actionKey);
+                      const isConfirmed = confirmedClasses.has(actionKey) || classItem.attendanceConfirmed;
                       
                       return (
                         <div
@@ -269,13 +301,13 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                           
                           {/* Ações (CTA) - Coluna 2/3 */}
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 md:col-span-1 lg:col-span-1">
-                            {classItem.attendanceConfirmed ? (
+                            {isConfirmed ? (
                               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                 <Badge variant="secondary" className="flex items-center justify-center gap-1 py-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                                   <CheckCircle className="h-4 w-4" />
                                   <span>Confirmado</span>
                                 </Badge>
-                                {classItem.canCancel && (
+                                {(classItem.canCancel || isConfirmed) && (
                                   <Button
                                     size="sm"
                                     variant="ghost"

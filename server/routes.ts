@@ -2153,6 +2153,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/classes/today", isAuthenticated, async (req, res) => {
+    // Desabilitar cache para dados dinâmicos de presença
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Vary': 'Authorization'
+    });
+    
     try {
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
@@ -2234,6 +2242,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { studentId } = req.params;
       const requestUser = (req as any).user;
+      
+      // Desabilitar cache para dados dinâmicos de presença
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Vary': 'Authorization'
+      });
       
       // Verificar se o usuário tem permissão para acessar os dados deste aluno
       const student = await storage.getStudentByUserId(requestUser.id);

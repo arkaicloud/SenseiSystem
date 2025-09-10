@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Sun, Moon, LogOut, Building2, User, UserCheck, ChevronDown } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { StudentBell } from "@/components/student/StudentBell";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     queryKey: ['/api/users/pending'],
     enabled: user?.role === 'admin',
     refetchInterval: 30000,
+  });
+
+  // Buscar perfil do aluno para notificações
+  const { data: studentProfile } = useQuery({
+    queryKey: ['/api/student/profile'],
+    enabled: user?.role === 'student',
   });
 
   const schoolConfig = schoolConfigData?.config;
@@ -122,6 +129,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-4">
               {/* Notification Bell */}
               {user?.role === 'admin' && <NotificationBell />}
+              {user?.role === 'student' && studentProfile && (
+                <StudentBell studentId={studentProfile.id} />
+              )}
               
               {/* Theme toggle button */}
               <Button
@@ -231,6 +241,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-2">
               {/* Notification Bell */}
               {user?.role === 'admin' && <NotificationBell />}
+              {user?.role === 'student' && studentProfile && (
+                <StudentBell studentId={studentProfile.id} />
+              )}
               
               {/* Theme toggle button */}
               <Button

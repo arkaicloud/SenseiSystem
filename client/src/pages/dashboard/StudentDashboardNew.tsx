@@ -75,11 +75,7 @@ export default function StudentDashboardNew() {
     enabled: !!user?.id && user?.role === 'student',
   });
   
-  // Get school events
-  const { data: schoolEvents, isLoading: isEventsLoading } = useQuery({
-    queryKey: ['/api/school-events'],
-    enabled: !!user?.id && user?.role === 'student',
-  });
+  // School events not needed for notices - NoticesBlock fetches its own data
   
   // Get attendance count for current month
   const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
@@ -165,13 +161,7 @@ export default function StudentDashboardNew() {
     isFinancialResponsible: financialData?.isFinancialResponsible || false
   };
 
-  const notices = schoolEvents?.events?.map((event: any) => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    date: event.date,
-    type: "event" as const
-  })) || [];
+  // Notices are handled directly by NoticesBlock component
 
   const classes = todayClasses?.classes || [];
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { WeekAgenda } from '@/components/student/WeekAgenda';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import type { SchoolConfig } from '@shared/schema';
 
 export default function WeekAgendaPage() {
@@ -10,19 +9,17 @@ export default function WeekAgendaPage() {
 
   const { data: studentData } = useQuery({
     queryKey: ['/api/student/profile'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/student/profile');
-      if (!response.ok) {
-        throw new Error('Erro ao carregar perfil do aluno');
-      }
-      return response.json();
-    },
     enabled: !!user?.id && user?.role === 'student',
   });
 
   const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
     queryKey: ['/api/school-config'],
     enabled: !!user?.id,
+  });
+
+  const { data: weekData, isLoading } = useQuery({
+    queryKey: ['/api/students', studentData?.id, 'classes/week'],
+    enabled: !!studentData?.id,
   });
 
   const primaryColor = schoolConfigData?.config?.primaryColor || '#B85C38';
@@ -34,9 +31,10 @@ export default function WeekAgendaPage() {
       </div>
       
       <WeekAgenda 
+        weekData={weekData?.weekData || []}
         studentId={studentData?.id || 0}
         primaryColor={primaryColor}
-        showHeader={false}
+        isLoading={isLoading}
       />
     </div>
   );

@@ -2357,10 +2357,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(classEnrollments.classId, classId),
           eq(classEnrollments.isActive, true)
         ))
-        .leftJoin(attendance, and(
+        .innerJoin(attendance, and(
           eq(attendance.studentId, students.id),
           eq(attendance.classId, classId),
-          sql`DATE(${attendance.date}) = ${date}`
+          sql`DATE(${attendance.date}) = ${date}`,
+          eq(attendance.status, 'confirmed')
         ))
         .where(eq(users.active, true));
         

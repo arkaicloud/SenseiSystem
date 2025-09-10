@@ -52,6 +52,8 @@ export const medicalCertificateStatusEnum = pgEnum('medical_certificate_status',
 export const schoolPaymentStatusEnum = pgEnum('school_payment_status', ['pending', 'paid', 'overdue', 'cancelled', 'failed']);
 export const billingTypeEnum = pgEnum('billing_type', ['BOLETO', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'TRANSFER']);
 export const riskActionEnum = pgEnum('risk_action', ['call', 'email', 'whatsapp', 'visit', 'discount', 'other']);
+export const noticeLevelEnum = pgEnum('notice_level', ['LOW', 'MEDIUM', 'HIGH']);
+export const noticeAudienceEnum = pgEnum('notice_audience', ['ALL', 'STUDENTS', 'INSTRUCTORS']);
 
 // Belt levels management table
 export const beltLevels = pgTable("belt_levels", {
@@ -404,6 +406,30 @@ export const documents = pgTable("documents", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Notices table (para avisos/comunicados)
+export const notices = pgTable("notices", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  level: noticeLevelEnum("level").notNull().default('MEDIUM'),
+  audience: noticeAudienceEnum("audience").notNull().default('ALL'),
+  publishAt: timestamp("publish_at").defaultNow(),
+  eventAt: timestamp("event_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
+// Student Notifications table (controle de leitura)
+export const studentNotifications = pgTable("student_notifications", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id, { onDelete: 'cascade' }).notNull(),
+  noticeId: integer("notice_id").references(() => notices.id, { onDelete: 'cascade' }).notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users)
   .omit({ 
@@ -438,6 +464,8 @@ export const insertRiskActionSchema = createInsertSchema(riskActions).omit({ id:
 export const insertRiskSettingsSchema = createInsertSchema(riskSettings).omit({ id: true, updatedAt: true });
 export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertContaReceberSchema = createInsertSchema(contasReceber).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertNoticeSchema = createInsertSchema(notices).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertStudentNotificationSchema = createInsertSchema(studentNotifications).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -474,6 +502,12 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 
 export type DashboardCustomization = typeof dashboardCustomizations.$inferSelect;
+
+export type Notice = typeof notices.$inferSelect;
+export type InsertNotice = z.infer<typeof insertNoticeSchema>;
+
+export type StudentNotification = typeof studentNotifications.$inferSelect;
+export type InsertStudentNotification = z.infer<typeof insertStudentNotificationSchema>;
 export type InsertDashboardCustomization = z.infer<typeof insertDashboardCustomizationSchema>;
 
 export type RiskAction = typeof riskActions.$inferSelect;

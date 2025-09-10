@@ -2154,23 +2154,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/classes/today", isAuthenticated, async (req, res) => {
     try {
-      // Buscar todas as aulas em vez de apenas as de hoje para debug
+      // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
 
-      // Para debug, vamos retornar todas as aulas
+      // Obter o dia da semana atual (0=domingo, 1=segunda, 2=terça, 3=quarta, etc)
       const today = new Date();
-      const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const currentDayOfWeek = today.getDay();
+      const dayOfWeekName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
-      console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeek}`);
+      console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeekName} (${currentDayOfWeek})`);
       console.log(`Total de aulas encontradas: ${allClasses.length}`);
 
-      // Filtrar aulas para hoje (por enquanto incluindo todas as aulas ativas)
+      // Filtrar aulas APENAS do dia atual da semana
       const todaysClasses = allClasses.filter(classItem => {
-        // Por enquanto, incluir todas as aulas ativas
-        return classItem.isActive !== false;
+        return classItem.isActive !== false && classItem.dayOfWeek === currentDayOfWeek;
       });
 
-      console.log(`Aulas filtradas para hoje: ${todaysClasses.length}`);
+      console.log(`Aulas filtradas para hoje (${dayOfWeekName}): ${todaysClasses.length}`);
 
       const requestUser = (req as any).user;
       const student = await storage.getStudentByUserId(requestUser.id);

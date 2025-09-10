@@ -2260,27 +2260,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
       
-      // Obter dias da semana únicos que têm aulas cadastradas
-      const daysWithClasses = [...new Set(allClasses.map(cls => cls.dayOfWeek))].sort();
-      
-      // Criar dados para a semana (apenas dias que têm aulas)
+      // Criar dados para a semana completa (segunda a domingo: próximos 7 dias)
       const today = new Date();
       const weekData = [];
       
-      // Gerar próximos 14 dias para ter certeza de pegar todos os dias da semana com aulas
-      for (let i = 0; i < 14; i++) {
-        const currentDate = new Date(today);
-        currentDate.setDate(today.getDate() + i);
-        const currentDayOfWeek = currentDate.getDay(); // 0=domingo, 1=segunda, etc.
-        const dateStr = currentDate.toISOString().split('T')[0];
+      // Array dos dias da semana em ordem (0=domingo, 1=segunda, etc)
+      const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // segunda, terça, quarta, quinta, sexta, sábado, domingo
+      
+      for (const targetDayOfWeek of daysOfWeek) {
+        // Encontrar a próxima ocorrência deste dia da semana
+        let nextOccurrence = new Date(today);
+        const todayDayOfWeek = today.getDay();
         
-        // Só processar se este dia da semana tem aulas cadastradas
-        if (!daysWithClasses.includes(currentDayOfWeek)) {
-          continue;
+        // Calcular quantos dias adicionar para chegar ao dia desejado
+        let daysToAdd = targetDayOfWeek - todayDayOfWeek;
+        if (daysToAdd < 0) {
+          daysToAdd += 7; // Se já passou esta semana, pegar da próxima
         }
         
+        nextOccurrence.setDate(today.getDate() + daysToAdd);
+        const dateStr = nextOccurrence.toISOString().split('T')[0];
+        
         // Filtrar aulas do dia da semana
-        const dayClasses = allClasses.filter(cls => cls.dayOfWeek === currentDayOfWeek);
+        const dayClasses = allClasses.filter(cls => cls.dayOfWeek === targetDayOfWeek);
         
         // Para cada aula, verificar se o aluno confirmou presença
         const classesWithAttendance = await Promise.all(
@@ -2299,8 +2301,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return {
                 ...classItem,
                 attendanceConfirmed: !!userAttendance,
-                canConfirm: i >= 0, // Pode confirmar hoje e no futuro
-                canCancel: !!userAttendance && i >= 0, // Só pode cancelar se confirmou
+                canConfirm: true,
+                canCancel: !!userAttendance,
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                   : 'Sem instrutor'
@@ -2310,7 +2312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return {
                 ...classItem,
                 attendanceConfirmed: false,
-                canConfirm: i >= 0,
+                canConfirm: true,
                 canCancel: false,
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
@@ -2322,14 +2324,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         weekData.push({
           date: dateStr,
-          dayOfWeek: currentDayOfWeek,
+          dayOfWeek: targetDayOfWeek,
           classes: classesWithAttendance
         });
-        
-        // Parar quando tiver dados para todos os dias da semana com aulas
-        if (weekData.length >= daysWithClasses.length) {
-          break;
-        }
       }
       
       res.json({ weekData });

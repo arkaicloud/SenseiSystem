@@ -88,7 +88,11 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Carregando agenda...</p>
+            <div className="animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4 mx-auto mb-4"></div>
+              <div className="h-4 bg-muted rounded w-1/2 mx-auto"></div>
+            </div>
+            <p className="text-muted-foreground mt-4">Carregando agenda...</p>
           </div>
         </CardContent>
       </Card>
@@ -108,6 +112,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
           <div className="text-center py-8 text-muted-foreground">
             <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
             <p>Nenhuma aula encontrada para esta semana</p>
+            <p className="text-sm mt-2">Verifique com a academia sobre os horários disponíveis</p>
           </div>
         </CardContent>
       </Card>
@@ -165,12 +170,17 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            <span>{classSession.startTime} - {classSession.endTime || '20:30'}</span>
+                            <span>{classSession.startTime} - {classSession.endTime}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <User className="w-4 h-4" />
-                            <span>Professor {classSession.instructorName || 'Marcus'}</span>
+                            <span>{classSession.instructorName}</span>
                           </div>
+                          {classSession.location && (
+                            <div className="flex items-center gap-1 text-xs">
+                              <span>📍 {classSession.location}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 

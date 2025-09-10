@@ -2334,6 +2334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Filtrar aulas baseado na categoria do aluno
       const allowedClasses = allClasses.filter(classItem => {
+        if (!classItem.isActive) return false; // Apenas aulas ativas
         if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
         
         const classType = classItem.type.toLowerCase();
@@ -2377,7 +2378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Filtrar aulas do dia da semana atual
         const dayClasses = allowedClasses.filter(cls => cls.dayOfWeek === dayOfWeek);
         
-        console.log(`📅 ${dateStr} (${dayOfWeek}): ${dayClasses.length} aulas encontradas`);
+        console.log(`📅 ${dateStr} (${dayOfWeek}): ${dayClasses.length} aulas encontradas para o aluno`);
         
         // Para cada aula, verificar se o aluno confirmou presença
         const classesWithAttendance = await Promise.all(
@@ -2394,29 +2395,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               
               let bookingStatus = null;
+              let attendanceConfirmed = false;
+              
               if (userAttendance) {
                 if (userAttendance.status === 'confirmed' || userAttendance.status === 'present') {
                   bookingStatus = 'CONFIRMED';
+                  attendanceConfirmed = true;
                 } else if (userAttendance.status === 'cancelled') {
                   bookingStatus = 'CANCELLED';
+                  attendanceConfirmed = false;
                 }
               }
               
+              // Calcular horário de fim (assumindo 1h30min de duração padrão)
+              const startTime = classItem.startTime;
+              let endTime = classItem.endTime;
+              
+              if (!endTime && startTime) {
+                const [hours, minutes] = startTime.split(':').map(Number);
+                const endHours = hours + 1;
+                const endMinutes = minutes + 30;
+                const finalHours = endHours + Math.floor(endMinutes / 60);
+                const finalMinutes = endMinutes % 60;
+                endTime = `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
+              }
+              
               return {
-                ...classItem,
-                attendanceConfirmed: bookingStatus === 'CONFIRMED',
-                bookingStatus: bookingStatus,
+                id: classItem.id,
+                name: classItem.name,
+                type: classItem.type,
+                startTime: classItem.startTime,
+                endTime: endTime,
+                duration: classItem.duration || 90, // Duração padrão em minutos
+                maxCapacity: classItem.maxCapacity || classItem.maxStudents,
+                location: classItem.location || 'Tatame Principal',
+                attendanceConfirmed,
+                bookingStatus,
                 dateISO: dateStr,
-                canConfirm: true,
-                canCancel: bookingStatus === 'CONFIRMED',
+                canConfirm: !attendanceConfirmed,
+                canCancel: attendanceConfirmed,
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
-                  : 'Sem instrutor'
+                  : 'Instrutor'
               };
             } catch (error) {
               console.error(`Erro ao buscar presença para aula ${classItem.id}:`, error);
               return {
-                ...classItem,
+                id: classItem.id,
+                name: classItem.name,
+                type: classItem.type,
+                startTime: classItem.startTime,
+                endTime: classItem.endTime,
+                duration: classItem.duration || 90,
+                maxCapacity: classItem.maxCapacity || classItem.maxStudents,
+                location: classItem.location || 'Tatame Principal',
                 attendanceConfirmed: false,
                 bookingStatus: null,
                 dateISO: dateStr,
@@ -2424,7 +2456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 canCancel: false,
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
-                  : 'Sem instrutor'
+                  : 'Instrutor'
               };
             }
           })
@@ -2441,7 +2473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`✅ Retornando agenda semanal com ${weekData.length} dias`);
+      console.log(`✅ Retornando agenda semanal com ${weekData.length} dias e ${weekData.reduce((total, day) => total + day.classes.length, 0)} aulas`);
       res.json({ weekData });
     } catch (error) {
       console.error("Error fetching week agenda:", error);

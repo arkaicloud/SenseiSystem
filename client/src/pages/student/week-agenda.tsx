@@ -44,10 +44,25 @@ export default function WeekAgendaPage() {
     enabled: !!user?.id,
   });
 
-  const { data: weekData, isLoading } = useQuery<WeekDataResponse>({
+  const { data: weekData, isLoading, error } = useQuery<WeekDataResponse>({
     queryKey: ['/api/students', studentData?.id, 'classes/week'],
     enabled: !!studentData?.id,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
+
+  // Debug para acompanhar o carregamento
+  React.useEffect(() => {
+    if (studentData?.id) {
+      console.log('🔍 Buscando agenda semanal para studentId:', studentData.id);
+    }
+    if (error) {
+      console.error('❌ Erro ao carregar agenda semanal:', error);
+    }
+    if (weekData) {
+      console.log('✅ Dados da agenda carregados:', weekData);
+    }
+  }, [studentData?.id, error, weekData]);
 
   const primaryColor = schoolConfigData?.config?.primaryColor || '#B85C38';
 

@@ -17,12 +17,12 @@ interface BookingMutationData {
   dateISO: string;
 }
 
-export function useBookingMutations() {
+export function useBookingMutations(providedStudentId?: number) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Get student ID from user data
+  // Get student ID from user data if not provided
   const studentQuery = useQuery({
     queryKey: ['/api/student/profile'],
     queryFn: async () => {
@@ -30,10 +30,10 @@ export function useBookingMutations() {
       if (!response.ok) throw new Error('Failed to fetch student profile');
       return response.json();
     },
-    enabled: !!user && user.role === 'student'
+    enabled: !!user && user.role === 'student' && !providedStudentId
   });
 
-  const studentId = studentQuery.data?.id;
+  const studentId = providedStudentId || studentQuery.data?.id;
 
   console.log('🔍 Debug useBookingMutations:', {
     user: user?.id,

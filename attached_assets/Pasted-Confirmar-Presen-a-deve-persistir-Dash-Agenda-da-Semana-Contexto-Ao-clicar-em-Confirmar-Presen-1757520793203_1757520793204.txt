@@ -1,0 +1,294 @@
+Confirmar Presença deve persistir (Dash + Agenda da Semana)”
+
+Contexto
+Ao clicar em Confirmar Presença o UI muda para ✅ Confirmado + Cancelar, porém ao recarregar a página volta para “Confirmar Presença”. Precisamos garantir persistência, idempotência e render consistente nas duas telas.
+
+1) Banco/Modelo (se já existir, apenas garanta unicidade)
+
+Tabela ClassBooking com chave única por studentId + classId + date (date = dia da ocorrência da turma).
+
+Campos: status ∈ PENDING | CONFIRMED | CANCELLED | ATTENDED, createdAt, updatedAt.
+
+Prisma exemplo
+
+model ClassBooking {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  classId    Int
+  date       DateTime
+  status     String   @default("CONFIRMED")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([studentId, classId, date])
+  @@index([studentId, date])
+  @@index([classId, date])
+}
+
+
+Timezone: trate date como 00:00:00 local da escola (normalizar no backend).
+
+2) Backend — rotas idempotentes + respostas com status
+
+Helpers
+
+// server/utils/date.ts
+export function toDayUTC(dateStr: string, tz = "America/Sao_Paulo") {
+  // normaliza yyyy-mm-dd para 00:00:00 do fuso da escola e salva em UTC
+  const d = new Date(`${dateStr}T00:00:00${tz === "America/Sao_Paulo" ? "-03:00" : "Z"}`);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+
+Confirmar (idempotente)
+
+// POST /api/students/:sid/classes/:classId/:date/confirm
+app.post("/api/students/:sid/classes/:classId/:date/confirm", async (req, res) => {
+  try {
+    const sid = Number(req.params.sid);
+    const classId = Number(req.params.classId);
+    const date = toDayUTC(req.params.date);
+
+    const booking = await prisma.classBooking.upsert({
+      where: { studentId_classId_date: { studentId: sid, classId, date } },
+      update: { status: "CONFIRMED" },
+      create: { studentId: sid, classId, date, status: "CONFIRMED" },
+    });
+
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({ success: true, booking });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Erro ao confirmar presença." });
+  }
+});
+
+
+Cancelar
+
+// POST /api/students/:sid/classes/:classId/:date/cancel
+app.post("/api/students/:sid/classes/:classId/:date/cancel", async (req, res) => {
+  try {
+    const sid = Number(req.params.sid);
+    const classId = Number(req.params.classId);
+    const date = toDayUTC(req.params.date);
+
+    const booking = await prisma.classBooking.update({
+      where: { studentId_classId_date: { studentId: sid, classId, date } },
+      data: { status: "CANCELLED" },
+    }).catch(async () => {
+      // se não existe, criar como cancelado (idempotente)
+      return prisma.classBooking.create({ data: { studentId: sid, classId, date, status: "CANCELLED" } });
+    });
+
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({ success: true, booking });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Erro ao cancelar presença." });
+  }
+});
+
+
+Listagens já trazendo status
+(una as aulas com ClassBooking por studentId e date)
+
+// GET /api/students/:sid/classes/today
+app.get("/api/students/:sid/classes/today", async (req, res) => {
+  const sid = Number(req.params.sid);
+  const today = new Date(); // normalizar para 00:00 do fuso
+  const dayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+
+  const classes = await listClassesForDay(dayUTC); // sua função existente
+  const bookings = await prisma.classBooking.findMany({ where: { studentId: sid, date: dayUTC } });
+
+  const map = new Map(bookings.map(b => [`${b.classId}`, b.status]));
+  const result = classes.map(c => ({ ...c, bookingStatus: map.get(String(c.id)) || null }));
+
+  res.setHeader("Cache-Control", "no-store");
+  return res.json(result);
+});
+
+// GET /api/students/:sid/classes/week?start=yyyy-mm-dd
+app.get("/api/students/:sid/classes/week", async (req, res) => {
+  const sid = Number(req.params.sid);
+  const start = toDayUTC(req.query.start as string);
+  const days: Date[] = Array.from({ length: 7 }, (_, i) => new Date(start.getTime() + i*86400000));
+
+  const classesByDay = await listClassesForDays(days); // sua função
+  const bookings = await prisma.classBooking.findMany({
+    where: { studentId: sid, date: { gte: days[0], lte: days[6] } }
+  });
+
+  const key = (d: Date, classId: number) => `${classId}|${d.toISOString()}`;
+  const bmap = new Map(bookings.map(b => [key(b.date, b.classId), b.status]));
+
+  const result = classesByDay.map(day => ({
+    date: day.date,
+    items: day.items.map(c => ({
+      ...c,
+      bookingStatus: bmap.get(key(day.date, c.id)) || null
+    }))
+  }));
+
+  res.setHeader("Cache-Control", "no-store");
+  return res.json(result);
+});
+
+
+Importante: Todas as respostas com Cache-Control: no-store para evitar o 304 reusar payload antigo.
+
+3) Frontend — estado otimista + invalidação nas duas telas
+
+Serviços
+
+// src/services/api/classes.ts
+import axios from "axios";
+
+export const confirmClass = (sid: number, classId: number, date: string) =>
+  axios.post(`/api/students/${sid}/classes/${classId}/${date}/confirm`, {}).then(r => r.data);
+
+export const cancelClass = (sid: number, classId: number, date: string) =>
+  axios.post(`/api/students/${sid}/classes/${classId}/${date}/cancel`, {}).then(r => r.data);
+
+export const getToday = (sid: number) =>
+  axios.get(`/api/students/${sid}/classes/today`, { headers: { "Cache-Control": "no-store" } }).then(r => r.data);
+
+export const getWeek = (sid: number, start: string) =>
+  axios.get(`/api/students/${sid}/classes/week`, { params: { start }, headers: { "Cache-Control": "no-store" } }).then(r => r.data);
+
+
+Hook compartilhado (React Query recomendado)
+
+// src/hooks/useBookings.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { confirmClass, cancelClass } from "@/services/api/classes";
+
+export function useBookingMutations(studentId: number) {
+  const qc = useQueryClient();
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["today-classes", studentId] });
+    qc.invalidateQueries({ queryKey: ["week-classes", studentId] });
+  };
+
+  const confirmMut = useMutation({
+    mutationFn: ({ classId, date }: { classId: number; date: string }) => confirmClass(studentId, classId, date),
+    onMutate: async ({ classId, date }) => {
+      // otimista: hoje
+      qc.setQueryData<any[]>(["today-classes", studentId], (old) =>
+        old?.map(c => c.id === classId ? { ...c, bookingStatus: "CONFIRMED" } : c) || old
+      );
+      // otimista: semana
+      qc.setQueryData<any>(["week-classes", studentId], (old) => {
+        if (!old) return old;
+        return old.map((d: any) => ({
+          ...d,
+          items: d.items.map((c: any) => c.id === classId && d.date.startsWith(date) ? { ...c, bookingStatus: "CONFIRMED" } : c)
+        }));
+      });
+    },
+    onSettled: invalidate,
+  });
+
+  const cancelMut = useMutation({
+    mutationFn: ({ classId, date }: { classId: number; date: string }) => cancelClass(studentId, classId, date),
+    onMutate: async ({ classId, date }) => {
+      qc.setQueryData<any[]>(["today-classes", studentId], (old) =>
+        old?.map(c => c.id === classId ? { ...c, bookingStatus: "CANCELLED" } : c) || old
+      );
+      qc.setQueryData<any>(["week-classes", studentId], (old) => {
+        if (!old) return old;
+        return old.map((d: any) => ({
+          ...d,
+          items: d.items.map((c: any) => c.id === classId && d.date.startsWith(date) ? { ...c, bookingStatus: "CANCELLED" } : c)
+        }));
+      });
+    },
+    onSettled: invalidate,
+  });
+
+  return { confirmMut, cancelMut };
+}
+
+
+Uso no Card (Dash e Agenda devem usar o mesmo componente)
+
+// src/components/classes/ClassCard.tsx
+import { Button } from "@/components/ui/button";
+
+export function ClassCard({ cls, onConfirm, onCancel }: {
+  cls: { id: number; title: string; dateISO: string; bookingStatus?: string | null; time: string; instructor?: string };
+  onConfirm: (id: number, dateISO: string) => void;
+  onCancel: (id: number, dateISO: string) => void;
+}) {
+  const status = cls.bookingStatus;
+
+  return (
+    <div className="rounded border p-3">
+      <div className="text-sm font-medium">{cls.title}</div>
+      <div className="text-xs text-muted-foreground">{cls.time} • {cls.instructor || "Sem instrutor"}</div>
+
+      <div className="mt-3 flex gap-2">
+        {status === "CONFIRMED" ? (
+          <>
+            <Button variant="secondary" disabled className="pointer-events-none">✅ Confirmado</Button>
+            <Button variant="ghost" onClick={() => onCancel(cls.id, cls.dateISO)}>Cancelar</Button>
+          </>
+        ) : (
+          <Button onClick={() => onConfirm(cls.id, cls.dateISO)}>Confirmar Presença</Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+Tela usando o hook (ex.: Aulas de Hoje)
+
+// src/pages/student/Today.tsx
+import { useQuery } from "@tanstack/react-query";
+import { getToday } from "@/services/api/classes";
+import { useBookingMutations } from "@/hooks/useBookings";
+import { ClassCard } from "@/components/classes/ClassCard";
+
+export default function Today({ studentId }: { studentId: number }) {
+  const { data } = useQuery({ queryKey: ["today-classes", studentId], queryFn: () => getToday(studentId) });
+  const { confirmMut, cancelMut } = useBookingMutations(studentId);
+
+  return (
+    <div className="space-y-3">
+      {data?.map((c: any) => (
+        <ClassCard
+          key={`${c.id}`}
+          cls={{ id: c.id, title: c.name, time: c.timeLabel, dateISO: c.dateISO, instructor: c.instructor, bookingStatus: c.bookingStatus }}
+          onConfirm={(id, date) => confirmMut.mutate({ classId: id, date })}
+          onCancel={(id, date) => cancelMut.mutate({ classId: id, date })}
+        />
+      ))}
+    </div>
+  );
+}
+
+
+Agenda da Semana deve usar o mesmo ClassCard + o mesmo hook useBookingMutations(studentId) para manter comportamento idêntico.
+
+4) Cache e revalidação
+
+Em todas as rotas de listagem, enviar Cache-Control: no-store.
+
+No front, após onSettled das mutações, invalidar queries ["today-classes", sid] e ["week-classes", sid].
+
+Assim, ao dar refresh, o status vem do banco e o botão permanece Confirmado.
+
+5) Critérios de Aceitação
+
+Clicar em Confirmar muda o botão para ✅ Confirmado imediatamente (otimista).
+
+Ao recarregar a página, os mesmos itens continuam Confirmados.
+
+Cancelar volta o estado e persiste após reload.
+
+Dash (Hoje) e Agenda da Semana apresentam o mesmo estado para a mesma aula/data.
+
+Testado com trocas rápidas entre aulas/dias (sem estado “piscar” por cache antigo).

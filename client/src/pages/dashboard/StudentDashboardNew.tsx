@@ -252,12 +252,14 @@ export default function StudentDashboardNew() {
             isLoading={isClassesLoading}
           />
 
-          {/* Bloco 2: Agenda da Semana */}
-          <WeekAgenda 
-            studentId={studentData?.id || 0}
-            primaryColor={primaryColor}
-            showHeader={true}
-          />
+          {/* Bloco 2: Agenda da Semana - Oculto no mobile (disponível via bottom nav) */}
+          <div className="hidden md:block">
+            <WeekAgenda 
+              studentId={studentData?.id || 0}
+              primaryColor={primaryColor}
+              showHeader={true}
+            />
+          </div>
 
           {/* Grid para Frequência e Avisos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

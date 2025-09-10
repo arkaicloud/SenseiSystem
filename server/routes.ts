@@ -2,8 +2,8 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber } from "@shared/schema";
-import { eq, and, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
+import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber, notices, studentNotifications } from "@shared/schema";
+import { eq, and, or, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
 import { z } from "zod";
 import { 
   insertUserSchema, 
@@ -6008,6 +6008,254 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         message: "Erro interno do servidor" 
       });
+    }
+  });
+
+  // ========== NOTICES/NOTIFICATIONS ENDPOINTS ==========
+
+  // Get notices for student notifications (with read status)
+  app.get("/api/students/:id/notifications", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      const { limit = 20, unreadOnly = false } = req.query;
+      const requestUser = (req as any).user;
+
+      // Verificar autorização (apenas o próprio aluno ou admin)
+      if (requestUser.role !== 'admin') {
+        const student = await storage.getStudentByUserId(requestUser.id);
+        if (!student || student.id !== studentId) {
+          return res.status(403).json({ message: "Acesso negado" });
+        }
+      }
+
+      const query = db
+        .select({
+          id: notices.id,
+          title: notices.title,
+          content: notices.content,
+          level: notices.level,
+          publishAt: notices.publishAt,
+          eventAt: notices.eventAt,
+          readAt: studentNotifications.readAt,
+          notificationId: studentNotifications.id
+        })
+        .from(notices)
+        .leftJoin(studentNotifications, and(
+          eq(studentNotifications.noticeId, notices.id),
+          eq(studentNotifications.studentId, studentId)
+        ))
+        .where(and(
+          eq(notices.isActive, true),
+          or(
+            eq(notices.audience, 'ALL'),
+            eq(notices.audience, 'STUDENTS')
+          ),
+          lte(notices.publishAt, new Date())
+        ))
+        .orderBy(desc(notices.publishAt))
+        .limit(parseInt(limit as string));
+
+      if (unreadOnly === 'true' || unreadOnly === '1') {
+        query.where(isNull(studentNotifications.readAt));
+      }
+
+      const notifications = await query;
+
+      // Contar não lidos
+      const unreadCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(notices)
+        .leftJoin(studentNotifications, and(
+          eq(studentNotifications.noticeId, notices.id),
+          eq(studentNotifications.studentId, studentId)
+        ))
+        .where(and(
+          eq(notices.isActive, true),
+          or(
+            eq(notices.audience, 'ALL'),
+            eq(notices.audience, 'STUDENTS')
+          ),
+          lte(notices.publishAt, new Date()),
+          isNull(studentNotifications.readAt)
+        ));
+
+      res.json({
+        notifications,
+        unreadCount: unreadCount[0]?.count || 0
+      });
+    } catch (error) {
+      console.error("Error fetching student notifications:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Mark notification as read
+  app.patch("/api/students/:id/notifications/:notifId/read", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      const noticeId = parseInt(req.params.notifId);
+      const requestUser = (req as any).user;
+
+      // Verificar autorização
+      if (requestUser.role !== 'admin') {
+        const student = await storage.getStudentByUserId(requestUser.id);
+        if (!student || student.id !== studentId) {
+          return res.status(403).json({ message: "Acesso negado" });
+        }
+      }
+
+      // Verificar se já existe um registro de leitura
+      const existingNotification = await db
+        .select()
+        .from(studentNotifications)
+        .where(and(
+          eq(studentNotifications.studentId, studentId),
+          eq(studentNotifications.noticeId, noticeId)
+        ))
+        .limit(1);
+
+      if (existingNotification.length > 0) {
+        // Atualizar readAt se ainda não foi lido
+        if (!existingNotification[0].readAt) {
+          await db
+            .update(studentNotifications)
+            .set({ readAt: new Date() })
+            .where(eq(studentNotifications.id, existingNotification[0].id));
+        }
+      } else {
+        // Criar novo registro com readAt
+        await db
+          .insert(studentNotifications)
+          .values({
+            studentId,
+            noticeId,
+            readAt: new Date()
+          });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get recent notices for dashboard
+  app.get("/api/students/:id/notices/recent", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      const { limit = 4 } = req.query;
+      const requestUser = (req as any).user;
+
+      // Verificar autorização
+      if (requestUser.role !== 'admin') {
+        const student = await storage.getStudentByUserId(requestUser.id);
+        if (!student || student.id !== studentId) {
+          return res.status(403).json({ message: "Acesso negado" });
+        }
+      }
+
+      const recentNotices = await db
+        .select({
+          id: notices.id,
+          title: notices.title,
+          content: notices.content,
+          level: notices.level,
+          publishAt: notices.publishAt,
+          eventAt: notices.eventAt,
+          readAt: studentNotifications.readAt
+        })
+        .from(notices)
+        .leftJoin(studentNotifications, and(
+          eq(studentNotifications.noticeId, notices.id),
+          eq(studentNotifications.studentId, studentId)
+        ))
+        .where(and(
+          eq(notices.isActive, true),
+          or(
+            eq(notices.audience, 'ALL'),
+            eq(notices.audience, 'STUDENTS')
+          ),
+          lte(notices.publishAt, new Date())
+        ))
+        .orderBy(desc(notices.publishAt))
+        .limit(parseInt(limit as string));
+
+      res.json(recentNotices);
+    } catch (error) {
+      console.error("Error fetching recent notices:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin - Create notice
+  app.post("/api/notices", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      
+      if (requestUser.role !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const { title, content, level, audience, eventAt } = req.body;
+
+      if (!title || !content) {
+        return res.status(400).json({ message: "Título e conteúdo são obrigatórios" });
+      }
+
+      const [notice] = await db
+        .insert(notices)
+        .values({
+          title,
+          content,
+          level: level || 'MEDIUM',
+          audience: audience || 'ALL',
+          eventAt: eventAt ? new Date(eventAt) : null,
+          createdBy: requestUser.id
+        })
+        .returning();
+
+      // Criar notificações para todos os alunos elegíveis
+      if (audience === 'ALL' || audience === 'STUDENTS') {
+        const allStudents = await db.select({ id: students.id }).from(students);
+        
+        if (allStudents.length > 0) {
+          await db
+            .insert(studentNotifications)
+            .values(
+              allStudents.map(student => ({
+                studentId: student.id,
+                noticeId: notice.id
+              }))
+            );
+        }
+      }
+
+      res.json(notice);
+    } catch (error) {
+      console.error("Error creating notice:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin - Get all notices
+  app.get("/api/notices", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      
+      if (requestUser.role !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const allNotices = await db
+        .select()
+        .from(notices)
+        .orderBy(desc(notices.createdAt));
+
+      res.json(allNotices);
+    } catch (error) {
+      console.error("Error fetching notices:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

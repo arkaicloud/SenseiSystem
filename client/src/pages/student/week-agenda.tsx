@@ -1,6 +1,6 @@
+import React from 'react';
 import { WeekAgenda } from '@/components/student/WeekAgenda';
 import { useAuth } from '@/hooks/use-auth';
-import MainLayout from '@/components/layouts/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { SchoolConfig } from '@shared/schema';
@@ -28,17 +28,16 @@ export default function WeekAgendaPage() {
   const primaryColor = schoolConfigData?.config?.primaryColor || '#B85C38';
 
   return (
-    <MainLayout>
-      <div className="flex flex-col w-full min-h-screen bg-gray-50">
-        {/* Main Content */}
-        <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <WeekAgenda 
-            studentId={studentData?.id || 0}
-            primaryColor={primaryColor}
-            showHeader={true}
-          />
-        </main>
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <h1 className="text-2xl font-bold">Agenda da Semana</h1>
       </div>
-    </MainLayout>
+      
+      <WeekAgenda 
+        studentId={studentData?.id || 0}
+        primaryColor={primaryColor}
+        showHeader={false}
+      />
+    </div>
   );
 }

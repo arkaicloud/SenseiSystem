@@ -27,6 +27,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
 
   const handleConfirm = (classSession: ClassSession) => {
+    // Usar dateISO da API ou fallback para hoje (server timezone)
     const dateISO = classSession.dateISO || new Date().toISOString().split('T')[0];
     confirmMutation.mutate({
       classId: classSession.id,
@@ -35,6 +36,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   };
 
   const handleCancel = (classSession: ClassSession) => {
+    // Usar dateISO da API ou fallback para hoje (server timezone)
     const dateISO = classSession.dateISO || new Date().toISOString().split('T')[0];
     cancelMutation.mutate({
       classId: classSession.id,
@@ -43,8 +45,8 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   };
 
   const isConfirmed = (classSession: ClassSession) => {
-    // Priorizar bookingStatus se disponível, senão usar attendanceConfirmed
-    if (classSession.bookingStatus !== undefined) {
+    // Priorizar bookingStatus se disponível e não null, senão usar attendanceConfirmed
+    if (classSession.bookingStatus != null) {
       return classSession.bookingStatus === 'CONFIRMED';
     }
     return classSession.attendanceConfirmed;

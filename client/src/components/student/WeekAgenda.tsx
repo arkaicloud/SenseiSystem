@@ -54,8 +54,8 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
   };
 
   const isConfirmed = (classSession: ClassSession) => {
-    // Priorizar bookingStatus se disponível, senão usar attendanceConfirmed
-    if (classSession.bookingStatus !== undefined) {
+    // Priorizar bookingStatus se disponível e não null, senão usar attendanceConfirmed
+    if (classSession.bookingStatus != null) {
       return classSession.bookingStatus === 'CONFIRMED';
     }
     return classSession.attendanceConfirmed;

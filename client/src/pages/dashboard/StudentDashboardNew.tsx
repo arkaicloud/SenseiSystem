@@ -252,8 +252,8 @@ export default function StudentDashboardNew() {
             isLoading={isClassesLoading}
           />
 
-          {/* Bloco 2: Agenda da Semana - Oculto no mobile (disponível via bottom nav) */}
-          <div className="hidden md:block">
+          {/* Bloco 2: Agenda da Semana - Oculto no mobile e tablet (disponível via bottom nav) */}
+          <div className="hidden lg:block">
             <WeekAgenda 
               studentId={studentData?.id || 0}
               primaryColor={primaryColor}

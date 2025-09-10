@@ -2440,7 +2440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const update of updates) {
         const { studentId, status } = update;
         
-        if (!studentId || !status) continue;
+        if (!studentId || status === undefined) continue;
         
         // Check if attendance record exists
         const existing = await db

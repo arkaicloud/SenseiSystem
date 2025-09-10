@@ -2378,7 +2378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const studentId = parseInt(req.params.studentId);
       const { date, status, note } = req.body;
       
-      if (!date || !status) {
+      if (!date || status === undefined) {
         return res.status(400).json({ message: "Date and status are required" });
       }
       

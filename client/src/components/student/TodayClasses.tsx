@@ -139,7 +139,7 @@ export const TodayClasses = ({ classes, onCheckIn, onCancel, primaryColor, isLoa
       <CardContent className="space-y-4">
         {classes.map((classSession) => (
           <div key={classSession.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-semibold">{classSession.name}</h3>
@@ -148,7 +148,7 @@ export const TodayClasses = ({ classes, onCheckIn, onCancel, primaryColor, isLoa
                   </Badge>
                 </div>
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
                     <span>{classSession.startTime} - {classSession.endTime || '20:30'}</span>
@@ -160,10 +160,10 @@ export const TodayClasses = ({ classes, onCheckIn, onCancel, primaryColor, isLoa
                 </div>
               </div>
 
-              <div className="flex-shrink-0">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 sm:flex-shrink-0">
                 {isCheckedIn(classSession.id) ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 text-green-600">
+                  <>
+                    <div className="flex items-center justify-center gap-2 text-green-600 py-2 px-3 bg-green-50 rounded-md sm:bg-transparent sm:p-0">
                       <CheckCircle className="w-5 h-5" />
                       <span className="text-sm font-medium">Confirmado</span>
                     </div>
@@ -172,22 +172,24 @@ export const TodayClasses = ({ classes, onCheckIn, onCancel, primaryColor, isLoa
                       size="sm"
                       onClick={() => cancelAttendanceMutation.mutate(classSession.id)}
                       disabled={cancelAttendanceMutation.isPending}
-                      className="text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+                      className="w-full sm:w-auto text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
                     >
                       {cancelAttendanceMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       ) : (
-                        <XCircle className="w-4 h-4" />
+                        <XCircle className="w-4 h-4 mr-2" />
                       )}
+                      Cancelar
                     </Button>
-                  </div>
+                  </>
                 ) : (
                   <Button
                     size="sm"
                     onClick={() => handleCheckIn(classSession.id)}
-                    className="text-white font-medium"
+                    className="w-full sm:w-auto text-white font-medium"
                     style={{ backgroundColor: primaryColor }}
                   >
+                    <CheckCircle className="w-4 h-4 mr-2" />
                     Confirmar Presença
                   </Button>
                 )}

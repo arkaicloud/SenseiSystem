@@ -2260,29 +2260,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
       
-      // Criar dados para a semana completa (segunda a domingo: próximos 7 dias)
+      // Criar dados para próximos 7 dias consecutivos começando hoje
       const today = new Date();
       const weekData = [];
       
-      // Array dos dias da semana em ordem (0=domingo, 1=segunda, etc)
-      const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // segunda, terça, quarta, quinta, sexta, sábado, domingo
-      
-      for (const targetDayOfWeek of daysOfWeek) {
-        // Encontrar a próxima ocorrência deste dia da semana
-        let nextOccurrence = new Date(today);
-        const todayDayOfWeek = today.getDay();
+      for (let i = 0; i < 7; i++) {
+        // Criar data para o dia atual + i
+        const currentDate = new Date(today);
+        currentDate.setDate(today.getDate() + i);
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const dayOfWeek = currentDate.getDay();
         
-        // Calcular quantos dias adicionar para chegar ao dia desejado
-        let daysToAdd = targetDayOfWeek - todayDayOfWeek;
-        if (daysToAdd < 0) {
-          daysToAdd += 7; // Se já passou esta semana, pegar da próxima
-        }
-        
-        nextOccurrence.setDate(today.getDate() + daysToAdd);
-        const dateStr = nextOccurrence.toISOString().split('T')[0];
-        
-        // Filtrar aulas do dia da semana
-        const dayClasses = allClasses.filter(cls => cls.dayOfWeek === targetDayOfWeek);
+        // Filtrar aulas do dia da semana atual
+        const dayClasses = allClasses.filter(cls => cls.dayOfWeek === dayOfWeek);
         
         // Para cada aula, verificar se o aluno confirmou presença
         const classesWithAttendance = await Promise.all(
@@ -2322,9 +2312,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
         );
         
+        // Mapear nomes dos dias da semana
+        const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        
         weekData.push({
           date: dateStr,
-          dayOfWeek: targetDayOfWeek,
+          dayOfWeek,
+          dayName: dayNames[dayOfWeek],
           classes: classesWithAttendance
         });
       }

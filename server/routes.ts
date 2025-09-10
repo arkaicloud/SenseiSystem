@@ -2260,15 +2260,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
       
-      // Criar dados para a semana (próximos 7 dias)
+      // Obter dias da semana únicos que têm aulas cadastradas
+      const daysWithClasses = [...new Set(allClasses.map(cls => cls.dayOfWeek))].sort();
+      
+      // Criar dados para a semana (apenas dias que têm aulas)
       const today = new Date();
       const weekData = [];
       
-      for (let i = 0; i < 7; i++) {
+      // Gerar próximos 14 dias para ter certeza de pegar todos os dias da semana com aulas
+      for (let i = 0; i < 14; i++) {
         const currentDate = new Date(today);
         currentDate.setDate(today.getDate() + i);
         const currentDayOfWeek = currentDate.getDay(); // 0=domingo, 1=segunda, etc.
         const dateStr = currentDate.toISOString().split('T')[0];
+        
+        // Só processar se este dia da semana tem aulas cadastradas
+        if (!daysWithClasses.includes(currentDayOfWeek)) {
+          continue;
+        }
         
         // Filtrar aulas do dia da semana
         const dayClasses = allClasses.filter(cls => cls.dayOfWeek === currentDayOfWeek);
@@ -2316,6 +2325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dayOfWeek: currentDayOfWeek,
           classes: classesWithAttendance
         });
+        
+        // Parar quando tiver dados para todos os dias da semana com aulas
+        if (weekData.length >= daysWithClasses.length) {
+          break;
+        }
       }
       
       res.json({ weekData });

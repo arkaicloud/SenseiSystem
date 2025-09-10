@@ -35,7 +35,7 @@ export default function WeekAgendaPage() {
           <WeekAgenda 
             studentId={studentData?.id || 0}
             primaryColor={primaryColor}
-            showHeader={true}
+            showHeader={false}
           />
         </main>
       </div>

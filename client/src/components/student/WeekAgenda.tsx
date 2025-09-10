@@ -2,14 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Calendar, 
-  ChevronDown, 
-  ChevronRight, 
   Clock, 
   User, 
   CheckCircle, 
@@ -40,10 +37,10 @@ interface DayClasses {
 interface WeekAgendaProps {
   studentId: number;
   primaryColor?: string;
+  showHeader?: boolean;
 }
 
-export const WeekAgenda = ({ studentId, primaryColor = "#B85C38" }: WeekAgendaProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = true }: WeekAgendaProps) => {
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -88,7 +85,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38" }: WeekAgendaPr
       
       return weekData;
     },
-    enabled: isOpen, // Só carrega quando o accordion é aberto
+    enabled: !!studentId, // Carrega automaticamente
   });
 
   // Mutation para confirmar presença
@@ -202,135 +199,131 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38" }: WeekAgendaPr
   };
 
   return (
-    <Card data-testid="card-week-agenda">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Agenda da Semana
-              </div>
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </CardTitle>
-          </CardHeader>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                  <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {weekClasses?.map((day) => (
-                  <div key={day.date.toISOString()} className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-semibold text-lg">
-                        {day.dayName}
-                      </h3>
-                      <Badge variant={isToday(day.date) ? "default" : "outline"}>
-                        {format(day.date, 'dd/MM')}
+    <Card data-testid="card-week-agenda" className="w-full">
+      {showHeader && (
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Agenda da Semana
+          </CardTitle>
+        </CardHeader>
+      )}
+      
+      <CardContent className={showHeader ? "" : "pt-6"}>
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5, 6, 7].map(i => (
+              <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {weekClasses?.map((day) => (
+              <div key={day.date.toISOString()} className="border rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                  <h3 className="font-semibold text-lg">
+                    {day.dayName}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={isToday(day.date) ? "default" : "outline"}>
+                      {format(day.date, 'dd/MM')}
+                    </Badge>
+                    {isToday(day.date) && (
+                      <Badge style={{ backgroundColor: primaryColor }}>
+                        Hoje
                       </Badge>
-                      {isToday(day.date) && (
-                        <Badge style={{ backgroundColor: primaryColor }}>
-                          Hoje
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {day.classes.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">
-                        Nenhuma aula programada
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {day.classes.map((classItem) => {
-                          const actionKey = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
-                          const isActionLoading = loadingActions.has(actionKey);
-                          
-                          return (
-                            <div
-                              key={`${classItem.id}-${day.date.toISOString()}`}
-                              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded"
-                              data-testid={`week-class-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
-                            >
-                              <div className="flex-1">
-                                <h4 className="font-medium">{classItem.name}</h4>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {classItem.startTime}
-                                  </div>
-                                  {classItem.instructorName && (
-                                    <div className="flex items-center gap-1">
-                                      <User className="h-3 w-3" />
-                                      {classItem.instructorName}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center gap-2">
-                                {classItem.attendanceConfirmed ? (
-                                  <>
-                                    <Badge variant="secondary" className="flex items-center gap-1">
-                                      <CheckCircle className="h-3 w-3" />
-                                      Confirmado
-                                    </Badge>
-                                    {classItem.canCancel && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleCancelAttendance(classItem.id, day.date)}
-                                        disabled={isActionLoading}
-                                        data-testid={`button-cancel-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
-                                      >
-                                        {isActionLoading ? (
-                                          <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                          <X className="h-3 w-3" />
-                                        )}
-                                      </Button>
-                                    )}
-                                  </>
-                                ) : (
-                                  classItem.canConfirm && (
-                                    <Button
-                                      size="sm"
-                                      style={{ backgroundColor: primaryColor }}
-                                      onClick={() => handleConfirmAttendance(classItem.id, day.date)}
-                                      disabled={isActionLoading}
-                                      data-testid={`button-confirm-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
-                                    >
-                                      {isActionLoading ? (
-                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                      ) : (
-                                        "Confirmar"
-                                      )}
-                                    </Button>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
                     )}
                   </div>
-                ))}
+                </div>
+                
+                {day.classes.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    Nenhuma aula programada
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {day.classes.map((classItem) => {
+                      const actionKey = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
+                      const isActionLoading = loadingActions.has(actionKey);
+                      
+                      return (
+                        <div
+                          key={`${classItem.id}-${day.date.toISOString()}`}
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded"
+                          data-testid={`week-class-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">{classItem.name}</h4>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {classItem.startTime}
+                              </div>
+                              {classItem.instructorName && (
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  <span className="truncate">{classItem.instructorName}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {classItem.attendanceConfirmed ? (
+                              <>
+                                <Badge variant="secondary" className="flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  <span className="hidden sm:inline">Confirmado</span>
+                                  <span className="sm:hidden">OK</span>
+                                </Badge>
+                                {classItem.canCancel && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCancelAttendance(classItem.id, day.date)}
+                                    disabled={isActionLoading}
+                                    data-testid={`button-cancel-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
+                                  >
+                                    {isActionLoading ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <X className="h-3 w-3" />
+                                    )}
+                                    <span className="hidden sm:inline ml-1">Cancelar</span>
+                                  </Button>
+                                )}
+                              </>
+                            ) : (
+                              classItem.canConfirm && (
+                                <Button
+                                  size="sm"
+                                  style={{ backgroundColor: primaryColor }}
+                                  onClick={() => handleConfirmAttendance(classItem.id, day.date)}
+                                  disabled={isActionLoading}
+                                  data-testid={`button-confirm-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
+                                >
+                                  {isActionLoading ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="h-3 w-3 sm:mr-1" />
+                                      <span className="hidden sm:inline">Confirmar</span>
+                                    </>
+                                  )}
+                                </Button>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
+            ))}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };

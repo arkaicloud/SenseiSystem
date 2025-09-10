@@ -2251,11 +2251,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint para agenda semanal do aluno com dados de confirmação
+  // Endpoint para agenda semanal do aluno com dados de confirmação e filtros por categoria
   app.get("/api/students/:studentId/classes/week", isAuthenticated, async (req, res) => {
     try {
       const { studentId } = req.params;
       const requestUser = (req as any).user;
+      
+      console.log(`📅 Buscando agenda semanal para studentId: ${studentId}`);
       
       // Desabilitar cache para dados dinâmicos de presença
       res.set({
@@ -2271,8 +2273,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Acesso negado" });
       }
 
-      // Buscar todas as aulas ativas
+      // Buscar dados completos do usuário para filtros de categoria
+      const userData = await storage.getUser(requestUser.id);
+      if (!userData) {
+        return res.status(404).json({ message: "Dados do usuário não encontrados" });
+      }
+
+      // Determinar categoria do aluno
+      const isChild = userData.birthDate ? 
+        ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
+      const userSex = userData.sex?.toLowerCase() || 'misto';
+      
+      console.log(`👤 Usuário: ${userData.firstName}, sexo: ${userSex}, criança: ${isChild}`);
+
+      // Buscar todas as aulas ativas com filtros por categoria
       const allClasses = await storage.getClassesWithInstructors();
+      
+      // Filtrar aulas baseado na categoria do aluno
+      const allowedClasses = allClasses.filter(classItem => {
+        if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
+        
+        const classType = classItem.type.toLowerCase();
+        
+        // Aulas infantis: apenas para crianças
+        if (classType === 'infantil') {
+          return isChild;
+        }
+        
+        // Aulas mistas: para todos (exceto infantil que já foi tratado acima)
+        if (classType === 'misto') {
+          return !isChild; // Adultos podem fazer mistas
+        }
+        
+        // Aulas masculinas: apenas para homens adultos
+        if (classType === 'masculino') {
+          return !isChild && userSex === 'masculino';
+        }
+        
+        // Aulas femininas: apenas para mulheres adultas
+        if (classType === 'feminino') {
+          return !isChild && userSex === 'feminino';
+        }
+        
+        return true; // Default: permite
+      });
+      
+      console.log(`🎯 Aulas filtradas por categoria: ${allowedClasses.length} de ${allClasses.length} total`);
       
       // Criar dados para próximos 7 dias consecutivos começando hoje
       const today = new Date();
@@ -2286,7 +2332,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const dayOfWeek = currentDate.getDay();
         
         // Filtrar aulas do dia da semana atual
-        const dayClasses = allClasses.filter(cls => cls.dayOfWeek === dayOfWeek);
+        const dayClasses = allowedClasses.filter(cls => cls.dayOfWeek === dayOfWeek);
+        
+        console.log(`📅 ${dateStr} (${dayOfWeek}): ${dayClasses.length} aulas encontradas`);
         
         // Para cada aula, verificar se o aluno confirmou presença
         const classesWithAttendance = await Promise.all(
@@ -2317,7 +2365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 bookingStatus: bookingStatus,
                 dateISO: dateStr,
                 canConfirm: true,
-                canCancel: !!userAttendance,
+                canCancel: bookingStatus === 'CONFIRMED',
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                   : 'Sem instrutor'
@@ -2350,6 +2398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log(`✅ Retornando agenda semanal com ${weekData.length} dias`);
       res.json({ weekData });
     } catch (error) {
       console.error("Error fetching week agenda:", error);

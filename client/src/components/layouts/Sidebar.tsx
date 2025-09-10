@@ -141,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       id: "agenda-semana",
       label: "Agenda da Semana", 
       icon: Calendar,
-      path: "/student/agenda",
+      path: "/agenda",
       roles: ["student"],
     },
   ];

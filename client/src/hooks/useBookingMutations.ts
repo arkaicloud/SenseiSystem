@@ -1,6 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | null;
 
@@ -16,20 +17,55 @@ interface BookingMutationData {
   dateISO: string;
 }
 
-export function useBookingMutations(studentId: number) {
+export function useBookingMutations() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Get student ID from user data
+  const studentQuery = useQuery({
+    queryKey: ['/api/student/profile'],
+    queryFn: async () => {
+      const response = await fetch('/api/student/profile');
+      if (!response.ok) throw new Error('Failed to fetch student profile');
+      return response.json();
+    },
+    enabled: !!user && user.role === 'student'
+  });
+
+  const studentId = studentQuery.data?.id;
+
+  console.log('🔍 Debug useBookingMutations:', {
+    user: user?.id,
+    role: user?.role,
+    studentData: studentQuery.data,
+    studentId: studentId
+  });
 
   const confirmMutation = useMutation({
     mutationFn: async ({ classId, dateISO }: BookingMutationData) => {
+      console.log('🎯 Confirming attendance for:', { studentId, classId, dateISO, userRole: user?.role });
+
+      if (!studentId) {
+        throw new Error('ID do estudante não encontrado. Tente recarregar a página.');
+      }
+
       const response = await apiRequest('POST', `/api/students/${studentId}/classes/${classId}/${dateISO}/confirm`);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error confirming attendance:', { url: `/api/students/${studentId}/classes/${classId}/${dateISO}/confirm`, errorData });
         throw new Error(errorData.message || 'Erro ao confirmar presença');
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('📤 Attendance confirmation response:', {
+        url: `/api/students/${studentId}/classes/${classId}/${dateISO}/confirm`,
+        status: response.status,
+        data
+      });
+
+      return data;
     },
     onMutate: async ({ classId, dateISO }: BookingMutationData) => {
       // Cancel any outgoing refetches
@@ -119,14 +155,28 @@ export function useBookingMutations(studentId: number) {
 
   const cancelMutation = useMutation({
     mutationFn: async ({ classId, dateISO }: BookingMutationData) => {
+      console.log('🚫 Canceling attendance for:', { studentId, classId, dateISO, userRole: user?.role });
+
+      if (!studentId) {
+        throw new Error('ID do estudante não encontrado. Tente recarregar a página.');
+      }
+
       const response = await apiRequest('POST', `/api/students/${studentId}/classes/${classId}/${dateISO}/cancel`);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error canceling attendance:', { url: `/api/students/${studentId}/classes/${classId}/${dateISO}/cancel`, errorData });
         throw new Error(errorData.message || 'Erro ao cancelar presença');
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('📤 Attendance cancellation response:', {
+        url: `/api/students/${studentId}/classes/${classId}/${dateISO}/cancel`,
+        status: response.status,
+        data
+      });
+
+      return data;
     },
     onMutate: async ({ classId, dateISO }: BookingMutationData) => {
       // Cancel any outgoing refetches

@@ -1,0 +1,100 @@
+Correção de Layout e Responsividade “Agenda da Semana”
+
+Contexto
+Tela do aluno no SenseiSystem (Agenda da Semana).
+Problemas:
+
+Header duplicado (“Bem-vindo, Aluno!” aparece duas vezes).
+
+Espaço em branco (coluna lateral sem conteúdo visível).
+
+Cards de aulas não se ajustam bem em telas pequenas.
+
+Responsividade inconsistente (largura fixa, não ocupa toda a tela no mobile).
+
+Objetivo
+
+Corrigir duplicação do header.
+
+Ajustar grid para remover colunas vazias → conteúdo deve ocupar 100% no mobile e centralizar no desktop.
+
+Cards de aulas devem ser fluidos (1 coluna no mobile, 2 colunas em telas médias, largura máxima em desktop).
+
+Garantir que CTA (Confirmar / Confirmado / Cancelar) fique sempre visível e alinhado.
+
+Unificar estilos: mesmo padding, mesma tipografia dos demais blocos do dashboard.
+
+Tarefas
+
+Header
+
+Garantir apenas um header fixo global.
+
+Remover saudação duplicada dentro do container da página.
+
+No mobile, header ocupa largura total; no desktop, alinhado ao sidebar.
+
+Layout da página
+
+Usar grid responsivo:
+
+<div className="flex flex-col lg:flex-row gap-6 w-full">
+  <aside className="hidden lg:block w-64"> {/* sidebar existente */}</aside>
+  <main className="flex-1 max-w-5xl mx-auto px-4">{children}</main>
+</div>
+
+
+Mobile: esconder colunas extras → conteúdo ocupa 100%.
+
+Desktop: centralizar conteúdo, largura máxima ~max-w-5xl.
+
+Agenda da Semana (cards)
+
+Container:
+
+<div className="space-y-6">
+  {dias.map(dia => (
+    <Card key={dia.date} className="w-full">
+      {/* título do dia + aulas */}
+    </Card>
+  ))}
+</div>
+
+
+Mobile: cada aula = linha única.
+
+≥md: grid 2 colunas dentro do card (aula esquerda, CTA direita).
+
+≥lg: grid 3 colunas se houver informações adicionais (instrutor, tatame).
+
+Botões
+
+Sempre alinhados à direita em desktop.
+
+No mobile, ocupar largura total (w-full h-10).
+
+Status “Confirmado” → botão secundário cinza com ícone de check.
+
+“Cancelar” → botão ghost vermelho, alinhado ao lado do confirmado.
+
+Responsividade
+
+Testar breakpoints:
+
+sm <640px: agenda em lista única, 100% largura.
+
+md ≥640px: cards em grid responsivo.
+
+lg ≥1024px: agenda centralizada com sidebar.
+
+Critérios de Aceitação
+
+Header aparece apenas uma vez, sem espaços extras.
+
+Conteúdo principal ocupa largura total no mobile, sem colunas vazias.
+
+Cards de aulas responsivos: 1 coluna no mobile, 2 colunas no md, centralizado no desktop.
+
+Botões de confirmar/cancelar sempre acessíveis, sem quebrar layout.
+
+Testado em: iPhone SE (375px), iPad (768px), desktop 1366px e ultrawide.

@@ -252,7 +252,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
         ) : (
           <div className="space-y-4">
             {weekClasses?.map((day: DayClasses) => (
-              <Card key={day.date} className="w-full shadow-sm border border-gray-200 dark:border-gray-700">
+              <Card key={day.date.toISOString()} className="w-full shadow-sm border border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">

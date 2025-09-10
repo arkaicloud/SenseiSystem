@@ -5,7 +5,6 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { StudentGreeting } from '@/components/student/StudentGreeting';
 import { TodayClasses } from '@/components/student/TodayClasses';
-import { WeekAgenda } from '@/components/student/WeekAgenda';
 import { FrequencyMetrics } from '@/components/student/FrequencyMetrics';
 import { NoticesBlock } from '@/components/student/NoticesBlock';
 import { useBeltLevels } from '@/hooks/useBeltLevels';
@@ -242,14 +241,6 @@ export default function StudentDashboardNew() {
             isLoading={isClassesLoading}
           />
 
-          {/* Bloco 2: Agenda da Semana - Oculto no mobile e tablet (disponível via bottom nav) */}
-          <div className="hidden lg:block">
-            <WeekAgenda 
-              studentId={studentData?.id || 0}
-              primaryColor={primaryColor}
-              showHeader={true}
-            />
-          </div>
 
           {/* Grid para Frequência e Avisos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

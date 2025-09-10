@@ -5551,7 +5551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Try to get API Key from school config first
       const config = await storage.getSchoolConfig();
       const asaasService = config?.asaasApiKey 
-        ? new AsaasPaymentsService(config.asaasApiKey, false)
+        ? new AsaasPaymentsService(config.asaasApiKey)
         : new AsaasPaymentsService();
       const limit = parseInt(req.query.limit as string) || 100;
 

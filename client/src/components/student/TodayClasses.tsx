@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, CheckCircle, Calendar } from "lucide-react";
+import { Clock, User, CheckCircle, Calendar, XCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClassSession {
   id: number;
@@ -17,14 +20,63 @@ interface ClassSession {
 interface TodayClassesProps {
   classes: ClassSession[];
   onCheckIn: (classId: number) => void;
+  onCancel?: (classId: number) => void;
   primaryColor: string;
   isLoading?: boolean;
 }
 
-export const TodayClasses = ({ classes, onCheckIn, primaryColor, isLoading }: TodayClassesProps) => {
+export const TodayClasses = ({ classes, onCheckIn, onCancel, primaryColor, isLoading }: TodayClassesProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [checkedInClasses, setCheckedInClasses] = useState<Set<number>>(() => {
     const confirmedIds = classes.filter(c => c.attendanceConfirmed).map(c => c.id);
     return new Set(confirmedIds);
+  });
+
+  // Mutação para cancelar presença
+  const cancelAttendanceMutation = useMutation({
+    mutationFn: async (classId: number) => {
+      const response = await apiRequest('DELETE', '/api/attendance/cancel', {
+        classId: classId,
+        date: new Date().toISOString().split('T')[0]
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao cancelar presença");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data, classId) => {
+      // Remover o ID da aula da lista de aulas confirmadas
+      setCheckedInClasses(prev => {
+        const newSet = new Set(Array.from(prev));
+        newSet.delete(classId);
+        return newSet;
+      });
+      
+      // Atualizar dados
+      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      
+      toast({
+        title: "Presença cancelada!",
+        description: "Sua confirmação de presença foi cancelada.",
+        variant: "default",
+      });
+      
+      if (onCancel) {
+        onCancel(classId);
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao cancelar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   });
 
   const handleCheckIn = (classId: number) => {
@@ -110,9 +162,24 @@ export const TodayClasses = ({ classes, onCheckIn, primaryColor, isLoading }: To
 
               <div className="flex-shrink-0">
                 {isCheckedIn(classSession.id) ? (
-                  <div className="flex items-center gap-2 text-green-600">
-                    <CheckCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">Confirmado</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="text-sm font-medium">Confirmado</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => cancelAttendanceMutation.mutate(classSession.id)}
+                      disabled={cancelAttendanceMutation.isPending}
+                      className="text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {cancelAttendanceMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <XCircle className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <Button

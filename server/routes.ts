@@ -2359,6 +2359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Date parameter is required" });
       }
       
+      // Query students who confirmed attendance for this class and date
       const roster = await db
         .select({
           student_id: students.id,
@@ -2367,20 +2368,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           confirmed: sql<boolean>`CASE WHEN ${attendance.status} = 'confirmed' THEN true ELSE false END`.as('confirmed'),
           status: attendance.status
         })
-        .from(students)
+        .from(attendance)
+        .innerJoin(students, eq(attendance.studentId, students.id))
         .innerJoin(users, eq(students.userId, users.id))
-        .innerJoin(classEnrollments, and(
-          eq(classEnrollments.studentId, students.id),
-          eq(classEnrollments.classId, classId),
-          eq(classEnrollments.isActive, true)
-        ))
-        .innerJoin(attendance, and(
-          eq(attendance.studentId, students.id),
+        .where(and(
           eq(attendance.classId, classId),
           sql`DATE(${attendance.date}) = ${date}`,
-          eq(attendance.status, 'confirmed')
-        ))
-        .where(eq(users.active, true));
+          eq(attendance.status, 'confirmed'),
+          eq(users.active, true)
+        ));
         
       res.json(roster);
     } catch (error) {

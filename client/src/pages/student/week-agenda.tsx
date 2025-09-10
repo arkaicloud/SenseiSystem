@@ -1,8 +1,9 @@
 import { WeekAgenda } from '@/components/student/WeekAgenda';
 import { useAuth } from '@/hooks/use-auth';
-import { MainLayout } from '@/components/layouts/MainLayout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import type { SchoolConfig } from '@shared/schema';
 
 export default function WeekAgendaPage() {
   const { user } = useAuth();
@@ -19,12 +20,12 @@ export default function WeekAgendaPage() {
     enabled: !!user?.id && user?.role === 'student',
   });
 
-  const { data: schoolConfig } = useQuery({
+  const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
     queryKey: ['/api/school-config'],
     enabled: !!user?.id,
   });
 
-  const primaryColor = schoolConfig?.config?.primaryColor || '#B85C38';
+  const primaryColor = schoolConfigData?.config?.primaryColor || '#B85C38';
 
   return (
     <MainLayout>

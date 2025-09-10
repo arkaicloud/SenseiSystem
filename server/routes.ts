@@ -3178,12 +3178,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const date = toDayUTC(req.params.date);
       const requestUser = (req as any).user;
 
-      console.log("Idempotent confirmation attempt:", { sid, classId, date: toDateString(date) });
+      console.log("Idempotent confirmation attempt:", { 
+        sid, 
+        classId, 
+        date: toDateString(date),
+        userId: requestUser?.id,
+        userRole: requestUser?.role,
+        rawSid: req.params.sid
+      });
+
+      // Validate sid parameter
+      if (isNaN(sid) || sid <= 0) {
+        console.error("❌ Invalid student ID:", req.params.sid);
+        return res.status(400).json({ success: false, message: "ID do estudante inválido" });
+      }
 
       // Verify student access
       const student = await storage.getStudentByUserId(requestUser.id);
-      if (!student || student.id !== sid) {
-        return res.status(403).json({ success: false, message: "Access denied" });
+      console.log("👤 Student lookup result:", { 
+        studentFound: !!student, 
+        studentId: student?.id, 
+        requestedSid: sid,
+        userId: requestUser.id 
+      });
+
+      if (!student) {
+        return res.status(404).json({ success: false, message: "Perfil de estudante não encontrado" });
+      }
+
+      if (student.id !== sid) {
+        console.error("❌ Student ID mismatch:", { studentId: student.id, requestedSid: sid });
+        return res.status(403).json({ success: false, message: "Acesso negado - ID não corresponde" });
       }
 
       // Check if class exists

@@ -49,45 +49,27 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
   const { data: weekClasses, isLoading } = useQuery({
     queryKey: [`/api/students/${studentId}/classes/week`],
     queryFn: async () => {
-      // Buscar todas as aulas para poder filtrar por dia da semana
-      const today = new Date();
-      
-      const response = await apiRequest('GET', '/api/classes');
+      const response = await apiRequest('GET', `/api/students/${studentId}/classes/week`);
       if (!response.ok) {
-        throw new Error('Erro ao buscar aulas');
+        throw new Error('Erro ao buscar agenda da semana');
       }
       
       const data = await response.json();
-      const allClasses = data.classes || [];
+      const weekData = data.weekData || [];
       
-      // Criar dados para a semana baseado no dia atual (domingo = 0, segunda = 1, etc.)
-      const weekData: DayClasses[] = [];
-      
-      for (let i = 0; i < 7; i++) {
-        const currentDate = addDays(today, i);
+      // Converter os dados para o formato esperado pelo componente
+      const formattedWeekData: DayClasses[] = weekData.map((dayData: any) => {
+        const currentDate = new Date(dayData.date);
         const dayName = format(currentDate, 'EEEE', { locale: ptBR });
-        const currentDayOfWeek = currentDate.getDay(); // 0=domingo, 1=segunda, 2=terça, etc.
         
-        // Filtrar apenas aulas do dia da semana correto
-        const dayClasses = allClasses
-          .filter((cls: any) => cls.dayOfWeek === currentDayOfWeek)
-          .map((cls: any) => ({
-            ...cls,
-            // Para hoje (i === 0), manter o status atual de confirmação
-            // Para outros dias, resetar confirmação
-            attendanceConfirmed: i === 0 ? cls.attendanceConfirmed : false,
-            canConfirm: i >= 0, // Pode confirmar hoje e no futuro
-            canCancel: i >= 0 && (i === 0 ? cls.attendanceConfirmed : false)
-          }));
-        
-        weekData.push({
+        return {
           date: currentDate,
           dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
-          classes: dayClasses
-        });
-      }
+          classes: dayData.classes || []
+        };
+      });
       
-      return weekData;
+      return formattedWeekData;
     },
     enabled: !!studentId, // Carrega automaticamente
   });

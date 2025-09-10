@@ -2198,20 +2198,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Verificar se o aluno logado confirmou presença para esta aula hoje
             let attendanceConfirmed = false;
+            let bookingStatus = null;
             if (student) {
               const userAttendance = attendances.find(attendance => {
                 const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
                 return attendance.studentId === student.id && 
                        attendanceDate === todayStr && 
-                       (attendance.status === 'confirmed' || attendance.status === 'present');
+                       (attendance.status === 'confirmed' || attendance.status === 'present' || attendance.status === 'cancelled');
               });
-              attendanceConfirmed = !!userAttendance;
+              if (userAttendance) {
+                if (userAttendance.status === 'confirmed' || userAttendance.status === 'present') {
+                  attendanceConfirmed = true;
+                  bookingStatus = 'CONFIRMED';
+                } else if (userAttendance.status === 'cancelled') {
+                  attendanceConfirmed = false;
+                  bookingStatus = 'CANCELLED';
+                }
+              }
             }
 
             return {
               ...classItem,
               attendanceCount: todayAttendanceCount,
               attendanceConfirmed: attendanceConfirmed,
+              bookingStatus: bookingStatus,
+              dateISO: todayStr,
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                 : 'Sem instrutor'
@@ -2222,6 +2233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ...classItem,
               attendanceCount: 0,
               attendanceConfirmed: false,
+              bookingStatus: null,
+              dateISO: today.toISOString().split('T')[0],
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                 : 'Sem instrutor'
@@ -2286,12 +2299,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
                 return attendance.studentId === student.id && 
                        attendanceDate === dateStr && 
-                       (attendance.status === 'confirmed' || attendance.status === 'present');
+                       (attendance.status === 'confirmed' || attendance.status === 'present' || attendance.status === 'cancelled');
               });
+              
+              let bookingStatus = null;
+              if (userAttendance) {
+                if (userAttendance.status === 'confirmed' || userAttendance.status === 'present') {
+                  bookingStatus = 'CONFIRMED';
+                } else if (userAttendance.status === 'cancelled') {
+                  bookingStatus = 'CANCELLED';
+                }
+              }
               
               return {
                 ...classItem,
-                attendanceConfirmed: !!userAttendance,
+                attendanceConfirmed: bookingStatus === 'CONFIRMED',
+                bookingStatus: bookingStatus,
+                dateISO: dateStr,
                 canConfirm: true,
                 canCancel: !!userAttendance,
                 instructorName: classItem.instructor 
@@ -2303,6 +2327,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return {
                 ...classItem,
                 attendanceConfirmed: false,
+                bookingStatus: null,
+                dateISO: dateStr,
                 canConfirm: true,
                 canCancel: false,
                 instructorName: classItem.instructor 

@@ -42,7 +42,6 @@ interface WeekAgendaProps {
 
 export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = true }: WeekAgendaProps) => {
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
-  const [confirmedClasses, setConfirmedClasses] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -75,21 +74,6 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
     enabled: !!studentId, // Carrega automaticamente
   });
 
-  // Sincronizar estado local com dados da API
-  useEffect(() => {
-    if (weekClasses) {
-      const confirmed = new Set<string>();
-      weekClasses.forEach(day => {
-        day.classes.forEach(classItem => {
-          if (classItem.attendanceConfirmed) {
-            const key = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
-            confirmed.add(key);
-          }
-        });
-      });
-      setConfirmedClasses(confirmed);
-    }
-  }, [weekClasses]);
 
   // Mutation para confirmar presença
   const confirmAttendanceMutation = useMutation({
@@ -107,9 +91,29 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       return response.json();
     },
     onSuccess: (data, variables) => {
-      // Atualizar estado local imediatamente
       const confirmKey = `${variables.classId}-${variables.date}`;
-      setConfirmedClasses(prev => new Set(prev).add(confirmKey));
+      
+      // Update cache optimistically
+      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          weekData: oldData.weekData.map((day: any) => {
+            if (day.date === variables.date) {
+              return {
+                ...day,
+                classes: day.classes.map((cls: any) => 
+                  cls.id === variables.classId 
+                    ? { ...cls, attendanceConfirmed: true, canCancel: true }
+                    : cls
+                )
+              };
+            }
+            return day;
+          })
+        };
+      });
       
       // Invalidar queries para sincronizar com servidor
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
@@ -157,12 +161,28 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       return response.json();
     },
     onSuccess: (data, variables) => {
-      // Atualizar estado local imediatamente
-      const confirmKey = `${variables.classId}-${variables.date}`;
-      setConfirmedClasses(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(confirmKey);
-        return newSet;
+      const cancelKey = `${variables.classId}-${variables.date}`;
+      
+      // Update cache optimistically
+      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          weekData: oldData.weekData.map((day: any) => {
+            if (day.date === variables.date) {
+              return {
+                ...day,
+                classes: day.classes.map((cls: any) => 
+                  cls.id === variables.classId 
+                    ? { ...cls, attendanceConfirmed: false, canCancel: false }
+                    : cls
+                )
+              };
+            }
+            return day;
+          })
+        };
       });
       
       // Invalidar queries para sincronizar com servidor
@@ -170,13 +190,13 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
       
       toast({
-        title: "Presença cancelada",
-        description: "Sua confirmação foi cancelada.",
+        title: "Presença cancelada!",
+        description: "Sua confirmação foi cancelada com sucesso.",
       });
       
       setLoadingActions(prev => {
         const newSet = new Set(prev);
-        newSet.delete(confirmKey);
+        newSet.delete(cancelKey);
         return newSet;
       });
     },
@@ -274,7 +294,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                     {day.classes.map((classItem) => {
                       const actionKey = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
                       const isActionLoading = loadingActions.has(actionKey);
-                      const isConfirmed = confirmedClasses.has(actionKey) || classItem.attendanceConfirmed;
+                      const isConfirmed = classItem.attendanceConfirmed;
                       
                       return (
                         <div

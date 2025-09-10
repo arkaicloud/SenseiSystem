@@ -46,22 +46,6 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Sincronizar estado local com dados da API
-  useEffect(() => {
-    if (weekClasses) {
-      const confirmed = new Set<string>();
-      weekClasses.forEach(day => {
-        day.classes.forEach(classItem => {
-          if (classItem.attendanceConfirmed) {
-            const key = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
-            confirmed.add(key);
-          }
-        });
-      });
-      setConfirmedClasses(confirmed);
-    }
-  }, [weekClasses]);
-
   // Query para buscar aulas da semana
   const { data: weekClasses, isLoading } = useQuery({
     queryKey: [`/api/students/${studentId}/classes/week`],
@@ -90,6 +74,22 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
     },
     enabled: !!studentId, // Carrega automaticamente
   });
+
+  // Sincronizar estado local com dados da API
+  useEffect(() => {
+    if (weekClasses) {
+      const confirmed = new Set<string>();
+      weekClasses.forEach(day => {
+        day.classes.forEach(classItem => {
+          if (classItem.attendanceConfirmed) {
+            const key = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
+            confirmed.add(key);
+          }
+        });
+      });
+      setConfirmedClasses(confirmed);
+    }
+  }, [weekClasses]);
 
   // Mutation para confirmar presença
   const confirmAttendanceMutation = useMutation({

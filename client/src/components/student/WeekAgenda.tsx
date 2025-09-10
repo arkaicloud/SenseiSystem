@@ -249,65 +249,68 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                       return (
                         <div
                           key={`${classItem.id}-${day.date.toISOString()}`}
-                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded"
+                          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600"
                           data-testid={`week-class-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
                         >
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate">{classItem.name}</h4>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+                          {/* Informações da aula - Coluna 1 */}
+                          <div className="flex flex-col space-y-2 md:col-span-1 lg:col-span-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white text-base">{classItem.name}</h4>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
                               <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {classItem.startTime}
+                                <Clock className="h-4 w-4" />
+                                <span className="font-medium">{classItem.startTime}</span>
                               </div>
                               {classItem.instructorName && (
                                 <div className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  <span className="truncate">{classItem.instructorName}</span>
+                                  <User className="h-4 w-4" />
+                                  <span>{classItem.instructorName}</span>
                                 </div>
                               )}
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          {/* Ações (CTA) - Coluna 2/3 */}
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 md:col-span-1 lg:col-span-1">
                             {classItem.attendanceConfirmed ? (
-                              <>
-                                <Badge variant="secondary" className="flex items-center gap-1">
-                                  <CheckCircle className="h-3 w-3" />
-                                  <span className="hidden sm:inline">Confirmado</span>
-                                  <span className="sm:hidden">OK</span>
+                              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <Badge variant="secondary" className="flex items-center justify-center gap-1 py-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span>Confirmado</span>
                                 </Badge>
                                 {classItem.canCancel && (
                                   <Button
                                     size="sm"
-                                    variant="outline"
+                                    variant="ghost"
+                                    className="w-full sm:w-auto h-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
                                     onClick={() => handleCancelAttendance(classItem.id, day.date)}
                                     disabled={isActionLoading}
                                     data-testid={`button-cancel-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
                                   >
                                     {isActionLoading ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
-                                      <X className="h-3 w-3" />
+                                      <X className="h-4 w-4" />
                                     )}
-                                    <span className="hidden sm:inline ml-1">Cancelar</span>
+                                    <span className="ml-1">Cancelar</span>
                                   </Button>
                                 )}
-                              </>
+                              </div>
                             ) : (
                               classItem.canConfirm && (
                                 <Button
                                   size="sm"
+                                  className="w-full sm:w-auto h-10 text-white font-medium"
                                   style={{ backgroundColor: primaryColor }}
                                   onClick={() => handleConfirmAttendance(classItem.id, day.date)}
                                   disabled={isActionLoading}
                                   data-testid={`button-confirm-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
                                 >
                                   {isActionLoading ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                   ) : (
                                     <>
-                                      <CheckCircle className="h-3 w-3 sm:mr-1" />
-                                      <span className="hidden sm:inline">Confirmar</span>
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      <span>Confirmar Presença</span>
                                     </>
                                   )}
                                 </Button>

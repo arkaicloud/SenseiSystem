@@ -124,6 +124,11 @@ function Router() {
         allowedRoles={["student"]}
       />
       <ProtectedRoute
+        path="/agenda"
+        component={() => <WeekAgendaPage />}
+        allowedRoles={["student"]}
+      />
+      <ProtectedRoute
         path="/student/notices"
         component={() => <StudentNoticesPage />}
         allowedRoles={["student"]}

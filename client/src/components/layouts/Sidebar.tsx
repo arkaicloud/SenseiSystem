@@ -150,6 +150,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       path: "/communications",
       roles: ["admin", "instructor"],
     },
+    {
+      id: "agenda-semana",
+      label: "Agenda da Semana", 
+      icon: Calendar,
+      path: "/student/agenda",
+      roles: ["student"],
+    },
   ];
 
   // Check if user has permission for a menu item

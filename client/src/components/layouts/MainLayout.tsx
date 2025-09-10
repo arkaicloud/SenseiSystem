@@ -13,6 +13,7 @@ import { Sun, Moon, LogOut, Building2, User, UserCheck, ChevronDown } from "luci
 import { useTheme } from "@/hooks/use-theme";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { StudentBell } from "@/components/student/StudentBell";
+import BottomNav from "@/components/student/BottomNav";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -112,11 +113,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         />
       )}
 
-      {/* Sidebar navigation */}
-      {user && <Sidebar isOpen={sidebarOpen} isMobile={isMobile} onClose={() => setSidebarOpen(false)} />}
+      {/* Sidebar navigation - hidden on mobile for students */}
+      {user && (
+        <div className={user?.role === 'student' ? 'hidden md:block' : ''}>
+          <Sidebar isOpen={sidebarOpen} isMobile={isMobile} onClose={() => setSidebarOpen(false)} />
+        </div>
+      )}
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile && user ? "ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
+      <main className={`flex-1 ${!isMobile && user && user?.role !== 'student' ? "ml-64" : ""} ${user?.role === 'student' ? "md:ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
         {/* Desktop header */}
         {!isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 hidden md:flex items-center justify-between px-6 py-3 sticky top-0 z-40">
@@ -326,12 +331,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""}`}>
+        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "pb-20 md:pb-6" : ""}`}>
           <div className="max-w-full min-w-0">
             {children}
           </div>
         </div>
       </main>
+
+      {/* Bottom Navigation - only for students on mobile */}
+      {user?.role === 'student' && <BottomNav />}
     </div>
   );
 };

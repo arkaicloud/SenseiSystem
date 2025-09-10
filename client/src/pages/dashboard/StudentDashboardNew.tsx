@@ -256,6 +256,7 @@ export default function StudentDashboardNew() {
           <WeekAgenda 
             studentId={studentData?.id || 0}
             primaryColor={primaryColor}
+            showHeader={true}
           />
 
           {/* Grid para Frequência e Avisos */}

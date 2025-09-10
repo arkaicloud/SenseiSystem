@@ -54,8 +54,8 @@ export default function StudentDashboardNew() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Get belt levels hook at the top to maintain hook order
-  const { getBeltName, getBeltColor } = useBeltLevels();
+  // Get belt levels hook at the top to maintain hook order - using public endpoint for students
+  const { getBeltName, getBeltColor } = useBeltLevels(undefined, true);
   
   // Get school configuration for colors
   const { data: schoolConfig } = useQuery({

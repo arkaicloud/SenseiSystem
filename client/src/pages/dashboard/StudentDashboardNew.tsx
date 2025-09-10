@@ -4,10 +4,10 @@ import { formatDate, getBeltColor } from '@/lib/utils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { StudentGreeting } from '@/components/student/StudentGreeting';
-import { SchoolNotices } from '@/components/student/SchoolNotices';
 import { TodayClasses } from '@/components/student/TodayClasses';
-import { MonthlyAttendance } from '@/components/student/MonthlyAttendance';
-import { FinancialStatus } from '@/components/student/FinancialStatus';
+import { WeekAgenda } from '@/components/student/WeekAgenda';
+import { FrequencyMetrics } from '@/components/student/FrequencyMetrics';
+import { NoticesBlock } from '@/components/student/NoticesBlock';
 import { useBeltLevels } from '@/hooks/useBeltLevels';
 
 interface StudentDashboardProps {
@@ -216,48 +216,60 @@ export default function StudentDashboardNew() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
-          {/* Greeting Section */}
-          <StudentGreeting 
-            studentName={student.name}
-            currentBelt={student.currentBelt}
+          {/* Saudação Topo */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border">
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">👋</div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Olá, {user?.firstName}!
+                </h1>
+                <div className="flex items-center gap-4 mt-1">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                      style={{ backgroundColor: beltColorCode }}
+                    />
+                    <span className="text-gray-600">{beltName}</span>
+                  </div>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-600">
+                    Desde {studentData?.enrollmentDate ? 
+                      new Date(studentData.enrollmentDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) :
+                      'este mês'
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bloco 1: Aulas de Hoje */}
+          <TodayClasses 
+            classes={classes}
+            onCheckIn={handleCheckIn}
+            primaryColor={primaryColor}
+            isLoading={isClassesLoading}
+          />
+
+          {/* Bloco 2: Agenda da Semana */}
+          <WeekAgenda 
+            studentId={studentData?.id || 0}
             primaryColor={primaryColor}
           />
 
-          {/* Main Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              <TodayClasses 
-                classes={classes}
-                onCheckIn={handleCheckIn}
-                primaryColor={primaryColor}
-                isLoading={isClassesLoading}
-              />
-              
-              <SchoolNotices 
-                notices={notices} 
-                primaryColor={primaryColor}
-                isLoading={isEventsLoading}
-              />
-            </div>
+          {/* Grid para Frequência e Avisos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bloco 3: Frequência/Métricas */}
+            <FrequencyMetrics 
+              studentId={studentData?.id || 0}
+              primaryColor={primaryColor}
+            />
 
-            {/* Right Column - Sidebar */}
-            <div className="space-y-6">
-              <MonthlyAttendance 
-                attendedClasses={attendance.attendedClasses}
-                totalClasses={attendance.totalClasses}
-                currentMonth={attendance.currentMonth}
-                primaryColor={primaryColor}
-                isLoading={isAttendanceLoading}
-              />
-
-              <FinancialStatus 
-                invoices={invoices}
-                isFinancialResponsible={student.isFinancialResponsible}
-                primaryColor={primaryColor}
-                isLoading={isFinancialLoading}
-              />
-            </div>
+            {/* Bloco 4: Avisos & Eventos */}
+            <NoticesBlock 
+              studentId={studentData?.id || 0}
+            />
           </div>
         </div>
       </div>

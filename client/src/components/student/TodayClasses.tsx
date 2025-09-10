@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User, CheckCircle, Calendar, XCircle, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,10 +29,13 @@ export const TodayClasses = ({ classes, onCheckIn, onCancel, primaryColor, isLoa
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [checkedInClasses, setCheckedInClasses] = useState<Set<number>>(() => {
+  const [checkedInClasses, setCheckedInClasses] = useState<Set<number>>(new Set());
+
+  // Sincronizar o estado local com os dados da API sempre que mudarem
+  useEffect(() => {
     const confirmedIds = classes.filter(c => c.attendanceConfirmed).map(c => c.id);
-    return new Set(confirmedIds);
-  });
+    setCheckedInClasses(new Set(confirmedIds));
+  }, [classes]);
 
   // Mutação para cancelar presença
   const cancelAttendanceMutation = useMutation({

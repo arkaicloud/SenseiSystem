@@ -94,25 +94,23 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       const confirmKey = `${variables.classId}-${variables.date}`;
       
       // Update cache optimistically
-      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (oldData: any) => {
+      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (oldData: DayClasses[]) => {
         if (!oldData) return oldData;
         
-        return {
-          ...oldData,
-          weekData: oldData.weekData.map((day: any) => {
-            if (day.date === variables.date) {
-              return {
-                ...day,
-                classes: day.classes.map((cls: any) => 
-                  cls.id === variables.classId 
-                    ? { ...cls, attendanceConfirmed: true, canCancel: true }
-                    : cls
-                )
-              };
-            }
-            return day;
-          })
-        };
+        return oldData.map((day: DayClasses) => {
+          const dayDate = format(day.date, 'yyyy-MM-dd');
+          if (dayDate === variables.date) {
+            return {
+              ...day,
+              classes: day.classes.map((cls: ClassSession) => 
+                cls.id === variables.classId 
+                  ? { ...cls, attendanceConfirmed: true, canCancel: true }
+                  : cls
+              )
+            };
+          }
+          return day;
+        });
       });
       
       // Invalidar queries para sincronizar com servidor
@@ -164,25 +162,23 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
       const cancelKey = `${variables.classId}-${variables.date}`;
       
       // Update cache optimistically
-      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (oldData: any) => {
+      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (oldData: DayClasses[]) => {
         if (!oldData) return oldData;
         
-        return {
-          ...oldData,
-          weekData: oldData.weekData.map((day: any) => {
-            if (day.date === variables.date) {
-              return {
-                ...day,
-                classes: day.classes.map((cls: any) => 
-                  cls.id === variables.classId 
-                    ? { ...cls, attendanceConfirmed: false, canCancel: false }
-                    : cls
-                )
-              };
-            }
-            return day;
-          })
-        };
+        return oldData.map((day: DayClasses) => {
+          const dayDate = format(day.date, 'yyyy-MM-dd');
+          if (dayDate === variables.date) {
+            return {
+              ...day,
+              classes: day.classes.map((cls: ClassSession) => 
+                cls.id === variables.classId 
+                  ? { ...cls, attendanceConfirmed: false, canCancel: false }
+                  : cls
+              )
+            };
+          }
+          return day;
+        });
       });
       
       // Invalidar queries para sincronizar com servidor
@@ -255,7 +251,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
           </div>
         ) : (
           <div className="space-y-4">
-            {weekClasses?.weekData?.map((day) => (
+            {weekClasses?.map((day: DayClasses) => (
               <Card key={day.date} className="w-full shadow-sm border border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -291,7 +287,7 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {day.classes.map((classItem) => {
+                    {day.classes.map((classItem: ClassSession) => {
                       const actionKey = `${classItem.id}-${day.date}`;
                       const isActionLoading = loadingActions.has(actionKey);
                       const isConfirmed = classItem.attendanceConfirmed;

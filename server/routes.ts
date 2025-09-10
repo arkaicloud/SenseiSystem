@@ -2301,6 +2301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestUser = (req as any).user;
       
       console.log(`📅 Buscando agenda semanal para studentId: ${studentId}`);
+      console.log(`👤 Usuário logado: ${requestUser.id}, role: ${requestUser.role}`);
       
       // Desabilitar cache para dados dinâmicos de presença
       res.set({
@@ -2312,7 +2313,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verificar se o usuário tem permissão para acessar os dados deste aluno
       const student = await storage.getStudentByUserId(requestUser.id);
-      if (!student || student.id !== parseInt(studentId)) {
+      if (!student) {
+        console.log(`❌ Estudante não encontrado para userId: ${requestUser.id}`);
+        return res.status(404).json({ message: "Estudante não encontrado" });
+      }
+
+      console.log(`👤 Estudante encontrado: ${student.id}, comparando com ${studentId}`);
+      
+      if (student.id !== parseInt(studentId)) {
+        console.log(`❌ Acesso negado - student.id: ${student.id} !== studentId: ${studentId}`);
         return res.status(403).json({ message: "Acesso negado" });
       }
 
@@ -2322,47 +2331,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Dados do usuário não encontrados" });
       }
 
-      // Determinar categoria do aluno
+      // Determinar categoria do aluno (simplificado para debug)
       const isChild = userData.birthDate ? 
         ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
-      const userSex = userData.sex?.toLowerCase() || 'misto';
+      const userSex = userData.sex?.toLowerCase() || null;
       
       console.log(`👤 Usuário: ${userData.firstName}, sexo: ${userSex}, criança: ${isChild}`);
 
-      // Buscar todas as aulas ativas com filtros por categoria
+      // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
+      console.log(`🎯 Total de aulas no sistema: ${allClasses.length}`);
       
-      // Filtrar aulas baseado na categoria do aluno
+      // Para debug inicial, não filtrar por categoria - mostrar todas as aulas ativas
       const allowedClasses = allClasses.filter(classItem => {
-        if (!classItem.isActive) return false; // Apenas aulas ativas
-        if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
-        
-        const classType = classItem.type.toLowerCase();
-        
-        // Aulas infantis: apenas para crianças
-        if (classType === 'infantil') {
-          return isChild;
-        }
-        
-        // Aulas mistas: para TODOS (crianças e adultos)
-        if (classType === 'misto') {
-          return true;
-        }
-        
-        // Aulas masculinas: apenas para homens adultos
-        if (classType === 'masculino') {
-          return !isChild && userSex === 'masculino';
-        }
-        
-        // Aulas femininas: apenas para mulheres adultas
-        if (classType === 'feminino') {
-          return !isChild && userSex === 'feminino';
-        }
-        
-        return true; // Default: permite
+        const isActive = classItem.isActive !== false;
+        console.log(`🔍 Aula ${classItem.name}: isActive = ${isActive}, type = ${classItem.type || 'sem tipo'}`);
+        return isActive;
       });
       
-      console.log(`🎯 Aulas filtradas por categoria: ${allowedClasses.length} de ${allClasses.length} total`);
+      console.log(`🎯 Aulas ativas encontradas: ${allowedClasses.length} de ${allClasses.length} total`);
       
       // Criar dados para próximos 7 dias consecutivos começando hoje
       const today = new Date();
@@ -2375,10 +2362,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const dateStr = currentDate.toISOString().split('T')[0];
         const dayOfWeek = currentDate.getDay();
         
-        // Filtrar aulas do dia da semana atual
-        const dayClasses = allowedClasses.filter(cls => cls.dayOfWeek === dayOfWeek);
+        console.log(`📅 Processando dia: ${dateStr} (${dayOfWeek})`);
         
-        console.log(`📅 ${dateStr} (${dayOfWeek}): ${dayClasses.length} aulas encontradas para o aluno`);
+        // Filtrar aulas do dia da semana atual
+        const dayClasses = allowedClasses.filter(cls => {
+          const matches = cls.dayOfWeek === dayOfWeek;
+          if (matches) {
+            console.log(`  ✅ Aula ${cls.name} encontrada para o dia ${dayOfWeek}`);
+          }
+          return matches;
+        });
+        
+        console.log(`📅 ${dateStr} (${dayOfWeek}): ${dayClasses.length} aulas encontradas`);
         
         // Para cada aula, verificar se o aluno confirmou presença
         const classesWithAttendance = await Promise.all(
@@ -2420,7 +2415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 endTime = `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
               }
               
-              return {
+              const classData = {
                 id: classItem.id,
                 name: classItem.name,
                 type: classItem.type,
@@ -2438,6 +2433,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                   : 'Instrutor'
               };
+              
+              console.log(`  📝 Aula processada: ${classData.name} - ${classData.startTime}`);
+              return classData;
             } catch (error) {
               console.error(`Erro ao buscar presença para aula ${classItem.id}:`, error);
               return {
@@ -2471,9 +2469,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dayName: dayNames[dayOfWeek],
           classes: classesWithAttendance
         });
+        
+        console.log(`📝 Dia ${dateStr} adicionado com ${classesWithAttendance.length} aulas`);
       }
       
       console.log(`✅ Retornando agenda semanal com ${weekData.length} dias e ${weekData.reduce((total, day) => total + day.classes.length, 0)} aulas`);
+      console.log(`📊 Resumo por dia:`, weekData.map(day => `${day.dayName}: ${day.classes.length} aulas`));
+      
       res.json({ weekData });
     } catch (error) {
       console.error("Error fetching week agenda:", error);

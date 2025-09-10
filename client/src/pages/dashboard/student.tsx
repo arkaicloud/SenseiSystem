@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, CreditCard, BookOpen, Users, Clock } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Calendar, CreditCard, BookOpen } from 'lucide-react';
 import FinancialPanel from '@/components/student/FinancialPanel';
 import AttendanceHistory from '@/components/student/AttendanceHistory';
+import { TodayClasses } from '@/components/student/TodayClasses';
 
 export default function StudentDashboard() {
   const { t } = useTranslations();
@@ -41,31 +39,6 @@ export default function StudentDashboard() {
     enabled: !!user?.id,
   });
   
-  // Confirm attendance mutation
-  const confirmAttendanceMutation = useMutation({
-    mutationFn: (data: { classId: number, date: string }) => 
-      apiRequest('/api/attendance/confirm', 'POST', data),
-    onSuccess: () => {
-      toast({
-        title: "✅ Presença confirmada!",
-        description: "Sua presença foi confirmada com sucesso.",
-      });
-      // Refetch today's classes to update status
-      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "❌ Erro",
-        description: error.message || "Não foi possível confirmar a presença.",
-        variant: "destructive",
-      });
-    },
-  });
-  
-  const handleConfirmAttendance = (classId: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    confirmAttendanceMutation.mutate({ classId, date: today });
-  };
   
   if (isStudentLoading) {
     return (
@@ -183,64 +156,12 @@ export default function StudentDashboard() {
 
         {/* Aulas de Hoje */}
         <TabsContent value="proximas-aulas" className="space-y-4">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
-                <span>Aulas de Hoje</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isClassesLoading ? (
-                <div className="text-gray-400">Carregando aulas...</div>
-              ) : todayClasses?.classes?.length > 0 ? (
-                <div className="space-y-3">
-                  {todayClasses.classes.map((aula: any) => (
-                    <div key={aula.id} className="bg-gray-700 p-4 rounded-xl flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-blue-600 p-2 rounded-lg">
-                          <Users className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-white">{aula.name}</p>
-                          <div className="flex items-center space-x-4 text-sm text-gray-400">
-                            <span className="flex items-center space-x-1">
-                              <Clock className="w-3 h-3" />
-                              <span>{aula.startTime}</span>
-                            </span>
-                            <span className="flex items-center space-x-1">
-                              <Users className="w-3 h-3" />
-                              <span>{aula.instructorName || 'Sem instrutor'}</span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        {aula.attendanceConfirmed ? (
-                          <span className="text-green-400 font-medium flex items-center space-x-1">
-                            <span>✅</span>
-                            <span>Presença Confirmada</span>
-                          </span>
-                        ) : (
-                          <Button
-                            onClick={() => handleConfirmAttendance(aula.id)}
-                            disabled={confirmAttendanceMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            {confirmAttendanceMutation.isPending ? 'Confirmando...' : 'Confirmar'}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-gray-700/30 p-4 rounded-xl text-center text-gray-400">
-                  Nenhuma aula agendada para hoje.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <TodayClasses 
+            classes={todayClasses?.classes || []}
+            studentId={studentData?.id || 1}
+            primaryColor="#3B82F6"
+            isLoading={isClassesLoading}
+          />
 
           {/* Estatísticas do Mês */}
           <Card className="bg-gray-800 border-gray-700">

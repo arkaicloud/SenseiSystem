@@ -2163,6 +2163,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     try {
+      const requestUser = (req as any).user;
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Buscar dados completos do usuário para filtros de categoria
+      const userData = await storage.getUser(requestUser.id);
+      if (!userData) {
+        return res.status(404).json({ message: "Dados do usuário não encontrados" });
+      }
+
+      // Determinar categoria do aluno
+      const isChild = userData.birthDate ? 
+        ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
+      const userSex = userData.sex?.toLowerCase() || 'misto';
+
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
 
@@ -2174,15 +2191,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeekName} (${currentDayOfWeek})`);
       console.log(`Total de aulas encontradas: ${allClasses.length}`);
 
+      // Filtrar aulas baseado na categoria do aluno
+      const allowedClasses = allClasses.filter(classItem => {
+        if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
+        
+        const classType = classItem.type.toLowerCase();
+        
+        // Aulas infantis: apenas para crianças
+        if (classType === 'infantil') {
+          return isChild;
+        }
+        
+        // Aulas mistas: para todos (exceto infantil que já foi tratado acima)
+        if (classType === 'misto') {
+          return !isChild; // Adultos podem fazer mistas
+        }
+        
+        // Aulas masculinas: apenas para homens adultos
+        if (classType === 'masculino') {
+          return !isChild && userSex === 'masculino';
+        }
+        
+        // Aulas femininas: apenas para mulheres adultas
+        if (classType === 'feminino') {
+          return !isChild && userSex === 'feminino';
+        }
+        
+        return true; // Default: permite
+      });
+
       // Filtrar aulas APENAS do dia atual da semana
-      const todaysClasses = allClasses.filter(classItem => {
+      const todaysClasses = allowedClasses.filter(classItem => {
         return classItem.isActive !== false && classItem.dayOfWeek === currentDayOfWeek;
       });
 
       console.log(`Aulas filtradas para hoje (${dayOfWeekName}): ${todaysClasses.length}`);
-
-      const requestUser = (req as any).user;
-      const student = await storage.getStudentByUserId(requestUser.id);
 
       const classesWithAttendance = await Promise.all(
         todaysClasses.map(async (classItem) => {

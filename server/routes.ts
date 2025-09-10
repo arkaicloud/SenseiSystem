@@ -2194,7 +2194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
                 return attendance.studentId === student.id && 
                        attendanceDate === todayStr && 
-                       attendance.status === 'confirmed';
+                       (attendance.status === 'confirmed' || attendance.status === 'present');
               });
               attendanceConfirmed = !!userAttendance;
             }

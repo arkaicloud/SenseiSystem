@@ -219,29 +219,41 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
         ) : (
           <div className="space-y-4">
             {weekClasses?.map((day) => (
-              <div key={day.date.toISOString()} className="border rounded-lg p-4 bg-white dark:bg-gray-900">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-                  <h3 className="font-semibold text-lg">
-                    {day.dayName}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={isToday(day.date) ? "default" : "outline"}>
-                      {format(day.date, 'dd/MM')}
-                    </Badge>
-                    {isToday(day.date) && (
-                      <Badge style={{ backgroundColor: primaryColor }}>
-                        Hoje
+              <Card key={day.date.toISOString()} className="w-full shadow-sm border border-gray-200 dark:border-gray-700">
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                      {day.dayName}
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={isToday(day.date) ? "default" : "outline"}
+                        className="text-sm"
+                      >
+                        {format(day.date, 'dd/MM')}
                       </Badge>
-                    )}
+                      {isToday(day.date) && (
+                        <Badge 
+                          className="text-sm text-white font-medium"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          Hoje
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </CardHeader>
+                <CardContent className="pt-0">
                 
                 {day.classes.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">
-                    Nenhuma aula programada
-                  </p>
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      Nenhuma aula programada
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {day.classes.map((classItem) => {
                       const actionKey = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
                       const isActionLoading = loadingActions.has(actionKey);
@@ -322,7 +334,8 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                     })}
                   </div>
                 )}
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

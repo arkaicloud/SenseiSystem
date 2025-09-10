@@ -1,0 +1,273 @@
+Dashboard do Aluno + Avisos/Notificações (UX novo)”
+
+Contexto
+SenseiSystem. Precisamos melhorar o UX do aluno com um dashboard focado em ação e comunicação:
+
+Topo com saudação + resumo (faixa/frequência/progresso).
+
+Bloco 1: “Aulas de Hoje” com confirmação rápida.
+
+Bloco 2: “Agenda da Semana” (toggle/accordion) para planejamento.
+
+Bloco 3: Frequência/Métricas.
+
+Bloco 4: “Avisos & Eventos” da escola, integrados a um sino no header com badge de não lidos; aviso some do sino somente após leitura efetiva.
+Reusar a base de “Comunicados” já presente no admin.
+
+Objetivo
+
+Entregar uma experiência clara e sem ruído para o aluno, mantendo foco nas aulas do dia, possibilitando planejamento da semana e garantindo que avisos sejam vistos e persistidos como lidos por aluno.
+
+Escopo Técnico
+1) Banco de Dados (Prisma ou equivalente)
+
+Adicionar (ou ajustar) os modelos:
+
+model Notice {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  level      String   // "LOW" | "MEDIUM" | "HIGH"
+  audience   String   // "ALL" | "STUDENTS" | "INSTRUCTORS" | etc.
+  publishAt  DateTime
+  eventAt    DateTime?
+  createdBy  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  // opcional: tags, image, link externo
+}
+
+model StudentNotification {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  noticeId  Int
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, noticeId])
+  @@index([studentId, readAt])
+}
+
+model ClassBooking {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  classId    Int
+  date       DateTime // instância do dia
+  status     String   // "PENDING" | "CONFIRMED" | "CANCELLED" | "ATTENDED"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([studentId, date])
+  @@index([classId, date])
+}
+
+
+Caso já existam entidades equivalentes, apenas complemente os campos/índices.
+
+2) Backend (API)
+
+Notificações (aluno):
+
+GET /api/students/:id/notifications?limit=20&unreadOnly=1
+Retorna lista de notices com estado readAt e badge count (se unreadOnly=1, só não lidos).
+
+PATCH /api/students/:id/notifications/:notifId/read
+Marca como lido (set readAt=now()).
+
+Hook de criação de Notice (no admin): ao publicar, criar StudentNotification para todos os alunos-alvo (batch com paginação para não travar).
+
+Avisos no dashboard:
+
+GET /api/students/:id/notices/recent?limit=4
+Retorna os 3–4 avisos mais recentes (independente de lido/não lido) para o bloco “Avisos & Eventos”.
+
+Aulas do dia/semana:
+
+GET /api/students/:id/classes/today → aulas do dia (com status de booking do aluno).
+
+GET /api/students/:id/classes/week?start=YYYY-MM-DD → aulas da semana (7 dias).
+
+POST /api/students/:id/classes/:classId/:date/confirm → cria/atualiza ClassBooking para CONFIRMED.
+
+POST /api/students/:id/classes/:classId/:date/cancel → CANCELLED.
+
+Regra: só permitir confirmar para hoje/futuro; cancelar com janela de tolerância (config).
+
+Frequência/Métricas:
+
+GET /api/students/:id/attendance/summary?month=YYYY-MM
+Retorna {participated, available, progressPct, beltLevel}.
+
+Regras/segurança:
+
+Todas as rotas autenticadas; autorizar apenas o próprio aluno (ou admin).
+
+3) Frontend (React + shadcn + Tailwind)
+
+Header do aluno (com sino):
+
+Componente StudentBell.tsx
+
+Exibe ícone 🔔 com badge de não lidos.
+
+Ao clicar, abre dropdown com os últimos 10 avisos: título, data, “Ver completo”.
+
+Ao abrir o aviso (modal) marcar como lido via PATCH.
+
+Atualizar badge em tempo real (otimista).
+
+Dashboard (novo layout):
+
+StudentDashboard.tsx:
+
+Saudação Topo: “👋 Olá, {firstName}!” + Faixa atual, Desde {data}.
+
+Bloco 1 – Aulas de Hoje: lista de cards com:
+
+horário, nome da turma, instrutor, local
+
+CTA principal: Confirmar Presença / status “✅ Confirmado”
+
+ação secundária: cancelar (se confirmado)
+
+Bloco 2 – Agenda da Semana (toggle):
+
+Botão “📆 Ver Agenda da Semana” → expande um acordeon com 7 dias (seg–dom)
+
+Para cada dia, cards similares com confirmar/cancelar
+
+Bloco 3 – Frequência/Métricas:
+
+KPI: participadas / disponíveis, barra de progresso, faixa atual
+
+Bloco 4 – Avisos & Eventos:
+
+Cards coloridos por severidade/tipo
+
+Botão “Ver todos os comunicados”
+
+Clique em um card → modal com o aviso completo; ao abrir, chamar PATCH read
+
+Estados/UX:
+
+Loading com skeletons.
+
+Confirmação/cancelamento otimistas (desabilitar botão enquanto processa).
+
+Toasts: sucesso/erro.
+
+Acessibilidade: focus management ao abrir dropdown/modal.
+
+Responsividade:
+
+Mobile: blocos empilhados; cards com CTA ocupando largura total.
+
+Desktop: grid com 2 colunas quando houver espaço (ex.: Aulas + Frequência lado a lado).
+
+Páginas/Componentes a criar/ajustar (exemplos de paths)
+
+frontend/src/components/student/StudentBell.tsx
+
+frontend/src/components/student/NoticesDropdown.tsx
+
+frontend/src/components/student/NoticeModal.tsx
+
+frontend/src/pages/student/StudentDashboard.tsx (ou container)
+
+frontend/src/components/student/TodayClasses.tsx
+
+frontend/src/components/student/WeekAgenda.tsx
+
+frontend/src/components/student/FrequencyCard.tsx
+
+frontend/src/components/student/NoticesBlock.tsx
+
+frontend/src/services/api/notices.ts
+
+frontend/src/services/api/classes.ts
+
+frontend/src/services/api/attendance.ts
+
+Regras de Produto / UX
+
+“Aulas de Hoje” sempre visível no topo do conteúdo (após a saudação).
+
+“Agenda da Semana” não carrega por padrão (evita ruído); carregar ao expandir ou pré-buscar em background leve.
+
+Confirmação:
+
+hoje ou futuro; impedir passado.
+
+edge: se confirmar e aula for removida → mostrar aviso e limpar booking.
+
+Cancelamento:
+
+permitir até X horas antes (config); depois disso, ocultar botão ou pedir contato.
+
+Notificações:
+
+badge = contagem de não lidos.
+
+marcar como lido apenas ao abrir o conteúdo completo (dropdown não basta).
+
+Avisos & Eventos:
+
+cores: azul (evento), amarelo (aviso), verde (positivo), vermelho (urgente).
+
+exibir “Publicados em … / Evento dia … / Público: …”.
+
+link “Ver todos” leva a lista histórica (pagina 20/20).
+
+Critérios de Aceitação
+
+Sino aparece no header do aluno com badge correto.
+
+Clicar no sino → lista de avisos. Abrir um aviso → badge decrementa; backend marca readAt.
+
+Dashboard mostra Aulas de Hoje com ações funcionando (confirmar/cancelar) e persistindo.
+
+Ao expandir Agenda da Semana, exibe 7 dias com aulas; confirmar futura funciona.
+
+Frequência/Métricas mostra dados do mês atual e faixa.
+
+Avisos & Eventos exibe últimos 3–4; abrir modal marca como lido; botão Baixar/Ver todos funciona (se houver).
+
+Mobile e desktop responsivos; CTAs sempre acessíveis.
+
+Toda chamada autenticada/autorizar apenas o próprio aluno.
+
+Testes/QA
+
+Trocar rapidamente entre alunos (contas diferentes) → badge e avisos corretos para cada um.
+
+Confirmar, recarregar a página → status persiste.
+
+Confirmar aula de amanhã, cancelar ainda hoje → respeita janela de cancelamento.
+
+Publicar aviso no admin → sino do aluno incrementa; abrir aviso → decrementa.
+
+Performance: dropdown de avisos abre em <200ms (cache leve, paginação 10 itens).
+
+Acessibilidade: navegação por teclado no sino e no modal.
+
+Observações de Implementação
+
+Seed/Backfill: criar StudentNotification para notices existentes (apenas recentes, ex.: 30 dias).
+
+Indices: garantir índices em StudentNotification(studentId, readAt) e em ClassBooking(studentId, date) para consultas rápidas.
+
+Feature flag (opcional): FEATURE_STUDENT_NOTICES=1 e FEATURE_WEEK_AGENDA=1 para rollout gradual.
+
+Telemetria (opcional): eventos notice_opened, class_confirmed, class_cancelled, week_agenda_opened.
+
+Entregáveis
+
+Migração de DB aplicada.
+
+Rotas de API criadas e documentadas no código.
+
+Novos componentes React funcionando e integrados.
+
+Dashboard do aluno no novo layout.
+
+QA básico passando nos critérios acima.

@@ -2866,7 +2866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
         const confirmedCount = existingAttendances.filter(att => 
           new Date(att.date).toISOString().split('T')[0] === classDateStr &&
-          att.status === 'present'
+          (att.status === 'confirmed' || att.status === 'present')
         ).length;
 
         if (confirmedCount >= classItem.maxStudents) {
@@ -2880,7 +2880,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === classDateStr
+        new Date(att.date).toISOString().split('T')[0] === classDateStr &&
+        (att.status === 'confirmed' || att.status === 'present')
       );
 
       if (existingAttendance) {
@@ -2955,7 +2956,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === classDateStr
+        new Date(att.date).toISOString().split('T')[0] === classDateStr &&
+        (att.status === 'confirmed' || att.status === 'present')
       );
 
       if (!existingAttendance) {

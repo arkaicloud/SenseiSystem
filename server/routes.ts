@@ -3192,6 +3192,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, message: "Class not found" });
       }
 
+      // Check class capacity
+      if (classItem.maxCapacity && classItem.maxCapacity > 0) {
+        const existingAttendances = await storage.getAttendanceByClass(classId, date);
+        const confirmedCount = existingAttendances.filter(att => 
+          new Date(att.date).toISOString().split('T')[0] === toDateString(date) &&
+          (att.status === 'confirmed' || att.status === 'present') &&
+          att.studentId !== student.id // Don't count current student
+        ).length;
+
+        if (confirmedCount >= classItem.maxCapacity) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Esta aula já atingiu o limite máximo de alunos" 
+          });
+        }
+      }
+
       // Use upsert pattern: first try to find existing attendance
       const existingAttendances = await storage.getAttendanceByClass(classId, date);
       let existingAttendance = existingAttendances.find(att => 
@@ -3224,6 +3241,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         booking = await storage.createAttendance(attendanceData);
       }
+
+      // Log activity
+      await storage.createActivityLog({
+        activity: `Aluno confirmou presença na aula: ${classItem.name}`,
+        userId: requestUser.id,
+        entityType: 'attendance',
+        entityId: booking.id,
+        timestamp: new Date()
+      });
 
       // Set no-store cache headers
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -3262,25 +3288,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let booking;
       if (existingAttendance) {
-        // Update to cancelled status or delete the record
-        await db.update(attendance)
-          .set({ status: 'cancelled' })
+        // Delete the attendance record instead of marking as cancelled
+        await db.delete(attendance)
           .where(eq(attendance.id, existingAttendance.id));
           
-        // Fetch updated record
-        const updatedAttendances = await storage.getAttendanceByClass(classId, date);
-        booking = updatedAttendances.find(att => att.id === existingAttendance.id);
+        booking = { id: existingAttendance.id, status: 'cancelled' };
       } else {
-        // If no existing attendance, create a cancelled record for idempotency
-        const attendanceData = {
-          studentId: student.id,
-          classId: classId,
-          date: date,
-          status: 'cancelled' as const,
-          checkedInBy: requestUser.id
-        };
-        
-        booking = await storage.createAttendance(attendanceData);
+        // If no existing attendance, return success (already cancelled)
+        booking = { status: 'cancelled' };
+      }
+
+      // Get class info for logging
+      const classItem = await storage.getClass(classId);
+
+      // Log activity
+      if (classItem) {
+        await storage.createActivityLog({
+          activity: `Aluno cancelou presença na aula: ${classItem.name}`,
+          userId: requestUser.id,
+          entityType: 'attendance',
+          entityId: existingAttendance?.id || 0,
+          timestamp: new Date()
+        });
       }
 
       // Set no-store cache headers

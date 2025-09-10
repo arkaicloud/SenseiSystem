@@ -1,19 +1,28 @@
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, CheckCircle, Calendar, XCircle, Loader2 } from "lucide-react";
+import { Clock, User, CheckCircle, XCircle, Loader2, Calendar } from "lucide-react";
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ClassSession {
   id: number;
   name: string;
   startTime: string;
   endTime?: string;
+  duration?: number;
   instructorName?: string;
   location?: string;
   attendanceConfirmed: boolean;
   bookingStatus?: BookingStatus;
   dateISO?: string;
+  canConfirm?: boolean;
+  canCancel?: boolean;
+  maxCapacity?: number;
+  attendanceCount?: number;
 }
 
 interface TodayClassesProps {
@@ -27,8 +36,9 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
 
   const handleConfirm = (classSession: ClassSession) => {
-    // Usar dateISO da API ou fallback para hoje (server timezone)
-    const dateISO = classSession.dateISO || new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    const dateISO = classSession.dateISO || today;
+    
     confirmMutation.mutate({
       classId: classSession.id,
       dateISO: dateISO
@@ -36,8 +46,9 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   };
 
   const handleCancel = (classSession: ClassSession) => {
-    // Usar dateISO da API ou fallback para hoje (server timezone)
-    const dateISO = classSession.dateISO || new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    const dateISO = classSession.dateISO || today;
+    
     cancelMutation.mutate({
       classId: classSession.id,
       dateISO: dateISO
@@ -52,6 +63,18 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
     return classSession.attendanceConfirmed;
   };
 
+  const formatTime = (time: string, duration?: number) => {
+    if (duration) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const startMinutes = hours * 60 + minutes;
+      const endMinutes = startMinutes + duration;
+      const endHours = Math.floor(endMinutes / 60);
+      const endMins = endMinutes % 60;
+      return `${time} - ${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+    }
+    return time;
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -62,8 +85,14 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Carregando aulas...</p>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border rounded-lg p-4 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-24"></div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -83,7 +112,6 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
           <div className="text-center py-8 text-muted-foreground">
             <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
             <p>Nenhuma aula agendada para hoje</p>
-            <p className="text-sm">Aproveite para descansar e se preparar para as próximas aulas!</p>
           </div>
         </CardContent>
       </Card>
@@ -97,33 +125,38 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
           <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
           Aulas de Hoje
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {classes.map((classSession) => (
           <div
             key={classSession.id}
-            className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-            data-testid={`class-card-${classSession.id}`}
+            className="border rounded-lg p-4 hover:shadow-sm transition-shadow"
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold" data-testid={`text-class-name-${classSession.id}`}>
-                    {classSession.name}
-                  </h3>
+                  <h4 className="font-medium">{classSession.name}</h4>
                   <Badge variant="outline" className="text-xs">
-                    {classSession.location || 'Tatame 1'}
+                    {classSession.location || 'Tatame Principal'}
                   </Badge>
+                  {classSession.maxCapacity && (
+                    <Badge variant="secondary" className="text-xs">
+                      {classSession.attendanceCount || 0}/{classSession.maxCapacity}
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    <span>{classSession.startTime} - {classSession.endTime || '20:30'}</span>
+                    <span>{formatTime(classSession.startTime, classSession.duration)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="w-4 h-4" />
-                    <span>Professor {classSession.instructorName || 'Marcus'}</span>
+                    <span>{classSession.instructorName || 'Instrutor'}</span>
                   </div>
                 </div>
               </div>
@@ -141,7 +174,6 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                       onClick={() => handleCancel(classSession)}
                       disabled={isMutating}
                       className="w-full sm:w-auto text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
-                      data-testid={`button-cancel-${classSession.id}`}
                     >
                       {isMutating ? (
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -158,7 +190,6 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     disabled={isMutating}
                     className="w-full sm:w-auto text-white font-medium"
                     style={{ backgroundColor: primaryColor }}
-                    data-testid={`button-confirm-${classSession.id}`}
                   >
                     {isMutating ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -176,3 +207,5 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
     </Card>
   );
 };
+
+export default TodayClasses;

@@ -20,6 +20,7 @@ import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
 import BeltManagement from "@/pages/admin/BeltManagement";
+import WeekAgendaPage from "@/pages/student/week-agenda";
 import LoginPage from "@/pages/LoginPage";
 import WelcomePage from "@/pages/welcome-page";
 import OnboardingPage from "@/pages/onboarding-page";
@@ -115,6 +116,11 @@ function Router() {
         path="/belt-management"
         component={() => <BeltManagement />}
         allowedRoles={["admin"]}
+      />
+      <ProtectedRoute
+        path="/student/agenda"
+        component={() => <WeekAgendaPage />}
+        allowedRoles={["student"]}
       />
 
       {/* Public routes */}

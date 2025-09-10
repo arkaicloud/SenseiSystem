@@ -49,32 +49,36 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
   const { data: weekClasses, isLoading } = useQuery({
     queryKey: [`/api/students/${studentId}/classes/week`],
     queryFn: async () => {
-      // Por enquanto, simular dados da semana usando as aulas de hoje
+      // Buscar todas as aulas para poder filtrar por dia da semana
       const today = new Date();
-      const startDate = format(startOfDay(today), 'yyyy-MM-dd');
       
-      const response = await apiRequest('GET', '/api/classes/today');
+      const response = await apiRequest('GET', '/api/classes');
       if (!response.ok) {
         throw new Error('Erro ao buscar aulas');
       }
       
       const data = await response.json();
+      const allClasses = data.classes || [];
       
-      // Criar dados simulados para a semana
+      // Criar dados para a semana baseado no dia atual (domingo = 0, segunda = 1, etc.)
       const weekData: DayClasses[] = [];
       
       for (let i = 0; i < 7; i++) {
         const currentDate = addDays(today, i);
         const dayName = format(currentDate, 'EEEE', { locale: ptBR });
+        const currentDayOfWeek = currentDate.getDay(); // 0=domingo, 1=segunda, 2=terça, etc.
         
-        // Simular algumas aulas para cada dia (em uma implementação real, isso viria da API)
-        const dayClasses = data.classes?.map((cls: any, index: number) => ({
-          ...cls,
-          // Simular confirmação para dias futuros
-          attendanceConfirmed: i === 0 ? cls.attendanceConfirmed : false,
-          canConfirm: i >= 0, // Pode confirmar hoje e no futuro
-          canCancel: i >= 0 && cls.attendanceConfirmed
-        })).slice(0, Math.max(1, Math.floor(Math.random() * 4) + 1)) || [];
+        // Filtrar apenas aulas do dia da semana correto
+        const dayClasses = allClasses
+          .filter((cls: any) => cls.dayOfWeek === currentDayOfWeek)
+          .map((cls: any) => ({
+            ...cls,
+            // Para hoje (i === 0), manter o status atual de confirmação
+            // Para outros dias, resetar confirmação
+            attendanceConfirmed: i === 0 ? cls.attendanceConfirmed : false,
+            canConfirm: i >= 0, // Pode confirmar hoje e no futuro
+            canCancel: i >= 0 && (i === 0 ? cls.attendanceConfirmed : false)
+          }));
         
         weekData.push({
           date: currentDate,

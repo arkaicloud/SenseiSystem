@@ -2172,6 +2172,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Aulas filtradas para hoje: ${todaysClasses.length}`);
 
+      const requestUser = (req as any).user;
+      const student = await storage.getStudentByUserId(requestUser.id);
+
       const classesWithAttendance = await Promise.all(
         todaysClasses.map(async (classItem) => {
           try {
@@ -2184,9 +2187,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return attendanceDate === todayStr && (attendance.status === 'confirmed' || attendance.status === 'present');
             }).length;
 
+            // Verificar se o aluno logado confirmou presença para esta aula hoje
+            let attendanceConfirmed = false;
+            if (student) {
+              const userAttendance = attendances.find(attendance => {
+                const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+                return attendance.studentId === student.id && 
+                       attendanceDate === todayStr && 
+                       attendance.status === 'confirmed';
+              });
+              attendanceConfirmed = !!userAttendance;
+            }
+
             return {
               ...classItem,
               attendanceCount: todayAttendanceCount,
+              attendanceConfirmed: attendanceConfirmed,
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                 : 'Sem instrutor'
@@ -2196,6 +2212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return {
               ...classItem,
               attendanceCount: 0,
+              attendanceConfirmed: false,
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                 : 'Sem instrutor'

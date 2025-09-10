@@ -152,14 +152,14 @@ const Profile: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">Perfil</h1>
           <p className="text-gray-600 dark:text-gray-300">Gerencie suas informações pessoais</p>
         </div>
         {!isEditing && (
           <Button
-            className="mt-4 md:mt-0 bg-secondary hover:bg-secondary-dark text-white"
+            className="mt-4 sm:mt-0 bg-secondary hover:bg-secondary-dark text-white"
             onClick={() => setIsEditing(true)}
           >
             <span className="material-icons mr-1 text-sm">edit</span>
@@ -173,8 +173,8 @@ const Profile: React.FC = () => {
       ) : !user ? (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">Usuário não encontrado</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
@@ -252,7 +252,7 @@ const Profile: React.FC = () => {
             </Card>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle>Detalhes do Perfil</CardTitle>
@@ -268,7 +268,7 @@ const Profile: React.FC = () => {
                   <TabsContent value="details">
                     {isEditing ? (
                       <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               First Name
@@ -349,7 +349,7 @@ const Profile: React.FC = () => {
                       </form>
                     ) : (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-gray-500">First Name</p>
                             <p className="font-medium">{user.firstName}</p>

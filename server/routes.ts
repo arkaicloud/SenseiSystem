@@ -2181,7 +2181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Contar presenças confirmadas para hoje
             const todayAttendanceCount = attendances.filter(attendance => {
               const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
-              return attendanceDate === todayStr && attendance.status === 'present';
+              return attendanceDate === todayStr && (attendance.status === 'confirmed' || attendance.status === 'present');
             }).length;
 
             return {
@@ -2781,7 +2781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentId: student.id,
         classId: classId,
         date: classDate,
-        status: 'present' as const,
+        status: 'confirmed' as const,
         checkedInBy: requestUser.id
       };
 

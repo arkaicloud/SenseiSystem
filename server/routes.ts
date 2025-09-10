@@ -2365,7 +2365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           student_id: students.id,
           name: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('name'),
           belt_level: students.beltLevel,
-          confirmed: sql<boolean>`CASE WHEN ${attendance.status} = 'confirmed' THEN true ELSE false END`.as('confirmed'),
+          confirmed: sql<boolean>`CASE WHEN ${attendance.status} IN ('confirmed', 'present') THEN true ELSE false END`.as('confirmed'),
           status: attendance.status
         })
         .from(attendance)

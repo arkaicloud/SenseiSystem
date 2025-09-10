@@ -2202,9 +2202,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return isChild;
         }
         
-        // Aulas mistas: para todos (exceto infantil que já foi tratado acima)
+        // Aulas mistas: para TODOS (crianças e adultos)
         if (classType === 'misto') {
-          return !isChild; // Adultos podem fazer mistas
+          return true;
         }
         
         // Aulas masculinas: apenas para homens adultos
@@ -2343,9 +2343,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return isChild;
         }
         
-        // Aulas mistas: para todos (exceto infantil que já foi tratado acima)
+        // Aulas mistas: para TODOS (crianças e adultos)
         if (classType === 'misto') {
-          return !isChild; // Adultos podem fazer mistas
+          return true;
         }
         
         // Aulas masculinas: apenas para homens adultos

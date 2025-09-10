@@ -29,12 +29,37 @@ export default function WeekAgendaPage() {
 
   return (
     <MainLayout>
-      <div className="p-6">
-        <WeekAgenda 
-          studentId={studentData?.id || 0}
-          primaryColor={primaryColor}
-          showHeader={true}
-        />
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <span className="text-white font-bold text-sm">S</span>
+                </div>
+                <h1 className="text-xl font-bold text-gray-900">SenseiSystem</h1>
+              </div>
+              <div className="text-sm text-gray-500">
+                Agenda da Semana
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="space-y-6">
+            <WeekAgenda 
+              studentId={studentData?.id || 0}
+              primaryColor={primaryColor}
+              showHeader={true}
+            />
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

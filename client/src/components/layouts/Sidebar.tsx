@@ -87,26 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
         },
       ],
     },
-    {
-      id: "aulas",
-      label: "Aulas",
-      icon: Calendar,
-      children: [
-        {
-          id: "turmas-horarios",
-          label: "Turmas e Horários",
-          icon: Clock,
-          path: "/classes",
-          roles: ["admin", "instructor"],
-        },
-        {
-          id: "controle-presenca",
-          label: "Controle de Presença",
-          icon: CheckSquare,
-          path: "/attendance",
-        },
-      ],
-    },
+    
     {
       id: "financeiro",
       label: "Financeiro",

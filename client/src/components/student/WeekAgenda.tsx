@@ -255,8 +255,8 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
           </div>
         ) : (
           <div className="space-y-4">
-            {weekClasses?.map((day) => (
-              <Card key={day.date.toISOString()} className="w-full shadow-sm border border-gray-200 dark:border-gray-700">
+            {weekClasses?.weekData?.map((day) => (
+              <Card key={day.date} className="w-full shadow-sm border border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
@@ -264,12 +264,12 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge 
-                        variant={isToday(day.date) ? "default" : "outline"}
+                        variant={isToday(new Date(day.date)) ? "default" : "outline"}
                         className="text-sm"
                       >
-                        {format(day.date, 'dd/MM')}
+                        {format(new Date(day.date), 'dd/MM')}
                       </Badge>
-                      {isToday(day.date) && (
+                      {isToday(new Date(day.date)) && (
                         <Badge 
                           className="text-sm text-white font-medium"
                           style={{ backgroundColor: primaryColor }}
@@ -292,15 +292,15 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                 ) : (
                   <div className="space-y-4">
                     {day.classes.map((classItem) => {
-                      const actionKey = `${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`;
+                      const actionKey = `${classItem.id}-${day.date}`;
                       const isActionLoading = loadingActions.has(actionKey);
                       const isConfirmed = classItem.attendanceConfirmed;
                       
                       return (
                         <div
-                          key={`${classItem.id}-${day.date.toISOString()}`}
+                          key={`${classItem.id}-${day.date}`}
                           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600"
-                          data-testid={`week-class-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
+                          data-testid={`week-class-${classItem.id}-${day.date}`}
                         >
                           {/* Informações da aula - Coluna 1 */}
                           <div className="flex flex-col space-y-2 md:col-span-1 lg:col-span-2">
@@ -332,9 +332,9 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                                     size="sm"
                                     variant="ghost"
                                     className="w-full sm:w-auto h-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
-                                    onClick={() => handleCancelAttendance(classItem.id, day.date)}
+                                    onClick={() => handleCancelAttendance(classItem.id, new Date(day.date))}
                                     disabled={isActionLoading}
-                                    data-testid={`button-cancel-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
+                                    data-testid={`button-cancel-${classItem.id}-${day.date}`}
                                   >
                                     {isActionLoading ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -351,9 +351,9 @@ export const WeekAgenda = ({ studentId, primaryColor = "#B85C38", showHeader = t
                                   size="sm"
                                   className="w-full sm:w-auto h-10 text-white font-medium"
                                   style={{ backgroundColor: primaryColor }}
-                                  onClick={() => handleConfirmAttendance(classItem.id, day.date)}
+                                  onClick={() => handleConfirmAttendance(classItem.id, new Date(day.date))}
                                   disabled={isActionLoading}
-                                  data-testid={`button-confirm-${classItem.id}-${format(day.date, 'yyyy-MM-dd')}`}
+                                  data-testid={`button-confirm-${classItem.id}-${day.date}`}
                                 >
                                   {isActionLoading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />

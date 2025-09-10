@@ -108,13 +108,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       roles: ["admin", "instructor"],
       children: [
         {
-          id: "mensalidades",
-          label: "Contas a Receber",
-          icon: CreditCard,
-          path: "/payments",
-          roles: ["admin", "instructor"],
-        },
-        {
           id: "planos",
           label: "Planos",
           icon: FileText,

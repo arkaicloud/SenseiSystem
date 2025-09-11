@@ -36,6 +36,16 @@ interface WeekAgendaProps {
 
 export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: WeekAgendaProps) => {
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
+  
+  // Debug
+  React.useEffect(() => {
+    console.log('🔍 WeekAgenda props:', { 
+      weekDataLength: weekData?.length, 
+      studentId, 
+      isLoading,
+      weekData: weekData?.slice(0, 2) // Log primeiros 2 dias para debug
+    });
+  }, [weekData, studentId, isLoading]);
 
   const handleConfirm = (classSession: ClassSession, date: string) => {
     const dateISO = classSession.dateISO || date;
@@ -99,7 +109,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
     );
   }
 
-  if (!weekData || weekData.length === 0) {
+  if (!isLoading && (!weekData || weekData.length === 0)) {
     return (
       <Card>
         <CardHeader>
@@ -113,6 +123,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
             <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
             <p>Nenhuma aula encontrada para esta semana</p>
             <p className="text-sm mt-2">Verifique com a academia sobre os horários disponíveis</p>
+            <p className="text-xs mt-1 text-muted-foreground/70">StudentId: {studentId}</p>
           </div>
         </CardContent>
       </Card>

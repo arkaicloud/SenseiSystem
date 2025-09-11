@@ -45,10 +45,10 @@ export default function WeekAgendaPage() {
   });
 
   const { data: weekData, isLoading, error } = useQuery<WeekDataResponse>({
-    queryKey: ['/api/students', studentData?.id, 'classes/week'],
+    queryKey: [`/api/students/${studentData?.id}/classes/week`],
     enabled: !!studentData?.id,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 1, // 1 minuto
   });
 
   // Debug para acompanhar o carregamento

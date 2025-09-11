@@ -2320,7 +2320,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`👤 Estudante encontrado: ${student.id}, comparando com ${studentId}`);
       
-      if (student.id !== parseInt(studentId)) {
+      // Para estudantes, só podem ver sua própria agenda
+      if (requestUser.role === 'student' && student.id !== parseInt(studentId)) {
         console.log(`❌ Acesso negado - student.id: ${student.id} !== studentId: ${studentId}`);
         return res.status(403).json({ message: "Acesso negado" });
       }
@@ -2331,10 +2332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Dados do usuário não encontrados" });
       }
 
-      // Determinar categoria do aluno (simplificado para debug)
+      // Determinar categoria do aluno
       const isChild = userData.birthDate ? 
         ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
-      const userSex = userData.sex?.toLowerCase() || null;
+      const userSex = userData.sex?.toLowerCase() || 'misto';
       
       console.log(`👤 Usuário: ${userData.firstName}, sexo: ${userSex}, criança: ${isChild}`);
 
@@ -2342,14 +2343,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allClasses = await storage.getClassesWithInstructors();
       console.log(`🎯 Total de aulas no sistema: ${allClasses.length}`);
       
-      // Para debug inicial, não filtrar por categoria - mostrar todas as aulas ativas
+      // Filtrar aulas baseado na categoria do aluno (igual ao dashboard)
       const allowedClasses = allClasses.filter(classItem => {
-        const isActive = classItem.isActive !== false;
-        console.log(`🔍 Aula ${classItem.name}: isActive = ${isActive}, type = ${classItem.type || 'sem tipo'}`);
-        return isActive;
+        if (!classItem.isActive || classItem.isActive === false) return false;
+        
+        if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
+        
+        const classType = classItem.type.toLowerCase();
+        
+        // Aulas infantis: apenas para crianças
+        if (classType === 'infantil') {
+          return isChild;
+        }
+        
+        // Aulas mistas: para TODOS (crianças e adultos)
+        if (classType === 'misto') {
+          return true;
+        }
+        
+        // Aulas masculinas: apenas para homens adultos
+        if (classType === 'masculino') {
+          return !isChild && userSex === 'masculino';
+        }
+        
+        // Aulas femininas: apenas para mulheres adultas
+        if (classType === 'feminino') {
+          return !isChild && userSex === 'feminino';
+        }
+        
+        return true; // Default: permite
       });
       
-      console.log(`🎯 Aulas ativas encontradas: ${allowedClasses.length} de ${allClasses.length} total`);
+      console.log(`🎯 Aulas permitidas encontradas: ${allowedClasses.length} de ${allClasses.length} total`);
       
       // Criar dados para próximos 7 dias consecutivos começando hoje (horário de Brasília)
       const today = getBrasiliaDate();
@@ -2418,17 +2443,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const classData = {
                 id: classItem.id,
                 name: classItem.name,
-                type: classItem.type,
+                type: classItem.type || 'misto',
                 startTime: classItem.startTime,
                 endTime: endTime,
-                duration: classItem.duration || 90, // Duração padrão em minutos
-                maxCapacity: classItem.maxCapacity || classItem.maxStudents,
+                duration: classItem.duration || 90,
+                maxCapacity: classItem.maxCapacity || classItem.maxStudents || 20,
                 location: classItem.location || 'Tatame Principal',
                 attendanceConfirmed,
                 bookingStatus,
                 dateISO: dateStr,
-                canConfirm: !attendanceConfirmed,
-                canCancel: attendanceConfirmed,
+                canConfirm: !attendanceConfirmed && bookingStatus !== 'CONFIRMED',
+                canCancel: attendanceConfirmed || bookingStatus === 'CONFIRMED',
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                   : 'Instrutor'

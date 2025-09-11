@@ -1,114 +1,273 @@
 
-const { db } = require('./server/db');
-const { notices, studentNotifications, students, users } = require('./shared/schema');
+<old_str>const { db } = require('./server/db.js');
+const { notices, studentNotifications, students, users } = require('./shared/schema.js');
 const { eq } = require('drizzle-orm');
 
 async function createSampleNotices() {
+  console.log('🔔 Criando avisos de exemplo...');
+
   try {
-    console.log('🔍 Verificando avisos existentes...');
-    
-    // Verificar se já existem avisos
-    const existingNotices = await db.select().from(notices);
-    console.log(`📊 Avisos existentes: ${existingNotices.length}`);
-    
-    if (existingNotices.length === 0) {
-      console.log('📢 Criando avisos de exemplo...');
+    // Primeiro, buscar um usuário admin para ser o criador
+    const adminUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, 'admin'))
+      .limit(1);
+
+    if (adminUser.length === 0) {
+      console.error('❌ Nenhum usuário admin encontrado. Crie um admin primeiro.');
+      return;
+    }
+
+    const createdBy = adminUser[0].id;
+
+    // Avisos de exemplo
+    const sampleNotices = [
+      {
+        title: 'Bem-vindo ao SenseiSystem! 🥋',
+        content: 'Seja bem-vindo(a) ao nosso sistema! Aqui você pode acompanhar suas aulas, confirmar presenças e ficar por dentro de todos os eventos da academia.',
+        level: 'MEDIUM',
+        audience: 'ALL',
+        publishAt: new Date(),
+        eventAt: null,
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Graduação de Faixas - Setembro 2024 🏆',
+        content: 'A cerimônia de graduação será realizada no dia 28 de setembro. Os alunos aprovados receberão comunicado individual na próxima semana. Parabéns pelo empenho!',
+        level: 'HIGH',
+        audience: 'STUDENTS',
+        publishAt: new Date(),
+        eventAt: new Date('2024-09-28'),
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Seminário Técnico com Mestre Carlos 📚',
+        content: 'Grande oportunidade de aprendizado! Seminário técnico especial no próximo sábado às 14h. Inscrições na recepção até sexta-feira.',
+        level: 'HIGH',
+        audience: 'ALL',
+        publishAt: new Date(),
+        eventAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Próxima semana
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Alteração de Horário - Aula Quinta 📅',
+        content: 'A aula de quinta-feira das 19h será antecipada para 18h30 devido ao evento especial. Ajustem suas agendas!',
+        level: 'MEDIUM',
+        audience: 'STUDENTS',
+        publishAt: new Date(),
+        eventAt: null,
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Limpeza e Manutenção do Tatame 🧹',
+        content: 'Mutirão de limpeza e manutenção do tatame no domingo pela manhã. Contamos com a participação de todos para manter nossa academia sempre em ordem!',
+        level: 'LOW',
+        audience: 'ALL',
+        publishAt: new Date(),
+        eventAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Daqui a 3 dias
+        createdBy: createdBy,
+        isActive: true
+      }
+    ];
+
+    // Inserir avisos
+    const insertedNotices = await db
+      .insert(notices)
+      .values(sampleNotices)
+      .returning();
+
+    console.log(`✅ ${insertedNotices.length} avisos criados com sucesso!`);
+
+    // Criar notificações para todos os alunos ativos
+    const activeStudents = await db
+      .select({ id: students.id })
+      .from(students)
+      .innerJoin(users, eq(students.userId, users.id))
+      .where(eq(users.active, true));
+
+    console.log(`📤 Criando notificações para ${activeStudents.length} alunos...`);
+
+    if (activeStudents.length > 0) {
+      const notifications = [];
       
-      // Criar avisos de exemplo
-      const sampleNotices = [
-        {
-          title: "Bem-vindo ao SenseiSystem!",
-          content: "Seja bem-vindo à nossa academia! Aqui você encontrará todas as informações importantes sobre suas aulas, eventos e muito mais. Qualquer dúvida, fale com nosso Sensei.",
-          level: "MEDIUM",
-          audience: "ALL",
-          publishAt: new Date(),
-          isActive: true,
-          createdBy: 1
-        },
-        {
-          title: "Horários Especiais de Fim de Ano",
-          content: "Atenção! Durante o período de dezembro, teremos horários especiais devido às festas de fim de ano. As aulas serão suspensas nos dias 24, 25 e 31 de dezembro, e 1° de janeiro. Retornaremos normalmente no dia 2 de janeiro.",
-          level: "HIGH",
-          audience: "STUDENTS",
-          publishAt: new Date(),
-          eventAt: new Date('2024-12-24'),
-          isActive: true,
-          createdBy: 1
-        },
-        {
-          title: "Workshop de Defesa Pessoal",
-          content: "No próximo sábado teremos um workshop especial de defesa pessoal para todos os alunos. O workshop será das 9h às 12h. Participação gratuita para alunos ativos. Tragam seus amigos!",
-          level: "MEDIUM",
-          audience: "STUDENTS",
-          publishAt: new Date(),
-          eventAt: new Date('2024-12-14'),
-          isActive: true,
-          createdBy: 1
-        },
-        {
-          title: "Graduação de Fim de Ano",
-          content: "A cerimônia de graduação de fim de ano será realizada no dia 15 de dezembro. Todos os alunos aptos para graduação já foram notificados individualmente. Familiares são bem-vindos para prestigiar!",
-          level: "HIGH",
-          audience: "ALL",
-          publishAt: new Date(),
-          eventAt: new Date('2024-12-15'),
-          isActive: true,
-          createdBy: 1
-        }
-      ];
-      
-      // Inserir avisos
-      const insertedNotices = await db.insert(notices).values(sampleNotices).returning();
-      console.log(`✅ ${insertedNotices.length} avisos criados`);
-      
-      // Buscar todos os alunos ativos
-      const activeStudents = await db
-        .select({ id: students.id })
-        .from(students)
-        .innerJoin(users, eq(students.userId, users.id))
-        .where(eq(users.active, true));
-      
-      console.log(`👥 Alunos ativos encontrados: ${activeStudents.length}`);
-      
-      if (activeStudents.length > 0) {
-        // Criar notificações para todos os alunos
-        const notifications = [];
-        for (const notice of insertedNotices) {
-          if (notice.audience === 'ALL' || notice.audience === 'STUDENTS') {
-            for (const student of activeStudents) {
-              notifications.push({
-                studentId: student.id,
-                noticeId: notice.id
-              });
-            }
+      for (const notice of insertedNotices) {
+        // Avisos para todos ou apenas para estudantes
+        if (notice.audience === 'ALL' || notice.audience === 'STUDENTS') {
+          for (const student of activeStudents) {
+            notifications.push({
+              studentId: student.id,
+              noticeId: notice.id,
+              readAt: null // Não lido inicialmente
+            });
           }
         }
-        
-        if (notifications.length > 0) {
-          await db.insert(studentNotifications).values(notifications);
-          console.log(`📤 ${notifications.length} notificações criadas para alunos`);
-        }
       }
-      
-    } else {
-      console.log('ℹ️ Avisos já existem no banco de dados');
+
+      if (notifications.length > 0) {
+        await db.insert(studentNotifications).values(notifications);
+        console.log(`✅ ${notifications.length} notificações criadas!`);
+      }
     }
-    
-    // Mostrar estatísticas
-    const totalNotices = await db.select().from(notices);
-    const totalNotifications = await db.select().from(studentNotifications);
-    
-    console.log('\n📊 Estatísticas:');
-    console.log(`   Avisos cadastrados: ${totalNotices.length}`);
-    console.log(`   Notificações enviadas: ${totalNotifications.length}`);
-    
-    console.log('\n🎉 Script concluído com sucesso!');
-    process.exit(0);
+
+    console.log('🎉 Avisos de exemplo criados com sucesso!');
     
   } catch (error) {
     console.error('❌ Erro ao criar avisos:', error);
-    process.exit(1);
   }
 }
 
-createSampleNotices();
+// Executar se chamado diretamente
+if (require.main === module) {
+  createSampleNotices()
+    .then(() => {
+      console.log('✅ Script concluído!');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('❌ Erro no script:', error);
+      process.exit(1);
+    });
+}
+
+module.exports = { createSampleNotices };</old_str>
+<new_str>const { db } = require('./server/db.js');
+const { notices, studentNotifications, students, users } = require('./shared/schema.js');
+const { eq } = require('drizzle-orm');
+
+async function createSampleNotices() {
+  console.log('🔔 Criando avisos de exemplo...');
+
+  try {
+    // Primeiro, buscar um usuário admin para ser o criador
+    const adminUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, 'admin'))
+      .limit(1);
+
+    if (adminUser.length === 0) {
+      console.error('❌ Nenhum usuário admin encontrado. Crie um admin primeiro.');
+      return;
+    }
+
+    const createdBy = adminUser[0].id;
+
+    // Avisos de exemplo
+    const sampleNotices = [
+      {
+        title: 'Bem-vindo ao SenseiSystem! 🥋',
+        content: 'Seja bem-vindo(a) ao nosso sistema! Aqui você pode acompanhar suas aulas, confirmar presenças e ficar por dentro de todos os eventos da academia.',
+        level: 'MEDIUM',
+        audience: 'ALL',
+        publishAt: new Date(),
+        eventAt: null,
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Graduação de Faixas - Setembro 2024 🏆',
+        content: 'A cerimônia de graduação será realizada no dia 28 de setembro. Os alunos aprovados receberão comunicado individual na próxima semana. Parabéns pelo empenho!',
+        level: 'HIGH',
+        audience: 'STUDENTS',
+        publishAt: new Date(),
+        eventAt: new Date('2024-09-28'),
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Seminário Técnico com Mestre Carlos 📚',
+        content: 'Grande oportunidade de aprendizado! Seminário técnico especial no próximo sábado às 14h. Inscrições na recepção até sexta-feira.',
+        level: 'HIGH',
+        audience: 'ALL',
+        publishAt: new Date(),
+        eventAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Próxima semana
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Alteração de Horário - Aula Quinta 📅',
+        content: 'A aula de quinta-feira das 19h será antecipada para 18h30 devido ao evento especial. Ajustem suas agendas!',
+        level: 'MEDIUM',
+        audience: 'STUDENTS',
+        publishAt: new Date(),
+        eventAt: null,
+        createdBy: createdBy,
+        isActive: true
+      },
+      {
+        title: 'Limpeza e Manutenção do Tatame 🧹',
+        content: 'Mutirão de limpeza e manutenção do tatame no domingo pela manhã. Contamos com a participação de todos para manter nossa academia sempre em ordem!',
+        level: 'LOW',
+        audience: 'ALL',
+        publishAt: new Date(),
+        eventAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Daqui a 3 dias
+        createdBy: createdBy,
+        isActive: true
+      }
+    ];
+
+    // Inserir avisos
+    const insertedNotices = await db
+      .insert(notices)
+      .values(sampleNotices)
+      .returning();
+
+    console.log(`✅ ${insertedNotices.length} avisos criados com sucesso!`);
+
+    // Criar notificações para todos os alunos ativos
+    const activeStudents = await db
+      .select({ id: students.id })
+      .from(students)
+      .innerJoin(users, eq(students.userId, users.id))
+      .where(eq(users.active, true));
+
+    console.log(`📤 Criando notificações para ${activeStudents.length} alunos...`);
+
+    if (activeStudents.length > 0) {
+      const notifications = [];
+      
+      for (const notice of insertedNotices) {
+        // Avisos para todos ou apenas para estudantes
+        if (notice.audience === 'ALL' || notice.audience === 'STUDENTS') {
+          for (const student of activeStudents) {
+            notifications.push({
+              studentId: student.id,
+              noticeId: notice.id,
+              readAt: null // Não lido inicialmente
+            });
+          }
+        }
+      }
+
+      if (notifications.length > 0) {
+        await db.insert(studentNotifications).values(notifications);
+        console.log(`✅ ${notifications.length} notificações criadas!`);
+      }
+    }
+
+    console.log('🎉 Avisos de exemplo criados com sucesso!');
+    
+  } catch (error) {
+    console.error('❌ Erro ao criar avisos:', error);
+  }
+}
+
+// Executar se chamado diretamente
+if (require.main === module) {
+  createSampleNotices()
+    .then(() => {
+      console.log('✅ Script concluído!');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('❌ Erro no script:', error);
+      process.exit(1);
+    });
+}
+
+module.exports = { createSampleNotices };</new_str>

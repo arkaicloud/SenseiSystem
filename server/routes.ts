@@ -6545,6 +6545,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== NOTICES/ANNOUNCEMENTS ENDPOINTS =====
 
+  // GET: Listar todos os comunicados (para admin)
+  app.get("/api/notices", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const allNotices = await db
+        .select({
+          id: notices.id,
+          title: notices.title,
+          content: notices.content,
+          level: notices.level,
+          audience: notices.audience,
+          publishAt: notices.publishAt,
+          eventAt: notices.eventAt,
+          isActive: notices.isActive,
+          createdAt: notices.createdAt,
+          createdBy: notices.createdBy
+        })
+        .from(notices)
+        .orderBy(desc(notices.createdAt));
+
+      res.json(allNotices);
+    } catch (error) {
+      console.error('❌ Error fetching notices:', error);
+      res.status(500).json({ message: "Error fetching notices" });
+    }
+  });
+
+  // PUT: Atualizar comunicado
+  app.put("/api/notices/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const noticeId = parseInt(req.params.id);
+
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const { title, content, level, audience, eventAt } = req.body;
+
+      if (!title || !content) {
+        return res.status(400).json({ message: "Título e conteúdo são obrigatórios" });
+      }
+
+      const [updatedNotice] = await db
+        .update(notices)
+        .set({
+          title,
+          content,
+          level: level || 'MEDIUM',
+          audience: audience || 'ALL',
+          eventAt: eventAt ? new Date(eventAt) : null,
+          updatedAt: new Date()
+        })
+        .where(eq(notices.id, noticeId))
+        .returning();
+
+      if (!updatedNotice) {
+        return res.status(404).json({ message: "Comunicado não encontrado" });
+      }
+
+      res.json({ success: true, notice: updatedNotice });
+    } catch (error) {
+      console.error("Error updating notice:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // DELETE: Deletar comunicado
+  app.delete("/api/notices/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const noticeId = parseInt(req.params.id);
+
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const [deletedNotice] = await db
+        .update(notices)
+        .set({ 
+          isActive: false,
+          updatedAt: new Date()
+        })
+        .where(eq(notices.id, noticeId))
+        .returning();
+
+      if (!deletedNotice) {
+        return res.status(404).json({ message: "Comunicado não encontrado" });
+      }
+
+      // Remover notificações relacionadas
+      await db
+        .delete(studentNotifications)
+        .where(eq(studentNotifications.noticeId, noticeId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notice:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // GET: Listar comunicados para o painel do aluno (com status de lido)
   app.get("/api/students/:id/notifications", isAuthenticated, async (req, res) => {
     try {

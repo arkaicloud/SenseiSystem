@@ -41,6 +41,12 @@ export const DashboardSchema = z.object({
 
 export type DashboardDTO = z.infer<typeof DashboardSchema>;
 
+// Login Schema
+export const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(1, "Senha é obrigatória")
+});
+
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student']);
 export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'brown', 'black']);

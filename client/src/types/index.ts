@@ -43,7 +43,7 @@ export interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResponse | void>;
   register: (email: string, password: string, additionalData: any) => Promise<void>;
   logout: () => void;
   clearError: () => void;

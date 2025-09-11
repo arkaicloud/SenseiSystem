@@ -52,8 +52,11 @@ export default function Login() {
       const result = await login(data.email, data.password);
       
       // Não navegar imediatamente - mostrar TransitionGate
-      if (result?.user?.role) {
+      if (result && 'user' in result && result.user?.role) {
         setUserRole(result.user.role);
+        setShowTransitionGate(true);
+      } else {
+        // Fallback para quando o login não retorna dados
         setShowTransitionGate(true);
       }
     } catch (error) {

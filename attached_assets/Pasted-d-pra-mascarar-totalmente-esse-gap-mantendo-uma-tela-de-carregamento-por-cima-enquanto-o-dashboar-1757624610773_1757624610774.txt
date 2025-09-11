@@ -1,0 +1,156 @@
+dá pra “mascarar” totalmente esse gap mantendo uma tela de carregamento por cima enquanto o dashboard carrega atrás (chunk + dados). A chave é: não navegar ainda. Primeiro pré-carrega tudo (bundle do dashboard + queries críticas), só depois faz navigate() e tira o overlay com um fade. Aqui vai um kit plug-and-play para React Router + TanStack Query (adapte os nomes):
+
+1) Loader central que sabe o que precisa estar “pronto”
+// app/loaders.ts
+import { queryClient } from "./queryClient";
+
+// pré-carrega o bundle JS pesado do dashboard
+export const preloadDashboardChunk = () => import("../routes/DashboardInner");
+
+// queries essenciais do topo do dashboard
+async function prefetchDashboard() {
+  await Promise.all([
+    queryClient.prefetchQuery(["me"], getMe),
+    queryClient.prefetchQuery(["dashboard:init"], fetchDashboardInit),
+  ]);
+}
+
+export async function warmUpDashboard() {
+  await Promise.all([preloadDashboardChunk(), prefetchDashboard()]);
+}
+
+2) Gate de transição: segura a navegação, carrega “por trás” e só então navega
+// app/TransitionGate.tsx
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { warmUpDashboard } from "./loaders";
+
+export default function TransitionGate({
+  to = "/dashboard",
+  text = "Preparando seu painel...",
+}: { to?: string; text?: string }) {
+  const nav = useNavigate();
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        await warmUpDashboard();        // carrega bundle + dados (em background)
+        if (!mounted) return;
+        nav(to, { replace: true });     // agora sim, troca de rota
+        // pequena graça para evitar flash
+        setTimeout(() => mounted && setVisible(false), 300);
+      } catch {
+        // opcional: tratar erro e navegar para uma tela de fallback
+      }
+    })();
+    return () => { mounted = false; };
+  }, [nav, to]);
+
+  if (!visible) return null;
+  return (
+    <div className="fixed inset-0 z-[9999] grid place-items-center bg-[rgba(10,12,18,.92)] backdrop-blur-md">
+      <div className="rounded-2xl p-6 text-white shadow-xl w-[min(92vw,420px)]">
+        <div className="mb-4 flex items-center gap-3">
+          <img src="/logo.svg" alt="" className="h-8 w-8" />
+          <strong>SenseiSystem</strong>
+        </div>
+        <div className="h-1.5 w-full rounded bg-white/10 overflow-hidden">
+          <div className="h-full w-1/3 animate-[loader_1.2s_ease_infinite] bg-white/70" />
+        </div>
+        <p className="mt-3 text-sm opacity-80">{text}</p>
+      </div>
+      <style>{`
+        @keyframes loader {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(220%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+3) Fluxo de login: em vez de navegar direto → mostra o Gate
+
+Depois do auth.login(), renderize <TransitionGate /> (um estado “gateOn”).
+
+O Gate faz o warm-up (chunk + queries) antes de navegar para o dashboard.
+
+// routes/Login.tsx
+import { useState } from "react";
+import TransitionGate from "../app/TransitionGate";
+
+export default function Login() {
+  const [gateOn, setGateOn] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await auth.login({ email, password }); // valida token etc.
+    setGateOn(true); // exibe overlay e deixa ele cuidar do pré-carregamento+navegação
+  }
+
+  return (
+    <>
+      {/* ... seu formulário ... */}
+      <form onSubmit={handleSubmit}>{/* ... */}</form>
+      {gateOn && <TransitionGate text="Carregando seu dojo..." />}
+    </>
+  );
+}
+
+
+Resultado: acaba a “tela branca”. Você vê o login → overlay persistente; enquanto isso o dashboard já está baixando e populando cache. Quando tudo está pronto, o Gate navega e some. O dashboard surge já com dados (sem 0→100 falso).
+
+4) No Dashboard em si: Suspense + Skeleton (sem tela vazia)
+// routes/Dashboard.tsx
+import { Suspense, lazy } from "react";
+const DashboardInner = lazy(() => import("./DashboardInner"));
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardInner /> {/* usa useQuery(..., { suspense: true }) */}
+    </Suspense>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-4 grid gap-4">
+      <div className="h-7 w-44 rounded bg-white/5 animate-pulse" />
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="h-40 rounded bg-white/5 animate-pulse" />
+        <div className="h-40 rounded bg-white/5 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+5) Evitar “branco” por CSS/estrutura
+
+Garanta que o layout raiz (header/aside/container) nunca desmonte entre rotas; troque só o <Outlet />.
+
+Coloque min-h-screen bg-[#0b1220] (ou sua cor de fundo) no contêiner raiz — o branco muitas vezes é só o body padrão.
+
+Se usa PWA, deixe um splash no HTML inicial (um #boot-loader) para cobrir hidratação.
+
+6) Amarrar a barra de progresso ao que realmente carrega
+
+Se quiser manter sua barra:
+
+Atualize percentuais a partir dos promises do warmUpDashboard():
+
++40% quando o chunk resolve,
+
++60% quando as queries resolvem,
+
+100% → navigate().
+
+7) Causas comuns dos 4–6s e como neutralizar
+
+Bundle do dashboard grande (charts, libs): deixe só no lazy (DashboardInner) – já fazemos preload no Gate.
+
+Query única pesada: quebre em 2–3 queries (KPI rápido primeiro).
+
+Main-thread bloqueada (gráficos): carregue charts com nextTick/requestIdleCallback dentro do DashboardInner.

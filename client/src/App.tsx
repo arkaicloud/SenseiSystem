@@ -31,9 +31,6 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import { AuthProvider } from "@/providers/auth-provider";
 import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { LoadingProvider, useLoading } from "@/hooks/LoadingContext";
-import LoadingOverlay from "@/components/ui/LoadingOverlay";
-import { useRouteLoading } from "@/hooks/useRouteLoading";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PendingRouteGuard } from "@/lib/pending-route-guard";
 import { RootGuard } from "@/components/guards/RootGuard";
@@ -43,9 +40,6 @@ import AsaasPaymentsPage from "./pages/asaas-payments";
 import CommunicationsPage from "./pages/admin/communications";
 
 function Router() {
-  // Hook para detectar mudanças de rota e mostrar loading overlay
-  useRouteLoading();
-  
   return (
     <Switch>
       {/* Protected routes */}
@@ -157,36 +151,25 @@ function Router() {
   );
 }
 
-function AppShell() {
-  const { busy, loadingText } = useLoading();
-  
-  return (
-    <div className="w-full h-full min-h-screen m-0 p-0">
-      <Toaster />
-      <PendingRouteGuard>
-        <RootGuard>
-          <Router />
-        </RootGuard>
-      </PendingRouteGuard>
-      {busy && <LoadingOverlay text={loadingText} />}
-    </div>
-  );
-}
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <LoadingProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <ThemeProvider>
-                <AppShell />
-              </ThemeProvider>
-            </TooltipProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </LoadingProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <ThemeProvider>
+              <div className="w-full h-full min-h-screen m-0 p-0">
+                <Toaster />
+                <PendingRouteGuard>
+                  <RootGuard>
+                    <Router />
+                  </RootGuard>
+                </PendingRouteGuard>
+              </div>
+            </ThemeProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

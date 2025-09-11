@@ -23,6 +23,7 @@ import {
   insertBeltLevelSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashPassword } from "./auth";
+import bcrypt from "bcryptjs";
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
@@ -6989,7 +6990,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verificar se a senha atual está correta
-      const bcrypt = require('bcryptjs');
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
       
       if (!isCurrentPasswordValid) {

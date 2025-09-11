@@ -326,31 +326,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           {filteredMenuItems.map(item => renderMenuItem(item))}
         </div>
 
-        {/* Admin specific links */}
-        {user?.role === 'admin' && (
-          <>
-            <SidebarItem 
-              icon={<Users className="h-4 w-4" />} 
-              label="Aprovações" 
-              to="/pending-users" 
-            />
-            <SidebarItem 
-              icon={<MessageSquare className="h-4 w-4" />} 
-              label="Comunicados" 
-              to="/admin/communications" 
-            />
-            <SidebarItem 
-              icon={<DollarSign className="h-4 w-4" />} 
-              label="Financeiro" 
-              to="/financial-dashboard" 
-            />
-            <SidebarItem 
-              icon={<FileText className="h-4 w-4" />} 
-              label="Relatórios" 
-              to="/reports" 
-            />
-          </>
-        )}
+        
 
         {/* Social Media Section */}
         {((schoolConfig as any)?.config?.instagram || (schoolConfig as any)?.config?.facebook || (schoolConfig as any)?.config?.whatsapp || (schoolConfig as any)?.config?.youtube || (schoolConfig as any)?.config?.tiktok) && (

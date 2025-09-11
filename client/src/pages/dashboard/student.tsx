@@ -139,7 +139,7 @@ export default function StudentDashboard() {
                       }
                     </p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                      💪 Continue assim! Cada aula é um passo a mais na sua jornada no Jiu-Jitsu!
+                      💪 Continue assim! Cada aula é um passo a mais na sua jornada!
                     </p>
                   </div>
                 </div>

@@ -25,11 +25,11 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
     queryKey: [`/api/student/attendance-current-month`],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/student/attendance-current-month');
-      
+
       if (!response.ok) {
         throw new Error('Erro ao buscar dados de frequência');
       }
-      
+
       return response.json();
     },
   });
@@ -39,11 +39,11 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
     queryKey: ['/api/student/profile'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/student/profile');
-      
+
       if (!response.ok) {
         throw new Error('Erro ao buscar perfil do aluno');
       }
-      
+
       return response.json();
     },
   });
@@ -71,15 +71,15 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
   const attendedClasses = attendanceData?.attendanceCount || 0;
   const totalClasses = attendanceData?.totalClasses || 1;
   const progressPct = Math.round((attendedClasses / totalClasses) * 100);
-  
+
   const beltName = getBeltName(studentProfile?.beltLevel || 'white');
   const beltColor = getBeltColor(studentProfile?.beltLevel || 'white');
-  
+
   // Calcular data de início na academia
   const enrollmentDate = studentProfile?.enrollmentDate 
     ? new Date(studentProfile.enrollmentDate) 
     : new Date();
-  
+
   const monthsSinceEnrollment = Math.floor(
     (Date.now() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
   );
@@ -111,7 +111,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
               {engagement.label}
             </Badge>
           </div>
-          
+
           <div className="mb-2">
             <Progress 
               value={progressPct} 
@@ -121,7 +121,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
               }}
             />
           </div>
-          
+
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
@@ -145,7 +145,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
               </Badge>
             )}
           </div>
-          
+
           <div className="text-sm text-muted-foreground">
             <div className="flex items-center gap-1 mb-1">
               <Award className="h-3 w-3" />
@@ -175,7 +175,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: Freque
               Aulas este mês
             </div>
           </div>
-          
+
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
               {Math.max(0, totalClasses - attendedClasses)}

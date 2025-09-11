@@ -221,8 +221,8 @@ export default function StudentDashboardNew() {
                     />
                     <span className="text-gray-600">{beltName}</span>
                   </div>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-600">
+                  <span className="text-gray-400 hidden sm:inline">•</span>
+                  <span className="text-gray-600 hidden sm:inline">
                     Desde {studentData?.enrollmentDate ? 
                       new Date(studentData.enrollmentDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) :
                       'este mês'
@@ -241,22 +241,18 @@ export default function StudentDashboardNew() {
             isLoading={isClassesLoading}
           />
 
+          {/* Bloco 2: Avisos & Eventos */}
+          <NoticesBlock 
+            studentId={studentData?.id || 0}
+            primaryColor={schoolConfig?.config?.primary_color || "#3b82f6"}
+            limit={4}
+          />
 
-          {/* Grid para Frequência e Avisos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Bloco 3: Frequência/Métricas */}
-            <FrequencyMetrics 
-              studentId={studentData?.id || 0}
-              primaryColor={primaryColor}
-            />
-
-            {/* Bloco 4: Avisos & Eventos */}
-            <NoticesBlock 
-              studentId={studentData?.id || 0}
-              primaryColor={schoolConfig?.config?.primary_color || "#3b82f6"}
-              limit={4}
-            />
-          </div>
+          {/* Bloco 3: Frequência & Progresso */}
+          <FrequencyMetrics 
+            studentId={studentData?.id || 0}
+            primaryColor={primaryColor}
+          />
         </div>
       </div>
     </div>

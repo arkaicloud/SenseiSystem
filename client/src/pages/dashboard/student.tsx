@@ -10,36 +10,37 @@ import { Calendar, CreditCard, BookOpen } from 'lucide-react';
 import FinancialPanel from '@/components/student/FinancialPanel';
 import AttendanceHistory from '@/components/student/AttendanceHistory';
 import { TodayClasses } from '@/components/student/TodayClasses';
+import { NoticesBlock } from "@/components/student/NoticesBlock";
 
 export default function StudentDashboard() {
   const { t } = useTranslations();
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("proximas-aulas");
-  
+
   // Get student data
   const { data: studentData, isLoading: isStudentLoading } = useQuery({
     queryKey: ['/api/student/profile', user?.id],
     enabled: !!user?.id,
   });
-  
+
   // Get today's classes
   const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
     queryKey: ['/api/classes/today'],
   });
-  
+
   // Get school events
   const { data: schoolEvents, isLoading: isEventsLoading } = useQuery({
     queryKey: ['/api/school-events'],
   });
-  
+
   // Get attendance count for current month
   const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
     queryKey: ['/api/student/attendance-current-month', user?.id],
     enabled: !!user?.id,
   });
-  
-  
+
+
   if (isStudentLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -47,7 +48,7 @@ export default function StudentDashboard() {
       </div>
     );
   }
-  
+
   // Get belt color mapping
   const getBeltColor = (beltLevel: string) => {
     const colors = {
@@ -59,7 +60,7 @@ export default function StudentDashboard() {
     };
     return colors[beltLevel as keyof typeof colors] || '#FFFFFF';
   };
-  
+
   // Format belt display
   const formatBelt = (beltLevel: string, stripes: number) => {
     const beltNames = {
@@ -72,7 +73,7 @@ export default function StudentDashboard() {
     const stripesText = stripes > 0 ? ` (${stripes} ${stripes === 1 ? 'fita' : 'fitas'})` : '';
     return `${beltNames[beltLevel as keyof typeof beltNames] || beltLevel}${stripesText}`;
   };
-  
+
   const currentMonthName = new Date().toLocaleDateString('pt-BR', { month: 'long' });
   const currentYear = new Date().getFullYear();
 
@@ -182,12 +183,12 @@ export default function StudentDashboard() {
                     </span>
                     <span className="text-gray-400 ml-2">aulas participadas este mês</span>
                   </div>
-                  
+
                   <Progress 
                     value={Math.min((attendanceData?.count || 0) * 10, 100)} 
                     className="h-2"
                   />
-                  
+
                   <p className="text-sm text-gray-400">
                     {(attendanceData?.count || 0) >= 8 
                       ? '🎉 Parabéns! Você atingiu a meta mensal!'

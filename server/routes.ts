@@ -6568,6 +6568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdBy: notices.createdBy
         })
         .from(notices)
+        .where(eq(notices.isActive, true))
         .orderBy(desc(notices.createdAt));
 
       res.json(allNotices);

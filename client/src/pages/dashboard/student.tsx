@@ -123,7 +123,7 @@ export default function StudentDashboard() {
                     <span className="text-2xl font-bold text-blue-400">
                       {(attendanceData && 'count' in attendanceData) ? attendanceData.count : 0}
                     </span>
-                    <span className="text-gray-600 dark:text-gray-400 ml-2">Aulas realizadas este mês</span>
+                    <span className="text-gray-600 dark:text-gray-400 ml-2">aulas com presença confirmada este mês</span>
                   </div>
 
                   <Progress 

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,24 @@ import { Bell, Calendar, Users, Award, Clock, AlertTriangle, Info, MessageCircle
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Link } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface Notice {
+  id: number;
+  title: string;
+  content: string;
+  level: 'LOW' | 'MEDIUM' | 'HIGH';
+  publishAt: string;
+  eventAt?: string;
+  readAt?: string;
+}
 
 interface NoticesBlockProps {
   studentId: number;
@@ -16,6 +34,9 @@ interface NoticesBlockProps {
 }
 
 export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }: NoticesBlockProps) => {
+  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   // Buscar avisos recentes para o estudante
   const { data: notices, isLoading } = useQuery({
     queryKey: [`/api/students/${studentId}/notices/recent`, { limit }],
@@ -28,6 +49,11 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
     },
     enabled: !!studentId,
   });
+
+  const handleNoticeClick = (notice: Notice) => {
+    setSelectedNotice(notice);
+    setIsDialogOpen(true);
+  };
 
   const getLevelIcon = (level: string) => {
     switch (level) {
@@ -140,14 +166,19 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
           </div>
           {notices.length >= limit && (
             <Button variant="ghost" size="sm" asChild>
-              <a href="/student/notices">Ver todos</a>
+              <Link href="/student/notices" data-testid="link-all-notices">Ver todos</Link>
             </Button>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {notices.map((notice: any) => (
-          <div key={notice.id} className={`${getLevelColor(notice.level)} border rounded-lg p-4`}>
+        {notices.map((notice: Notice) => (
+          <div 
+            key={notice.id} 
+            className={`${getLevelColor(notice.level)} border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]`}
+            onClick={() => handleNoticeClick(notice)}
+            data-testid={`notice-card-${notice.id}`}
+          >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2 flex-1">
                 {getLevelIcon(notice.level)}
@@ -178,9 +209,65 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
                 <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Novo</span>
               </div>
             )}
+            
+            <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+              Clique para ver detalhes
+            </div>
           </div>
         ))}
       </CardContent>
+
+      {/* Dialog para exibir aviso completo */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="notice-popup">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-2">
+              {selectedNotice && getLevelIcon(selectedNotice.level)}
+              <DialogTitle className="text-lg font-semibold">
+                {selectedNotice?.title}
+              </DialogTitle>
+              {selectedNotice && (
+                <Badge variant={getBadgeVariant(selectedNotice.level)} className="text-xs">
+                  {getLevelText(selectedNotice.level)}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+              <span>Publicado {selectedNotice && formatDate(selectedNotice.publishAt)}</span>
+              {selectedNotice?.eventAt && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Evento: {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR')}</span>
+                </div>
+              )}
+            </div>
+          </DialogHeader>
+          <DialogDescription asChild>
+            <div className="mt-4">
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {selectedNotice?.content || ''}
+              </div>
+              
+              {selectedNotice?.eventAt && (
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Informações do Evento</h4>
+                  </div>
+                  <p className="text-blue-800 dark:text-blue-200">
+                    <strong>Data:</strong> {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </DialogDescription>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

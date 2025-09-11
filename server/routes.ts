@@ -6831,6 +6831,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all notices for student
+  app.get("/api/students/:id/notices", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      const requestUser = (req as any).user;
+
+      console.log(`📢 Fetching all notices for student ${studentId}`);
+
+      // Verificar autorização (apenas o próprio aluno ou admin)
+      if (requestUser.role !== 'admin') {
+        const student = await storage.getStudentByUserId(requestUser.id);
+        if (!student || student.id !== studentId) {
+          return res.status(403).json({ message: "Acesso negado" });
+        }
+      }
+
+      const allNotices = await db
+        .select({
+          id: notices.id,
+          title: notices.title,
+          content: notices.content,
+          level: notices.level,
+          publishAt: notices.publishAt,
+          eventAt: notices.eventAt,
+          readAt: studentNotifications.readAt
+        })
+        .from(notices)
+        .leftJoin(studentNotifications, and(
+          eq(studentNotifications.noticeId, notices.id),
+          eq(studentNotifications.studentId, studentId)
+        ))
+        .where(and(
+          eq(notices.isActive, true),
+          or(
+            eq(notices.audience, 'ALL'),
+            eq(notices.audience, 'STUDENTS')
+          ),
+          lte(notices.publishAt, new Date())
+        ))
+        .orderBy(desc(notices.publishAt));
+
+      console.log(`✅ Found ${allNotices.length} notices for student ${studentId}`);
+      res.json(allNotices);
+    } catch (error) {
+      console.error('❌ Error fetching notices:', error);
+      res.status(500).json({ message: "Error fetching notices" });
+    }
+  });
+
   // Admin - Create notice
   app.post("/api/notices", isAuthenticated, async (req, res) => {
     try {

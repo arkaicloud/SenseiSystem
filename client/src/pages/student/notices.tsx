@@ -74,7 +74,7 @@ export default function StudentNoticesPage() {
     enabled: !!studentProfile?.id,
   });
 
-  const notices = noticesData?.notices || [];
+  const notices = noticesData?.notices || noticesData || [];
 
   // Marcar aviso como lido
   const markAsReadMutation = useMutation({
@@ -140,12 +140,12 @@ export default function StudentNoticesPage() {
   };
 
   // Filtrar avisos
-  const filteredNotices = notices?.notices?.filter((notice: Notice) => {
+  const filteredNotices = Array.isArray(notices) ? notices.filter((notice: Notice) => {
     const matchesSearch = notice.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          notice.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = levelFilter === "all" || notice.level === levelFilter;
     return matchesSearch && matchesLevel;
-  }) || [];
+  }) : [];
 
   if (isLoading) {
     return (
@@ -315,10 +315,9 @@ export default function StudentNoticesPage() {
           
           <DialogDescription asChild>
             <div className="space-y-4">
-              <div 
-                className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: selectedNotice?.content || '' }}
-              />
+              <div className="prose prose-sm max-w-none dark:prose-invert text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {selectedNotice?.content || ''}
+              </div>
               
               {selectedNotice?.eventAt && (
                 <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">

@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           path: "/students-at-risk",
           roles: ["admin", "instructor"],
         },
-        
+
         {
           id: "gerenciar-faixas",
           label: "Gerenciar Faixas",
@@ -306,7 +306,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             {(schoolConfig as any)?.config?.schoolName || 'SenseiSystem'}
           </h1>
         </div>
-        
+
         {/* Close button for mobile */}
         {isMobile && (
           <Button

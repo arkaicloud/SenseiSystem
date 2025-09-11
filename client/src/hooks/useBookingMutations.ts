@@ -70,12 +70,12 @@ export function useBookingMutations(providedStudentId?: number) {
     onMutate: async ({ classId, dateISO }: BookingMutationData) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['/api/classes/today'] });
-      await queryClient.cancelQueries({ queryKey: ['/api/students', studentId, 'classes/week'] });
+      await queryClient.cancelQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       await queryClient.cancelQueries({ queryKey: ['/api/attendance/by-student'] });
 
       // Snapshot the previous values
       const previousTodayClasses = queryClient.getQueryData<any>(['/api/classes/today']);
-      const previousWeekData = queryClient.getQueryData<any>(['/api/students', studentId, 'classes/week']);
+      const previousWeekData = queryClient.getQueryData<any>([`/api/students/${studentId}/classes/week`]);
       const previousStudentAttendance = queryClient.getQueryData<any>(['/api/attendance/by-student']);
 
       // Optimistically update caches
@@ -91,7 +91,7 @@ export function useBookingMutations(providedStudentId?: number) {
         };
       });
 
-      queryClient.setQueryData(['/api/students', studentId, 'classes/week'], (old: any) => {
+      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (old: any) => {
         if (!old?.weekData) return old;
         return {
           ...old,
@@ -127,7 +127,7 @@ export function useBookingMutations(providedStudentId?: number) {
         queryClient.setQueryData(['/api/classes/today'], context.previousTodayClasses);
       }
       if (context?.previousWeekData) {
-        queryClient.setQueryData(['/api/students', studentId, 'classes/week'], context.previousWeekData);
+        queryClient.setQueryData([`/api/students/${studentId}/classes/week`], context.previousWeekData);
       }
       if (context?.previousStudentAttendance) {
         queryClient.setQueryData(['/api/attendance/by-student'], context.previousStudentAttendance);
@@ -140,6 +140,12 @@ export function useBookingMutations(providedStudentId?: number) {
       });
     },
     onSuccess: () => {
+      // Invalidate queries to refetch data
+      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
+
       toast({
         title: "Presença confirmada!",
         description: "Sua presença foi confirmada com sucesso.",
@@ -148,7 +154,7 @@ export function useBookingMutations(providedStudentId?: number) {
     onSettled: () => {
       // Always refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/students', studentId, 'classes/week'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
     },
   });
@@ -181,12 +187,12 @@ export function useBookingMutations(providedStudentId?: number) {
     onMutate: async ({ classId, dateISO }: BookingMutationData) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['/api/classes/today'] });
-      await queryClient.cancelQueries({ queryKey: ['/api/students', studentId, 'classes/week'] });
+      await queryClient.cancelQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       await queryClient.cancelQueries({ queryKey: ['/api/attendance/by-student'] });
 
       // Snapshot the previous values
       const previousTodayClasses = queryClient.getQueryData<any>(['/api/classes/today']);
-      const previousWeekData = queryClient.getQueryData<any>(['/api/students', studentId, 'classes/week']);
+      const previousWeekData = queryClient.getQueryData<any>([`/api/students/${studentId}/classes/week`]);
       const previousStudentAttendance = queryClient.getQueryData<any>(['/api/attendance/by-student']);
 
       // Optimistically update caches
@@ -202,7 +208,7 @@ export function useBookingMutations(providedStudentId?: number) {
         };
       });
 
-      queryClient.setQueryData(['/api/students', studentId, 'classes/week'], (old: any) => {
+      queryClient.setQueryData([`/api/students/${studentId}/classes/week`], (old: any) => {
         if (!old?.weekData) return old;
         return {
           ...old,
@@ -238,7 +244,7 @@ export function useBookingMutations(providedStudentId?: number) {
         queryClient.setQueryData(['/api/classes/today'], context.previousTodayClasses);
       }
       if (context?.previousWeekData) {
-        queryClient.setQueryData(['/api/students', studentId, 'classes/week'], context.previousWeekData);
+        queryClient.setQueryData([`/api/students/${studentId}/classes/week`], context.previousWeekData);
       }
       if (context?.previousStudentAttendance) {
         queryClient.setQueryData(['/api/attendance/by-student'], context.previousStudentAttendance);
@@ -251,6 +257,12 @@ export function useBookingMutations(providedStudentId?: number) {
       });
     },
     onSuccess: () => {
+      // Invalidate queries to refetch data
+      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
+
       toast({
         title: "Presença cancelada",
         description: "Sua presença foi cancelada com sucesso.",
@@ -259,7 +271,7 @@ export function useBookingMutations(providedStudentId?: number) {
     onSettled: () => {
       // Always refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/students', studentId, 'classes/week'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
     },
   });

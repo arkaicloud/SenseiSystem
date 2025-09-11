@@ -33,26 +33,30 @@ export default function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 md:hidden"
+      className="fixed bottom-0 left-0 right-0 md:hidden bg-background/95 border-t backdrop-blur shadow-[0_-6px_16px_rgba(0,0,0,0.08)] z-50"
       style={{ 
-        paddingBottom: "env(safe-area-inset-bottom, 8px)"
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
+        paddingTop: "8px"
       }}
+      aria-label="Student bottom navigation"
     >
-      <ul className="grid grid-cols-4 h-16">
+      <ul className="mx-auto grid max-w-xl grid-cols-4 gap-1 px-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <li key={item.to}>
               <Link 
                 href={item.to} 
-                className={`flex flex-col items-center justify-center h-full text-xs gap-1 transition-colors ${
+                className={`flex flex-col items-center justify-center min-h-[44px] text-xs gap-1 transition-colors rounded-lg p-2 ${
                   item.isActive 
-                    ? "text-primary font-medium" 
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    ? "text-foreground font-medium" 
+                    : "text-foreground/80 hover:text-foreground"
                 }`}
+                aria-current={item.isActive ? "page" : undefined}
+                data-testid={`link-nav-${item.label.toLowerCase()}`}
               >
-                <Icon size={20} strokeWidth={item.isActive ? 2.5 : 2} />
-                <span className="text-[10px] leading-tight">{item.label}</span>
+                <Icon size={22} strokeWidth={item.isActive ? 2.5 : 2} />
+                <span className="text-xs leading-tight">{item.label}</span>
               </Link>
             </li>
           );

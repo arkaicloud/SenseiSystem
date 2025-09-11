@@ -1,0 +1,204 @@
+UI Mobile do Aluno (BottomNav + Cards + Espaçamento + Estados)”
+
+Contexto
+No painel do aluno (mobile), precisamos refinar o layout para ficar “app-like” (estilo Spotify):
+
+dar respiro entre a bottom-nav e a barra do sistema (iOS/Android);
+
+garantir padding no conteúdo para não ficar atrás da barra;
+
+padronizar cards (Aulas de Hoje + Agenda da Semana);
+
+manter e exibir status Confirmado/Cancelar nos dois lugares (dash e agenda);
+
+tipografia e espaçamentos consistentes.
+
+Tarefas
+
+BottomNav (components/BottomNav.tsx)
+
+Aplicar safe-area + respiro:
+
+padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+
+padding-top: 8px;
+
+Largura:
+
+class="fixed bottom-0 left-0 right-0 md:hidden bg-background/95 border-t backdrop-blur shadow-[0_-6px_16px_rgba(0,0,0,0.08)]"
+
+<ul class="mx-auto grid max-w-xl grid-cols-4 gap-1 px-3">
+
+Ícones 22px, label text-xs, aria-[current=page]:opacity-100 (ativo).
+
+Layout (layouts/StudentLayout.tsx)
+
+Em <main>, reservar espaço para a barra:
+
+style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
+
+Sidebar só em md+; BottomNav apenas mobile.
+
+Card unificado de aula (components/classes/ClassCard.tsx)
+
+Padrão de UI:
+
+container rounded-2xl border bg-card p-4 md:p-5
+
+título text-base font-semibold, chip “Tatame” com rounded-full px-2.5 py-1 text-xs
+
+“1/20” como pill bg-muted text-foreground/80 rounded-md px-2 py-1 text-xs
+
+linhas info (relógio / instrutor) com ícones 16px e gap-1.5
+
+CTA:
+
+Confirmar Presença → variant=default w-full sm:w-auto
+
+Confirmado → botão secondary com ícone ✅ (desabilitado) + botão Cancelar variant="destructive" | "outline" ao lado
+
+micro-animação: animate-[fadeIn_120ms_ease-out]
+
+Recebe bookingStatus e não perde estado após refresh (consome API que já devolve o status).
+
+Dash “Aulas de Hoje” e “Agenda da Semana”
+
+Ambos usam o mesmo ClassCard (DRY).
+
+Depois de confirmar/cancelar:
+
+atualizar UI otimista;
+
+invalidar queries ["today-classes", studentId] e ["week-classes", studentId].
+
+Requests de listagem com Cache-Control: no-store.
+
+Acessibilidade & touch
+
+Hit-area mínima de 44px (botões).
+
+Sem overflow sob a bottom-nav.
+
+Testar iPhone com “home indicator” e Android com 3 botões.
+
+Critérios de Aceitação
+
+Bottom-nav com respiro claro sobre o gesto do sistema (iOS/Android).
+
+Conteúdo nunca fica escondido atrás da barra.
+
+Visual dos cards consistente e responsivo.
+
+Confirmar/Cancelar mantém o estado ao recarregar tanto no Dash quanto na Agenda.
+
+LCP e fluidez sem “pulos” de layout.
+
+🌓 ArkDev — “Dash do Aluno: Modo Escuro (Contraste e Tokens)”
+
+Contexto
+No modo escuro, o dash do aluno perde contraste (botões, textos, chips). Vamos padronizar tokens de tema (CSS variables) e mapear no Tailwind/shadcn para garantir WCAG AA.
+
+Tarefas
+
+Tokens de cor (CSS variables)
+
+Em globals.css:
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 36%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+
+  --primary: 18 66% 40%;      /* terracota Sensei */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --ring: 215 20% 35%;
+}
+
+.dark {
+  --background: 222 15% 10%;
+  --foreground: 0 0% 98%;
+
+  --card: 222 14% 13%;
+  --card-foreground: 0 0% 98%;
+
+  --muted: 222 14% 18%;
+  --muted-foreground: 0 0% 80%;
+
+  --border: 220 14% 22%;
+  --input: 220 14% 22%;
+
+  --primary: 18 66% 48%;               /* um pouco mais claro p/ contraste */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 222 14% 18%;
+  --secondary-foreground: 0 0% 98%;
+
+  --accent: 222 14% 18%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 74% 58%;
+  --destructive-foreground: 0 0% 100%;
+
+  --ring: 18 66% 48%;
+}
+
+
+Tailwind (se usar shadcn)
+
+tailwind.config.ts → theme.extend.colors apontando para hsl(var(--token)).
+
+Garantir classes bg-background, text-foreground, border-border, bg-card etc. em todos os componentes do dash do aluno (cards, chips, botões).
+
+Bottom-nav (dark)
+
+Usar bg-background/95, border-t e backdrop-blur.
+
+Ícones herdam currentColor (text-foreground/80 inativo; text-primary ativo).
+
+Barra ativa (indicador) bg-foreground/80 com opacidade reduzida (acessível).
+
+Estados de presença (dark)
+
+Confirmado: bg-emerald-600/18 + text-emerald-400 (contraste AA sobre --card).
+
+Cancelar: text-destructive com borda border-destructive/40 e hover bg-destructive/10.
+
+Persistência do tema
+
+Respeitar prefers-color-scheme.
+
+Toggle salva em localStorage (theme=light|dark|system), aplica classe dark no <html>.
+
+Acessibilidade
+
+Checar contraste mínimo 4.5:1 (títulos 3:1).
+
+Estados focados com ring-2 ring-ring.
+
+Critérios de Aceitação
+
+Todos os textos/chips/botões do dash do aluno legíveis no escuro (AA).
+
+Bottom-nav e cards mantêm contraste e elevação corretos.
+
+Togglar claro/escuro não quebra cores dos componentes.
+
+Preferência do usuário persiste entre sessões.

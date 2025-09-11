@@ -33,6 +33,13 @@ export default function StudentDashboard() {
     enabled: !!user?.id,
   });
 
+  // Get financial data to check if user is financial responsible
+  const { data: financialData, isLoading: isFinancialLoading } = useQuery({
+    queryKey: ['/api/student/financial', (studentData as any)?.id],
+    enabled: !!(studentData as any)?.id,
+    retry: false,
+  });
+
 
   if (isStudentLoading) {
     return (
@@ -262,11 +269,13 @@ export default function StudentDashboard() {
           </Card>
         )}
 
-      {/* Painel Financeiro */}
-      {user?.id && <FinancialPanel studentId={user.id} />}
+      {/* Painel Financeiro - só exibe se o aluno é responsável financeiro */}
+      {(studentData as any)?.id && (financialData as any)?.isFinancialResponsible && (
+        <FinancialPanel studentId={(studentData as any)?.id} />
+      )}
 
       {/* Histórico de Presenças */}
-      {user?.id && <AttendanceHistory studentId={user.id} />}
+      {(studentData as any)?.id && <AttendanceHistory studentId={(studentData as any)?.id} />}
     </div>
   );
 }

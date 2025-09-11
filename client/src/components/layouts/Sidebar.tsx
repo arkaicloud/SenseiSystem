@@ -7,7 +7,7 @@ import {
   Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, 
   Home, CheckSquare, MessageSquare, AlertTriangle, GraduationCap, 
   UserCheck, DollarSign, Building2, BarChart3, UserCog, ChevronDown,
-  FileText, Clock, Award, X
+  FileText, Clock, Award, X, Bell
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -142,6 +142,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       label: "Agenda da Semana", 
       icon: Calendar,
       path: "/agenda",
+      roles: ["student"],
+    },
+    {
+      id: "avisos-aluno",
+      label: "Avisos",
+      icon: Bell,
+      path: "/student/notices",
       roles: ["student"],
     },
   ];

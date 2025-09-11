@@ -45,13 +45,13 @@ interface AttendanceData {
 }
 
 const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>('');
-
   // Generate month/year options
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString());
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
 
   const months = [
     { value: '1', label: 'Janeiro' },

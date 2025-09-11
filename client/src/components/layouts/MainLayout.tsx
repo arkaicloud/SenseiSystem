@@ -233,8 +233,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {/* Mobile header */}
         {isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
-            {/* Menu button - hide in PWA and for students */}
-            {!isPWA && user?.role !== 'student' && (
+            {/* Menu button - hide in PWA */}
+            {!isPWA && (
               <button
                 id="menu-toggle"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-gray-100 dark:active:bg-gray-700 transition-colors duration-200"
@@ -249,7 +249,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </svg>
               </button>
             )}
-            <div className={`flex items-center flex-1 ${isPWA || user?.role === 'student' ? 'justify-center' : ''}`}>
+            <div className={`flex items-center flex-1 ${isPWA ? 'justify-center' : ''}`}>
               <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>

@@ -53,29 +53,29 @@ interface StudentDashboardProps {
 export default function StudentDashboardNew() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   // Get belt levels hook at the top to maintain hook order - using public endpoint for students
   const { getBeltName, getBeltColor } = useBeltLevels(undefined, true);
-  
+
   // Get school configuration for colors
   const { data: schoolConfig } = useQuery({
     queryKey: ['/api/school-config'],
   });
-  
+
   // Get student data
   const { data: studentData, isLoading: isStudentLoading } = useQuery({
     queryKey: ['/api/student/profile'],
     enabled: !!user?.id && user?.role === 'student',
   });
-  
+
   // Get today's classes
   const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
     queryKey: ['/api/classes/today'],
     enabled: !!user?.id && user?.role === 'student',
   });
-  
+
   // School events not needed for notices - NoticesBlock fetches its own data
-  
+
   // Get attendance count for current month
   const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
     queryKey: ['/api/student/attendance-current-month'],
@@ -88,7 +88,7 @@ export default function StudentDashboardNew() {
     enabled: !!user?.id && user?.role === 'student',
     retry: false,
   });
-  
+
   // Confirm attendance mutation
   const confirmAttendanceMutation = useMutation({
     mutationFn: async (classId: number) => {
@@ -96,12 +96,12 @@ export default function StudentDashboardNew() {
         classId: classId,
         date: new Date().toISOString().split('T')[0]
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Erro ao confirmar presença');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -121,11 +121,11 @@ export default function StudentDashboardNew() {
       });
     },
   });
-  
+
   const handleCheckIn = (classId: number) => {
     confirmAttendanceMutation.mutate(classId);
   };
-  
+
   if (isStudentLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px] bg-gray-50">
@@ -133,22 +133,22 @@ export default function StudentDashboardNew() {
       </div>
     );
   }
-  
+
   // Get colors from school config or use defaults
   const primaryColor = schoolConfig?.config?.primaryColor || '#B85C38';
   const secondaryColor = schoolConfig?.config?.secondaryColor || '#D97659';
-  
+
   // Get belt information
   const beltLevel = studentData?.beltLevel || 'white';
   const beltName = getBeltName(beltLevel);
   const beltColorCode = getBeltColor(beltLevel);
-  
+
   const studentName = user ? `${user.firstName} ${user.lastName}` : 'Aluno';
   const currentDate = new Date();
   const monthName = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const totalAttendances = attendanceData?.attendanceCount || 0;
   const availableClasses = attendanceData?.totalClasses || 16;
-  
+
   // Prepare data for components
   const student = {
     name: studentName,
@@ -253,6 +253,8 @@ export default function StudentDashboardNew() {
             {/* Bloco 4: Avisos & Eventos */}
             <NoticesBlock 
               studentId={studentData?.id || 0}
+              primaryColor={schoolConfig?.config?.primary_color || "#3b82f6"}
+              limit={4}
             />
           </div>
         </div>

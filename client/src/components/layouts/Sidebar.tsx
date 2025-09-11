@@ -326,6 +326,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           {filteredMenuItems.map(item => renderMenuItem(item))}
         </div>
 
+        
+
         {/* Social Media Section */}
         {((schoolConfig as any)?.config?.instagram || (schoolConfig as any)?.config?.facebook || (schoolConfig as any)?.config?.whatsapp || (schoolConfig as any)?.config?.youtube || (schoolConfig as any)?.config?.tiktok) && (
           <div className="border-t border-slate-200 dark:border-slate-700 p-4">

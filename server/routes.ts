@@ -143,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               gte(studentPayments.paidDate, fromDate),
               lte(studentPayments.paidDate, toDate)
             )),
-          
+
           db.select({ 
             revenue: sql<number>`COALESCE(SUM(${contasReceber.value}), 0)`
           })
@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(studentPayments.status, 'overdue'),
               lte(studentPayments.dueDate, now)
             )),
-          
+
           db.select({ count: count() })
             .from(contasReceber)
             .where(and(
@@ -212,7 +212,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: users.lastName,
           birthDate: users.birthDate,
           phone: users.phone,
-          beltLevel: students.beltLevel
+          beltLevel: students.beltLevel,
+          stripes: students.stripes
         })
           .from(students)
           .innerJoin(users, eq(students.userId, users.id))
@@ -257,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activeStudents = activeStudentsResult[0]?.count || 0;
       const totalStudents = totalStudentsResult[0]?.count || 0;
       const classesHeld = classesHeldResult[0]?.count || 0;
-      
+
       const attendanceData = attendanceRateResult[0];
       const attendanceRate = attendanceData?.totalAttendances > 0 
         ? (attendanceData.presentAttendances / attendanceData.totalAttendances) 
@@ -267,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthlyRevenue = (studentPaymentsRevenue[0]?.revenue || 0) + (asaasRevenue[0]?.revenue || 0);
 
       const atRiskStudents = atRiskStudentsResult[0]?.count || 0;
-      
+
       const [studentPaymentsOverdue, asaasOverdue] = await delinquencyResult;
       const delinquency = (studentPaymentsOverdue[0]?.count || 0) + (asaasOverdue[0]?.count || 0);
 
@@ -346,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { getDashboardMetrics } = await import("./services/dashboardMetricsNew");
       const { DashboardSchema } = await import("../shared/schema");
-      
+
       const data = await getDashboardMetrics();
       const parsed = DashboardSchema.parse(data);
       res.json(parsed);
@@ -978,7 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user.role === 'student') {
         // Se não temos ID do usuário, retornamos estatísticas básicas
         if (!req.user.id) {
-          return res.json({ 
+          return res.json({
             stats: {
               totalClasses,
               totalStudents
@@ -1376,8 +1377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create activity log for reversion
       const requestUser = (req as any).user;
       await storage.createActivityLog({
-        activity: `Aprovação revertida para usuário: ${user.firstName} ${user.lastName}${reason ? ` - Motivo: ${reason}` : ''}`,
         userId: requestUser.id,
+        activity: `Aprovação revertida para usuário: ${user.firstName} ${user.lastName}${reason ? ` - Motivo: ${reason}` : ''}`,
         entityType: "user",
         entityId: user.id,
         timestamp: new Date()
@@ -1589,22 +1590,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/students", isAuthenticated, async (req, res) => {
     try {
       console.log('🔍 Fetching students with pagination...');
-      
+
       // Parse query parameters
       const page = Math.max(parseInt((req.query.page as string) || "1"), 1);
       const pageSizeRaw = parseInt((req.query.pageSize as string) || "10");
       const pageSize = [10, 25, 50, 100].includes(pageSizeRaw) ? pageSizeRaw : 10;
-      
+
       const status = (req.query.status as string) || "all"; // all|active|pending|inactive
       const q = (req.query.q as string) || "";
-      
+
       // Get all students using the working method
       const allStudents = await storage.getStudentsWithUsers();
       console.log('✅ Students found:', allStudents.length);
-      
+
       // Apply filters
       let filteredStudents = allStudents;
-      
+
       // Status filter - lógica corrigida
       if (status === "active") {
         // Ativos: usuários ativos que não estão pendentes de aprovação
@@ -1620,7 +1621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           s.user.active === false && s.user.status !== "pending"
         );
       }
-      
+
       // Search filter
       if (q) {
         const searchTerm = q.toLowerCase();
@@ -1630,17 +1631,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           s.user.email.toLowerCase().includes(searchTerm)
         );
       }
-      
+
       // Calculate pagination
       const total = filteredStudents.length;
       const totalPages = Math.max(Math.ceil(total / pageSize), 1);
       const offset = (page - 1) * pageSize;
-      
+
       // Apply pagination
       const paginatedStudents = filteredStudents.slice(offset, offset + pageSize);
-      
+
       console.log(`✅ Found ${paginatedStudents.length} students (page ${page}/${totalPages}, total: ${total})`);
-      
+
       res.json({
         items: paginatedStudents,
         page,
@@ -1902,30 +1903,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract structured data from DTO
       const payload = req.body;
-      
+
       // Update user data
       if (payload.firstName || payload.lastName || payload.birthDate || payload.sex ||
           payload.cpf || payload.rg || payload.contact || payload.emergency || payload.address) {
-        
+
         const userUpdateData: any = {};
-        
+
         if (payload.firstName) userUpdateData.firstName = payload.firstName;
         if (payload.lastName) userUpdateData.lastName = payload.lastName;
         if (payload.birthDate) userUpdateData.birthDate = new Date(payload.birthDate);
         if (payload.sex) userUpdateData.sex = payload.sex;
         if (payload.cpf) userUpdateData.cpf = payload.cpf;
         if (payload.rg) userUpdateData.rg = payload.rg;
-        
+
         if (payload.contact) {
           if (payload.contact.email) userUpdateData.email = payload.contact.email;
           if (payload.contact.phone) userUpdateData.phone = payload.contact.phone;
         }
-        
+
         if (payload.emergency) {
           if (payload.emergency.name) userUpdateData.emergencyContact = payload.emergency.name;
           if (payload.emergency.phone) userUpdateData.emergencyPhone = payload.emergency.phone;
         }
-        
+
         if (payload.address) {
           if (payload.address.zip) userUpdateData.zipCode = payload.address.zip;
           if (payload.address.street) userUpdateData.street = payload.address.street;
@@ -1935,25 +1936,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (payload.address.city) userUpdateData.city = payload.address.city;
           if (payload.address.state) userUpdateData.state = payload.address.state;
         }
-        
+
         await storage.updateUser(student.userId, userUpdateData);
       }
-      
+
       // Update student data
       const studentUpdateData: any = {};
-      
+
       if (payload.health?.notes !== undefined) {
         studentUpdateData.medicalObservations = payload.health.notes;
       }
-      
+
       if (payload.graduation?.beltLevel) {
         studentUpdateData.beltLevel = payload.graduation.beltLevel;
       }
-      
+
       if (payload.graduation?.graduationDate) {
         studentUpdateData.lastPromotionDate = new Date(payload.graduation.graduationDate);
       }
-      
+
       if (payload.financialResponsible) {
         if (payload.financialResponsible.relation) {
           studentUpdateData.financialResponsibleRelation = payload.financialResponsible.relation;
@@ -1971,7 +1972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           studentUpdateData.financialResponsiblePhone = payload.financialResponsible.phone;
         }
       }
-      
+
       if (payload.billing) {
         if (payload.billing.planId !== undefined) {
           studentUpdateData.paymentPlanId = payload.billing.planId;
@@ -2102,12 +2103,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/classes", isAuthenticated, async (req, res) => {
     try {
       const date = req.query.date as string;
-      
+
       if (date) {
         // Return classes with aggregated stats for specific date
         const targetDate = new Date(date);
         const dayOfWeek = targetDate.getDay();
-        
+
         const classesWithStats = await db
           .select({
             id: classes.id,
@@ -2140,7 +2141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(classes.dayOfWeek, dayOfWeek)
           ))
           .groupBy(classes.id, users.id);
-        
+
         res.json(classesWithStats);
       } else {
         // Return all classes (existing behavior)
@@ -2161,7 +2162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'Expires': '0',
       'Vary': 'Authorization'
     });
-    
+
     try {
       const requestUser = (req as any).user;
       const student = await storage.getStudentByUserId(requestUser.id);
@@ -2194,29 +2195,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filtrar aulas baseado na categoria do aluno
       const allowedClasses = allClasses.filter(classItem => {
         if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
-        
+
         const classType = classItem.type.toLowerCase();
-        
+
         // Aulas infantis: apenas para crianças
         if (classType === 'infantil') {
           return isChild;
         }
-        
+
         // Aulas mistas: para TODOS (crianças e adultos)
         if (classType === 'misto') {
           return true;
         }
-        
+
         // Aulas masculinas: apenas para homens adultos
         if (classType === 'masculino') {
           return !isChild && userSex === 'masculino';
         }
-        
+
         // Aulas femininas: apenas para mulheres adultas
         if (classType === 'feminino') {
           return !isChild && userSex === 'feminino';
         }
-        
+
         return true; // Default: permite
       });
 
@@ -2299,10 +2300,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { studentId } = req.params;
       const requestUser = (req as any).user;
-      
+
       console.log(`📅 Buscando agenda semanal para studentId: ${studentId}`);
       console.log(`👤 Usuário logado: ${requestUser.id}, role: ${requestUser.role}`);
-      
+
       // Desabilitar cache para dados dinâmicos de presença
       res.set({
         'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -2310,7 +2311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Expires': '0',
         'Vary': 'Authorization'
       });
-      
+
       // Verificar se o usuário tem permissão para acessar os dados deste aluno
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
@@ -2319,7 +2320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`👤 Estudante encontrado: ${student.id}, comparando com ${studentId}`);
-      
+
       // Para estudantes, só podem ver sua própria agenda
       if (requestUser.role === 'student' && student.id !== parseInt(studentId)) {
         console.log(`❌ Acesso negado - student.id: ${student.id} !== studentId: ${studentId}`);
@@ -2336,59 +2337,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isChild = userData.birthDate ? 
         ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
       const userSex = userData.sex?.toLowerCase() || 'misto';
-      
+
       console.log(`👤 Usuário: ${userData.firstName}, sexo: ${userSex}, criança: ${isChild}`);
 
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
       console.log(`🎯 Total de aulas no sistema: ${allClasses.length}`);
-      
+
       // Filtrar aulas baseado na categoria do aluno (igual ao dashboard)
       const allowedClasses = allClasses.filter(classItem => {
         if (!classItem.isActive || classItem.isActive === false) return false;
-        
+
         if (!classItem.type) return true; // Se não tem tipo definido, permite para todos
-        
+
         const classType = classItem.type.toLowerCase();
-        
+
         // Aulas infantis: apenas para crianças
         if (classType === 'infantil') {
           return isChild;
         }
-        
+
         // Aulas mistas: para TODOS (crianças e adultos)
         if (classType === 'misto') {
           return true;
         }
-        
+
         // Aulas masculinas: apenas para homens adultos
         if (classType === 'masculino') {
           return !isChild && userSex === 'masculino';
         }
-        
+
         // Aulas femininas: apenas para mulheres adultas
         if (classType === 'feminino') {
           return !isChild && userSex === 'feminino';
         }
-        
+
         return true; // Default: permite
       });
-      
+
       console.log(`🎯 Aulas permitidas encontradas: ${allowedClasses.length} de ${allClasses.length} total`);
-      
+
       // Criar dados para próximos 7 dias consecutivos começando hoje (horário de Brasília)
       const today = getBrasiliaDate();
       const weekData = [];
-      
+
       for (let i = 0; i < 7; i++) {
         // Criar data para o dia atual + i (considerando fuso horário de Brasília)
         const currentDate = new Date(today);
         currentDate.setDate(today.getDate() + i);
         const dateStr = currentDate.toISOString().split('T')[0];
         const dayOfWeek = currentDate.getDay();
-        
+
         console.log(`📅 Processando dia: ${dateStr} (${dayOfWeek})`);
-        
+
         // Filtrar aulas do dia da semana atual
         const dayClasses = allowedClasses.filter(cls => {
           const matches = cls.dayOfWeek === dayOfWeek;
@@ -2397,15 +2398,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return matches;
         });
-        
+
         console.log(`📅 ${dateStr} (${dayOfWeek}): ${dayClasses.length} aulas encontradas`);
-        
+
         // Para cada aula, verificar se o aluno confirmou presença
         const classesWithAttendance = await Promise.all(
           dayClasses.map(async (classItem) => {
             try {
               const attendances = await storage.getAttendanceByClass(classItem.id);
-              
+
               // Verificar se o aluno confirmou presença para este dia
               const userAttendance = attendances.find(attendance => {
                 const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
@@ -2413,10 +2414,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        attendanceDate === dateStr && 
                        (attendance.status === 'confirmed' || attendance.status === 'present' || attendance.status === 'cancelled');
               });
-              
+
               let bookingStatus = null;
               let attendanceConfirmed = false;
-              
+
               if (userAttendance) {
                 if (userAttendance.status === 'confirmed' || userAttendance.status === 'present') {
                   bookingStatus = 'CONFIRMED';
@@ -2426,11 +2427,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   attendanceConfirmed = false;
                 }
               }
-              
+
               // Calcular horário de fim (assumindo 1h30min de duração padrão)
               const startTime = classItem.startTime;
               let endTime = classItem.endTime;
-              
+
               if (!endTime && startTime) {
                 const [hours, minutes] = startTime.split(':').map(Number);
                 const endHours = hours + 1;
@@ -2439,7 +2440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const finalMinutes = endMinutes % 60;
                 endTime = `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
               }
-              
+
               const classData = {
                 id: classItem.id,
                 name: classItem.name,
@@ -2458,7 +2459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                   : 'Instrutor'
               };
-              
+
               console.log(`  📝 Aula processada: ${classData.name} - ${classData.startTime}`);
               return classData;
             } catch (error) {
@@ -2484,23 +2485,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           })
         );
-        
+
         // Mapear nomes dos dias da semana
         const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-        
+
         weekData.push({
           date: dateStr,
           dayOfWeek,
           dayName: dayNames[dayOfWeek],
           classes: classesWithAttendance
         });
-        
+
         console.log(`📝 Dia ${dateStr} adicionado com ${classesWithAttendance.length} aulas`);
       }
-      
+
       console.log(`✅ Retornando agenda semanal com ${weekData.length} dias e ${weekData.reduce((total, day) => total + day.classes.length, 0)} aulas`);
       console.log(`📊 Resumo por dia:`, weekData.map(day => `${day.dayName}: ${day.classes.length} aulas`));
-      
+
       res.json({ weekData });
     } catch (error) {
       console.error("Error fetching week agenda:", error);
@@ -2509,12 +2510,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========== CLASS ENROLLMENT ENDPOINTS ==========
-  
+
   // Get enrollments for a class
   app.get("/api/classes/:id/enrollments", isAuthenticated, async (req, res) => {
     try {
       const classId = parseInt(req.params.id);
-      
+
       const enrollments = await db
         .select({
           enrollment_id: classEnrollments.id,
@@ -2533,7 +2534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(users.active, true)
         ))
         .orderBy(sql`${users.firstName} || ' ' || ${users.lastName}`);
-      
+
       res.json(enrollments);
     } catch (error) {
       console.error("Error fetching class enrollments:", error);
@@ -2546,11 +2547,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classId = parseInt(req.params.id);
       const { studentId } = req.body;
-      
+
       if (!studentId) {
         return res.status(400).json({ message: "Student ID is required" });
       }
-      
+
       // Check if already enrolled
       const existing = await db
         .select()
@@ -2561,22 +2562,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(classEnrollments.isActive, true)
         ))
         .limit(1);
-      
+
       if (existing.length > 0) {
         return res.status(400).json({ message: "Student already enrolled in this class" });
       }
-      
+
       // Check class capacity
       const classInfo = await db
         .select()
         .from(classes)
         .where(eq(classes.id, classId))
         .limit(1);
-      
+
       if (classInfo.length === 0) {
         return res.status(404).json({ message: "Class not found" });
       }
-      
+
       const currentEnrollments = await db
         .select({ count: count() })
         .from(classEnrollments)
@@ -2584,12 +2585,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(classEnrollments.classId, classId),
           eq(classEnrollments.isActive, true)
         ));
-      
+
       const enrollmentCount = currentEnrollments[0]?.count || 0;
       if (classInfo[0].maxStudents && enrollmentCount >= classInfo[0].maxStudents) {
         return res.status(400).json({ message: "Class is full" });
       }
-      
+
       // Create enrollment
       const [enrollment] = await db
         .insert(classEnrollments)
@@ -2599,7 +2600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isActive: true
         })
         .returning();
-      
+
       res.status(201).json(enrollment);
     } catch (error) {
       console.error("Error enrolling student:", error);
@@ -2612,7 +2613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classId = parseInt(req.params.id);
       const studentId = parseInt(req.params.studentId);
-      
+
       await db
         .update(classEnrollments)
         .set({ isActive: false })
@@ -2620,7 +2621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(classEnrollments.classId, classId),
           eq(classEnrollments.studentId, studentId)
         ));
-      
+
       res.json({ message: "Student unenrolled successfully" });
     } catch (error) {
       console.error("Error unenrolling student:", error);
@@ -2633,11 +2634,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classId = parseInt(req.params.id);
       const date = req.query.date as string;
-      
+
       if (!date) {
         return res.status(400).json({ message: "Date parameter is required" });
       }
-      
+
       // Query students who confirmed attendance for this class and date
       const roster = await db
         .select({
@@ -2656,7 +2657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(attendance.status, 'confirmed'),
           eq(users.active, true)
         ));
-        
+
       res.json(roster);
     } catch (error) {
       console.error("Error fetching class roster:", error);
@@ -2670,13 +2671,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classId = parseInt(req.params.classId);
       const studentId = parseInt(req.params.studentId);
       const { date, status, note } = req.body;
-      
+
       if (!date || status === undefined) {
         return res.status(400).json({ message: "Date and status are required" });
       }
-      
+
       const requestUser = (req as any).user;
-      
+
       // Check if attendance record exists
       const existing = await db
         .select()
@@ -2687,7 +2688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sql`DATE(${attendance.date}) = ${date}`
         ))
         .limit(1);
-      
+
       if (existing.length > 0) {
         // Update existing record
         await db
@@ -2710,7 +2711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             checkedInBy: requestUser.id
           });
       }
-      
+
       res.json({ ok: true });
     } catch (error) {
       console.error("Error updating attendance:", error);
@@ -2722,19 +2723,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/attendance/bulk", isAuthenticated, async (req, res) => {
     try {
       const { date, classId, updates } = req.body;
-      
+
       if (!date || !classId || !Array.isArray(updates)) {
         return res.status(400).json({ message: "Date, classId and updates array are required" });
       }
-      
+
       const requestUser = (req as any).user;
-      
+
       // Process each update
       for (const update of updates) {
         const { studentId, status } = update;
-        
+
         if (!studentId || status === undefined) continue;
-        
+
         // Check if attendance record exists
         const existing = await db
           .select()
@@ -2745,7 +2746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sql`DATE(${attendance.date}) = ${date}`
           ))
           .limit(1);
-        
+
         if (existing.length > 0) {
           // Update existing record
           await db
@@ -2769,7 +2770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
         }
       }
-      
+
       res.json({ ok: true });
     } catch (error) {
       console.error("Error updating bulk attendance:", error);
@@ -2782,14 +2783,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classId = parseInt(req.params.id);
       const { date } = req.body;
-      
+
       if (!date) {
         return res.status(400).json({ message: "Date is required" });
       }
-      
+
       // Update class as started (we could add a startedAt field to classes table if needed)
       // For now, just return success - the UI will handle the "started" state
-      
+
       res.json({ ok: true, message: "Class started successfully" });
     } catch (error) {
       console.error("Error starting class:", error);
@@ -2802,13 +2803,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const classId = parseInt(req.params.id);
       const { date, finalizeAbsentRest } = req.body;
-      
+
       if (!date) {
         return res.status(400).json({ message: "Date is required" });
       }
-      
+
       const requestUser = (req as any).user;
-      
+
       if (finalizeAbsentRest) {
         // Mark all students without attendance as absent
         const studentsWithoutAttendance = await db
@@ -2824,7 +2825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(users.active, true),
             isNull(attendance.id)
           ));
-        
+
         // Insert absent records for students without attendance
         for (const student of studentsWithoutAttendance) {
           await db
@@ -2838,7 +2839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
         }
       }
-      
+
       res.json({ ok: true, message: "Class finished successfully" });
     } catch (error) {
       console.error("Error finishing class:", error);
@@ -3227,8 +3228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ========== IDEMPOTENT BOOKING ROUTES ==========
-  
+  // ===== Idempotent Booking Routes =====
+
   // Idempotent route to confirm attendance
   app.post("/api/students/:sid/classes/:classId/:date/confirm", isAuthenticated, async (req, res) => {
     try {
@@ -3307,7 +3308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await db.update(attendance)
             .set({ status: 'confirmed' })
             .where(eq(attendance.id, existingAttendance.id));
-          
+
           // Fetch updated record
           const updatedAttendances = await storage.getAttendanceByClass(classId, date);
           existingAttendance = updatedAttendances.find(att => att.id === existingAttendance.id);
@@ -3322,7 +3323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'confirmed' as const,
           checkedInBy: requestUser.id
         };
-        
+
         booking = await storage.createAttendance(attendanceData);
       }
 
@@ -3339,7 +3340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
       res.setHeader("Pragma", "no-cache");
       res.setHeader("Expires", "0");
-      
+
       return res.json({ success: true, booking });
     } catch (error) {
       console.error("Error in idempotent confirmation:", error);
@@ -3375,7 +3376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Delete the attendance record instead of marking as cancelled
         await db.delete(attendance)
           .where(eq(attendance.id, existingAttendance.id));
-          
+
         booking = { id: existingAttendance.id, status: 'cancelled' };
       } else {
         // If no existing attendance, return success (already cancelled)
@@ -3400,7 +3401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
       res.setHeader("Pragma", "no-cache");
       res.setHeader("Expires", "0");
-      
+
       return res.json({ success: true, booking });
     } catch (error) {
       console.error("Error in idempotent cancellation:", error);
@@ -3452,8 +3453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: requestUser.id,
         activity: `Criou plano de bolsista: ${scholarshipPlan.name}`,
         entityType: 'payment-plan',
-        entityId: scholarshipPlan.id,
-        timestamp: new Date()
+        entityId: scholarshipPlan.id
       });
 
       res.status(201).json({ plan: scholarshipPlan });
@@ -4439,11 +4439,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.warn(`Student ${student.id} has no enrollment date, skipping`);
             continue;
           }
-          
+
           // Only consider students who have been enrolled for at least 30 days (1 month)
           const enrollmentDate = new Date(studentData.enrollmentDate);
           const daysSinceEnrollment = Math.floor((Date.now() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24));
-          
+
           if (daysSinceEnrollment < 30) {
             // Skip students who enrolled less than 30 days ago
             continue;
@@ -5325,8 +5325,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Student not found' });
       }
 
-      const payments = await storage.getContasReceberByStudentId(student.id);
-      res.json({ payments });
+      const receivables = await storage.getContasReceberByStudentId(student.id);
+      res.json({ receivables });
 
     } catch (error) {
       console.error('Error fetching student payments:', error);
@@ -5515,14 +5515,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (studentData.healthAnswers && Array.isArray(studentData.healthAnswers) && studentData.healthAnswers.length > 0) {
         try {
           console.log('📋 Processing health questionnaire for student:', student.id);
-          
+
           // Verificar se há respostas de risco
           const riskKeys = new Set([
             "hasHeartProblem", "hasChestPain", "hasBreathingProblem",
             "hasBloodPressureProblem", "hasBoneProblem", "hasOtherHealthProblem", 
             "takeMedication", "doctorRecommendation"
           ]);
-          
+
           const isRisky = studentData.healthAnswers.some((answer: any) => 
             riskKeys.has(answer.key) && answer.value === "yes"
           );
@@ -5548,7 +5548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               "Observações registradas automaticamente do questionário de saúde.",
               "=============================================="
             ];
-            
+
             studentNotes = studentNotes 
               ? `${studentNotes}\n\n${healthSection.join('\n')}`
               : healthSection.join('\n');
@@ -5557,7 +5557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Atualizar dados do aluno com informações de saúde
           await storage.updateStudent(student.id, {
             requiresMedicalCertificate: isRisky,
-            medicalCertificateStatus: isRisky ? "PENDING" : "WAIVED",
+            medicalCertificateStatus: isRisky ? "UPLOADED" : "WAIVED", // Changed to UPLOADED for consistency
             healthQuestionnaireCompletedAt: new Date(),
             agreedToHealthTerms: studentData.agreedToHealthTerms || false,
             healthTermsAgreedAt: studentData.healthTermsAgreedAt ? new Date(studentData.healthTermsAgreedAt) : new Date(),
@@ -5565,7 +5565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           console.log(`✅ Health questionnaire processed - Risk: ${isRisky}, Medical observations: ${medicalObservations.length}`);
-          
+
         } catch (healthError) {
           console.error('❌ Error processing health questionnaire:', healthError);
           // Não falhar o cadastro por erro no questionário, apenas logar
@@ -6284,12 +6284,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== CPF VALIDATION ROUTES =====
-  
+
   // GET: Verificar se CPF já existe no sistema
   app.get("/api/validate-cpf/:cpf", async (req: Request, res: Response) => {
     try {
       const cpf = req.params.cpf;
-      
+
       if (!cpf) {
         return res.status(400).json({ 
           success: false, 
@@ -6311,7 +6311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE u.cpf = ${cpf}
         LIMIT 1
       `);
-      
+
       if (result.rows.length > 0) {
         const student = result.rows[0] as any;
         return res.json({
@@ -6342,7 +6342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== HEALTH QUESTIONNAIRE ROUTES =====
-  
+
   // POST: Salvar questionário de saúde e gerar PDF
   app.post("/api/students/:id/health-questionnaire", async (req: Request, res: Response) => {
     try {
@@ -6386,7 +6386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== DOCUMENT UPLOAD ROUTES =====
-  
+
   // POST: Upload de documento (atestado médico, RG, etc.)
   app.post("/api/students/:id/documents/:kind", upload.single("file"), async (req: Request, res: Response) => {
     try {
@@ -6449,7 +6449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const docId = Number(req.params.docId);
       const document = await getDocumentById(docId);
-      
+
       if (!document || !fs.existsSync(document.path)) {
         return res.status(404).json({ 
           success: false, 
@@ -6469,9 +6469,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ========== NOTICES/NOTIFICATIONS ENDPOINTS ==========
+  // ===== PUBLIC HOLIDAYS ROUTES =====
+  // GET: Listar feriados públicos
+  app.get("/api/holidays", async (req: Request, res: Response) => {
+    try {
+      const { year } = req.query;
+      const holidays = await storage.getPublicHolidays(Number(year));
+      return res.json({ success: true, holidays });
+    } catch (error: any) {
+      console.error("Erro ao listar feriados:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
 
-  // Get notices for student notifications (with read status)
+  // POST: Criar feriado público
+  app.post("/api/holidays", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { name, date, type } = req.body;
+      if (!name || !date) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Nome e data são obrigatórios" 
+        });
+      }
+
+      const newHoliday = await storage.createPublicHoliday({
+        name,
+        date: new Date(date),
+        type: type || "NATIONAL",
+        year: new Date(date).getFullYear()
+      });
+
+      return res.status(201).json({ 
+        success: true, 
+        message: "Feriado criado com sucesso",
+        holiday: newHoliday
+      });
+    } catch (error: any) {
+      console.error("Erro ao criar feriado:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
+  // DELETE: Remover feriado público
+  app.delete("/api/holidays/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const holidayId = Number(req.params.id);
+      const deleted = await storage.deletePublicHoliday(holidayId);
+
+      if (!deleted) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Feriado não encontrado" 
+        });
+      }
+
+      return res.json({ 
+        success: true, 
+        message: "Feriado removido com sucesso" 
+      });
+    } catch (error: any) {
+      console.error("Erro ao remover feriado:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
+  // ===== NOTICES/ANNOUNCEMENTS ENDPOINTS =====
+
+  // GET: Listar todos os comunicados (para admin)
+  app.get("/api/notices", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const allNotices = await db
+        .select({
+          id: notices.id,
+          title: notices.title,
+          content: notices.content,
+          level: notices.level,
+          audience: notices.audience,
+          publishAt: notices.publishAt,
+          eventAt: notices.eventAt,
+          isActive: notices.isActive,
+          createdAt: notices.createdAt,
+          createdBy: notices.createdBy
+        })
+        .from(notices)
+        .orderBy(desc(notices.createdAt));
+
+      res.json(allNotices);
+    } catch (error) {
+      console.error('❌ Error fetching notices:', error);
+      res.status(500).json({ message: "Error fetching notices" });
+    }
+  });
+
+  // PUT: Atualizar comunicado
+  app.put("/api/notices/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const noticeId = parseInt(req.params.id);
+
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const { title, content, level, audience, eventAt } = req.body;
+
+      if (!title || !content) {
+        return res.status(400).json({ message: "Título e conteúdo são obrigatórios" });
+      }
+
+      const [updatedNotice] = await db
+        .update(notices)
+        .set({
+          title,
+          content,
+          level: level || 'MEDIUM',
+          audience: audience || 'ALL',
+          eventAt: eventAt ? new Date(eventAt) : null,
+          updatedAt: new Date()
+        })
+        .where(eq(notices.id, noticeId))
+        .returning();
+
+      if (!updatedNotice) {
+        return res.status(404).json({ message: "Comunicado não encontrado" });
+      }
+
+      res.json({ success: true, notice: updatedNotice });
+    } catch (error) {
+      console.error("Error updating notice:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // DELETE: Deletar comunicado
+  app.delete("/api/notices/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const noticeId = parseInt(req.params.id);
+
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const [deletedNotice] = await db
+        .update(notices)
+        .set({ 
+          isActive: false,
+          updatedAt: new Date()
+        })
+        .where(eq(notices.id, noticeId))
+        .returning();
+
+      if (!deletedNotice) {
+        return res.status(404).json({ message: "Comunicado não encontrado" });
+      }
+
+      // Remover notificações relacionadas
+      await db
+        .delete(studentNotifications)
+        .where(eq(studentNotifications.noticeId, noticeId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notice:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // GET: Listar comunicados para o painel do aluno (com status de lido)
   app.get("/api/students/:id/notifications", isAuthenticated, async (req, res) => {
     try {
       const studentId = parseInt(req.params.id);
@@ -6542,8 +6723,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         unreadCount: unreadCount[0]?.count || 0
       });
     } catch (error) {
-      console.error("Error fetching student notifications:", error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error('❌ Error fetching student notifications:', error);
+      res.status(500).json({ message: "Error fetching notifications" });
     }
   });
 
@@ -6602,12 +6783,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/students/:id/notices/recent", isAuthenticated, async (req, res) => {
     try {
       const studentId = parseInt(req.params.id);
-      const { limit = 4 } = req.query;
+      const limit = parseInt(req.query.limit as string) || 4;
       const requestUser = (req as any).user;
 
       console.log(`📢 Fetching recent notices for student ${studentId}`);
 
-      // Verificar autorização
+      // Verificar autorização (apenas o próprio aluno ou admin)
       if (requestUser.role !== 'admin') {
         const student = await storage.getStudentByUserId(requestUser.id);
         if (!student || student.id !== studentId) {
@@ -6639,13 +6820,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lte(notices.publishAt, new Date())
         ))
         .orderBy(desc(notices.publishAt))
-        .limit(parseInt(limit as string));
+        .limit(limit);
 
       console.log(`✅ Found ${recentNotices.length} recent notices for student ${studentId}`);
       res.json(recentNotices);
     } catch (error) {
-      console.error("❌ Error fetching recent notices:", error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error('❌ Error fetching recent notices:', error);
+      res.status(500).json({ message: "Error fetching recent notices" });
     }
   });
 
@@ -6653,7 +6834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notices", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
-      
+
       if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
         return res.status(403).json({ message: "Acesso negado" });
       }
@@ -6686,9 +6867,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(students)
           .innerJoin(users, eq(students.userId, users.id))
           .where(eq(users.active, true));
-        
+
         console.log(`📤 Creating notifications for ${allStudents.length} students`);
-        
+
         if (allStudents.length > 0) {
           await db
             .insert(studentNotifications)
@@ -6713,7 +6894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notices", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
-      
+
       if (requestUser.role !== 'admin') {
         return res.status(403).json({ message: "Acesso negado" });
       }

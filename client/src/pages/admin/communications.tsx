@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +26,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { 
-  Plus, 
-  MessageSquare, 
+import {
+  Plus,
+  MessageSquare,
   Calendar,
   AlertTriangle,
   Info,
@@ -38,6 +37,17 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface Notice {
   id: number;
@@ -54,6 +64,8 @@ interface Notice {
 export default function CommunicationsPage() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -88,14 +100,8 @@ export default function CommunicationsPage() {
         description: "Aviso criado e enviado para os alunos com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/notices'] });
+      resetForm();
       setIsCreateDialogOpen(false);
-      setFormData({
-        title: '',
-        content: '',
-        level: 'MEDIUM',
-        audience: 'ALL',
-        eventAt: ''
-      });
     },
     onError: (error: any) => {
       toast({
@@ -106,9 +112,74 @@ export default function CommunicationsPage() {
     },
   });
 
+  // Editar aviso
+  const editNoticeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest('PUT', `/api/notices/${id}`, data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao editar aviso');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso!",
+        description: "Aviso atualizado com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/notices'] });
+      resetForm();
+      setIsEditDialogOpen(false);
+      setEditingNotice(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Deletar aviso
+  const deleteNoticeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/notices/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao deletar aviso');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso!",
+        description: "Aviso removido com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/notices'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      content: '',
+      level: 'MEDIUM',
+      audience: 'ALL',
+      eventAt: ''
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.content.trim()) {
       toast({
         title: "Erro",
@@ -118,10 +189,36 @@ export default function CommunicationsPage() {
       return;
     }
 
-    createNoticeMutation.mutate({
-      ...formData,
-      eventAt: formData.eventAt || null
+    if (editingNotice) {
+      editNoticeMutation.mutate({
+        id: editingNotice.id,
+        data: {
+          ...formData,
+          eventAt: formData.eventAt || null
+        }
+      });
+    } else {
+      createNoticeMutation.mutate({
+        ...formData,
+        eventAt: formData.eventAt || null
+      });
+    }
+  };
+
+  const handleEdit = (notice: Notice) => {
+    setEditingNotice(notice);
+    setFormData({
+      title: notice.title,
+      content: notice.content,
+      level: notice.level,
+      audience: notice.audience,
+      eventAt: notice.eventAt ? new Date(notice.eventAt).toISOString().split('T')[0] : ''
     });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    deleteNoticeMutation.mutate(id);
   };
 
   const getLevelIcon = (level: string) => {
@@ -186,7 +283,7 @@ export default function CommunicationsPage() {
           <MessageSquare className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Comunicados</h1>
         </div>
-        
+
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -201,7 +298,7 @@ export default function CommunicationsPage() {
                 Crie um aviso que será enviado para os alunos selecionados.
               </DialogDescription>
             </DialogHeader>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="title">Título</Label>
@@ -213,7 +310,7 @@ export default function CommunicationsPage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="content">Conteúdo</Label>
                 <Textarea
@@ -225,11 +322,11 @@ export default function CommunicationsPage() {
                   required
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="level">Prioridade</Label>
-                  <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value })}>
+                  <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value as any })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -240,10 +337,10 @@ export default function CommunicationsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="audience">Destinatários</Label>
-                  <Select value={formData.audience} onValueChange={(value) => setFormData({ ...formData, audience: value })}>
+                  <Select value={formData.audience} onValueChange={(value) => setFormData({ ...formData, audience: value as any })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -255,7 +352,7 @@ export default function CommunicationsPage() {
                   </Select>
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="eventAt">Data do Evento (Opcional)</Label>
                 <Input
@@ -265,13 +362,98 @@ export default function CommunicationsPage() {
                   onChange={(e) => setFormData({ ...formData, eventAt: e.target.value })}
                 />
               </div>
-              
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={createNoticeMutation.isPending}>
                   {createNoticeMutation.isPending ? 'Enviando...' : 'Enviar Comunicado'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Comunicado</DialogTitle>
+              <DialogDescription>
+                Edite as informações do comunicado selecionado.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="title">Título</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="Digite o título do comunicado..."
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="content">Conteúdo</Label>
+                <Textarea
+                  id="content"
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  placeholder="Digite o conteúdo do comunicado..."
+                  rows={5}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="level">Prioridade</Label>
+                  <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value as any })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LOW">Informativo</SelectItem>
+                      <SelectItem value="MEDIUM">Importante</SelectItem>
+                      <SelectItem value="HIGH">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="audience">Destinatários</Label>
+                  <Select value={formData.audience} onValueChange={(value) => setFormData({ ...formData, audience: value as any })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todos</SelectItem>
+                      <SelectItem value="STUDENTS">Apenas Alunos</SelectItem>
+                      <SelectItem value="INSTRUCTORS">Apenas Instrutores</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="eventAt">Data do Evento (Opcional)</Label>
+                <Input
+                  id="eventAt"
+                  type="date"
+                  value={formData.eventAt}
+                  onChange={(e) => setFormData({ ...formData, eventAt: e.target.value })}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => { setIsEditDialogOpen(false); resetForm(); setEditingNotice(null); }}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={editNoticeMutation.isPending}>
+                  {editNoticeMutation.isPending ? 'Atualizando...' : 'Salvar Alterações'}
                 </Button>
               </DialogFooter>
             </form>
@@ -318,29 +500,55 @@ export default function CommunicationsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(notice)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja remover este comunicado? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(notice.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Remover
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   {notice.content}
                 </p>
-                
+
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <span>
-                    Criado {formatDistanceToNow(new Date(notice.createdAt), { 
-                      addSuffix: true, 
-                      locale: ptBR 
+                    Criado {formatDistanceToNow(new Date(notice.createdAt), {
+                      addSuffix: true,
+                      locale: ptBR
                     })}
                   </span>
-                  
+
                   {notice.eventAt && (
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />

@@ -1,96 +1,107 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Bell, Calendar, Users, Award, Clock, AlertTriangle, Info, MessageCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bell, Calendar, AlertTriangle, Info, MessageCircle } from "lucide-react";
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  level: 'LOW' | 'MEDIUM' | 'HIGH';
-  publishAt: string;
-  eventAt?: string;
-  readAt?: string;
-}
 
 interface NoticesBlockProps {
   studentId: number;
+  primaryColor?: string;
+  limit?: number;
 }
 
-export const NoticesBlock = ({ studentId }: NoticesBlockProps) => {
-  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }: NoticesBlockProps) => {
+  // Buscar avisos recentes para o estudante
   const { data: notices, isLoading } = useQuery({
-    queryKey: [`/api/students/${studentId}/notices/recent`],
+    queryKey: [`/api/students/${studentId}/notices/recent`, { limit }],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/students/${studentId}/notices/recent?limit=4`);
-      
+      const response = await apiRequest('GET', `/api/students/${studentId}/notices/recent?limit=${limit}`);
       if (!response.ok) {
         throw new Error('Erro ao buscar avisos');
       }
-      
       return response.json();
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    enabled: !!studentId,
   });
 
   const getLevelIcon = (level: string) => {
     switch (level) {
       case 'HIGH':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
       case 'MEDIUM':
-        return <MessageCircle className="h-4 w-4 text-yellow-500" />;
+        return <MessageCircle className="w-4 h-4 text-yellow-500" />;
       case 'LOW':
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <Info className="w-4 h-4 text-blue-500" />;
       default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
+        return <Bell className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'HIGH':
-        return 'border-l-red-500 bg-red-50 dark:bg-red-950';
+        return "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800";
       case 'MEDIUM':
-        return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950';
+        return "bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800";
       case 'LOW':
-        return 'border-l-blue-500 bg-blue-50 dark:bg-blue-950';
+        return "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800";
       default:
-        return 'border-l-gray-500 bg-gray-50 dark:bg-gray-950';
+        return "bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800";
     }
   };
 
-  const handleNoticeClick = (notice: Notice) => {
-    setSelectedNotice(notice);
-    setIsDialogOpen(true);
+  const getBadgeVariant = (level: string) => {
+    switch (level) {
+      case 'HIGH':
+        return "destructive";
+      case 'MEDIUM':
+        return "default";
+      case 'LOW':
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
+  const getLevelText = (level: string) => {
+    switch (level) {
+      case 'HIGH': return 'Urgente';
+      case 'MEDIUM': return 'Importante';
+      case 'LOW': return 'Informativo';
+      default: return 'Aviso';
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+    } catch {
+      return 'Recente';
+    }
   };
 
   if (isLoading) {
     return (
-      <Card data-testid="card-notices-loading">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
+            <Bell className="w-5 h-5" style={{ color: primaryColor }} />
             Avisos & Eventos
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -98,104 +109,78 @@ export const NoticesBlock = ({ studentId }: NoticesBlockProps) => {
     );
   }
 
-  return (
-    <>
-      <Card data-testid="card-notices">
+  if (!notices || !Array.isArray(notices) || notices.length === 0) {
+    return (
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
+            <Bell className="w-5 h-5" style={{ color: primaryColor }} />
             Avisos & Eventos
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!notices || notices.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-notices">
-              <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Nenhum aviso recente</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {notices.slice(0, 4).map((notice: Notice) => (
-                <div
-                  key={notice.id}
-                  className={`border-l-4 p-3 rounded-r cursor-pointer transition-colors hover:bg-opacity-70 ${getLevelColor(notice.level)}`}
-                  onClick={() => handleNoticeClick(notice)}
-                  data-testid={`notice-card-${notice.id}`}
-                >
-                  <div className="flex items-start gap-3">
-                    {getLevelIcon(notice.level)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-sm truncate">{notice.title}</h4>
-                        {!notice.readAt && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                        {notice.content}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {notice.eventAt && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
-                          </div>
-                        )}
-                        <span>
-                          {formatDistanceToNow(new Date(notice.publishAt), { 
-                            addSuffix: true, 
-                            locale: ptBR 
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {notices.length > 4 && (
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  data-testid="button-view-all-notices"
-                >
-                  Ver todos os avisos
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="text-center py-6">
+            <Bell className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">
+              Nenhum aviso recente disponível.
+            </p>
+          </div>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Modal para exibir aviso completo */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              {selectedNotice && getLevelIcon(selectedNotice.level)}
-              <DialogTitle>{selectedNotice?.title}</DialogTitle>
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5" style={{ color: primaryColor }} />
+            Avisos & Eventos
+          </div>
+          {notices.length >= limit && (
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/student/notices">Ver todos</a>
+            </Button>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {notices.map((notice: any) => (
+          <div key={notice.id} className={`${getLevelColor(notice.level)} border rounded-lg p-4`}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2 flex-1">
+                {getLevelIcon(notice.level)}
+                <h4 className="font-medium text-sm line-clamp-1">{notice.title}</h4>
+              </div>
+              <Badge variant={getBadgeVariant(notice.level)} className="text-xs ml-2 shrink-0">
+                {getLevelText(notice.level)}
+              </Badge>
             </div>
-            {selectedNotice?.eventAt && (
-              <DialogDescription>
-                Evento: {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR')}
-              </DialogDescription>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+              {notice.content}
+            </p>
+            
+            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>{formatDate(notice.publishAt)}</span>
+              {notice.eventAt && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
+                </div>
+              )}
+            </div>
+            
+            {!notice.readAt && (
+              <div className="mt-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full inline-block mr-2"></div>
+                <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Novo</span>
+              </div>
             )}
-          </DialogHeader>
-          
-          <div className="mt-4">
-            <div className="whitespace-pre-wrap text-sm">
-              {selectedNotice?.content}
-            </div>
           </div>
-          
-          <div className="mt-4 text-xs text-muted-foreground">
-            Publicado {selectedNotice ? formatDistanceToNow(new Date(selectedNotice.publishAt), { 
-              addSuffix: true, 
-              locale: ptBR 
-            }) : ''}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        ))}
+      </CardContent>
+    </Card>
   );
 };

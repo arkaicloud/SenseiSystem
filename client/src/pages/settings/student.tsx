@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { apiRequest } from '@/lib/queryClient';
 import {
   Form,
   FormControl,
@@ -48,19 +49,26 @@ export default function StudentSettings() {
 
   const handlePasswordChange = async (data: z.infer<typeof passwordSchema>) => {
     try {
-      console.log('Changing password:', data);
-      // API call would happen here
-      
+      const response = await apiRequest('PUT', '/api/user/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao alterar senha');
+      }
+
       toast({
-        title: t('settings.passwordChanged'),
-        description: t('settings.passwordChangeSuccess'),
+        title: "Senha alterada",
+        description: "Atualize sua senha para manter sua conta segura",
       });
       passwordForm.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error changing password:', error);
       toast({
-        title: t('common.error'),
-        description: t('settings.passwordChangeFailed'),
+        title: "Erro",
+        description: error.message || "Falha ao alterar senha",
         variant: 'destructive',
       });
     }

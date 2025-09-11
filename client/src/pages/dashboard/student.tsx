@@ -132,12 +132,6 @@ export default function StudentDashboard() {
                   />
 
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0) >= 8 
-                        ? '🎉 Parabéns! Você atingiu a meta mensal!'
-                        : `Faltam ${8 - ((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0)} aulas para atingir a meta mensal!`
-                      }
-                    </p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                       💪 Continue assim! Cada aula é um passo a mais na sua jornada!
                     </p>

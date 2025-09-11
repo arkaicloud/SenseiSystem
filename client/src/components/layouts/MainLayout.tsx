@@ -228,23 +228,26 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         )}
         
-        {/* Mobile header - hide in PWA mobile */}
-        {isMobile && user && !isPWA && (
+        {/* Mobile header */}
+        {isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
-            <button
-              id="menu-toggle"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-gray-100 dark:active:bg-gray-700 transition-colors duration-200"
-              onClick={(e) => toggleSidebar(e)}
-              onTouchStart={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)'}
-              onTouchEnd={(e) => e.currentTarget.style.backgroundColor = ''}
-              type="button"
-              aria-label="Toggle navigation menu"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <div className="flex items-center flex-1">
+            {/* Menu button - hide in PWA */}
+            {!isPWA && (
+              <button
+                id="menu-toggle"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-gray-100 dark:active:bg-gray-700 transition-colors duration-200"
+                onClick={(e) => toggleSidebar(e)}
+                onTouchStart={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)'}
+                onTouchEnd={(e) => e.currentTarget.style.backgroundColor = ''}
+                type="button"
+                aria-label="Toggle navigation menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            )}
+            <div className={`flex items-center flex-1 ${isPWA ? 'justify-center' : ''}`}>
               <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
@@ -341,7 +344,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user && !isPWA ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "pb-20 md:pb-6" : ""}`}>
+        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "pb-20 md:pb-6" : ""}`}>
           <div className="max-w-full min-w-0">
             {children}
           </div>

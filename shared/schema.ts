@@ -428,7 +428,6 @@ export const studentNotifications = pgTable("student_notifications", {
   noticeId: integer("notice_id").references(() => notices.id, { onDelete: 'cascade' }).notNull(),
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});At: timestamp("created_at").defaultNow(),
 });
 
 // Schemas

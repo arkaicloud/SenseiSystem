@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,12 +10,43 @@ import { useToast } from "@/hooks/use-toast";
 import { Palette, Bell, Shield, User, Moon, Sun } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+// Schema de validação para alterar senha
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
+    newPassword: z.string().min(8, 'A nova senha deve ter pelo menos 8 caracteres'),
+    confirmPassword: z.string().min(1, 'Confirme sua nova senha'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ['confirmPassword'],
+  });
 
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   // Buscar configuração da escola
   const { data: schoolConfig } = useQuery({
@@ -57,6 +87,53 @@ export default function Settings() {
       document.documentElement.classList.remove('dark');
       setIsDarkMode(false);
     }
+  };
+
+  // Form para alterar senha
+  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    }
+  });
+
+  // Mutation para alterar senha
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof passwordSchema>) => {
+      const response = await apiRequest('PUT', '/api/user/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao alterar senha');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Senha alterada",
+        description: "Sua senha foi alterada com sucesso!",
+      });
+      passwordForm.reset();
+      setIsPasswordDialogOpen(false);
+    },
+    onError: (error: any) => {
+      console.error('Error changing password:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao alterar senha",
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handlePasswordChange = (data: z.infer<typeof passwordSchema>) => {
+    changePasswordMutation.mutate(data);
   };
 
   
@@ -191,25 +268,108 @@ export default function Settings() {
                   Atualize sua senha para manter sua conta segura
                 </div>
               </div>
-              <Button variant="outline" disabled>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsPasswordDialogOpen(true)}
+                data-testid="button-change-password"
+              >
                 Alterar senha
               </Button>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">Autenticação de dois fatores</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Adicione uma camada extra de segurança
-                </div>
-              </div>
-              <Switch disabled />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Diálogo para alterar senha */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-change-password">
+          <DialogHeader className="pt-2 pr-8">
+            <DialogTitle>Alterar Senha</DialogTitle>
+            <DialogDescription>
+              Para sua segurança, insira sua senha atual e defina uma nova senha.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(handlePasswordChange)} className="space-y-4">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha atual</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password"
+                        {...field} 
+                        data-testid="input-current-password"
+                        placeholder="Digite sua senha atual"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nova senha</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password"
+                        {...field} 
+                        data-testid="input-new-password"
+                        placeholder="Digite sua nova senha (mín. 8 caracteres)"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar nova senha</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password"
+                        {...field} 
+                        data-testid="input-confirm-password"
+                        placeholder="Confirme sua nova senha"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsPasswordDialogOpen(false)}
+                  data-testid="button-cancel"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={changePasswordMutation.isPending}
+                  data-testid="button-save-password"
+                >
+                  {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

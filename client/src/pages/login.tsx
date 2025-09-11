@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { loginSchema } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslations } from '@/hooks/use-translations';
+import TransitionGate from '@/components/ui/TransitionGate';
 import { 
   Card,
   CardContent,
@@ -34,6 +35,8 @@ export default function Login() {
   const { login, error, clearError, isLoading } = useAuth();
   const [_, navigate] = useLocation();
   const [rememberMe, setRememberMe] = useState(false);
+  const [showTransitionGate, setShowTransitionGate] = useState(false);
+  const [userRole, setUserRole] = useState<string>('student');
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -45,8 +48,14 @@ export default function Login() {
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     try {
-      await login(data.email, data.password);
-      navigate('/dashboard');
+      clearError();
+      const result = await login(data.email, data.password);
+      
+      // Não navegar imediatamente - mostrar TransitionGate
+      if (result?.user?.role) {
+        setUserRole(result.user.role);
+        setShowTransitionGate(true);
+      }
     } catch (error) {
       console.error('Login error:', error);
     }
@@ -57,6 +66,14 @@ export default function Login() {
       <div className="fixed top-4 right-4 z-50">
         <LanguageSwitcher />
       </div>
+      
+      {showTransitionGate && (
+        <TransitionGate 
+          userRole={userRole}
+          text="Carregando seu dojo..."
+          onComplete={() => setShowTransitionGate(false)}
+        />
+      )}
       
       <Card className="w-full max-w-md bg-gray-800 border-gray-700 text-white">
         <CardHeader className="space-y-1">

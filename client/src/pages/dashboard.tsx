@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import StatCard from "@/components/dashboard/StatCard";
-import ClassCard from "@/components/dashboard/ClassCard";
+import { ClassCard } from "@/components/classes/ClassCard";
 import ActivityList from "@/components/dashboard/ActivityList";
 import BeltDistribution from "@/components/dashboard/BeltDistribution";
 import StudentsTable from "@/components/dashboard/StudentsTable";
@@ -230,34 +230,28 @@ const Dashboard: React.FC = () => {
             </div>
           ) : (
             todaysClasses.map((classItem: any) => {
-              const { time, period } = formatTime(classItem.startTime);
               const instructorName = classItem.instructor 
-                ? `${classItem.instructor.firstName} Sensei` 
-                : t('semInstrutorDesignado') || 'Sem instrutor designado';
+                ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}` 
+                : null;
 
-              // Mock attendees for demonstration
-              const attendees = [
-                { initials: 'MS', name: 'Michael S.' },
-                { initials: 'AK', name: 'Aisha K.' },
-                { initials: 'DR', name: 'David R.' },
-                ...Array(12).fill(0).map((_, i) => ({ 
-                  initials: `S${i+1}`, 
-                  name: `Student ${i+1}` 
-                }))
-              ];
+              // Adaptar dados para o novo ClassCard unificado
+              const adaptedClassData = {
+                id: classItem.id,
+                name: classItem.name,
+                type: classItem.type || 'Aula',
+                startTime: classItem.startTime,
+                endTime: classItem.endTime || classItem.startTime, // fallback se não houver endTime
+                instructor: instructorName ? { name: instructorName } : null,
+                maxStudents: classItem.maxStudents || 20,
+                currentStudents: classItem.currentStudents || 0,
+              };
 
               return (
                 <ClassCard
                   key={classItem.id}
-                  time={time}
-                  period={period}
-                  name={classItem.name}
-                  instructor={instructorName}
-                  duration={classItem.duration}
-                  attendees={attendees}
-                  onTakeAttendance={() => handleTakeAttendance(classItem)}
-                  bgColor={classItem.id % 2 === 0 ? "bg-purple-100" : "bg-blue-100"}
-                  textColor={classItem.id % 2 === 0 ? "text-purple-800" : "text-blue-800"}
+                  classData={adaptedClassData}
+                  onConfirmAttendance={() => handleTakeAttendance(classItem)}
+                  showActions={true}
                 />
               );
             })

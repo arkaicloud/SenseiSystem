@@ -301,7 +301,7 @@ export default function StudentNoticesPage() {
       {/* Notice Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="pt-2 pr-8">
             <div className="flex items-center gap-2 mb-2">
               {selectedNotice && getLevelIcon(selectedNotice.level)}
               <DialogTitle className="text-xl">{selectedNotice?.title}</DialogTitle>

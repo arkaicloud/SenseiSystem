@@ -220,7 +220,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
       {/* Dialog para exibir aviso completo */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="notice-popup">
-          <DialogHeader>
+          <DialogHeader className="pt-2 pr-8">
             <div className="flex items-center gap-2 mb-2">
               {selectedNotice && getLevelIcon(selectedNotice.level)}
               <DialogTitle className="text-lg font-semibold">

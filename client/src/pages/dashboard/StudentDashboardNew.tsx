@@ -221,8 +221,8 @@ export default function StudentDashboardNew() {
                     />
                     <span className="text-gray-600">{beltName}</span>
                   </div>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-600">
+                  <span className="text-gray-400 hidden sm:inline">•</span>
+                  <span className="text-gray-600 hidden sm:inline">
                     Desde {studentData?.enrollmentDate ? 
                       new Date(studentData.enrollmentDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) :
                       'este mês'

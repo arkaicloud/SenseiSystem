@@ -20,7 +20,9 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' && window.innerWidth < 768
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPWA, setIsPWA] = useState(false);
   const { user, isLoading, logout } = useAuth();
@@ -344,7 +346,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "pb-20 md:pb-6" : ""}`}>
+        <div 
+          className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "md:pb-6" : ""}`}
+          style={user?.role === 'student' ? {
+            paddingBottom: isMobile 
+              ? 'calc(72px + env(safe-area-inset-bottom, 0px))' 
+              : '1.5rem' // md:pb-6 equivalent
+          } : undefined}
+        >
           <div className="max-w-full min-w-0">
             {children}
           </div>

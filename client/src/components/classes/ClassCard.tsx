@@ -1,7 +1,6 @@
 import React from "react";
 import { Clock, User, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAsyncOperations } from "@/hooks/useAsyncOperations";
 
 export interface ClassData {
   id: number;
@@ -42,25 +41,15 @@ export function ClassCard({
     bookingStatus 
   } = classData;
 
-  const { confirmAttendance, cancelAttendance } = useAsyncOperations();
-
-  const handleConfirm = async () => {
-    if (isLoading) return;
-    
-    if (onConfirmAttendance) {
+  const handleConfirm = () => {
+    if (onConfirmAttendance && !isLoading) {
       onConfirmAttendance(id);
-    } else {
-      await confirmAttendance(id);
     }
   };
 
-  const handleCancel = async () => {
-    if (isLoading) return;
-    
-    if (onCancelAttendance) {
+  const handleCancel = () => {
+    if (onCancelAttendance && !isLoading) {
       onCancelAttendance(id);
-    } else {
-      await cancelAttendance(id);
     }
   };
 

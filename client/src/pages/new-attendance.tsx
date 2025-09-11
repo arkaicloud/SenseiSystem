@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClassCard } from "@/components/classes/ClassCard";
+import { ClassCard } from "@/components/attendance/ClassCard";
 import { RosterRow } from "@/components/attendance/RosterRow";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -258,38 +258,17 @@ export default function NewAttendancePage() {
                   Nenhuma aula encontrada
                 </div>
               ) : (
-                classes.map((classItem: ClassWithStats) => {
-                  // Adaptar dados para o ClassCard unificado
-                  const adaptedClassData = {
-                    id: classItem.id,
-                    name: classItem.name,
-                    type: classItem.type,
-                    startTime: classItem.startTime,
-                    endTime: (() => {
-                      const [hours, minutes] = classItem.startTime.split(':').map(Number);
-                      const totalMinutes = hours * 60 + minutes + classItem.duration;
-                      const endHours = Math.floor(totalMinutes / 60);
-                      const endMins = totalMinutes % 60;
-                      return `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
-                    })(),
-                    instructor: classItem.instructor,
-                    maxStudents: classItem.maxStudents,
-                    currentStudents: classItem.stats.confirmed + classItem.stats.present,
-                  };
-
-                  return (
-                    <div key={classItem.id} onClick={() => {
-                      const selected = classes.find((c: ClassWithStats) => c.id === classItem.id);
+                classes.map((classItem: ClassWithStats) => (
+                  <ClassCard
+                    key={classItem.id}
+                    class={classItem}
+                    onOpen={(id) => {
+                      const selected = classes.find((c: ClassWithStats) => c.id === id);
                       setSelectedClass(selected || null);
                       setIsClassStarted(false); // Reset class status
-                    }}>
-                      <ClassCard
-                        classData={adaptedClassData}
-                        showActions={false}
-                      />
-                    </div>
-                  );
-                })
+                    }}
+                  />
+                ))
               )}
             </CardContent>
           </Card>

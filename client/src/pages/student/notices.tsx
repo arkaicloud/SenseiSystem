@@ -59,7 +59,7 @@ export default function StudentNoticesPage() {
   });
 
   // Buscar avisos do estudante
-  const { data: notices, isLoading } = useQuery({
+  const { data: noticesData, isLoading } = useQuery({
     queryKey: [`/api/students/${studentProfile?.id}/notices`],
     queryFn: async () => {
       if (!studentProfile?.id) return { notices: [] };
@@ -73,6 +73,8 @@ export default function StudentNoticesPage() {
     },
     enabled: !!studentProfile?.id,
   });
+
+  const notices = noticesData?.notices || [];
 
   // Marcar aviso como lido
   const markAsReadMutation = useMutation({

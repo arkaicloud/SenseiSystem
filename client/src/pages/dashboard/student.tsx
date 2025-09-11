@@ -26,10 +26,6 @@ export default function StudentDashboard() {
     queryKey: ['/api/classes/today'],
   });
 
-  // Get school events
-  const { data: schoolEvents, isLoading: isEventsLoading } = useQuery({
-    queryKey: ['/api/school-events'],
-  });
 
   // Get attendance count for current month
   const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
@@ -94,40 +90,12 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      {/* Avisos e Eventos da Escola */}
-      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white flex items-center space-x-2">
-            <span>📢</span>
-            <span>Avisos e Eventos</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isEventsLoading ? (
-            <div className="text-gray-600 dark:text-gray-400">Carregando eventos...</div>
-          ) : schoolEvents && Array.isArray(schoolEvents) && schoolEvents.length > 0 ? (
-            <div className="space-y-3">
-              {schoolEvents.slice(0, 3).map((evento: any, i: number) => (
-                <div key={i} className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700/30">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{evento.title}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{evento.description}</p>
-                    </div>
-                    <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
-                      {formatDate(evento.event_date)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-gray-100 dark:bg-gray-700/30 p-4 rounded-xl text-center text-gray-600 dark:text-gray-400">
-              Nenhum evento ou aviso no momento. Fique atento às próximas novidades!
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Comunicados da Escola - 3 mais recentes */}
+      <NoticesBlock 
+        studentId={(studentData && 'id' in studentData) ? studentData.id : 1}
+        primaryColor="#3B82F6"
+        limit={3}
+      />
 
       {/* Aulas de Hoje */}
       <div className="space-y-4">

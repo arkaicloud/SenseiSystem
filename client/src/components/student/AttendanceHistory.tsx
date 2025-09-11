@@ -231,7 +231,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
       {attendanceData && attendanceData.attendances.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Aulas Participadas</CardTitle>
+            <CardTitle>Aulas Frequentadas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

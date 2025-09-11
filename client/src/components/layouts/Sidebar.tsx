@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
     },
     {
       id: "presencas",
-      label: "Presenças",
+      label: "Controle de Aulas",
       icon: CheckSquare,
       path: "/attendance",
       roles: ["admin", "instructor"],

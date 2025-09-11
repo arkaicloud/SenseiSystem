@@ -6605,6 +6605,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { limit = 4 } = req.query;
       const requestUser = (req as any).user;
 
+      console.log(`📢 Fetching recent notices for student ${studentId}`);
+
       // Verificar autorização
       if (requestUser.role !== 'admin') {
         const student = await storage.getStudentByUserId(requestUser.id);
@@ -6639,9 +6641,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(notices.publishAt))
         .limit(parseInt(limit as string));
 
+      console.log(`✅ Found ${recentNotices.length} recent notices for student ${studentId}`);
       res.json(recentNotices);
     } catch (error) {
-      console.error("Error fetching recent notices:", error);
+      console.error("❌ Error fetching recent notices:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -6651,7 +6654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const requestUser = (req as any).user;
       
-      if (requestUser.role !== 'admin') {
+      if (requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
         return res.status(403).json({ message: "Acesso negado" });
       }
 
@@ -6661,6 +6664,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Título e conteúdo são obrigatórios" });
       }
 
+      console.log('📢 Creating new notice:', { title, level, audience });
+
       const [notice] = await db
         .insert(notices)
         .values({
@@ -6669,13 +6674,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           level: level || 'MEDIUM',
           audience: audience || 'ALL',
           eventAt: eventAt ? new Date(eventAt) : null,
+          publishAt: new Date(), // Define data de publicação
           createdBy: requestUser.id
         })
         .returning();
 
       // Criar notificações para todos os alunos elegíveis
       if (audience === 'ALL' || audience === 'STUDENTS') {
-        const allStudents = await db.select({ id: students.id }).from(students);
+        const allStudents = await db
+          .select({ id: students.id })
+          .from(students)
+          .innerJoin(users, eq(students.userId, users.id))
+          .where(eq(users.active, true));
+        
+        console.log(`📤 Creating notifications for ${allStudents.length} students`);
         
         if (allStudents.length > 0) {
           await db
@@ -6689,9 +6701,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(notice);
+      console.log('✅ Notice created successfully:', notice.id);
+      res.json({ success: true, notice });
     } catch (error) {
-      console.error("Error creating notice:", error);
+      console.error("❌ Error creating notice:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

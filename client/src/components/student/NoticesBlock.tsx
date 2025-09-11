@@ -44,6 +44,7 @@ export const NoticesBlock = ({ studentId }: NoticesBlockProps) => {
       
       return response.json();
     },
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
 
   const getLevelIcon = (level: string) => {

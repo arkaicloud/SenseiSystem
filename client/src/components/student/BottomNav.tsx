@@ -1,4 +1,4 @@
-import { Home, CalendarDays, Bell, User } from "lucide-react";
+import { Home, CalendarDays, Bell, User, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -16,6 +16,12 @@ export default function BottomNav() {
       icon: CalendarDays, 
       label: "Agenda",
       isActive: location === "/student/week-agenda"
+    },
+    { 
+      to: "/student/attendance-stats", 
+      icon: BarChart3, 
+      label: "Presenças",
+      isActive: location === "/student/attendance-stats"
     },
     { 
       to: "/student/notices", 
@@ -40,7 +46,7 @@ export default function BottomNav() {
       }}
       aria-label="Student bottom navigation"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-4 gap-1 px-3">
+      <ul className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (

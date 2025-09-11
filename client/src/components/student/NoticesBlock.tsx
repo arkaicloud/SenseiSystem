@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,11 +187,11 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
                 {getLevelText(notice.level)}
               </Badge>
             </div>
-            
+
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
               {notice.content}
             </p>
-            
+
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>{formatDate(notice.publishAt)}</span>
               {notice.eventAt && (
@@ -202,14 +201,14 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
                 </div>
               )}
             </div>
-            
+
             {!notice.readAt && (
               <div className="mt-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full inline-block mr-2"></div>
                 <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Novo</span>
               </div>
             )}
-            
+
             <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
               Clique para ver detalhes
             </div>
@@ -247,7 +246,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {selectedNotice?.content || ''}
               </div>
-              
+
               {selectedNotice?.eventAt && (
                 <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-2 mb-2">

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import IosSwitch from "@/components/ui/ios-switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -173,7 +173,11 @@ export default function Settings() {
                   Receber notificações sobre confirmação de presença
                 </div>
               </div>
-              <Switch defaultChecked />
+              <IosSwitch 
+                checked={true}
+                onChange={() => {}}
+                label="Notificações de presença"
+              />
             </div>
             
             <Separator />
@@ -185,7 +189,11 @@ export default function Settings() {
                   Receber notificações sobre pagamentos e vencimentos
                 </div>
               </div>
-              <Switch defaultChecked />
+              <IosSwitch 
+                checked={true}
+                onChange={() => {}}
+                label="Notificações de pagamento"
+              />
             </div>
             
             <Separator />
@@ -197,7 +205,11 @@ export default function Settings() {
                   Receber notificações sobre eventos da escola
                 </div>
               </div>
-              <Switch defaultChecked />
+              <IosSwitch 
+                checked={true}
+                onChange={() => {}}
+                label="Notificações de eventos"
+              />
             </div>
           </CardContent>
         </Card>

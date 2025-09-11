@@ -6983,7 +6983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Buscar o usuário atual no banco
-      const user = await storage.getUserById(requestUser.id);
+      const user = await storage.getUser(requestUser.id);
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }

@@ -228,14 +228,16 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
       )}
 
       {/* Attendance List */}
-      {attendanceData && attendanceData.attendances.length > 0 ? (
+      {attendanceData && attendanceData.attendances.filter(a => a.status === 'present').length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Aulas Frequentadas</CardTitle>
+            <CardTitle>Aulas com Presença Confirmada</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {attendanceData.attendances.map((attendance) => (
+              {attendanceData.attendances
+                .filter((attendance) => attendance.status === 'present')
+                .map((attendance) => (
                 <div key={attendance.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
                     {getStatusIcon(attendance.status)}
@@ -290,9 +292,9 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
         <Card>
           <CardContent className="text-center p-8">
             <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma presença registrada</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhuma presença confirmada</h3>
             <p className="text-gray-600">
-              Não há registros de presença para o período selecionado.
+              Não há registros de presença confirmada para o período selecionado.
             </p>
           </CardContent>
         </Card>

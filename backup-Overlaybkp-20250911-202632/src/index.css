@@ -1,0 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* SenseiSystem - Tema Claro (Light Mode) */
+  --background: 0 0% 100%; /* #FFFFFF - Branco */
+  --foreground: 222 47% 11%; /* Texto principal mais escuro para melhor contraste */
+  --muted: 210 40% 96%; /* Cinza claro mais suave */
+  --muted-foreground: 215 16% 36%; /* Texto muted com melhor contraste */
+  --popover: 0 0% 100%; /* #FFFFFF - Branco */
+  --popover-foreground: 222 47% 11%; /* Consistente com foreground */
+  --card: 0 0% 100%; /* #FFFFFF - Branco */
+  --card-foreground: 222 47% 11%; /* Texto de card consistente */
+  --border: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
+  --input: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
+
+  /* Cores Primárias do SenseiSystem */
+  --primary: 18 66% 40%; /* Terracota Sensei - cor característica */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
+  --primary-light: 18 66% 50%; /* Terracota mais claro */
+  --primary-dark: 18 66% 30%; /* Terracota mais escuro */
+
+  --secondary: 210 40% 96%; /* Cinza claro consistente */
+  --secondary-foreground: 222 47% 11%; /* Texto escuro sobre fundo claro */
+  --secondary-light: 210 40% 98%; /* Cinza mais claro */
+  --secondary-dark: 210 40% 88%; /* Cinza mais escuro */
+
+  --accent: 210 40% 96%; /* Consistente com secondary */
+  --accent-foreground: 222 47% 11%; /* Texto escuro sobre fundo claro */
+  --accent-light: 210 40% 98%; /* Accent mais claro */
+  --accent-dark: 210 40% 88%; /* Accent mais escuro */
+
+  /* Status Colors */
+  --status-success: 142 76% 36%; /* #22C55E - Verde Sucesso */
+  --status-danger: 0 84% 60%; /* #EF4444 - Vermelho Erro */
+  --status-warning: 25 95% 53%; /* #F97316 - Laranja Alerta */
+  --status-info: 217 91% 60%; /* #2563EB - Azul Info */
+
+  /* Sidebar Colors */
+  --sidebar-background: 0 0% 100%; /* #FFFFFF - Branco */
+  --sidebar-foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
+  --sidebar-primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
+  --sidebar-accent: 213 100% 97%; /* #EFF6FF - Azul Claro hover */
+  --sidebar-accent-foreground: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-border: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
+  --sidebar-ring: 217 91% 60%; /* #2563EB - Azul Royal */
+
+  --destructive: 0 72% 42%; /* Vermelho mais escuro para contraste AA (≥4.5:1) */
+  --destructive-foreground: 0 0% 100%; /* Branco para melhor contraste */
+  --ring: 215 20% 35%; /* Anel de foco mais sutil */
+  --radius: 0.5rem;
+
+  /* Dashboard customization variables */
+  --dashboard-bg: var(--background);
+  --dashboard-accent: var(--primary);
+}
+
+.dark {
+  /* SenseiSystem - Tema Escuro (Dark Mode) - Melhorado para contraste AA */
+  --background: 222 15% 10%; /* Fundo principal escuro mais suave */
+  --foreground: 0 0% 98%; /* Texto principal branco com excelente contraste */
+  --muted: 222 14% 18%; /* Fundo muted mais claro para separação */
+  --muted-foreground: 0 0% 80%; /* Texto muted com melhor legibilidade */
+  --popover: 222 15% 10%; /* Consistente com background */
+  --popover-foreground: 0 0% 98%; /* Consistente com foreground */
+  --card: 222 14% 13%; /* Cards ligeiramente mais claros que background */
+  --card-foreground: 0 0% 98%; /* Texto de card consistente */
+  --border: 220 14% 22%; /* Bordas mais visíveis no escuro */
+  --input: 220 14% 22%; /* Inputs consistentes com border */
+
+  /* Cores Primárias do SenseiSystem - Dark Mode */
+  --primary: 18 66% 48%; /* Terracota mais claro para melhor contraste no escuro */
+  --primary-foreground: 0 0% 100%; /* Branco puro sobre primary */
+  --primary-light: 18 66% 58%; /* Terracota mais claro */
+  --primary-dark: 18 66% 38%; /* Terracota mais escuro */
+
+  --secondary: 222 14% 18%; /* Fundo secundário consistente com muted */
+  --secondary-foreground: 0 0% 98%; /* Texto claro sobre fundo escuro */
+  --secondary-light: 222 14% 25%; /* Secondary mais claro */
+  --secondary-dark: 222 14% 12%; /* Secondary mais escuro */
+
+  --accent: 222 14% 18%; /* Accent consistente com secondary */
+  --accent-foreground: 0 0% 98%; /* Texto claro sobre fundo escuro */
+  --accent-light: 222 14% 25%; /* Accent mais claro */
+  --accent-dark: 222 14% 12%; /* Accent mais escuro */
+
+  /* Status Colors - Dark Mode */
+  --status-success: 142 76% 36%; /* #22C55E - Verde Sucesso */
+  --status-danger: 0 84% 60%; /* #EF4444 - Vermelho Erro */
+  --status-warning: 25 95% 53%; /* #F97316 - Laranja Alerta */
+  --status-info: 217 91% 60%; /* #2563EB - Azul Info */
+
+  /* Sidebar Colors - Dark Mode */
+  --sidebar-background: 222 84% 5%; /* #0F172A - Azul Grafite */
+  --sidebar-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-primary-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-accent: 220 91% 54%; /* #1D4ED8 - Azul Acetinado hover */
+  --sidebar-accent-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-border: 215 25% 27%; /* #334155 - Cinza Profundo */
+  --sidebar-ring: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+
+  --destructive: 0 72% 46%; /* Vermelho ajustado para contraste AA no dark mode */
+  --destructive-foreground: 0 0% 100%; /* Branco puro sobre destructive */
+  --ring: 18 66% 48%; /* Ring com cor primária para consistência */
+  --radius: 0.5rem;
+
+  /* Dashboard customization variables */
+  --dashboard-bg: var(--background);
+  --dashboard-accent: var(--primary);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+    background: #0b1220 !important; /* slate-950 para evitar flash branco */
+    overflow-x: hidden;
+  }
+  
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+    overflow-x: hidden;
+  }
+  
+  /* PWA Viewport Adjustments - Remove all borders */
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-width: 100vw;
+  }
+  
+  /* Remove white borders on mobile PWA */
+  @media (display-mode: standalone) {
+    html, body, #root {
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    
+    body {
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    }
+  }
+  
+  /* Force full viewport coverage */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Custom backdrop blur for better visual consistency */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-foreground;
+  }
+}
+
+@layer utilities {
+  .font-montserrat {
+    font-family: 'Montserrat', sans-serif;
+  }
+}
+
+@screen xs {
+  .xs\:inline {
+    display: inline;
+  }
+
+  .xs\:hidden {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Estados de presença com contraste AA */
+  .status-confirmed {
+    @apply bg-emerald-700 text-white px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-cancel-button {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors duration-200 px-2.5 py-1 rounded;
+  }
+  
+  .belt {
+    @apply inline-block mr-1;
+    width: 70px;
+    height: 10px;
+  }
+
+  .white-belt { 
+    @apply bg-white border border-gray-300; 
+  }
+
+  .blue-belt { 
+    @apply bg-[#2196f3]; 
+  }
+
+  .purple-belt { 
+    @apply bg-[#9c27b0]; 
+  }
+
+  .brown-belt { 
+    @apply bg-[#795548]; 
+  }
+
+  .black-belt { 
+    @apply bg-black; 
+  }
+}
+
+/* ==== Sticky footer sem espaço extra ==== */
+html, body {
+  height: auto !important;
+  min-height: 100svh !important; /* svh evita bugs do 100vh em mobile */
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100svh !important;
+}
+
+/* a área de conteúdo ocupa o meio, sem forçar altura extra */
+main, [data-main], .app-main {
+  flex: 1 0 auto !important;
+  min-height: 0 !important;
+}
+
+/* o footer vai para o fim da página, sem criar "piso" adicional */
+footer {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* saneamento defensivo: elimina margin/padding pós-footer */
+footer + * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* se algum contêiner genérico estiver "esticando" a página */
+.h-screen, .min-h-screen, .min-h-svh {
+  min-height: auto !important; /* só para esta tela de onboarding */
+}
+
+/* Mobile-specific fixes for onboarding */
+@media (max-width: 768px) {
+  .safe-area-inset {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Prevent iOS Safari zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Ensure proper touch targets */
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Fix viewport height on mobile */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height */
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Better mobile form styling */
+  .mobile-friendly-form {
+    padding: 1rem;
+  }
+  
+  .mobile-friendly-card {
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Fix for mobile keyboard issues */
+  .mobile-form-container {
+    max-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

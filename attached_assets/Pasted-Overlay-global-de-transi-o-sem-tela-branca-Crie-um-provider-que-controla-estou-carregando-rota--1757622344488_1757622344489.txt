@@ -1,0 +1,184 @@
+Overlay global de transição (sem tela branca)
+
+Crie um provider que controla “estou carregando rota/dados?” e um componente LoadingOverlay fixo que cobre a tela com spinner/skeleton.
+
+// ui/LoadingContext.tsx
+import { createContext, useContext, useState, ReactNode } from "react";
+const Ctx = createContext<{busy:boolean; setBusy:(v:boolean)=>void}>({busy:false,setBusy:()=>{}});
+export const LoadingProvider = ({children}:{children:ReactNode}) => {
+  const [busy, setBusy] = useState(false);
+  return <Ctx.Provider value={{busy,setBusy}}>{children}</Ctx.Provider>;
+};
+export const useLoading = () => useContext(Ctx);
+
+// ui/LoadingOverlay.tsx
+export default function LoadingOverlay({text="Carregando..."}:{text?:string}) {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 transition-opacity duration-200"
+         style={{opacity:0.96, display:"grid", placeItems:"center", background:"rgba(15,18,24,.75)", backdropFilter:"blur(4px)"}}>
+      <div className="rounded-2xl p-6 bg-black/40 text-white shadow-xl">
+        <div className="animate-spin h-6 w-6 mx-auto mb-3 border-2 border-white/30 border-t-white rounded-full"/>
+        <p className="text-sm">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+
+No root:
+
+// main.tsx
+import { LoadingProvider, useLoading } from "./ui/LoadingContext";
+import LoadingOverlay from "./ui/LoadingOverlay";
+
+function AppShell() {
+  const { busy } = useLoading();
+  return (
+    <>
+      {/* seu layout */}
+      {busy && <LoadingOverlay text="Preparando seu painel..." />}
+    </>
+  );
+}
+
+// index.tsx
+createRoot(document.getElementById('root')!).render(
+  <LoadingProvider>
+    <AppShell />
+  </LoadingProvider>
+);
+
+2) Detectar mudanças de rota e mostrar overlay
+
+Com React Router v6:
+
+// hooks/useRouteLoading.ts
+import { useEffect } from "react";
+import { useNavigation } from "react-router-dom";
+import { useLoading } from "../ui/LoadingContext";
+
+export function useRouteLoading() {
+  const nav = useNavigation(); // "idle" | "loading" | "submitting"
+  const { setBusy } = useLoading();
+  useEffect(() => { setBusy(nav.state !== "idle"); }, [nav.state, setBusy]);
+}
+
+
+Use em um layout que envolve as páginas:
+
+// layouts/RootLayout.tsx
+import { Outlet } from "react-router-dom";
+import { useRouteLoading } from "../hooks/useRouteLoading";
+export default function RootLayout() {
+  useRouteLoading();
+  return <Outlet />;
+}
+
+3) Manter a tela anterior até a nova ficar pronta (avoid flash branco)
+
+Adote code-splitting + Suspense e um fallback skeleton em vez de trocar para uma div vazia:
+
+// routes/Dashboard.tsx
+import { Suspense, lazy } from "react";
+const DashboardInner = lazy(() => import("./DashboardInner")); // parte pesada (gráficos etc.)
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardInner />
+    </Suspense>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-4 grid gap-4">
+      <div className="h-8 w-48 rounded bg-white/5 animate-pulse" />
+      <div className="h-40 rounded bg-white/5 animate-pulse" />
+      <div className="h-40 rounded bg-white/5 animate-pulse" />
+    </div>
+  );
+}
+
+4) Prefetch dos dados críticos antes de trocar a tela
+
+Se usar React Query/TanStack Query:
+
+// ao clicar em “Entrar”, faça prefetch:
+await queryClient.prefetchQuery(['dashboard:init'], fetchDashboardInit);
+
+// no DashboardInner:
+const { data } = useQuery(['dashboard:init'], fetchDashboardInit, { staleTime: 30_000, suspense:true });
+
+
+Isso evita que a rota mude sem dados, reduzindo o “gap” de 4s.
+
+5) Parallelize & de-priorize o que é pesado
+
+Carregue gráficos/imagens pesadas depois (lazy import dos componentes de chart).
+
+useTransition para transições suaves:
+
+const [isPending, startTransition] = useTransition();
+startTransition(() => navigate("/dashboard"));
+
+
+Divida o fetch: pegue “header/KPIs rápidos” primeiro (mostrar skeleton -> preencher), e depois busque relatórios longos.
+
+6) Evitar re-render/hidratação lenta
+
+Evite montar bibliotecas pesadas na primeira dobra. Lazy-load.
+
+Memorize componentes caros (memo, useMemo).
+
+Ative HTTP/2 + gzip/br no servidor; sirva chunks menores.
+
+7) PWA Splash & estados intermediários
+
+Garanta um splash do PWA configurado no manifest.json (background_color + theme_color corretos).
+
+Exiba um skeleton persistente também no HTML inicial (SSR ou um div “#app-loader”) para cobrir o tempo de hidratação.
+
+8) Remova o “buraco” de 4s especificamente
+
+Possíveis causas e correções:
+
+Bloqueio de main-thread (gráficos, libs): lazy-load + requestIdleCallback para pós-montagem.
+
+Consulta única muito lenta: quebre em 2–3 queries, mostre o topo do dashboard com dados rápidos, o restante “vai chegando”.
+
+Layout thrash: evite calcular layout pesado ao montar; use CSS puro para skeletons, adie medições (ResizeObserver) pro idle.
+
+Auth/JWT: valide token antes de navegar (prefetch do /me), salve em memória e prossiga.
+
+9) Exemplo rápido: bloquear tela branca entre login → dashboard
+async function handleLogin(form) {
+  setBusy(true); // from useLoading
+  try {
+    await auth.login(form);
+    // Prefetch dados essenciais do dashboard ANTES de navegar
+    await Promise.all([
+      queryClient.prefetchQuery(['dashboard:me'], getMe),
+      queryClient.prefetchQuery(['dashboard:init'], fetchDashboardInit),
+    ]);
+    navigate("/dashboard"); // tela nova já chega com cache
+  } finally {
+    setBusy(false);
+  }
+}
+
+10) Medir para confirmar
+
+Adicione Web Vitals (CLS/LCP/TTI) e logs de tempo entre: “login submit” → “rota montada” → “query resolvida”.
+
+Se o overlay fica 4s, você encontra o gargalo (rede? CPU? gráfico?).
+
+Se estiver em Next.js:
+
+Use route events do next/router para ligar o overlay (routeChangeStart/Complete/Error).
+
+Prefetch com getServerSideProps ou RSC + cache() para dados críticos do dashboard.
+
+next/dynamic para charts com ssr:false e loading: () => <ChartSkeleton />.
+
+Quer que eu gere um patch pronto (React Router ou Next) aplicando esse overlay e a lógica de prefetch no seu fluxo atual? Me diga qual stack exata (React Router ou Next) e eu já mando o bloco inteiro plug-and-play.

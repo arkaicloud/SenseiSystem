@@ -16,7 +16,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -61,12 +60,20 @@ interface Notice {
   createdAt: string;
 }
 
+interface NoticeFormData {
+  title: string;
+  content: string;
+  level: 'LOW' | 'MEDIUM' | 'HIGH';
+  audience: 'ALL' | 'STUDENTS' | 'INSTRUCTORS';
+  eventAt?: string;
+}
+
 export default function CommunicationsPage() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<NoticeFormData>({
     title: '',
     content: '',
     level: 'MEDIUM',
@@ -86,7 +93,7 @@ export default function CommunicationsPage() {
 
   // Criar aviso
   const createNoticeMutation = useMutation({
-    mutationFn: async (noticeData: any) => {
+    mutationFn: async (noticeData: NoticeFormData) => {
       const response = await apiRequest('POST', '/api/notices', noticeData);
       if (!response.ok) {
         const error = await response.json();
@@ -114,7 +121,7 @@ export default function CommunicationsPage() {
 
   // Editar aviso
   const editNoticeMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+    mutationFn: async ({ id, data }: { id: number; data: NoticeFormData }) => {
       const response = await apiRequest('PUT', `/api/notices/${id}`, data);
       if (!response.ok) {
         const error = await response.json();
@@ -177,6 +184,10 @@ export default function CommunicationsPage() {
     });
   };
 
+  const handleInputChange = (field: keyof NoticeFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -217,8 +228,14 @@ export default function CommunicationsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    deleteNoticeMutation.mutate(id);
+  const handleDelete = (notice: Notice) => {
+    deleteNoticeMutation.mutate(notice.id);
+  };
+
+  const handleNewNotice = () => {
+    resetForm();
+    setEditingNotice(null);
+    setIsCreateDialogOpen(true);
   };
 
   const getLevelIcon = (level: string) => {
@@ -249,6 +266,24 @@ export default function CommunicationsPage() {
       case 'STUDENTS': return 'Alunos';
       case 'INSTRUCTORS': return 'Instrutores';
       default: return 'Todos';
+    }
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'HIGH': return 'border-red-500';
+      case 'MEDIUM': return 'border-yellow-500';
+      case 'LOW': return 'border-blue-500';
+      default: return 'border-gray-500';
+    }
+  };
+
+  const getBadgeVariant = (level: string) => {
+    switch (level) {
+      case 'HIGH': return 'destructive';
+      case 'MEDIUM': return 'default';
+      case 'LOW': return 'secondary';
+      default: return 'outline';
     }
   };
 
@@ -305,7 +340,7 @@ export default function CommunicationsPage() {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Digite o título do comunicado..."
                   required
                 />
@@ -316,7 +351,7 @@ export default function CommunicationsPage() {
                 <Textarea
                   id="content"
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e) => handleInputChange('content', e.target.value)}
                   placeholder="Digite o conteúdo do comunicado..."
                   rows={5}
                   required
@@ -326,7 +361,7 @@ export default function CommunicationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="level">Prioridade</Label>
-                  <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value as any })}>
+                  <Select value={formData.level} onValueChange={(value) => handleInputChange('level', value as any)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -340,7 +375,7 @@ export default function CommunicationsPage() {
 
                 <div>
                   <Label htmlFor="audience">Destinatários</Label>
-                  <Select value={formData.audience} onValueChange={(value) => setFormData({ ...formData, audience: value as any })}>
+                  <Select value={formData.audience} onValueChange={(value) => handleInputChange('audience', value as any)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -359,7 +394,7 @@ export default function CommunicationsPage() {
                   id="eventAt"
                   type="date"
                   value={formData.eventAt}
-                  onChange={(e) => setFormData({ ...formData, eventAt: e.target.value })}
+                  onChange={(e) => handleInputChange('eventAt', e.target.value)}
                 />
               </div>
 
@@ -390,7 +425,7 @@ export default function CommunicationsPage() {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Digite o título do comunicado..."
                   required
                 />
@@ -401,7 +436,7 @@ export default function CommunicationsPage() {
                 <Textarea
                   id="content"
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e) => handleInputChange('content', e.target.value)}
                   placeholder="Digite o conteúdo do comunicado..."
                   rows={5}
                   required
@@ -411,7 +446,7 @@ export default function CommunicationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="level">Prioridade</Label>
-                  <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value as any })}>
+                  <Select value={formData.level} onValueChange={(value) => handleInputChange('level', value as any)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -425,7 +460,7 @@ export default function CommunicationsPage() {
 
                 <div>
                   <Label htmlFor="audience">Destinatários</Label>
-                  <Select value={formData.audience} onValueChange={(value) => setFormData({ ...formData, audience: value as any })}>
+                  <Select value={formData.audience} onValueChange={(value) => handleInputChange('audience', value as any)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -444,7 +479,7 @@ export default function CommunicationsPage() {
                   id="eventAt"
                   type="date"
                   value={formData.eventAt}
-                  onChange={(e) => setFormData({ ...formData, eventAt: e.target.value })}
+                  onChange={(e) => handleInputChange('eventAt', e.target.value)}
                 />
               </div>
 
@@ -481,36 +516,64 @@ export default function CommunicationsPage() {
           </Card>
         ) : (
           notices.map((notice: Notice) => (
-            <Card key={notice.id} className="border-l-4 border-l-primary">
-              <CardHeader>
+            <Card key={notice.id} className={`border-l-4 ${getLevelColor(notice.level)}`}>
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {getLevelIcon(notice.level)}
-                    <div>
-                      <CardTitle className="text-lg">{notice.title}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={notice.level === 'HIGH' ? 'destructive' : notice.level === 'MEDIUM' ? 'default' : 'secondary'}>
-                          {getLevelText(notice.level)}
-                        </Badge>
-                        <Badge variant="outline">
-                          <Users className="h-3 w-3 mr-1" />
-                          {getAudienceText(notice.audience)}
-                        </Badge>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {getLevelIcon(notice.level)}
+                      <div>
+                        <CardTitle className="text-lg">{notice.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant={getBadgeVariant(notice.level)}>
+                            {getLevelText(notice.level)}
+                          </Badge>
+                          <Badge variant="outline">
+                            <Users className="h-3 w-3 mr-1" />
+                            {getAudienceText(notice.audience)}
+                          </Badge>
+                          {!notice.isActive && (
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                              Inativo
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 whitespace-pre-wrap">
+                      {notice.content}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+                      <span>
+                        Criado {formatDistanceToNow(new Date(notice.createdAt), {
+                          addSuffix: true,
+                          locale: ptBR
+                        })}
+                      </span>
+
+                      {notice.eventAt && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(notice)}
+                      disabled={deleteNoticeMutation.isPending}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" disabled={deleteNoticeMutation.isPending}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -524,7 +587,7 @@ export default function CommunicationsPage() {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handleDelete(notice.id)}
+                            onClick={() => handleDelete(notice)}
                             className="bg-red-600 hover:bg-red-700"
                           >
                             Remover
@@ -533,28 +596,6 @@ export default function CommunicationsPage() {
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {notice.content}
-                </p>
-
-                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span>
-                    Criado {formatDistanceToNow(new Date(notice.createdAt), {
-                      addSuffix: true,
-                      locale: ptBR
-                    })}
-                  </span>
-
-                  {notice.eventAt && (
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>

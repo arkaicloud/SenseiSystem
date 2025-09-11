@@ -22,6 +22,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isPWA, setIsPWA] = useState(false);
   const { user, isLoading, logout } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
@@ -56,8 +57,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
+    
+    // Detect PWA
+    const detectPWA = () => {
+      const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || 
+                       (window.navigator as any).standalone || 
+                       document.referrer.includes('android-app://');
+      setIsPWA(isPWAMode);
+    };
 
     handleResize();
+    detectPWA();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -218,8 +228,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         )}
         
-        {/* Mobile header */}
-        {isMobile && user && (
+        {/* Mobile header - hide in PWA mobile */}
+        {isMobile && user && !isPWA && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
             <button
               id="menu-toggle"
@@ -331,7 +341,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
 
         {/* Page content */}
-        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "pb-20 md:pb-6" : ""}`}>
+        <div className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user && !isPWA ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "pb-20 md:pb-6" : ""}`}>
           <div className="max-w-full min-w-0">
             {children}
           </div>

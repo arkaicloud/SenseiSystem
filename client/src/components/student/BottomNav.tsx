@@ -33,10 +33,9 @@ export default function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-4 left-2 right-2 z-50 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/80 shadow-lg md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 md:hidden"
       style={{ 
-        paddingBottom: "max(8px, env(safe-area-inset-bottom, 8px))",
-        marginBottom: "max(8px, env(safe-area-inset-bottom, 8px))"
+        paddingBottom: "env(safe-area-inset-bottom, 8px)"
       }}
     >
       <ul className="grid grid-cols-4 h-16">

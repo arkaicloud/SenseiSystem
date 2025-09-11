@@ -26,7 +26,7 @@ import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashP
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
-import { toDayUTC, toDateString } from "./utils/date.js";
+import { toDayUTC, toDateString, getBrasiliaDate, getBrasiliaDayOfWeek } from "./utils/date.js";
 import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
 import { saveHealthQuestionnaire } from "./services/healthQuestionnaireService";
@@ -2183,10 +2183,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
 
-      // Obter o dia da semana atual (0=domingo, 1=segunda, 2=terça, 3=quarta, etc)
-      const today = new Date();
-      const currentDayOfWeek = today.getDay();
-      const dayOfWeekName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      // Obter o dia da semana atual considerando fuso horário de Brasília (-3 UTC)
+      const today = getBrasiliaDate();
+      const currentDayOfWeek = getBrasiliaDayOfWeek();
+      const dayOfWeekName = today.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' }).toLowerCase();
 
       console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeekName} (${currentDayOfWeek})`);
       console.log(`Total de aulas encontradas: ${allClasses.length}`);
@@ -2351,12 +2351,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🎯 Aulas ativas encontradas: ${allowedClasses.length} de ${allClasses.length} total`);
       
-      // Criar dados para próximos 7 dias consecutivos começando hoje
-      const today = new Date();
+      // Criar dados para próximos 7 dias consecutivos começando hoje (horário de Brasília)
+      const today = getBrasiliaDate();
       const weekData = [];
       
       for (let i = 0; i < 7; i++) {
-        // Criar data para o dia atual + i
+        // Criar data para o dia atual + i (considerando fuso horário de Brasília)
         const currentDate = new Date(today);
         currentDate.setDate(today.getDate() + i);
         const dateStr = currentDate.toISOString().split('T')[0];

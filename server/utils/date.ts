@@ -24,7 +24,10 @@ export function toDayUTC(dateStr: string, tz = "America/Sao_Paulo"): Date {
  */
 export function todayUTC(tz = "America/Sao_Paulo"): Date {
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0]; // Get YYYY-MM-DD
+  // Ajustar para fuso horário de Brasília
+  const brasiliaOffset = -3 * 60; // -3 horas em minutos
+  const brasiliaTime = new Date(now.getTime() + (brasiliaOffset + now.getTimezoneOffset()) * 60000);
+  const todayStr = brasiliaTime.toISOString().split('T')[0]; // Get YYYY-MM-DD
   return toDayUTC(todayStr, tz);
 }
 
@@ -35,4 +38,22 @@ export function todayUTC(tz = "America/Sao_Paulo"): Date {
  */
 export function toDateString(date: Date): string {
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Gets current date in Brazil timezone (America/Sao_Paulo)
+ * @returns Date object adjusted for Brazil timezone
+ */
+export function getBrasiliaDate(): Date {
+  const now = new Date();
+  const brasiliaOffset = -3 * 60; // -3 horas em minutos (UTC-3)
+  return new Date(now.getTime() + (brasiliaOffset + now.getTimezoneOffset()) * 60000);
+}
+
+/**
+ * Gets current day of week in Brazil timezone
+ * @returns Number (0=Sunday, 1=Monday, etc.)
+ */
+export function getBrasiliaDayOfWeek(): number {
+  return getBrasiliaDate().getDay();
 }

@@ -123,7 +123,7 @@ export default function StudentDashboard() {
                     <span className="text-2xl font-bold text-blue-400">
                       {(attendanceData && 'count' in attendanceData) ? attendanceData.count : 0}
                     </span>
-                    <span className="text-gray-600 dark:text-gray-400 ml-2">aulas com presença confirmada este mês</span>
+                    <span className="text-gray-600 dark:text-gray-400 ml-2">aulas realizadas este mês</span>
                   </div>
 
                   <Progress 
@@ -131,12 +131,17 @@ export default function StudentDashboard() {
                     className="h-2"
                   />
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0) >= 8 
-                      ? '🎉 Parabéns! Você atingiu a meta mensal!'
-                      : `Faltam ${8 - ((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0)} aulas para atingir a meta mensal!`
-                    }
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0) >= 8 
+                        ? '🎉 Parabéns! Você atingiu a meta mensal!'
+                        : `Faltam ${8 - ((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0)} aulas para atingir a meta mensal!`
+                      }
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                      💪 Continue assim! Cada aula é um passo a mais na sua jornada no Jiu-Jitsu!
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>

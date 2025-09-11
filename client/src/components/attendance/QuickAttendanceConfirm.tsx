@@ -23,13 +23,13 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   const queryClient = useQueryClient();
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [confirmedClasses, setConfirmedClasses] = useState<number[]>([]);
-  
+
   // Buscar aulas do dia
   const { data: classesData, isLoading } = useQuery({
     queryKey: ['/api/classes/today'],
     refetchInterval: 300000, // Atualiza a cada 5 minutos
   });
-  
+
   // Buscar estudante pelo userId
   const { data: studentData } = useQuery({
     queryKey: ['/api/students/by-user', userId],
@@ -39,7 +39,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
     },
     enabled: !!userId,
   });
-  
+
   // Buscar presenças do aluno
   const { data: attendanceData } = useQuery({
     queryKey: ['/api/attendance/by-student', userId],
@@ -50,16 +50,16 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   const todaysClasses = classesData?.classes || [];
   // Simplificar filtro para mostrar todas as aulas do dia para fins de demonstração
   const availableClasses = todaysClasses;
-  
+
   // Verificar se há aulas disponíveis
   const hasAvailableClasses = availableClasses.length > 0;
-  
+
   // Verificar presenças já confirmadas e atualizar estado ao carregar
   useEffect(() => {
     if (!attendanceData?.attendances) return;
-    
+
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    
+
     // Extrair IDs de aulas que o aluno já confirmou presença hoje
     const confirmedClassIds = attendanceData.attendances
       .filter((att: any) => {
@@ -67,7 +67,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         return attDate === today;
       })
       .map((att: any) => att.classId);
-    
+
     setConfirmedClasses(confirmedClassIds);
   }, [attendanceData]);
 
@@ -78,7 +78,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       if (!studentData?.student?.id) {
         throw new Error("Dados do estudante não encontrados");
       }
-      
+
       const res = await apiRequest("POST", "/api/attendance/confirm", {
         classId
       });
@@ -94,14 +94,14 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         description: t('sua_presenca_foi_registrada'),
         variant: "default",
       });
-      
+
       // Atualizar lista de aulas confirmadas
       setConfirmedClasses(prev => [...prev, classId]);
-      
+
       queryClient.invalidateQueries({
         queryKey: ['/api/attendance/by-student']
       });
-      
+
       setSelectedClassId(null);
     },
     onError: (error: Error) => {
@@ -112,7 +112,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       });
     }
   });
-  
+
   // Mutation para cancelar presença
   const cancelAttendanceMutation = useMutation({
     mutationFn: async (classId: number) => {
@@ -120,13 +120,13 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       if (!studentData?.student?.id) {
         throw new Error("Dados do estudante não encontrados");
       }
-      
+
       const cancellationData = {
         classId,
         studentId: studentData.student.id, // Usar o ID correto do estudante
         date: new Date().toISOString()
       };
-      
+
       const res = await apiRequest("DELETE", "/api/attendance/cancel", cancellationData);
       return await res.json();
     },
@@ -136,10 +136,10 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         description: t('sua_presenca_foi_cancelada'),
         variant: "default",
       });
-      
+
       // Atualizar lista de aulas confirmadas (remover o ID da aula cancelada)
       setConfirmedClasses(prev => prev.filter(id => id !== classId));
-      
+
       queryClient.invalidateQueries({
         queryKey: ['/api/attendance/by-student']
       });
@@ -152,7 +152,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       });
     }
   });
-  
+
   // Se não houver aulas disponíveis e estiver no modo compacto, mostrar apenas um botão desabilitado
   if (compact && !hasAvailableClasses) {
     return (
@@ -161,7 +161,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       </Button>
     );
   }
-  
+
   // Se estiver carregando e for compacto
   if (isLoading && compact) {
     return (
@@ -171,13 +171,13 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       </Button>
     );
   }
-  
+
   // Se for modo compacto com aulas disponíveis
   if (compact) {
     const classItem = availableClasses[0];
     const { time, period } = formatTime(classItem.startTime);
     const isConfirmed = confirmedClasses.includes(classItem.id);
-    
+
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -187,7 +187,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
               {time} • {classItem.duration} min
             </div>
           </div>
-          
+
           {isConfirmed ? (
             <div className="flex items-center gap-2">
               <Badge className="bg-green-100 text-green-800 border-green-200">
@@ -212,6 +212,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
               size="sm"
               disabled={confirmAttendanceMutation.isPending}
               onClick={() => confirmAttendanceMutation.mutate(classItem.id)}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
             >
               {confirmAttendanceMutation.isPending ? (
                 <Loader2 className="mr-2 h-3 w-3 animate-spin" />
@@ -222,7 +223,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
             </Button>
           )}
         </div>
-        
+
         {availableClasses.length > 1 && (
           <div className="text-xs text-center text-primary dark:text-blue-400">
             <span
@@ -236,13 +237,13 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       </div>
     );
   }
-  
+
   // Versão completa (não compacta)
   return (
     <Card>
       <CardContent className="p-6">
         <h3 className="text-lg font-medium mb-4">{t('confirmar_presenca')}</h3>
-        
+
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -258,11 +259,11 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
             <p className="text-sm text-muted-foreground mb-4">
               {t('selecione_aula_confirmar_presenca')}
             </p>
-            
+
             {availableClasses.map((classItem: any) => {
               const { time, period } = formatTime(classItem.startTime);
               const isConfirmed = confirmedClasses.includes(classItem.id);
-              
+
               return (
                 <div 
                   key={classItem.id}
@@ -286,7 +287,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   {isConfirmed ? (
                     <div className="flex items-center gap-2">
                       <Badge className="bg-green-100 text-green-800 border-green-200">
@@ -319,10 +320,10 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
                 </div>
               );
             })}
-            
+
             {!availableClasses.every(c => confirmedClasses.includes(c.id)) && (
               <Button
-                className="w-full mt-4"
+                className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
                 disabled={!selectedClassId || confirmAttendanceMutation.isPending}
                 onClick={() => selectedClassId && confirmAttendanceMutation.mutate(selectedClassId)}
               >

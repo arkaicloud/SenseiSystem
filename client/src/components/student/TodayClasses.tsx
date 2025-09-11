@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   const handleConfirm = (classSession: ClassSession) => {
     const today = new Date().toISOString().split('T')[0];
     const dateISO = classSession.dateISO || today;
-    
+
     confirmMutation.mutate({
       classId: classSession.id,
       dateISO: dateISO
@@ -48,7 +47,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   const handleCancel = (classSession: ClassSession) => {
     const today = new Date().toISOString().split('T')[0];
     const dateISO = classSession.dateISO || today;
-    
+
     cancelMutation.mutate({
       classId: classSession.id,
       dateISO: dateISO
@@ -148,7 +147,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     </Badge>
                   )}
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
@@ -176,7 +175,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                       className="w-full sm:w-auto text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
                     >
                       {isMutating ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
                         <XCircle className="w-4 h-4 mr-2" />
                       )}
@@ -188,8 +187,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     size="sm"
                     onClick={() => handleConfirm(classSession)}
                     disabled={isMutating}
-                    className="w-full sm:w-auto text-white font-medium"
-                    style={{ backgroundColor: primaryColor }}
+                    className="w-full sm:w-auto text-white font-medium bg-blue-500 hover:bg-blue-600"
                   >
                     {isMutating ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />

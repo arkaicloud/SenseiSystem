@@ -216,7 +216,7 @@ const AttendanceConfirmation: React.FC = () => {
                     <Button
                       onClick={() => handleConfirmAttendance(classItem.id)}
                       disabled={confirmingClassId === classItem.id || confirmAttendanceMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
                     >
                       {confirmingClassId === classItem.id ? (
                         "Confirmando..."

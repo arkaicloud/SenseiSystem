@@ -88,6 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.location.href = '/awaiting-approval';
         return;
       }
+      
+      // Return user data to allow TransitionGate to get role
+      return data;
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Email ou senha incorretos');

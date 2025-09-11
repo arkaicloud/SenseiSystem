@@ -146,8 +146,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-4">
               {/* Notification Bell */}
               {user?.role === 'admin' && <NotificationBell />}
-              {user?.role === 'student' && studentProfile && (
-                <StudentBell studentId={studentProfile.id} />
+              {user?.role === 'student' && studentProfile && typeof studentProfile === 'object' && studentProfile !== null && 'id' in studentProfile && (
+                <StudentBell studentId={(studentProfile as { id: number }).id} />
               )}
               
               {/* Theme toggle button */}
@@ -261,8 +261,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-2">
               {/* Notification Bell */}
               {user?.role === 'admin' && <NotificationBell />}
-              {user?.role === 'student' && studentProfile && (
-                <StudentBell studentId={studentProfile.id} />
+              {user?.role === 'student' && studentProfile && typeof studentProfile === 'object' && studentProfile !== null && 'id' in studentProfile && (
+                <StudentBell studentId={(studentProfile as { id: number }).id} />
               )}
               
               {/* Theme toggle button */}

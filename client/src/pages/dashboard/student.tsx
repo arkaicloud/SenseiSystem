@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -16,7 +15,6 @@ import { NoticesBlock } from "@/components/student/NoticesBlock";
 export default function StudentDashboard() {
   const { t } = useTranslations();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("proximas-aulas");
 
   // Get student data
@@ -85,14 +83,14 @@ export default function StudentDashboard() {
         <h1 className="text-2xl font-semibold text-white mb-2">
           👋 Olá, {user?.firstName} {user?.lastName}!
         </h1>
-        {studentData?.student && (
+        {studentData && 'student' in studentData && studentData.student && (
           <div className="flex items-center space-x-2 text-gray-300">
             <div 
               className="w-4 h-4 rounded-full border-2 border-gray-400"
-              style={{ backgroundColor: getBeltColor(studentData.student.beltLevel) }}
+              style={{ backgroundColor: getBeltColor(studentData.student?.beltLevel || 'white') }}
             ></div>
             <span>
-              🥋 Faixa atual: {formatBelt(studentData.student.beltLevel, studentData.student.stripes || 0)}
+              🥋 Faixa atual: {formatBelt(studentData.student?.beltLevel || 'white', studentData.student?.stripes || 0)}
             </span>
           </div>
         )}
@@ -159,8 +157,8 @@ export default function StudentDashboard() {
         {/* Aulas de Hoje */}
         <TabsContent value="proximas-aulas" className="space-y-4">
           <TodayClasses 
-            classes={todayClasses?.classes || []}
-            studentId={studentData?.id || 1}
+            classes={(todayClasses && 'classes' in todayClasses && Array.isArray(todayClasses.classes)) ? todayClasses.classes : []}
+            studentId={(studentData && 'id' in studentData) ? studentData.id : 1}
             primaryColor="#3B82F6"
             isLoading={isClassesLoading}
           />
@@ -180,20 +178,20 @@ export default function StudentDashboard() {
                 <div className="space-y-4">
                   <div className="text-white">
                     <span className="text-2xl font-bold text-blue-400">
-                      {attendanceData?.count || 0}
+                      {(attendanceData && 'count' in attendanceData) ? attendanceData.count : 0}
                     </span>
                     <span className="text-gray-400 ml-2">aulas participadas este mês</span>
                   </div>
 
                   <Progress 
-                    value={Math.min((attendanceData?.count || 0) * 10, 100)} 
+                    value={Math.min(((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0) * 10, 100)} 
                     className="h-2"
                   />
 
                   <p className="text-sm text-gray-400">
-                    {(attendanceData?.count || 0) >= 8 
+                    {((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0) >= 8 
                       ? '🎉 Parabéns! Você atingiu a meta mensal!'
-                      : `Faltam ${8 - (attendanceData?.count || 0)} aulas para atingir a meta mensal!`
+                      : `Faltam ${8 - ((attendanceData && 'count' in attendanceData) ? attendanceData.count : 0)} aulas para atingir a meta mensal!`
                     }
                   </p>
                 </div>
@@ -204,12 +202,12 @@ export default function StudentDashboard() {
 
         {/* Painel Financeiro */}
         <TabsContent value="financeiro">
-          <FinancialPanel studentId={user?.id} />
+          <FinancialPanel studentId={user?.id || 1} />
         </TabsContent>
 
         {/* Histórico de Presenças */}
         <TabsContent value="historico">
-          <AttendanceHistory studentId={user?.id} />
+          <AttendanceHistory studentId={user?.id || 1} />
         </TabsContent>
       </Tabs>
     </div>

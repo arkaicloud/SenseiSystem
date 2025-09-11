@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
@@ -70,9 +69,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
 
   const years = Array.from({ length: 3 }, (_, i) => currentYear - i);
 
-  const queryParams = selectedMonth && selectedYear 
-    ? `?month=${selectedMonth}&year=${selectedYear}` 
-    : '';
+  const queryParams = `?month=${selectedMonth}&year=${selectedYear}`;
 
   const { data: attendanceData, isLoading } = useQuery<AttendanceData>({
     queryKey: [`/api/student/attendance-history/${studentId}${queryParams}`],
@@ -118,10 +115,6 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
     }
   };
 
-  const clearFilters = () => {
-    setSelectedMonth('');
-    setSelectedYear('');
-  };
 
   if (isLoading) {
     return (
@@ -155,7 +148,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
               <label className="text-sm font-medium mb-2 block">Mês</label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os meses" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
@@ -171,7 +164,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
               <label className="text-sm font-medium mb-2 block">Ano</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os anos" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
@@ -182,12 +175,6 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
                 </SelectContent>
               </Select>
             </div>
-            
-            {(selectedMonth || selectedYear) && (
-              <Button variant="outline" onClick={clearFilters}>
-                Limpar Filtros
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -305,10 +292,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
             <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma presença registrada</h3>
             <p className="text-gray-600">
-              {selectedMonth || selectedYear 
-                ? 'Não há registros de presença para o período selecionado.'
-                : 'Ainda não há registros de presença para este aluno.'
-              }
+              Não há registros de presença para o período selecionado.
             </p>
           </CardContent>
         </Card>

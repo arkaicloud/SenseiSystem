@@ -110,7 +110,10 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
     );
   }
 
-  if (!isLoading && (!weekData || weekData.length === 0)) {
+  // Filtrar dias com aulas
+  const daysWithClasses = (weekData ?? []).filter(dayData => dayData.classes.length > 0);
+
+  if (!isLoading && daysWithClasses.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -140,7 +143,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {weekData.map((dayData) => (
+        {daysWithClasses.map((dayData) => (
           <div key={dayData.date} className="space-y-3">
             <div className="flex items-center gap-2">
               <h3 
@@ -156,14 +159,9 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
               )}
             </div>
 
-            {dayData.classes.length === 0 ? (
-              <div className="text-sm text-muted-foreground pl-4 py-2">
-                Nenhuma aula agendada
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {dayData.classes.map((classSession) => (
-                  <div
+            <div className="space-y-3">
+              {dayData.classes.map((classSession) => (
+                <div
                     key={`${dayData.date}-${classSession.id}`}
                     className="border rounded-lg p-4 hover:shadow-sm transition-shadow ml-4"
                     data-testid={`class-card-${dayData.date}-${classSession.id}`}
@@ -240,8 +238,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
+            </div>
           </div>
         ))}
       </CardContent>

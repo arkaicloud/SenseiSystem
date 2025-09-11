@@ -42,7 +42,8 @@ export const NoticesBlock = ({ studentId }: NoticesBlockProps) => {
         throw new Error('Erro ao buscar avisos');
       }
       
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     refetchInterval: 30000, // Atualiza a cada 30 segundos
   });

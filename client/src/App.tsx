@@ -34,6 +34,10 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PendingRouteGuard } from "@/lib/pending-route-guard";
 import { RootGuard } from "@/components/guards/RootGuard";
+import StudentsAtRiskPage from "./pages/students-at-risk";
+import SettingsPage from "./pages/settings";
+import AsaasPaymentsPage from "./pages/asaas-payments";
+import CommunicationsPage from "./pages/admin/communications";
 
 function Router() {
   return (

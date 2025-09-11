@@ -199,9 +199,12 @@ export const StudentBell = ({ studentId }: StudentBellProps) => {
           </DialogHeader>
           
           <div className="mt-4">
-            <div className="whitespace-pre-wrap text-sm">
-              {selectedNotification?.content}
-            </div>
+            <div 
+              className="whitespace-pre-wrap text-sm prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ 
+                __html: selectedNotification?.content || '' 
+              }}
+            />
           </div>
           
           <div className="mt-4 text-xs text-muted-foreground">

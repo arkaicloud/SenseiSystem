@@ -6961,6 +6961,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Change Password
+  app.put('/api/user/change-password', isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const { currentPassword, newPassword } = req.body;
+
+      console.log(`🔐 Password change request for user ${requestUser.id}`);
+
+      // Validação dos dados de entrada
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ 
+          message: "Senha atual e nova senha são obrigatórias" 
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ 
+          message: "A nova senha deve ter pelo menos 8 caracteres" 
+        });
+      }
+
+      // Buscar o usuário atual no banco
+      const user = await storage.getUserById(requestUser.id);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      // Verificar se a senha atual está correta
+      const bcrypt = require('bcryptjs');
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ 
+          message: "Senha atual incorreta" 
+        });
+      }
+
+      // Criptografar a nova senha
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      // Atualizar a senha no banco
+      await storage.updateUser(user.id, { password: hashedNewPassword });
+
+      console.log(`✅ Password updated successfully for user ${requestUser.id}`);
+
+      res.json({ 
+        success: true, 
+        message: "Senha alterada com sucesso" 
+      });
+    } catch (error) {
+      console.error('❌ Error changing password:', error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

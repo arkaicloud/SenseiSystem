@@ -7,7 +7,7 @@ interface Notification {
   id: number;
   type: "event" | "attendance" | "belt" | "general";
   title: string;
-  message: string;
+  message: string; // Assuming 'message' can contain HTML
   date: string;
   isRead: boolean;
 }
@@ -20,7 +20,7 @@ const StudentNotifications: React.FC<StudentNotificationsProps> = ({
   notifications = [] 
 }) => {
   const { t } = useTranslation();
-  
+
   const getIcon = (type: string) => {
     switch (type) {
       case "event":
@@ -56,7 +56,10 @@ const StudentNotifications: React.FC<StudentNotificationsProps> = ({
                 </div>
                 <div className="flex-grow">
                   <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100">{notification.title}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{notification.message}</p>
+                  <div 
+                    className="text-sm text-gray-600 mb-2 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: notification.message }}
+                  />
                   <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{notification.date}</div>
                 </div>
                 {!notification.isRead && (

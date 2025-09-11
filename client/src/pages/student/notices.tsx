@@ -64,11 +64,11 @@ export default function StudentNoticesPage() {
     queryFn: async () => {
       if (!studentProfile?.id) return { notices: [] };
       const response = await apiRequest('GET', `/api/students/${studentProfile.id}/notices`);
-      
+
       if (!response.ok) {
         throw new Error('Erro ao buscar avisos');
       }
-      
+
       return response.json();
     },
     enabled: !!studentProfile?.id,
@@ -132,7 +132,7 @@ export default function StudentNoticesPage() {
   const handleNoticeClick = (notice: Notice) => {
     setSelectedNotice(notice);
     setIsDialogOpen(true);
-    
+
     // Marcar como lido se ainda não foi lido
     if (!notice.readAt) {
       markAsReadMutation.mutate(notice.id);
@@ -154,7 +154,7 @@ export default function StudentNoticesPage() {
           <Bell className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Avisos e Comunicados</h1>
         </div>
-        
+
         <div className="grid gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -181,7 +181,7 @@ export default function StudentNoticesPage() {
             <Bell className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Avisos e Comunicados</h1>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Search */}
             <div className="relative">
@@ -193,7 +193,7 @@ export default function StudentNoticesPage() {
                 className="pl-10 w-full sm:w-64"
               />
             </div>
-            
+
             {/* Filter */}
             <Select value={levelFilter} onValueChange={setLevelFilter}>
               <SelectTrigger className="w-full sm:w-40">
@@ -253,12 +253,12 @@ export default function StudentNoticesPage() {
                           </Badge>
                         )}
                       </div>
-                      
+
                       <p className="text-gray-600 dark:text-gray-400 line-clamp-2">
                         {notice.content.substring(0, 150)}
                         {notice.content.length > 150 && '...'}
                       </p>
-                      
+
                       <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
@@ -312,13 +312,14 @@ export default function StudentNoticesPage() {
               )}
             </div>
           </DialogHeader>
-          
+
           <DialogDescription asChild>
             <div className="space-y-4">
-              <div className="prose prose-sm max-w-none dark:prose-invert text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {selectedNotice?.content || ''}
-              </div>
-              
+              <div 
+                className="text-gray-700 leading-relaxed prose prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ __html: selectedNotice?.content || '' }}
+              />
+
               {selectedNotice?.eventAt && (
                 <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
                   <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
@@ -335,7 +336,7 @@ export default function StudentNoticesPage() {
                   </p>
                 </div>
               )}
-              
+
               <div className="text-xs text-muted-foreground border-t pt-3">
                 Publicado {selectedNotice ? formatDistanceToNow(new Date(selectedNotice.publishAt), { 
                   addSuffix: true, 

@@ -140,7 +140,7 @@
     background: #0b1220 !important; /* slate-950 para evitar flash branco */
     overflow-x: hidden;
   }
-  
+
   #root {
     margin: 0 !important;
     padding: 0 !important;
@@ -149,7 +149,7 @@
     min-height: 100vh !important;
     overflow-x: hidden;
   }
-  
+
   /* PWA Viewport Adjustments - Remove all borders */
   html, body, #root {
     margin: 0;
@@ -160,7 +160,7 @@
     min-height: 100vh;
     min-width: 100vw;
   }
-  
+
   /* Remove white borders on mobile PWA */
   @media (display-mode: standalone) {
     html, body, #root {
@@ -168,17 +168,17 @@
       margin: 0;
       overflow-x: hidden;
     }
-    
+
     body {
       padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     }
   }
-  
+
   /* Force full viewport coverage */
   * {
     box-sizing: border-box;
   }
-  
+
   /* Custom backdrop blur for better visual consistency */
   .backdrop-blur-xl {
     backdrop-filter: blur(24px);
@@ -206,16 +206,81 @@
   }
 }
 
+/* Custom styles for rendered HTML content */
+.prose-sm {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.prose-sm p {
+  margin-bottom: 0.75rem;
+}
+
+.prose-sm strong, .prose-sm b {
+  font-weight: 600;
+}
+
+.prose-sm em, .prose-sm i {
+  font-style: italic;
+}
+
+.prose-sm u {
+  text-decoration: underline;
+}
+
+.prose-sm ul, .prose-sm ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose-sm li {
+  margin-bottom: 0.25rem;
+}
+
+.prose-sm h1, .prose-sm h2, .prose-sm h3, .prose-sm h4, .prose-sm h5, .prose-sm h6 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+.prose-sm h1 { font-size: 1.25rem; }
+.prose-sm h2 { font-size: 1.125rem; }
+.prose-sm h3 { font-size: 1rem; }
+
+.prose-sm a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.prose-sm a:hover {
+  color: #1d4ed8;
+}
+
+.prose-sm blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+}
+
+.prose-sm code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8125rem;
+}
+
 @layer components {
   /* Estados de presença com contraste AA */
   .status-confirmed {
     @apply bg-emerald-700 text-white px-2.5 py-1 rounded-full text-xs font-medium;
   }
-  
+
   .status-cancel-button {
     @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors duration-200 px-2.5 py-1 rounded;
   }
-  
+
   .belt {
     @apply inline-block mr-1;
     width: 70px;
@@ -268,12 +333,6 @@ footer {
   flex-shrink: 0 !important;
 }
 
-/* saneamento defensivo: elimina margin/padding pós-footer */
-footer + * {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
 /* se algum contêiner genérico estiver "esticando" a página */
 .h-screen, .min-h-screen, .min-h-svh {
   min-height: auto !important; /* só para esta tela de onboarding */
@@ -285,7 +344,7 @@ footer + * {
     padding-bottom: env(safe-area-inset-bottom);
     padding-top: env(safe-area-inset-top);
   }
-  
+
   /* Prevent iOS Safari zoom on input focus */
   input[type="text"],
   input[type="email"],
@@ -296,35 +355,35 @@ footer + * {
   textarea {
     font-size: 16px !important;
   }
-  
+
   /* Ensure proper touch targets */
   button,
   .clickable {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   /* Fix viewport height on mobile */
   .min-h-screen {
     min-height: 100vh;
     min-height: 100dvh; /* Dynamic viewport height */
   }
-  
+
   /* Prevent horizontal scroll */
   body {
     overflow-x: hidden;
   }
-  
+
   /* Better mobile form styling */
   .mobile-friendly-form {
     padding: 1rem;
   }
-  
+
   .mobile-friendly-card {
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
-  
+
   /* Fix for mobile keyboard issues */
   .mobile-form-container {
     max-height: 100vh;

@@ -110,12 +110,12 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
   const filteredCommunications = mockCommunications
     .filter(comm => {
       if (!comm.isPublished) return false;
-      
+
       if (comm.targetAudience === 'all') return true;
       if (userRole === 'student' && comm.targetAudience === 'students') return true;
       if (userRole === 'instructor' && comm.targetAudience === 'instructors') return true;
       if (userRole === 'admin') return true;
-      
+
       return false;
     })
     .slice(0, limit);
@@ -170,25 +170,25 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
                 <span>{formatDate(comm.publishDate)}</span>
               </div>
             </div>
-            
+
             <div className="text-sm text-gray-700 mb-2">
               {stripHtml(comm.content).substring(0, 100)}
               {stripHtml(comm.content).length > 100 && '...'}
             </div>
-            
+
             {comm.eventDate && (
               <div className="flex items-center gap-1 text-xs text-blue-600">
                 <Calendar className="w-3 h-3" />
                 <span>Evento: {formatDateTime(comm.eventDate)}</span>
               </div>
             )}
-            
+
             <div className="text-xs text-gray-500 mt-1">
               Por: {comm.createdBy}
             </div>
           </div>
         ))}
-        
+
         {filteredCommunications.length >= limit && (
           <div className="text-center pt-2">
             <p className="text-sm text-gray-500">

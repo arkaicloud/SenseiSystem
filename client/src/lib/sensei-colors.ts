@@ -5,7 +5,7 @@
 export const senseiColors = {
   // Cores Primárias (Identidade da Marca)
   primary: {
-    main: '#4285F4', // Azul Google
+    main: '#3B82F6', // Azul primário
     light: '#5A9BF7', // Azul mais claro
     dark: '#2C5DBE', // Azul mais escuro
     foreground: '#FFFFFF'
@@ -87,7 +87,7 @@ export const getSenseiColor = (colorPath: string, theme: 'light' | 'dark' = 'lig
 export const senseiTailwindClasses = {
   // Backgrounds
   bg: {
-    primary: 'bg-[#4285F4]',
+    primary: 'bg-[#3B82F6]',
     secondary: 'bg-[#94A3B8]',
     accent: 'bg-[#FBBF24]',
     success: 'bg-[#22C55E]',
@@ -97,7 +97,7 @@ export const senseiTailwindClasses = {
   
   // Text colors
   text: {
-    primary: 'text-[#4285F4]',
+    primary: 'text-[#3B82F6]',
     secondary: 'text-[#94A3B8]',
     accent: 'text-[#FBBF24]',
     success: 'text-[#22C55E]',
@@ -107,7 +107,7 @@ export const senseiTailwindClasses = {
   
   // Border colors
   border: {
-    primary: 'border-[#4285F4]',
+    primary: 'border-[#3B82F6]',
     secondary: 'border-[#94A3B8]',
     accent: 'border-[#FBBF24]',
     success: 'border-[#22C55E]',

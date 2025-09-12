@@ -135,7 +135,7 @@ export default function StudentDashboardNew() {
   }
 
   // Get colors from school config or use defaults
-  const primaryColor = schoolConfig?.config?.primaryColor || '#B85C38';
+  const primaryColor = schoolConfig?.config?.primaryColor || '#3B82F6';
   const secondaryColor = schoolConfig?.config?.secondaryColor || '#D97659';
 
   // Get belt information

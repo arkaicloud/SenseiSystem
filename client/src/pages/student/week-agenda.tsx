@@ -64,7 +64,7 @@ export default function WeekAgendaPage() {
     }
   }, [studentData?.id, error, weekData]);
 
-  const primaryColor = schoolConfigData?.config?.primaryColor || '#B85C38';
+  const primaryColor = schoolConfigData?.config?.primaryColor || '#3B82F6';
 
   if (!studentData?.id) {
     return (

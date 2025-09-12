@@ -1,22 +1,14 @@
-
 import React from "react";
 
-type IosSwitchProps = {
+type Props = {
   checked: boolean;
-  onChange: (next: boolean) => void;
+  onChange: (v: boolean) => void;
   disabled?: boolean;
   id?: string;
-  label?: string; // para aria-label quando não houver <label htmlFor>
+  label?: string;
 };
 
-export default function IosSwitch({
-  checked,
-  onChange,
-  disabled,
-  id,
-  label,
-}: IosSwitchProps) {
-  // teclado: espaço/enter alternam
+export default function IosSwitch({ checked, onChange, disabled, id, label }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
@@ -35,22 +27,25 @@ export default function IosSwitch({
       onClick={() => !disabled && onChange(!checked)}
       onKeyDown={handleKeyDown}
       className={[
-        "relative inline-flex h-7 w-12 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out",
-        checked ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600", 
-        disabled ? "opacity-50 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
+        // tamanho iOS 51x31 com padding 2px
+        "relative inline-flex h-[31px] w-[51px] cursor-pointer items-center rounded-full p-[2px]",
+        "transition-colors duration-200",
+        checked ? "bg-[#34C759]" : "bg-[#E9E9EA] dark:bg-[#3a3a3c]",
+        disabled ? "opacity-50 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-[#34C759]/40",
+        // leve borda interna do trilho (iOS tem uma sutileza)
+        "shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]",
       ].join(" ")}
     >
-      {/* trilho (para borda interna suave no modo claro/escuro) */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 rounded-full ring-1 ring-black/5 dark:ring-white/10"
-      />
-      {/* botão */}
+      {/* botão branco */}
       <span
         aria-hidden="true"
         className={[
-          "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out",
-          checked ? "translate-x-6" : "translate-x-1",
+          // 27x27 = 31 - 2*2
+          "h-[27px] w-[27px] rounded-full bg-white",
+          // sombras parecidas com iOS
+          "shadow-[0_1px_2px_rgba(0,0,0,0.35),_0_0_0_0.5px_rgba(0,0,0,0.04)]",
+          "transform transition-transform duration-200 will-change-transform",
+          checked ? "translate-x-[20px]" : "translate-x-0",
         ].join(" ")}
       />
     </button>

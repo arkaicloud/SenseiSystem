@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -19,12 +19,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { createPreviewText } from "@/lib/htmlUtils";
 import {
   Plus,
   MessageSquare,
@@ -205,13 +207,13 @@ export default function CommunicationsPage() {
         id: editingNotice.id,
         data: {
           ...formData,
-          eventAt: formData.eventAt || null
+          eventAt: formData.eventAt || undefined
         }
       });
     } else {
       createNoticeMutation.mutate({
         ...formData,
-        eventAt: formData.eventAt || null
+        eventAt: formData.eventAt || undefined
       });
     }
   };
@@ -343,18 +345,17 @@ export default function CommunicationsPage() {
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Digite o título do comunicado..."
                   required
+                  data-testid="input-title-create"
                 />
               </div>
 
               <div>
                 <Label htmlFor="content">Conteúdo</Label>
-                <Textarea
-                  id="content"
+                <RichTextEditor
                   value={formData.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
+                  onChange={(value) => handleInputChange('content', value)}
                   placeholder="Digite o conteúdo do comunicado..."
-                  rows={5}
-                  required
+                  className="min-h-[300px]"
                 />
               </div>
 
@@ -428,18 +429,17 @@ export default function CommunicationsPage() {
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Digite o título do comunicado..."
                   required
+                  data-testid="input-title-edit"
                 />
               </div>
 
               <div>
                 <Label htmlFor="content">Conteúdo</Label>
-                <Textarea
-                  id="content"
+                <RichTextEditor
                   value={formData.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
+                  onChange={(value) => handleInputChange('content', value)}
                   placeholder="Digite o conteúdo do comunicado..."
-                  rows={5}
-                  required
+                  className="min-h-[300px]"
                 />
               </div>
 
@@ -541,8 +541,8 @@ export default function CommunicationsPage() {
                       </div>
                     </div>
 
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 whitespace-pre-wrap">
-                      {notice.content}
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      {createPreviewText(notice.content, 200)}
                     </p>
 
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">

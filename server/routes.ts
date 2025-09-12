@@ -1293,6 +1293,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Send welcome email after successful approval
+      try {
+        await emailService.sendWelcomeEmail(
+          user.email,
+          `${user.firstName} ${user.lastName}`,
+          `${user.firstName} ${user.lastName}`
+        );
+        console.log(`✅ Welcome email sent to: ${user.email}`);
+      } catch (emailError) {
+        console.error(`❌ Error sending welcome email to ${user.email}:`, emailError);
+        // Don't fail the approval if email sending fails
+      }
+
       // Create activity log for account activation
       const requestUser = (req as any).user;
       await storage.createActivityLog({

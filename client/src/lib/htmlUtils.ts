@@ -81,9 +81,9 @@ const ALLOWED_ATTRIBUTES: { [key: string]: string[] } = {
 
 /**
  * List of safe URL protocols
- * Blocks javascript:, data:, vbscript: and other dangerous protocols
+ * Allows data: for base64 images, blocks javascript:, vbscript: and other dangerous protocols
  */
-const SAFE_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:'];
+const SAFE_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:', 'data:'];
 
 /**
  * Validates if a URL has a safe protocol
@@ -95,6 +95,12 @@ export function isValidURL(url: string): boolean {
     // Handle relative URLs
     if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
       return true;
+    }
+    
+    // Handle data URLs (base64 images) - validate format
+    if (url.startsWith('data:')) {
+      // Only allow image data URLs
+      return /^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,/.test(url);
     }
     
     // Check absolute URLs

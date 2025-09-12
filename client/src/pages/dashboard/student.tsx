@@ -5,7 +5,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, CreditCard } from 'lucide-react';
-import FinancialPanel from '@/components/student/FinancialPanel';
 import { TodayClasses } from '@/components/student/TodayClasses';
 import { NoticesBlock } from "@/components/student/NoticesBlock";
 
@@ -25,12 +24,6 @@ export default function StudentDashboard() {
   });
 
 
-  // Get financial data to check if user is financial responsible
-  const { data: financialData, isLoading: isFinancialLoading } = useQuery({
-    queryKey: ['/api/student/financial', (studentData as any)?.id],
-    enabled: !!(studentData as any)?.id,
-    retry: false,
-  });
 
 
   if (isStudentLoading) {
@@ -107,10 +100,6 @@ export default function StudentDashboard() {
       )}
 
 
-      {/* Painel Financeiro - só exibe se o aluno é responsável financeiro */}
-      {(studentData as any)?.id && (financialData as any)?.isFinancialResponsible && (
-        <FinancialPanel studentId={(studentData as any)?.id} />
-      )}
 
     </div>
   );

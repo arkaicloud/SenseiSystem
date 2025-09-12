@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useQuery } from '@tanstack/react-query';
 import { currencyBRL } from '@/utils/fmt';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,9 +118,18 @@ const BeltsCard = ({ title, data }: { title: string; data: Record<string, number
 export default function AdminDashboard() {
   const { data, isLoading } = useDashboard();
   
+  // Buscar dados financeiros para obter o Total Recebido
+  const { data: financialData } = useQuery({
+    queryKey: ['/api/financial/payments'],
+    refetchInterval: false,
+  });
+  
   if (isLoading || !data) return <DashboardSkeleton />;
 
   const m = data.metrics;
+  
+  // Usar Total Recebido do painel financeiro como receita mensal
+  const monthlyRevenue = financialData?.metrics?.totalReceived || 0;
 
   return (
     <div className="space-y-6">
@@ -132,7 +142,7 @@ export default function AdminDashboard() {
           icon={UserCheck} 
           variant={m.attendanceRate < 0.6 ? "danger" : "success"} 
         />
-        <StatCard title="Receita Mensal" value={currencyBRL(m.monthlyRevenue)} icon={DollarSign} />
+        <StatCard title="Receita Mensal" value={currencyBRL(monthlyRevenue)} icon={DollarSign} />
         <StatCard 
           title="Engajamento em Baixa" 
           value={m.lowEngagement} 

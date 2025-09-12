@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useBeltLevels } from "@/hooks/useBeltLevels";
 import {
   Dialog,
   DialogContent,
@@ -101,6 +102,9 @@ export default function StudentEditDialog({
 }: StudentEditDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Hook para buscar opções de faixas dinâmicas
+  const { allBeltOptions, isLoading: isLoadingBelts } = useBeltLevels();
 
   // Buscar dados do aluno
   const { data: studentData, isLoading: isLoadingStudent } = useQuery({
@@ -752,11 +756,21 @@ export default function StudentEditDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="white">Faixa Branca</SelectItem>
-                              <SelectItem value="blue">Faixa Azul</SelectItem>
-                              <SelectItem value="purple">Faixa Roxa</SelectItem>
-                              <SelectItem value="brown">Faixa Marrom</SelectItem>
-                              <SelectItem value="black">Faixa Preta</SelectItem>
+                              {isLoadingBelts ? (
+                                <SelectItem value="loading" disabled>
+                                  Carregando faixas...
+                                </SelectItem>
+                              ) : allBeltOptions.length > 0 ? (
+                                allBeltOptions.map((belt) => (
+                                  <SelectItem key={belt.value} value={belt.value}>
+                                    {belt.label}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-belts" disabled>
+                                  Nenhuma faixa disponível
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />

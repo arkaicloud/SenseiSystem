@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MessageSquare, Clock } from "lucide-react";
+import { createPreviewText } from "@/lib/htmlUtils";
 
 interface Communication {
   id: number;
@@ -120,11 +121,6 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
     })
     .slice(0, limit);
 
-  const stripHtml = (html: string) => {
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    return temp.textContent || temp.innerText || '';
-  };
 
   if (filteredCommunications.length === 0) {
     return (
@@ -172,8 +168,7 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
             </div>
 
             <div className="text-sm text-gray-700 mb-2">
-              {stripHtml(comm.content).substring(0, 100)}
-              {stripHtml(comm.content).length > 100 && '...'}
+              {createPreviewText(comm.content, 100)}
             </div>
 
             {comm.eventDate && (

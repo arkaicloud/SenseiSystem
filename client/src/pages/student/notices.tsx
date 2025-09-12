@@ -47,6 +47,13 @@ interface Notice {
   readAt?: string;
 }
 
+interface StudentProfile {
+  id: number;
+  beltLevel: string;
+  stripes: number;
+  // Add other properties as needed
+}
+
 export default function StudentNoticesPage() {
   const { user } = useAuth();
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
@@ -55,7 +62,7 @@ export default function StudentNoticesPage() {
   const [levelFilter, setLevelFilter] = useState<string>("all");
 
   // Buscar perfil do estudante
-  const { data: studentProfile } = useQuery({
+  const { data: studentProfile } = useQuery<StudentProfile>({
     queryKey: ['/api/student/profile'],
     enabled: user?.role === 'student',
   });
@@ -273,7 +280,13 @@ export default function StudentNoticesPage() {
                         {notice.eventAt && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
+                            <span>Evento: {new Intl.DateTimeFormat('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }).format(new Date(notice.eventAt))}</span>
                           </div>
                         )}
                         {notice.readAt && (
@@ -332,7 +345,9 @@ export default function StudentNoticesPage() {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </p>
                 </div>

@@ -187,12 +187,13 @@ export function setupAuth(app: Express) {
       // Hash password
       const hashedPassword = await hashPassword(req.body.password);
 
-      // Preparar os dados do usuário
+      // Preparar os dados do usuário - SECURITY: Force all registrations to be students
       const userData = {
         ...req.body,
+        role: "student", // Force all public registrations to be students
         password: hashedPassword,
-        active: req.body.role === 'admin' ? true : false, // Auto-activate admins
-        status: req.body.role === 'admin' ? 'active' : 'pending', // Auto-approve admins
+        active: false, // All public registrations require approval
+        status: "pending", // All public registrations are pending approval
       };
       
       // Tratar o campo birthDate: converter de string para data, se existir

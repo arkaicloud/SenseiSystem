@@ -142,5 +142,20 @@ export default {
     priceRequired: 'Price is required',
     startDateRequired: 'Start date is required',
     endDateRequired: 'End date is required'
-  }
+  },
+  // Payment plan form translations
+  plan_name: 'Plan Name',
+  plan_amount: 'Plan Amount',
+  plan_frequency: 'Plan Frequency',
+  plan_description: 'Plan Description',
+  update_plan: 'Update Plan',
+  create_plan: 'Create Plan',
+  saving: 'Saving...',
+  select_frequency: 'Select frequency',
+  weekly: 'Weekly',
+  biweekly: 'Biweekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  semiannual: 'Semiannual',
+  annual: 'Annual'
 };

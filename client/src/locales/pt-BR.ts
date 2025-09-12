@@ -173,5 +173,20 @@ export default {
     priceRequired: 'Preço é obrigatório',
     startDateRequired: 'Data de início é obrigatória',
     endDateRequired: 'Data de término é obrigatória'
-  }
+  },
+  // Traduções para formulário de planos de pagamento
+  plan_name: 'Nome do Plano',
+  plan_amount: 'Valor do Plano',
+  plan_frequency: 'Frequência do Plano',
+  plan_description: 'Descrição do Plano',
+  update_plan: 'Atualizar Plano',
+  create_plan: 'Criar Plano',
+  saving: 'Salvando...',
+  select_frequency: 'Selecione a frequência',
+  weekly: 'Semanal',
+  biweekly: 'Quinzenal',
+  monthly: 'Mensal',
+  quarterly: 'Trimestral',
+  semiannual: 'Semestral',
+  annual: 'Anual'
 };

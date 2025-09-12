@@ -68,8 +68,8 @@ export default function StudentDashboard() {
           👋 Olá, {user?.firstName} {user?.lastName}!
         </h1>
         {studentData && (studentData as any)?.beltLevel && (
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
               <img 
                 src={`https://agilisbr.com.br/Faixas/${(studentData as any)?.beltLevel === 'white' ? 'branca' : 
                      (studentData as any)?.beltLevel === 'blue' ? 'azul' : 
@@ -77,13 +77,13 @@ export default function StudentDashboard() {
                      (studentData as any)?.beltLevel === 'brown' ? 'marrom' : 
                      (studentData as any)?.beltLevel === 'black' ? 'preta' : 'branca'}.svg`}
                 alt={`Faixa ${formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}`}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain drop-shadow-md"
                 onError={(e) => {
                   // Fallback para bolinha colorida se a imagem não carregar
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   const fallback = document.createElement('div');
-                  fallback.className = 'w-4 h-4 rounded-full';
+                  fallback.className = 'w-8 h-8 rounded-full shadow-md';
                   fallback.style.backgroundColor = getBeltColor((studentData as any)?.beltLevel || 'white');
                   target.parentNode?.appendChild(fallback);
                 }}

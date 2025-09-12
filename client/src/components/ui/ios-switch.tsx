@@ -33,8 +33,8 @@ export default function IosSwitch({
       onClick={() => !disabled && onChange(!checked)}
       onKeyDown={handleKeyDown}
       className={[
-        // tamanho iOS otimizado para mobile - círculo verde menor
-        "relative inline-flex h-[18px] w-[32px] cursor-pointer items-center rounded-full p-[1px]",
+        // círculo verde ainda menor para dar mais espaço à bolinha
+        "relative inline-flex h-[16px] w-[30px] cursor-pointer items-center rounded-full p-[1px]",
         "transition-colors duration-200",
         checked ? "bg-[#34C759]" : "bg-[#E9E9EA] dark:bg-[#3a3a3c]",
         disabled
@@ -48,8 +48,8 @@ export default function IosSwitch({
       <span
         aria-hidden="true"
         className={[
-          // 16x16 = 18 - 1*2
-          "h-[16px] w-[16px] rounded-full bg-white",
+          // bolinha maior: 14x14 = 16 - 1*2
+          "h-[14px] w-[14px] rounded-full bg-white",
           // sombras parecidas com iOS
           "shadow-[0_1px_2px_rgba(0,0,0,0.35),_0_0_0_0.5px_rgba(0,0,0,0.04)]",
           "transform transition-transform duration-200 will-change-transform",

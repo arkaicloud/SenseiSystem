@@ -94,17 +94,51 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     editorRef.current?.focus();
   };
 
-  // Handle image upload
+  // Handle image upload with size validation
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Erro",
+          description: "Apenas arquivos de imagem são permitidos.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validar tamanho do arquivo (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Erro",
+          description: "A imagem deve ter no máximo 5MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
         executeCommand('insertImage', imageUrl);
+        toast({
+          title: "Sucesso",
+          description: "Imagem inserida com sucesso!",
+        });
+      };
+      reader.onerror = () => {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar a imagem.",
+          variant: "destructive"
+        });
       };
       reader.readAsDataURL(file);
     }
+    
+    // Limpar o input para permitir upload da mesma imagem novamente
+    event.target.value = '';
   };
 
   // Handle link insertion with URL validation

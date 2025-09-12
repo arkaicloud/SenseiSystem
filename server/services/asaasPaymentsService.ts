@@ -49,6 +49,9 @@ interface FinancialMetrics {
   revenueVariation: number;
   previousMonthRevenue: number;
   payingStudentsCount: number;
+  // NOVO: Pagamentos em atraso (pagos após vencimento)
+  latePaymentsCount: number;
+  latePaymentsValue: number;
 }
 
 // Define AsaasPaymentWithCustomer to include customer data, though it's not strictly used in the modified calculateMetrics
@@ -295,6 +298,16 @@ export class AsaasPaymentsService {
       ? (totalOverdue / (totalReceived + totalOverdue)) * 100
       : 0;
 
+    // Pagamentos em atraso (pagos após o vencimento) - NOVA FUNCIONALIDADE
+    const latePayments = payments.filter(p => 
+      p.status === 'RECEIVED' && 
+      p.paymentDate && 
+      p.dueDate &&
+      new Date(p.paymentDate) > new Date(p.dueDate)
+    );
+    const latePaymentsCount = latePayments.length;
+    const latePaymentsValue = latePayments.reduce((sum, p) => sum + p.value, 0);
+
     // Payments this month (all statuses)
     const totalPaymentsThisMonth = payments.filter(p => {
       const paymentDate = new Date(p.dateCreated);
@@ -307,6 +320,21 @@ export class AsaasPaymentsService {
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
     const nextDueDate = upcomingPayments.length > 0 ? new Date(upcomingPayments[0].dueDate) : null;
+
+    // Debug para verificar dados vencidos
+    console.log(`📊 Metrics Debug:`);
+    console.log(`   - Total payments: ${payments.length}`);
+    console.log(`   - Overdue count: ${overdueCount}`);
+    console.log(`   - Overdue value: R$ ${totalOverdue.toFixed(2)}`);
+    console.log(`   - Late payments count: ${latePaymentsCount}`);
+    console.log(`   - Late payments value: R$ ${latePaymentsValue.toFixed(2)}`);
+    
+    if (overduePayments.length > 0) {
+      console.log(`   🔴 Overdue payments details:`);
+      overduePayments.forEach((p, i) => {
+        console.log(`      ${i+1}. ID: ${p.id} | Due: ${p.dueDate} | Value: R$ ${p.value}`);
+      });
+    }
 
     return {
       receivedThisMonth,
@@ -321,7 +349,10 @@ export class AsaasPaymentsService {
       averageTicket,
       revenueVariation,
       previousMonthRevenue,
-      payingStudentsCount
+      payingStudentsCount,
+      // NOVAS MÉTRICAS para pagamentos em atraso
+      latePaymentsCount,
+      latePaymentsValue
     };
   }
 }

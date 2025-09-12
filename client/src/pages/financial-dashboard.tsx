@@ -82,6 +82,9 @@ interface FinancialMetrics {
   totalOverdue: number;
   averageTicket: number; // Added for Ticket Médio
   revenueVariation: number; // Added for Variação de Receita
+  // NOVO: Pagamentos em atraso (pagos após vencimento)
+  latePaymentsCount: number;
+  latePaymentsValue: number;
 }
 
 interface FinancialData {
@@ -403,10 +406,11 @@ export default function FinancialDashboard() {
           </CardContent>
         </Card>
 
+        {/* NOVO: Cobranças Vencidas (overdue) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Pagamentos em Atraso
+              Cobranças Vencidas
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
@@ -415,6 +419,24 @@ export default function FinancialDashboard() {
               {metrics?.overdueCount || 0}
             </div>
             <p className="text-xs text-muted-foreground">Cobranças vencidas</p>
+          </CardContent>
+        </Card>
+
+        {/* NOVO: Pagamentos em Atraso (late payments) */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Pagamentos em Atraso
+            </CardTitle>
+            <Clock className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {metrics?.latePaymentsCount || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Pagos após vencimento ({formatCurrency(metrics?.latePaymentsValue || 0)})
+            </p>
           </CardContent>
         </Card>
 

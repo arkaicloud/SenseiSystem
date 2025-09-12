@@ -29,13 +29,13 @@ export class EmailService {
 
         console.log(`🔧 Using custom SMTP: ${schoolConfig.smtpHost}:${schoolConfig.smtpPort}`);
         this.smtpConfigured = true;
-        return nodemailer.createTransporter(transportConfig);
+        return nodemailer.createTransport(transportConfig);
       } else {
         // Fallback para variáveis de ambiente (Gmail ou outros)
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
           console.log('🔧 Using fallback SMTP from environment variables');
           this.smtpConfigured = true;
-          return nodemailer.createTransporter({
+          return nodemailer.createTransport({
             service: 'gmail',
             auth: {
               user: process.env.EMAIL_USER,

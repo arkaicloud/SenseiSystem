@@ -190,16 +190,16 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
               </Badge>
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-              {createPreviewText(notice.content, 100)}
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3 sm:line-clamp-2">
+              {createPreviewText(notice.content, 150)}
             </p>
 
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>{formatDate(notice.publishAt)}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <span className="truncate">{formatDate(notice.publishAt)}</span>
               {notice.eventAt && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <Calendar className="w-3 h-3" />
-                  <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR', {
+                  <span className="truncate">Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit', 
                     year: 'numeric',
@@ -226,7 +226,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
 
       {/* Dialog para exibir aviso completo */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="notice-popup">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="notice-popup">
           <DialogHeader className="pt-2 pr-8">
             <div className="flex items-center gap-2 mb-2">
               {selectedNotice && getLevelIcon(selectedNotice.level)}
@@ -239,12 +239,12 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-              <span>Publicado {selectedNotice && formatDate(selectedNotice.publishAt)}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500 dark:text-gray-400">
+              <span className="break-words">Publicado {selectedNotice && formatDate(selectedNotice.publishAt)}</span>
               {selectedNotice?.eventAt && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>Evento: {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
+                  <span className="break-words">Evento: {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit', 
                     year: 'numeric',
@@ -256,19 +256,19 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
             </div>
           </DialogHeader>
           <DialogDescription asChild>
-            <div className="mt-4">
+            <div className="mt-4 px-1">
               <RichContent 
                 content={selectedNotice?.content || ''}
-                className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
+                className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed break-words"
               />
 
               {selectedNotice?.eventAt && (
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="mt-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Informações do Evento</h4>
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+                    <h4 className="font-medium text-sm sm:text-base text-blue-900 dark:text-blue-100">Informações do Evento</h4>
                   </div>
-                  <p className="text-blue-800 dark:text-blue-200">
+                  <p className="text-sm sm:text-base text-blue-800 dark:text-blue-200 break-words">
                     <strong>Data:</strong> {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
                       weekday: 'long',
                       year: 'numeric',

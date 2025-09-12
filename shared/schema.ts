@@ -163,7 +163,7 @@ export const schoolConfig = pgTable("school_config", {
   youtube: text("youtube"),
   tiktok: text("tiktok"),
   defaultTheme: text("default_theme").notNull().default("light"), // "light" or "dark"
-  primaryColor: text("primary_color").notNull().default("#B85C38"), // Cor primária da escola
+  primaryColor: text("primary_color").notNull().default("#3B82F6"), // Cor primária da escola
   secondaryColor: text("secondary_color").notNull().default("#D97659"), // Cor secundária da escola
   attendanceMaxDaysAhead: integer("attendance_max_days_ahead").notNull().default(7), // Máximo de dias para visualizar/confirmar aulas
   // ASAAS Integration fields

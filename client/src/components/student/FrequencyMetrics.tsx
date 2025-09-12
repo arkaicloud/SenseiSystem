@@ -17,7 +17,7 @@ interface FrequencyMetricsProps {
   primaryColor?: string;
 }
 
-export const FrequencyMetrics = ({ studentId, primaryColor = "#B85C38" }: FrequencyMetricsProps) => {
+export const FrequencyMetrics = ({ studentId, primaryColor = "#3B82F6" }: FrequencyMetricsProps) => {
   const { getBeltName, getBeltColor } = useBeltLevels(undefined, true);
 
   // Buscar dados de frequência do mês atual

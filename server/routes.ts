@@ -1962,7 +1962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentUpdateData.medicalObservations = payload.health.notes;
       }
 
-      if (payload.graduation?.beltLevel) {
+      if (payload.graduation?.beltLevel !== undefined) {
         studentUpdateData.beltLevel = payload.graduation.beltLevel;
       }
 
@@ -1970,24 +1970,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentUpdateData.stripes = payload.graduation.stripes;
       }
 
-      if (payload.graduation?.graduationDate) {
-        studentUpdateData.lastPromotionDate = new Date(payload.graduation.graduationDate);
+      if (payload.graduation?.graduationDate !== undefined) {
+        studentUpdateData.lastPromotionDate = payload.graduation.graduationDate ? new Date(payload.graduation.graduationDate) : null;
       }
 
       if (payload.financialResponsible) {
-        if (payload.financialResponsible.relation) {
+        if (payload.financialResponsible.relation !== undefined) {
           studentUpdateData.financialResponsibleRelation = payload.financialResponsible.relation;
         }
-        if (payload.financialResponsible.name) {
+        if (payload.financialResponsible.name !== undefined) {
           studentUpdateData.financialResponsibleName = payload.financialResponsible.name;
         }
-        if (payload.financialResponsible.cpf) {
+        if (payload.financialResponsible.cpf !== undefined) {
           studentUpdateData.financialResponsibleCpf = payload.financialResponsible.cpf;
         }
-        if (payload.financialResponsible.email) {
+        if (payload.financialResponsible.email !== undefined) {
           studentUpdateData.financialResponsibleEmail = payload.financialResponsible.email;
         }
-        if (payload.financialResponsible.phone) {
+        if (payload.financialResponsible.phone !== undefined) {
           studentUpdateData.financialResponsiblePhone = payload.financialResponsible.phone;
         }
       }

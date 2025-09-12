@@ -1966,6 +1966,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentUpdateData.beltLevel = payload.graduation.beltLevel;
       }
 
+      if (payload.graduation?.stripes !== undefined) {
+        studentUpdateData.stripes = payload.graduation.stripes;
+      }
+
       if (payload.graduation?.graduationDate) {
         studentUpdateData.lastPromotionDate = new Date(payload.graduation.graduationDate);
       }

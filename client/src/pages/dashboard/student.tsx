@@ -69,7 +69,9 @@ export default function StudentDashboard() {
             {/* Ícone de faixa colorido destacado com listras */}
             <div className="relative">
               <div 
-                className="w-16 h-4 sm:w-20 sm:h-5 md:w-24 md:h-6 rounded-sm shadow-lg ring-2 ring-white/50"
+                className={`w-16 h-4 sm:w-20 sm:h-5 md:w-24 md:h-6 rounded-sm shadow-lg ring-2 ring-white/50 ${
+                  (studentData as any)?.beltLevel === "white" ? "border border-gray-300" : ""
+                }`}
                 style={{ backgroundColor: getBeltColor((studentData as any)?.beltLevel || "white") }}
               />
               {/* Listras/Riscos */}

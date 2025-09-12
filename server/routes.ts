@@ -1203,7 +1203,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create ASAAS customer and subscription after approval
             if (student.financialResponsibleName && student.financialResponsibleEmail) {
               try {
-                const asaasService = new AsaasService();
+                // Get API Key from school config
+                const config = await storage.getSchoolConfig();
+                const asaasService = new AsaasService(config?.asaasApiKey);
 
                 console.log('🎯 ARKAIDEV: Processando aprovação individual com anti-duplicata:', user.firstName, user.lastName);
 
@@ -5422,7 +5424,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use static AsaasService import
-      const asaasService = new AsaasService();
+      // Get API Key from school config
+      const config = await storage.getSchoolConfig();
+      const asaasService = new AsaasService(config?.asaasApiKey);
 
       // Get student and user data
       const student = await storage.getStudentByUserId(studentId);
@@ -5908,7 +5912,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Try ASAAS integration
             if (student.financialResponsibleName && student.financialResponsibleEmail) {
               try {
-                const asaasService = new AsaasService();
+                // Get API Key from school config
+      const config = await storage.getSchoolConfig();
+      const asaasService = new AsaasService(config?.asaasApiKey);
 
                 console.log(`🎯 ARKAIDEV: Processando aluno com verificação anti-duplicata: ${user.firstName} ${user.lastName}`);
 
@@ -6412,7 +6418,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/students/:id/sync-asaas", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const asaasService = new AsaasService();
+      // Get API Key from school config
+      const config = await storage.getSchoolConfig();
+      const asaasService = new AsaasService(config?.asaasApiKey);
 
       console.log(`🔄 Manual ASAAS sync requested for student ID: ${id}`);
 
@@ -6513,7 +6521,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const asaasService = new AsaasService();
+      // Get API Key from school config
+      const config = await storage.getSchoolConfig();
+      const asaasService = new AsaasService(config?.asaasApiKey);
 
       console.log(`🔍 Verificando cliente ASAAS - CPF: ${cpf}, Email: ${email}`);
 

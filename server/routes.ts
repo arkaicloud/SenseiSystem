@@ -2023,7 +2023,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: student.id
       });
 
-      res.json({ student: updatedStudent });
+      // Return same DTO format as GET /api/students/:id to maintain cache consistency
+      const studentDTO = {
+        id: updatedStudent.id,
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        birthDate: user.birthDate,
+        enrollmentDate: updatedStudent.enrollmentDate,
+        cpf: user.cpf,
+        rg: user.rg,
+        sex: user.sex,
+        contact: {
+          email: user.email,
+          phone: user.phone
+        },
+        emergency: {
+          name: user.emergencyContact,
+          phone: user.emergencyPhone || null
+        },
+        address: {
+          zip: user.zipCode,
+          street: user.street,
+          number: user.number,
+          complement: user.complement,
+          district: user.neighborhood,
+          city: user.city,
+          state: user.state
+        },
+        health: {
+          notes: updatedStudent.medicalObservations || null
+        },
+        graduation: {
+          beltLevel: updatedStudent.beltLevel,
+          stripes: updatedStudent.stripes,
+          graduationDate: updatedStudent.lastPromotionDate
+        },
+        // Dados do questionário de saúde (acessando campos em snake_case do banco)
+        healthQuestionnaireCompletedAt: (updatedStudent as any).health_questionnaire_completed_at,
+        agreedToHealthTerms: (updatedStudent as any).agreed_to_health_terms,
+        healthTermsAgreedAt: (updatedStudent as any).health_terms_agreed_at,
+        requiresMedicalCertificate: (updatedStudent as any).requires_medical_certificate,
+        medicalCertificateStatus: (updatedStudent as any).medical_certificate_status,
+        financialResponsible: {
+          relation: updatedStudent.financialResponsibleRelation || null
+        },
+        billing: {
+          planId: updatedStudent.paymentPlanId,
+          preferredDueDay: updatedStudent.preferredDueDate || 5
+        },
+        // Dados do responsável financeiro
+        financialResponsibleName: updatedStudent.financialResponsibleName || null,
+        financialResponsibleCpf: updatedStudent.financialResponsibleCpf || null,
+        financialResponsibleEmail: updatedStudent.financialResponsibleEmail || null,
+        financialResponsiblePhone: updatedStudent.financialResponsiblePhone || null,
+      };
+
+      res.json(studentDTO);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid student data", errors: error.errors });

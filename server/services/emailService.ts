@@ -376,8 +376,6 @@ export class EmailService {
       </html>
     `;
   }
-}
-
 
   // Método para obter configurações SMTP atuais
   async getCurrentSMTPConfig() {

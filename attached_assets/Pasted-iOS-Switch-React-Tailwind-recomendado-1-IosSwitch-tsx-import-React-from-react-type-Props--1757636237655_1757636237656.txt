@@ -1,0 +1,174 @@
+iOS Switch — React + Tailwind (recomendado)
+1) IosSwitch.tsx
+import React from "react";
+
+type Props = {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+  id?: string;
+  label?: string;
+};
+
+export default function IosSwitch({ checked, onChange, disabled, id, label }: Props) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      if (!disabled) onChange(!checked);
+    }
+  };
+
+  return (
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      onKeyDown={handleKeyDown}
+      className={[
+        // tamanho iOS 51x31 com padding 2px
+        "relative inline-flex h-[31px] w-[51px] cursor-pointer items-center rounded-full p-[2px]",
+        "transition-colors duration-200",
+        checked ? "bg-[#34C759]" : "bg-[#E9E9EA] dark:bg-[#3a3a3c]",
+        disabled ? "opacity-50 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-[#34C759]/40",
+        // leve borda interna do trilho (iOS tem uma sutileza)
+        "shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]",
+      ].join(" ")}
+    >
+      {/* botão branco */}
+      <span
+        aria-hidden="true"
+        className={[
+          // 27x27 = 31 - 2*2
+          "h-[27px] w-[27px] rounded-full bg-white",
+          // sombras parecidas com iOS
+          "shadow-[0_1px_2px_rgba(0,0,0,0.35),_0_0_0_0.5px_rgba(0,0,0,0.04)]",
+          "transform transition-transform duration-200 will-change-transform",
+          checked ? "translate-x-[20px]" : "translate-x-0",
+        ].join(" ")}
+      />
+    </button>
+  );
+}
+
+2) uso no seu card
+import { useState } from "react";
+import IosSwitch from "@/components/IosSwitch";
+
+export default function CardNotificacoes() {
+  const [presenca, setPresenca]   = useState(true);
+  const [pagamento, setPagamento] = useState(false);
+  const [eventos, setEventos]     = useState(true);
+
+  // persistência otimista (exemplo)
+  const save = async (key: string, value: boolean) => {
+    const prev = { presenca, pagamento, eventos };
+    try {
+      await fetch("/api/user/preferences/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+    } catch {
+      // rollback simples
+      setPresenca(prev.presenca);
+      setPagamento(prev.pagamento);
+      setEventos(prev.eventos);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-neutral-900 p-4">
+      <h3 className="text-lg font-semibold mb-1">Notificações</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        Configure suas preferências de notificações
+      </p>
+
+      <div className="divide-y divide-gray-200 dark:divide-gray-800">
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <p className="font-medium">Notificações de presença</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Receber notificações sobre confirmação de presença
+            </p>
+          </div>
+          <IosSwitch
+            checked={presenca}
+            onChange={(v) => { setPresenca(v); save("presenca", v); }}
+            label="Ativar notificações de presença"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <p className="font-medium">Notificações de pagamento</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Receber notificações sobre pagamentos e vencimentos
+            </p>
+          </div>
+          <IosSwitch
+            checked={pagamento}
+            onChange={(v) => { setPagamento(v); save("pagamento", v); }}
+            label="Ativar notificações de pagamento"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <p className="font-medium">Notificações de eventos</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Receber notificações sobre eventos da escola
+            </p>
+          </div>
+          <IosSwitch
+            checked={eventos}
+            onChange={(v) => { setEventos(v); save("eventos", v); }}
+            label="Ativar notificações de eventos"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+Dicas pro resultado sair idêntico ao iOS:
+
+Use exatamente h-[31px] w-[51px] p-[2px] e o dot h-[27px] w-[27px].
+
+Cor verde iOS: #34C759.
+
+Trilho “off”: #E9E9EA (no dark: #3a3a3c).
+
+Sombra do dot conforme classe custom shadow-[...] acima.
+
+translate-x-[20px] é a distância correta para o dot chegar na borda direita.
+
+iOS Switch — HTML + CSS puro
+<style>
+.ios-switch {
+  position: relative; width: 51px; height: 31px; padding: 2px;
+  border-radius: 999px; background: #E9E9EA;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  transition: background .2s ease;
+}
+.ios-switch input { position:absolute; inset:0; opacity:0; }
+.ios-switch .dot {
+  position: absolute; left: 2px; top: 2px;
+  width: 27px; height: 27px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.35), 0 0 0 .5px rgba(0,0,0,.04);
+  transition: transform .2s ease;
+}
+.ios-switch input:checked + .dot { transform: translateX(20px); }
+.ios-switch input:checked ~ .track { background:#34C759; }
+.ios-switch:has(input:focus-visible) { outline: 2px solid rgba(52,199,89,.4); outline-offset: 2px; }
+</style>
+
+<label class="ios-switch">
+  <input type="checkbox" aria-label="Ativar notificações de presença" checked />
+  <span class="dot"></span>
+  <span class="track" aria-hidden="true"></span>
+</label>

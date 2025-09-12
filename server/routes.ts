@@ -2001,7 +2001,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedStudent = await storage.updateStudent(student.id, studentUpdateData);
+      // Only update student data if there are fields to update
+      let updatedStudent = student;
+      if (Object.keys(studentUpdateData).length > 0) {
+        updatedStudent = await storage.updateStudent(student.id, studentUpdateData);
+      }
       const user = await storage.getUser(student.userId);
 
       // Log activity

@@ -1879,6 +1879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         graduation: {
           beltLevel: student.beltLevel,
+          stripes: student.stripes,
           graduationDate: student.lastPromotionDate
         },
         // Dados do questionário de saúde (acessando campos em snake_case do banco)
@@ -1901,6 +1902,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialResponsiblePhone: student.financialResponsiblePhone || null,
       };
 
+      // Add no-cache headers to prevent stale 304 responses after updates
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(studentDTO);
     } catch (error) {
       console.error("Error fetching student:", error);

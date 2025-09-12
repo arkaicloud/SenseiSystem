@@ -314,7 +314,7 @@ export default function StudentNoticesPage() {
 
       {/* Notice Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader className="pt-2 pr-8">
             <div className="flex items-center gap-2 mb-2">
               {selectedNotice && getLevelIcon(selectedNotice.level)}
@@ -328,7 +328,7 @@ export default function StudentNoticesPage() {
           </DialogHeader>
 
           <DialogDescription asChild>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1 max-h-[50vh] custom-scrollbar px-1">
               <RichContent 
                 content={selectedNotice?.content || ''}
                 className="text-gray-700 dark:text-gray-300"

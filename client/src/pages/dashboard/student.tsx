@@ -69,26 +69,24 @@ export default function StudentDashboard() {
         </h1>
         {studentData && (studentData as any)?.beltLevel && (
           <div className="flex items-center space-x-4">
-            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
-              <img 
-                src={`https://agilisbr.com.br/Faixas/${(studentData as any)?.beltLevel === 'white' ? 'branca' : 
-                     (studentData as any)?.beltLevel === 'blue' ? 'azul' : 
-                     (studentData as any)?.beltLevel === 'purple' ? 'roxa' : 
-                     (studentData as any)?.beltLevel === 'brown' ? 'marrom' : 
-                     (studentData as any)?.beltLevel === 'black' ? 'preta' : 'branca'}.svg`}
-                alt={`Faixa ${formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}`}
-                className="w-full h-full object-contain drop-shadow-md"
-                onError={(e) => {
-                  // Fallback para bolinha colorida se a imagem não carregar
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = document.createElement('div');
-                  fallback.className = 'w-8 h-8 rounded-full shadow-md';
-                  fallback.style.backgroundColor = getBeltColor((studentData as any)?.beltLevel || 'white');
-                  target.parentNode?.appendChild(fallback);
-                }}
-              />
-            </div>
+            <img 
+              src={`https://agilisbr.com.br/Faixas/${(studentData as any)?.beltLevel === 'white' ? 'branca' : 
+                   (studentData as any)?.beltLevel === 'blue' ? 'azul' : 
+                   (studentData as any)?.beltLevel === 'purple' ? 'roxa' : 
+                   (studentData as any)?.beltLevel === 'brown' ? 'marrom' : 
+                   (studentData as any)?.beltLevel === 'black' ? 'preta' : 'branca'}.svg`}
+              alt={`Faixa ${formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}`}
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain drop-shadow-md"
+              onError={(e) => {
+                // Fallback para bolinha colorida se a imagem não carregar
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.className = 'w-8 h-8 rounded-full shadow-md';
+                fallback.style.backgroundColor = getBeltColor((studentData as any)?.beltLevel || 'white');
+                target.parentNode?.appendChild(fallback);
+              }}
+            />
             <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
               Faixa {formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}
             </span>

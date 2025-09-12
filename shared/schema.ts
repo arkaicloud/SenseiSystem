@@ -49,7 +49,15 @@ export const loginSchema = z.object({
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student']);
-export const beltLevelEnum = pgEnum('belt_level', ['white', 'blue', 'purple', 'brown', 'black']);
+export const beltLevelEnum = pgEnum('belt_level', [
+  // Adult belts - IBJJF Adult System
+  'white', 'blue', 'purple', 'brown', 'black', 'coral', 'red_white', 'red',
+  // Kids belts - IBJJF Youth System  
+  'grey_white', 'grey', 'grey_black', 
+  'yellow_white', 'yellow', 'yellow_black',
+  'orange_white', 'orange', 'orange_black',
+  'green_white', 'green', 'green_black'
+]);
 export const paymentStatusEnum = pgEnum('payment_status', ['paid', 'pending', 'overdue']);
 export const attendanceStatusEnum = pgEnum('attendance_status', ['confirmed', 'present', 'absent', 'late', 'cancelled']);
 export const classTypeEnum = pgEnum('class_type', ['masculino', 'feminino', 'misto', 'infantil']);

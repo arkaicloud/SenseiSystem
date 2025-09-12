@@ -6396,7 +6396,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Refresh financial data (force reload from ASAAS)
   app.post("/api/financial/refresh", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const asaasService = new AsaasPaymentsService();
+      // Use school config API key consistently
+      const config = await storage.getSchoolConfig();
+      const asaasService = config?.asaasApiKey 
+        ? new AsaasPaymentsService(config.asaasApiKey)
+        : new AsaasPaymentsService();
 
       console.log('🔄 Force refreshing ASAAS financial data...');
 

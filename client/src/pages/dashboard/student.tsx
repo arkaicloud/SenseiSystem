@@ -67,16 +67,16 @@ export default function StudentDashboard() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
           👋 Olá, {user?.firstName} {user?.lastName}!
         </h1>
-        {studentData && (studentData as any)?.student && (
+        {studentData && (studentData as any)?.beltLevel && (
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-500 shadow-sm">
               <div 
                 className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: getBeltColor((studentData as any)?.student?.beltLevel || 'white') }}
+                style={{ backgroundColor: getBeltColor((studentData as any)?.beltLevel || 'white') }}
               ></div>
             </div>
             <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
-              Faixa {formatBelt((studentData as any)?.student?.beltLevel || 'white', (studentData as any)?.student?.stripes || 0)}
+              Faixa {formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}
             </span>
           </div>
         )}

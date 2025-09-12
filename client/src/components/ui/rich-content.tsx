@@ -130,9 +130,10 @@ export function useRichContent() {
     // Helper to get plain text from rich content
     getPlainText: (content: string): string => {
       if (!content) return '';
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = sanitizeHTML(content);
-      return tempDiv.textContent || tempDiv.innerText || '';
+      // Use DOMParser for safe HTML parsing without innerHTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(sanitizeHTML(content), 'text/html');
+      return doc.body.textContent || doc.body.innerText || '';
     }
   };
 }

@@ -121,13 +121,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           path: "/financial",
           roles: ["admin"],
         },
-        {
-          id: "asaas-payments",
-          label: "Integração ASAAS",
-          icon: CreditCard,
-          path: "/asaas-payments",
-          roles: ["admin"],
-        },
       ],
     },
     {
@@ -136,6 +129,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       icon: MessageSquare,
       path: "/communications",
       roles: ["admin", "instructor"],
+    },
+    {
+      id: "school-config",
+      label: "Configuração da Escola",
+      icon: Settings,
+      path: "/school-config",
+      roles: ["admin"],
+    },
+    {
+      id: "asaas-integration",
+      label: "Integração ASAAS",
+      icon: CreditCard,
+      path: "/asaas-payments",
+      roles: ["admin"],
     },
     {
       id: "agenda-semana",

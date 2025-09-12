@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RichContent } from "@/components/ui/rich-content";
+import { createPreviewText } from "@/lib/htmlUtils";
 import { 
   Bell, 
   Calendar, 
@@ -255,8 +257,7 @@ export default function StudentNoticesPage() {
                       </div>
 
                       <p className="text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {notice.content.substring(0, 150)}
-                        {notice.content.length > 150 && '...'}
+                        {createPreviewText(notice.content, 150)}
                       </p>
 
                       <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -315,9 +316,9 @@ export default function StudentNoticesPage() {
 
           <DialogDescription asChild>
             <div className="space-y-4">
-              <div 
-                className="text-gray-700 leading-relaxed prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: selectedNotice?.content || '' }}
+              <RichContent 
+                content={selectedNotice?.content || ''}
+                className="text-gray-700 dark:text-gray-300"
               />
 
               {selectedNotice?.eventAt && (

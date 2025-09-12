@@ -77,11 +77,19 @@ const EmptyState = ({ icon: Icon, children }: { icon: any; children: React.React
 // Card para distribuição de faixas
 const BeltsCard = ({ title, data }: { title: string; data: Record<string, number> }) => {
   const beltColors: Record<string, string> = {
-    white: '#f3f4f6',
-    blue: '#3b82f6',
-    purple: '#8b5cf6',
-    brown: '#a3681a',
-    black: '#1f2937'
+    white: '#FFFFFF',
+    blue: '#3B82F6',
+    purple: '#8B5CF6',
+    brown: '#8B4513',
+    black: '#000000'
+  };
+
+  const beltNamesPortuguese: Record<string, string> = {
+    white: 'Faixa Branca',
+    blue: 'Faixa Azul',
+    purple: 'Faixa Roxa',
+    brown: 'Faixa Marrom',
+    black: 'Faixa Preta'
   };
 
   const entries = Object.entries(data);
@@ -95,17 +103,22 @@ const BeltsCard = ({ title, data }: { title: string; data: Record<string, number
         {entries.length === 0 ? (
           <EmptyState icon={Users}>Nenhum aluno cadastrado</EmptyState>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {entries.map(([belt, count]) => (
               <li key={belt} className="flex items-center justify-between py-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <div 
-                    className="w-4 h-4 rounded-full border"
-                    style={{ backgroundColor: beltColors[belt] || '#9ca3af' }}
+                    className="w-12 h-3 rounded-sm shadow-sm border"
+                    style={{ 
+                      backgroundColor: beltColors[belt] || '#9ca3af',
+                      borderColor: belt === 'white' ? '#d1d5db' : beltColors[belt] || '#9ca3af'
+                    }}
                   />
-                  <span>{belt}</span>
+                  <span className="text-sm font-medium">
+                    {beltNamesPortuguese[belt] || belt}
+                  </span>
                 </div>
-                <span className="font-medium">{count}</span>
+                <span className="font-bold text-lg">{count}</span>
               </li>
             ))}
           </ul>

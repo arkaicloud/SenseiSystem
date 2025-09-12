@@ -218,6 +218,17 @@ export default function CommunicationsPage() {
     }
   };
 
+  // Helper function to format date for datetime-local input without timezone conversion
+  const formatForDatetimeLocal = (dateString: string): string => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const handleEdit = (notice: Notice) => {
     setEditingNotice(notice);
     setFormData({
@@ -225,7 +236,7 @@ export default function CommunicationsPage() {
       content: notice.content,
       level: notice.level,
       audience: notice.audience,
-      eventAt: notice.eventAt ? new Date(notice.eventAt).toISOString().split('T')[0] : ''
+      eventAt: notice.eventAt ? formatForDatetimeLocal(notice.eventAt) : ''
     });
     setIsEditDialogOpen(true);
   };
@@ -390,12 +401,13 @@ export default function CommunicationsPage() {
               </div>
 
               <div>
-                <Label htmlFor="eventAt">Data do Evento (Opcional)</Label>
+                <Label htmlFor="eventAt">Data e Horário do Evento (Opcional)</Label>
                 <Input
                   id="eventAt"
-                  type="date"
+                  type="datetime-local"
                   value={formData.eventAt}
                   onChange={(e) => handleInputChange('eventAt', e.target.value)}
+                  data-testid="input-event-datetime"
                 />
               </div>
 
@@ -474,12 +486,13 @@ export default function CommunicationsPage() {
               </div>
 
               <div>
-                <Label htmlFor="eventAt">Data do Evento (Opcional)</Label>
+                <Label htmlFor="eventAt">Data e Horário do Evento (Opcional)</Label>
                 <Input
                   id="eventAt"
-                  type="date"
+                  type="datetime-local"
                   value={formData.eventAt}
                   onChange={(e) => handleInputChange('eventAt', e.target.value)}
+                  data-testid="input-event-datetime"
                 />
               </div>
 
@@ -556,7 +569,13 @@ export default function CommunicationsPage() {
                       {notice.eventAt && (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
+                          <span>Evento: {new Intl.DateTimeFormat('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }).format(new Date(notice.eventAt))}</span>
                         </div>
                       )}
                     </div>

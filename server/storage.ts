@@ -401,26 +401,34 @@ export class MemStorage implements IStorage {
     const fundamentalsClass: Class = {
       id: this.classCurrentId++,
       name: "Fundamentals Class",
+      type: "misto",
       description: "Basics of Jiu-Jitsu for beginners",
-      instructorId: adminUser.id,
+      duration: 60,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       dayOfWeek: 2, // Tuesday
       startTime: "18:00", // 6:00 PM
-      duration: 60,
+      instructorId: adminUser.id,
       maxCapacity: 20,
-      maxStudents: 20
+      maxStudents: 20,
+      isActive: true
     };
     this.classes.set(fundamentalsClass.id, fundamentalsClass);
 
     const advancedClass: Class = {
       id: this.classCurrentId++,
       name: "Advanced Class",
+      type: "misto",
       description: "Advanced techniques for experienced practitioners",
-      instructorId: instructorUser.id,
+      duration: 90,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       dayOfWeek: 2, // Tuesday
       startTime: "19:30", // 7:30 PM
-      duration: 90,
+      instructorId: instructorUser.id,
       maxCapacity: 15,
-      maxStudents: 15
+      maxStudents: 15,
+      isActive: true
     };
     this.classes.set(advancedClass.id, advancedClass);
   }
@@ -449,9 +457,20 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
     const user: User = { 
-      ...insertUser, 
       id,
-      birthDate: insertUser.birthDate || null,
+      firstName: insertUser.firstName,
+      lastName: insertUser.lastName,
+      username: insertUser.username,
+      email: insertUser.email,
+      password: insertUser.password,
+      role: insertUser.role || 'student',
+      phone: insertUser.phone || null,
+      sex: insertUser.sex || null,
+      cpf: insertUser.cpf || null,
+      rg: insertUser.rg || null,
+      emergencyContact: insertUser.emergencyContact || null,
+      emergencyPhone: insertUser.emergencyPhone || null,
+      birthDate: insertUser.birthDate ? new Date(insertUser.birthDate) : null,
       street: insertUser.street || null,
       number: insertUser.number || null,
       complement: insertUser.complement || null,
@@ -459,9 +478,13 @@ export class MemStorage implements IStorage {
       city: insertUser.city || null,
       state: insertUser.state || null,
       zipCode: insertUser.zipCode || null,
-      phone: insertUser.phone || null,
-      emergencyContact: insertUser.emergencyContact || null,
-      active: insertUser.active !== undefined ? insertUser.active : true
+      joinDate: insertUser.joinDate || new Date(),
+      active: insertUser.active !== undefined ? insertUser.active : true,
+      status: insertUser.status || 'pending',
+      currentStreak: insertUser.currentStreak || 0,
+      longestStreak: insertUser.longestStreak || 0,
+      lastLoginDate: insertUser.lastLoginDate || null,
+      totalLogins: insertUser.totalLogins || 0
     };
     this.users.set(id, user);
     return user;
@@ -491,6 +514,17 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getStudentByCpf(cpf: string): Promise<StudentWithUser | undefined> {
+    const studentsArray = Array.from(this.students.values());
+    for (const student of studentsArray) {
+      const user = await this.getUser(student.userId);
+      if (user && user.cpf === cpf) {
+        return { ...student, user };
+      }
+    }
+    return undefined;
+  }
+
   async getStudents(): Promise<Student[]> {
     return Array.from(this.students.values());
   }
@@ -509,8 +543,8 @@ export class MemStorage implements IStorage {
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
     const id = this.studentCurrentId++;
     const student: Student = { 
-      ...insertStudent, 
       id,
+      userId: insertStudent.userId,
       beltLevel: insertStudent.beltLevel || "white",
       stripes: insertStudent.stripes || 0,
       lastPromotionDate: insertStudent.lastPromotionDate || null,
@@ -518,7 +552,24 @@ export class MemStorage implements IStorage {
       notes: insertStudent.notes || null,
       avatarColor: insertStudent.avatarColor || null,
       avatarStyle: insertStudent.avatarStyle || null,
-      avatarImage: insertStudent.avatarImage || null
+      avatarImage: insertStudent.avatarImage || null,
+      financialResponsibleName: insertStudent.financialResponsibleName || null,
+      financialResponsibleEmail: insertStudent.financialResponsibleEmail || null,
+      financialResponsiblePhone: insertStudent.financialResponsiblePhone || null,
+      financialResponsibleCpf: insertStudent.financialResponsibleCpf || null,
+      financialResponsibleRelation: insertStudent.financialResponsibleRelation || null,
+      asaasCustomerId: insertStudent.asaasCustomerId || null,
+      asaasSubscriptionId: insertStudent.asaasSubscriptionId || null,
+      paymentPlanId: insertStudent.paymentPlanId || null,
+      preferredDueDate: insertStudent.preferredDueDate || 5,
+      requiresMedicalCertificate: insertStudent.requiresMedicalCertificate || false,
+      medicalCertificateStatus: insertStudent.medicalCertificateStatus || 'PENDING',
+      medicalObservations: insertStudent.medicalObservations || null,
+      isScholarship: insertStudent.isScholarship || false,
+      healthQuestionnaireCompletedAt: insertStudent.healthQuestionnaireCompletedAt || null,
+      agreedToHealthTerms: insertStudent.agreedToHealthTerms || false,
+      healthTermsAgreedAt: insertStudent.healthTermsAgreedAt || null,
+      enrollmentDate: insertStudent.enrollmentDate || new Date()
     };
     this.students.set(id, student);
     return student;
@@ -686,6 +737,30 @@ export class MemStorage implements IStorage {
     return this.attendance.delete(id);
   }
 
+  // Attendance Changes - Missing interface methods
+  async getAttendanceChanges(studentId: number, classId: number, date: Date): Promise<AttendanceChanges[]> {
+    // MemStorage stub implementation
+    console.log(`MemStorage: getAttendanceChanges called for student ${studentId}, class ${classId}, date ${date}`);
+    return [];
+  }
+
+  async createAttendanceChange(change: InsertAttendanceChanges): Promise<AttendanceChanges> {
+    const id = this.attendanceCurrentId++; // Reusing attendance ID counter
+    const attendanceChange: AttendanceChanges = {
+      id,
+      studentId: change.studentId,
+      classId: change.classId,
+      oldStatus: change.oldStatus,
+      newStatus: change.newStatus,
+      reason: change.reason || null,
+      changedBy: change.changedBy,
+      date: change.date || new Date(),
+      createdAt: new Date()
+    };
+    // Note: MemStorage doesn't persist attendance changes, just returns the created object
+    return attendanceChange;
+  }
+
   // Payment Plans
   async getPaymentPlan(id: number): Promise<PaymentPlan | undefined> {
     return this.paymentPlans.get(id);
@@ -808,7 +883,11 @@ export class MemStorage implements IStorage {
 
   async getActivityLogs(limit?: number): Promise<ActivityLog[]> {
     const logs = Array.from(this.activityLogs.values())
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      .sort((a, b) => {
+        const aTime = a.timestamp ? a.timestamp.getTime() : 0;
+        const bTime = b.timestamp ? b.timestamp.getTime() : 0;
+        return bTime - aTime;
+      });
 
     return limit ? logs.slice(0, limit) : logs;
   }
@@ -816,14 +895,25 @@ export class MemStorage implements IStorage {
   async getActivityLogsByUser(userId: number, limit?: number): Promise<ActivityLog[]> {
     const logs = Array.from(this.activityLogs.values())
       .filter(log => log.userId === userId)
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      .sort((a, b) => {
+        const aTime = a.timestamp ? a.timestamp.getTime() : 0;
+        const bTime = b.timestamp ? b.timestamp.getTime() : 0;
+        return bTime - aTime;
+      });
 
     return limit ? logs.slice(0, limit) : logs;
   }
 
   async createActivityLog(insertLog: InsertActivityLog): Promise<ActivityLog> {
     const id = this.activityLogCurrentId++;
-    const log: ActivityLog = { ...insertLog, id };
+    const log: ActivityLog = { 
+      ...insertLog, 
+      id,
+      userId: insertLog.userId || null,
+      entityType: insertLog.entityType || null,
+      entityId: insertLog.entityId || null,
+      timestamp: insertLog.timestamp || new Date()
+    };
     this.activityLogs.set(id, log);
     return log;
   }
@@ -1155,6 +1245,97 @@ export class MemStorage implements IStorage {
       lastLoginDate: user.lastLoginDate || null,
       recentAchievements: recentAchievements.slice(0, 5)
     };
+  }
+
+  // Belt Levels Management - Add missing methods
+  async getBeltLevels(): Promise<BeltLevel[]> {
+    // MemStorage stub implementation - return empty array
+    console.log("MemStorage: getBeltLevels called");
+    return [];
+  }
+
+  async getBeltLevel(id: number): Promise<BeltLevel | undefined> {
+    // MemStorage stub implementation
+    console.log(`MemStorage: getBeltLevel called for id ${id}`);
+    return undefined;
+  }
+
+  async createBeltLevel(beltLevel: InsertBeltLevel): Promise<BeltLevel> {
+    // MemStorage stub implementation
+    const newBeltLevel: BeltLevel = {
+      id: Math.floor(Math.random() * 1000), // Generate random ID for MemStorage
+      ...beltLevel,
+      active: beltLevel.active !== undefined ? beltLevel.active : true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    console.log(`MemStorage: createBeltLevel called`, newBeltLevel);
+    return newBeltLevel;
+  }
+
+  async updateBeltLevel(id: number, beltLevel: Partial<BeltLevel>): Promise<BeltLevel | undefined> {
+    // MemStorage stub implementation
+    console.log(`MemStorage: updateBeltLevel called for id ${id}`);
+    return undefined;
+  }
+
+  async deleteBeltLevel(id: number): Promise<boolean> {
+    // MemStorage stub implementation
+    console.log(`MemStorage: deleteBeltLevel called for id ${id}`);
+    return true;
+  }
+
+  async getBeltStats(): Promise<{ [key: string]: number }> {
+    // MemStorage stub implementation - return empty stats
+    console.log("MemStorage: getBeltStats called");
+    return {
+      white: 0,
+      blue: 0,
+      purple: 0,
+      brown: 0,
+      black: 0
+    };
+  }
+
+  // Contas a Receber - Add missing methods  
+  async getContaReceber(id: number): Promise<any> {
+    console.log(`MemStorage: getContaReceber called for id ${id}`);
+    return undefined;
+  }
+
+  async getContasReceberByStudent(studentId: number): Promise<any[]> {
+    console.log(`MemStorage: getContasReceberByStudent called for student ${studentId}`);
+    return [];
+  }
+
+  async getContasReceberByStudentId(studentId: number): Promise<any[]> {
+    console.log(`MemStorage: getContasReceberByStudentId called for student ${studentId}`);
+    return [];
+  }
+
+  async getContasReceberPendentes(): Promise<any[]> {
+    console.log(`MemStorage: getContasReceberPendentes called`);
+    return [];
+  }
+
+  async getContaReceberByAsaasId(asaasPaymentId: string): Promise<any> {
+    console.log(`MemStorage: getContaReceberByAsaasId called for ${asaasPaymentId}`);
+    return undefined;
+  }
+
+  async createContaReceber(conta: any): Promise<any> {
+    console.log(`MemStorage: createContaReceber called`, conta);
+    return { id: Math.floor(Math.random() * 1000), ...conta };
+  }
+
+  async updateContaReceber(id: number, conta: Partial<any>): Promise<any> {
+    console.log(`MemStorage: updateContaReceber called for id ${id}`);
+    return undefined;
+  }
+
+  async deleteContaReceber(id: number): Promise<boolean> {
+    console.log(`MemStorage: deleteContaReceber called for id ${id}`);
+    return true;
   }
 
   // Password reset token functions (MemStorage implementation)

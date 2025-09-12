@@ -284,9 +284,9 @@ export class AsaasPaymentsService {
     );
     const pendingValue = pendingPayments.reduce((sum, p) => sum + p.value, 0);
 
-    // Overdue payments
+    // Overdue payments - CORRIGIDO: inclui status OVERDUE também
     const overduePayments = payments.filter(p =>
-      p.status === 'PENDING' &&
+      (p.status === 'PENDING' || p.status === 'OVERDUE') &&
       new Date(p.dueDate) < now
     );
     const overdueCount = overduePayments.length;
@@ -321,18 +321,39 @@ export class AsaasPaymentsService {
 
     const nextDueDate = upcomingPayments.length > 0 ? new Date(upcomingPayments[0].dueDate) : null;
 
-    // Debug para verificar dados vencidos
+    // Debug para verificar dados vencidos - ENHANCED
     console.log(`📊 Metrics Debug:`);
+    console.log(`   - Current date: ${now.toISOString()}`);
     console.log(`   - Total payments: ${payments.length}`);
     console.log(`   - Overdue count: ${overdueCount}`);
     console.log(`   - Overdue value: R$ ${totalOverdue.toFixed(2)}`);
     console.log(`   - Late payments count: ${latePaymentsCount}`);
     console.log(`   - Late payments value: R$ ${latePaymentsValue.toFixed(2)}`);
     
+    // Debug status distribution
+    const statusCounts = payments.reduce((acc, p) => {
+      acc[p.status] = (acc[p.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log(`   - Status distribution:`, statusCounts);
+    
+    // Debug payments with dates around 04/09/2025
+    const suspiciousPayments = payments.filter(p => 
+      p.dueDate && p.dueDate.includes('2025-09-04')
+    );
+    if (suspiciousPayments.length > 0) {
+      console.log(`   🔍 Payments with dueDate 2025-09-04:`);
+      suspiciousPayments.forEach((p, i) => {
+        const dueDate = new Date(p.dueDate);
+        const isOverdueByDate = dueDate < now;
+        console.log(`      ${i+1}. Status: ${p.status} | Due: ${p.dueDate} | isOverdue: ${isOverdueByDate} | Value: R$ ${p.value}`);
+      });
+    }
+    
     if (overduePayments.length > 0) {
       console.log(`   🔴 Overdue payments details:`);
       overduePayments.forEach((p, i) => {
-        console.log(`      ${i+1}. ID: ${p.id} | Due: ${p.dueDate} | Value: R$ ${p.value}`);
+        console.log(`      ${i+1}. Status: ${p.status} | Due: ${p.dueDate} | Value: R$ ${p.value}`);
       });
     }
 

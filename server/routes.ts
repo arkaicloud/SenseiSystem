@@ -6193,11 +6193,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Create new user and student from ASAAS customer
+          // Generate username - use email if available, otherwise create from name + cpf
+          let username = customer.email;
+          if (!username) {
+            const cleanName = customer.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const cpfSuffix = customer.cpfCnpj ? customer.cpfCnpj.slice(-4) : Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+            username = `${cleanName}${cpfSuffix}@temp.local`;
+          }
+
           const userData = {
             firstName: customer.name.split(' ')[0] || 'Cliente',
             lastName: customer.name.split(' ').slice(1).join(' ') || 'ASAAS',
-            username: customer.email,
-            email: customer.email,
+            username: username,
+            email: customer.email || username, // Use generated username as email if no email exists
             password: 'temp123456', // Temporary password
             role: 'student' as const,
             phone: customer.mobilePhone || customer.phone,

@@ -337,13 +337,7 @@ export default function Settings() {
             </div>
 
             <div className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsPasswordDialogOpen(true)}
-              >
-                Alterar senha
-              </Button>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500">
                 Para alterar suas informações pessoais, entre em contato com o
                 administrador.
               </p>

@@ -383,8 +383,9 @@ export async function initializeDefaultAdmin() {
 
     // Create admin user
     const existingAdmin = await storage.getUserByEmail("adm@senseisystem.com.br");
+    const existingAdminUsername = await storage.getUserByUsername("admin");
     
-    if (!existingAdmin) {
+    if (!existingAdmin && !existingAdminUsername) {
       const hashedPassword = await hashPassword("12345678");
       
       await storage.createUser({
@@ -406,8 +407,9 @@ export async function initializeDefaultAdmin() {
 
     // Create student user
     const existingStudent = await storage.getUserByEmail("aluno@senseisystem.com.br");
+    const existingStudentUsername = await storage.getUserByUsername("aluno");
     
-    if (!existingStudent) {
+    if (!existingStudent && !existingStudentUsername) {
       const hashedPassword = await hashPassword("12345678");
       
       const studentUser = await storage.createUser({

@@ -66,11 +66,27 @@ export default function StudentDashboard() {
         </h1>
         {studentData && (studentData as any)?.beltLevel && (
           <div className="flex items-center space-x-3">
-            {/* Ícone de faixa colorido destacado */}
-            <div 
-              className="w-16 h-4 sm:w-20 sm:h-5 md:w-24 md:h-6 rounded-sm shadow-lg ring-2 ring-white/50"
-              style={{ backgroundColor: getBeltColor((studentData as any)?.beltLevel || "white") }}
-            />
+            {/* Ícone de faixa colorido destacado com listras */}
+            <div className="relative">
+              <div 
+                className="w-16 h-4 sm:w-20 sm:h-5 md:w-24 md:h-6 rounded-sm shadow-lg ring-2 ring-white/50"
+                style={{ backgroundColor: getBeltColor((studentData as any)?.beltLevel || "white") }}
+              />
+              {/* Listras/Riscos */}
+              {((studentData as any)?.stripes || 0) > 0 && (
+                <div className="absolute inset-0 flex justify-end items-center pr-1 space-x-0.5">
+                  {Array.from({ length: (studentData as any)?.stripes || 0 }, (_, i) => (
+                    <div
+                      key={i}
+                      className="w-0.5 h-2 sm:h-3 md:h-4 rounded-full"
+                      style={{
+                        backgroundColor: (studentData as any)?.beltLevel === "black" ? "#FFFFFF" : "#FFFFFF"
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
             <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
               Faixa{" "}
               {formatBelt(

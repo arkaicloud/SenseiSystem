@@ -1958,6 +1958,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update student data
       const studentUpdateData: any = {};
 
+      // Process enrollment date
+      if (payload.enrollmentDate !== undefined) {
+        studentUpdateData.enrollmentDate = payload.enrollmentDate ? new Date(payload.enrollmentDate) : null;
+      }
+
       if (payload.health?.notes !== undefined) {
         studentUpdateData.medicalObservations = payload.health.notes;
       }

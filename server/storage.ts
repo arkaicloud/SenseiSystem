@@ -74,6 +74,7 @@ import {
   type InsertContaReceber,
   attendanceChanges,
 } from "@shared/schema";
+import { hashPassword } from "./auth";
 import { eq, and, gte, lte, desc, or, gt, isNull, lt, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -288,7 +289,12 @@ export class MemStorage implements IStorage {
     this.streakAchievementCurrentId = 1;
     this.dailyLoginRecordCurrentId = 1;
 
-    this.seedData();
+    // Initialize with async seed data
+    this.initializeAsync();
+  }
+
+  private async initializeAsync() {
+    await this.seedData();
   }
 
   // Test database connection (always returns true for memory storage)
@@ -297,7 +303,13 @@ export class MemStorage implements IStorage {
   }
 
   // Seed initial data
-  private seedData() {
+  private async seedData() {
+    // Use environment variables for demo credentials with secure fallbacks
+    const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || "SecureAdmin123!";
+    const instructorPassword = process.env.INSTRUCTOR_DEFAULT_PASSWORD || "SecureInstructor123!";
+    
+    const adminPasswordHash = await hashPassword(adminPassword);
+    const instructorPasswordHash = await hashPassword(instructorPassword);
     // Create admin user
     const adminUser: User = {
       id: this.userCurrentId++,
@@ -305,7 +317,7 @@ export class MemStorage implements IStorage {
       lastName: "Sensei",
       username: "admin",
       email: "admin@senseisystem.com",
-      password: "$2b$10$nyKIage48tmqXthsjlVCZeGOoXlDa9.rW4iR3D8IcL5U/IjIk3sO2", // "12345678"
+      password: adminPasswordHash, // Dynamically hashed from environment variable
       role: "admin",
       phone: "555-123-4567",
       sex: null,
@@ -338,7 +350,7 @@ export class MemStorage implements IStorage {
       lastName: "Sensei",
       username: "instructor",
       email: "instructor@senseisystem.com",
-      password: "$2b$10$O9hGnkb7dxHSHo5.jtffc.mUTQsQtMkj/K4GrP/NQFyukf8eZuU5G", // "password"
+      password: instructorPasswordHash, // Dynamically hashed from environment variable
       role: "instructor",
       phone: "555-234-5678",
       sex: null,

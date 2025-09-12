@@ -224,12 +224,15 @@ export default function AsaasPayments() {
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              🧪 <strong>Ambiente Sandbox (Teste)</strong> - Use a API key de teste do ASAAS. Os pagamentos não serão reais.
+              {asaasConfig.asaasApiKey?.startsWith('$aact_YTU') || asaasConfig.asaasApiKey?.includes('sandbox') ? 
+                "🧪 Ambiente Sandbox (Teste) - Use a API key de teste do ASAAS. Os pagamentos não serão reais." : 
+                "🚨 Ambiente Produção - Atenção você está usando a API key de produção do ASAAS. Os pagamentos são reais."
+              }
             </AlertDescription>
           </Alert>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="asaasApiKey">API Key ASAAS</Label>
               <Input
@@ -238,22 +241,6 @@ export default function AsaasPayments() {
                 placeholder="$aact_..."
                 value={asaasConfig.asaasApiKey}
                 onChange={(e) => setAsaasConfig(prev => ({ ...prev, asaasApiKey: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="planValue">Valor do Plano (R$)</Label>
-              <Input
-                id="planValue"
-                type="number"
-                step="0.01"
-                value={new Intl.NumberFormat('pt-BR', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                }).format(asaasConfig.planValue / 100)}
-                onChange={(e) => setAsaasConfig(prev => ({ 
-                  ...prev, 
-                  planValue: Math.round(parseFloat(e.target.value) * 100) 
-                }))}
               />
             </div>
           </div>
@@ -285,86 +272,7 @@ export default function AsaasPayments() {
         </CardContent>
       </Card>
 
-      {/* Status da Integração */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-sm font-medium">Customer ID</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">
-              {schoolConfig?.config.asaasCustomerId ? "Configurado" : "Não configurado"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-sm font-medium">Valor Mensal</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">
-              {formatCurrency(schoolConfig?.config.planValue || 19990)}
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-sm font-medium">Próximo Pagamento</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">01/09/2025</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Histórico de Pagamentos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Pagamentos</CardTitle>
-          <CardDescription>
-            Acompanhe todos os pagamentos da escola
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {paymentsLoading ? (
-            <div className="text-center py-4">Carregando pagamentos...</div>
-          ) : paymentsData?.payments.length === 0 ? (
-            <Alert>
-              <AlertDescription>
-                Nenhum pagamento encontrado. A integração ASAAS criará automaticamente os pagamentos mensais.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="space-y-4">
-              {paymentsData?.payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <p className="font-medium">{payment.description}</p>
-                      {getStatusBadge(payment.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Vencimento: {formatDate(payment.dueDate)}
-                      {payment.paidAt && ` • Pago em: ${formatDate(payment.paidAt)}`}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-lg">{formatCurrency(payment.value)}</p>
-                    {payment.asaasPaymentId && (
-                      <p className="text-xs text-muted-foreground">ID: {payment.asaasPaymentId}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Informações sobre Webhook */}
       <Card>

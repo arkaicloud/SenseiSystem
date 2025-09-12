@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import IosSwitch from "@/components/ui/ios-switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import type { UserNotificationPreferences } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,12 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+
+  // Fetch notification preferences
+  const { data: notificationPreferences, isLoading: isLoadingPreferences } = useQuery<UserNotificationPreferences>({
+    queryKey: ['/api/user/notification-preferences'],
+    retry: false,
+  });
 
   // Buscar configuração da escola
   const { data: schoolConfig } = useQuery({
@@ -136,6 +143,57 @@ export default function Settings() {
     changePasswordMutation.mutate(data);
   };
 
+  // Notification preferences mutation with optimistic UI
+  const updateNotificationPreferences = useMutation({
+    mutationFn: async (preferences: Partial<UserNotificationPreferences>) => {
+      const response = await apiRequest('PATCH', '/api/user/notification-preferences', preferences);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao atualizar preferências');
+      }
+      return response.json();
+    },
+    onMutate: async (newPreferences) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/user/notification-preferences'] });
+      
+      // Snapshot the previous value
+      const previousPreferences = queryClient.getQueryData(['/api/user/notification-preferences']);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(['/api/user/notification-preferences'], (old: UserNotificationPreferences) => ({
+        ...old,
+        ...newPreferences,
+      }));
+      
+      // Return a context object with the snapshotted value
+      return { previousPreferences };
+    },
+    onError: (err, newPreferences, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['/api/user/notification-preferences'], context?.previousPreferences);
+      toast({
+        title: "Erro",
+        description: err.message || "Erro ao atualizar preferências de notificação",
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Preferências atualizadas",
+        description: "Suas preferências de notificação foram salvas com sucesso!",
+      });
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['/api/user/notification-preferences'] });
+    },
+  });
+
+  const handleNotificationToggle = (key: keyof Pick<UserNotificationPreferences, 'attendanceNotifications' | 'paymentNotifications' | 'eventNotifications'>, value: boolean) => {
+    updateNotificationPreferences.mutate({ [key]: value });
+  };
+
   
 
   return (
@@ -173,7 +231,12 @@ export default function Settings() {
                   Receber notificações sobre confirmação de presença
                 </div>
               </div>
-              <Switch defaultChecked />
+              <IosSwitch 
+                checked={notificationPreferences?.attendanceNotifications ?? true}
+                onChange={(checked) => handleNotificationToggle('attendanceNotifications', checked)}
+                disabled={isLoadingPreferences || updateNotificationPreferences.isPending}
+                label="Notificações de presença"
+              />
             </div>
             
             <Separator />
@@ -185,7 +248,12 @@ export default function Settings() {
                   Receber notificações sobre pagamentos e vencimentos
                 </div>
               </div>
-              <Switch defaultChecked />
+              <IosSwitch 
+                checked={notificationPreferences?.paymentNotifications ?? true}
+                onChange={(checked) => handleNotificationToggle('paymentNotifications', checked)}
+                disabled={isLoadingPreferences || updateNotificationPreferences.isPending}
+                label="Notificações de pagamento"
+              />
             </div>
             
             <Separator />
@@ -197,7 +265,12 @@ export default function Settings() {
                   Receber notificações sobre eventos da escola
                 </div>
               </div>
-              <Switch defaultChecked />
+              <IosSwitch 
+                checked={notificationPreferences?.eventNotifications ?? true}
+                onChange={(checked) => handleNotificationToggle('eventNotifications', checked)}
+                disabled={isLoadingPreferences || updateNotificationPreferences.isPending}
+                label="Notificações de eventos"
+              />
             </div>
           </CardContent>
         </Card>

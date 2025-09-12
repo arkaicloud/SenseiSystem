@@ -436,6 +436,17 @@ export const studentNotifications = pgTable("student_notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// User Notification Preferences table
+export const userNotificationPreferences = pgTable("user_notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull().unique(),
+  attendanceNotifications: boolean("attendance_notifications").default(true),
+  paymentNotifications: boolean("payment_notifications").default(true),
+  eventNotifications: boolean("event_notifications").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users)
   .omit({ 
@@ -472,6 +483,7 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({ id: tru
 export const insertContaReceberSchema = createInsertSchema(contasReceber).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertNoticeSchema = createInsertSchema(notices).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertStudentNotificationSchema = createInsertSchema(studentNotifications).omit({ id: true, createdAt: true });
+export const insertUserNotificationPreferencesSchema = createInsertSchema(userNotificationPreferences).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -514,6 +526,10 @@ export type InsertNotice = z.infer<typeof insertNoticeSchema>;
 
 export type StudentNotification = typeof studentNotifications.$inferSelect;
 export type InsertStudentNotification = z.infer<typeof insertStudentNotificationSchema>;
+
+export type UserNotificationPreferences = typeof userNotificationPreferences.$inferSelect;
+export type InsertUserNotificationPreferences = z.infer<typeof insertUserNotificationPreferencesSchema>;
+
 export type InsertDashboardCustomization = z.infer<typeof insertDashboardCustomizationSchema>;
 
 export type RiskAction = typeof riskActions.$inferSelect;

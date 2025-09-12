@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber, notices, studentNotifications } from "@shared/schema";
+import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber, notices, studentNotifications, userNotificationPreferences } from "@shared/schema";
 import { eq, and, or, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
 import { z } from "zod";
 import { 
@@ -20,7 +20,8 @@ import {
   insertRiskActionSchema,
   insertRiskSettingsSchema,
   insertSchoolPaymentSchema,
-  insertBeltLevelSchema
+  insertBeltLevelSchema,
+  insertUserNotificationPreferencesSchema
 } from "@shared/schema";
 import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashPassword } from "./auth";
 import bcrypt from "bcryptjs";
@@ -4409,6 +4410,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating dashboard customization:", error);
       res.status(500).json({ message: "Erro ao atualizar personalização do dashboard" });
+    }
+  });
+
+  // ===== User Notification Preferences Routes =====
+  app.get("/api/user/notification-preferences", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      
+      const preferences = await db
+        .select()
+        .from(userNotificationPreferences)
+        .where(eq(userNotificationPreferences.userId, requestUser.id))
+        .limit(1);
+
+      if (preferences.length === 0) {
+        // Return default preferences if none exist
+        return res.json({
+          attendanceNotifications: true,
+          paymentNotifications: true,
+          eventNotifications: true,
+        });
+      }
+
+      res.json(preferences[0]);
+    } catch (error) {
+      console.error("Error fetching notification preferences:", error);
+      res.status(500).json({ message: "Erro ao buscar preferências de notificação" });
+    }
+  });
+
+  app.patch("/api/user/notification-preferences", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const updateData = insertUserNotificationPreferencesSchema.parse({
+        ...req.body,
+        userId: requestUser.id
+      });
+
+      // Check if preferences already exist
+      const existing = await db
+        .select()
+        .from(userNotificationPreferences)
+        .where(eq(userNotificationPreferences.userId, requestUser.id))
+        .limit(1);
+
+      if (existing.length === 0) {
+        // Create new preferences
+        const [newPreferences] = await db
+          .insert(userNotificationPreferences)
+          .values(updateData)
+          .returning();
+
+        res.status(201).json(newPreferences);
+      } else {
+        // Update existing preferences
+        const [updatedPreferences] = await db
+          .update(userNotificationPreferences)
+          .set({
+            ...updateData,
+            updatedAt: new Date(),
+          })
+          .where(eq(userNotificationPreferences.userId, requestUser.id))
+          .returning();
+
+        res.json(updatedPreferences);
+      }
+
+      // Log activity
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} atualizou preferências de notificação`,
+        entityType: 'user-notification-preferences',
+        entityId: requestUser.id
+      });
+
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados de preferência inválidos", errors: error.errors });
+      }
+      console.error("Error updating notification preferences:", error);
+      res.status(500).json({ message: "Erro ao atualizar preferências de notificação" });
     }
   });
 

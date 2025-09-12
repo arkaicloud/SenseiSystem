@@ -36,21 +36,18 @@ export default function NotificationBell() {
     refetchInterval: 30000,
   });
 
-  // Simular aniversariantes de hoje (você pode implementar uma API real depois)
-  const getTodayBirthdays = (): Birthday[] => {
-    const today = new Date();
-    const todayStr = `${today.getDate()} de ${today.toLocaleDateString('pt-BR', { month: 'short' })}`;
-    
-    // Mock data - substitua por dados reais da API
-    const mockBirthdays: Birthday[] = [
-      { id: 1, name: "João Silva", date: todayStr, type: "student" as const },
-      { id: 2, name: "Maria Santos", date: todayStr, type: "instructor" as const },
-    ];
-    
-    return mockBirthdays.filter(() => Math.random() < 0.3); // 30% chance de ter aniversariante hoje
-  };
+  // Buscar aniversariantes de hoje da API real
+  const { data: birthdaysData } = useQuery({
+    queryKey: ["/api/birthdays/today"],
+    refetchInterval: 60000, // Atualiza a cada minuto
+  });
 
-  const todayBirthdays = getTodayBirthdays();
+  const todayBirthdays: Birthday[] = (birthdaysData as any)?.birthdays?.map((b: any) => ({
+    id: b.id,
+    name: `${b.firstName} ${b.lastName}`,
+    date: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
+    type: 'student' as const
+  })) || [];
   const pendingCount = (pendingUsers as any)?.users?.length || 0;
   const birthdaysCount = todayBirthdays.length;
   const totalNotifications = pendingCount + birthdaysCount;

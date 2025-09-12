@@ -142,7 +142,7 @@ export default function AdminDashboard() {
           icon={UserCheck} 
           variant={m.attendanceRate < 0.6 ? "danger" : "success"} 
         />
-        <StatCard title="Receita Mensal" value={currencyBRL(monthlyRevenue)} icon={DollarSign} />
+        <StatCard title="Receita Mensal" value={`R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={DollarSign} />
         <StatCard 
           title="Engajamento em Baixa" 
           value={m.lowEngagement} 

@@ -267,9 +267,51 @@ export const richContentStyles = `
   .rich-content img {
     max-width: 100%;
     height: auto;
-    border-radius: 0.375rem;
-    margin: 1em 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    margin: 2em auto;
+    display: block;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .rich-content img:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .rich-content img.image-zoomable::after {
+    content: "🔍";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .rich-content img.image-zoomable:hover::after {
+    opacity: 1;
+  }
+
+  /* Mobile optimization */
+  @media (max-width: 640px) {
+    .rich-content img {
+      border-radius: 0.5rem;
+      margin: 1em auto;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .rich-content img:hover {
+      transform: scale(1.01);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
   }
 
   /* Text formatting */

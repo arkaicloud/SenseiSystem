@@ -1,5 +1,6 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { sanitizeHTML, richContentStyles } from '@/lib/htmlUtils';
+import { ImageViewer } from './image-viewer';
 
 interface RichContentProps {
   content: string;
@@ -101,15 +102,53 @@ export function RichContent({
     );
   }
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [imageModal, setImageModal] = useState<{ src: string; alt: string } | null>(null);
+
+  // Add click handlers to images after content is rendered
+  useEffect(() => {
+    if (contentRef.current) {
+      const images = contentRef.current.querySelectorAll('img');
+      images.forEach((img) => {
+        img.classList.add('image-zoomable');
+        img.addEventListener('click', () => {
+          setImageModal({
+            src: img.src,
+            alt: img.alt || 'Imagem'
+          });
+        });
+      });
+      
+      return () => {
+        images.forEach((img) => {
+          img.removeEventListener('click', () => {});
+        });
+      };
+    }
+  }, [sanitizedContent]);
+
   return (
-    <div 
-      className={`rich-content ${className}`}
-      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-      data-testid="rich-content"
-      // Add security headers as data attributes for debugging
-      data-sanitized="true"
-      data-content-length={content?.length || 0}
-    />
+    <>
+      <div 
+        ref={contentRef}
+        className={`rich-content ${className}`}
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+        data-testid="rich-content"
+        // Add security headers as data attributes for debugging
+        data-sanitized="true"
+        data-content-length={content?.length || 0}
+      />
+      
+      {/* Image Modal */}
+      {imageModal && (
+        <ImageViewer
+          src={imageModal.src}
+          alt={imageModal.alt}
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClose={() => setImageModal(null)}
+        />
+      )}
+    </>
   );
 }
 

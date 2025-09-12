@@ -153,10 +153,8 @@ CREATE TABLE IF NOT EXISTS dashboard_customization (
 );
 
 -- Inserir dados iniciais
--- Usuário administrador padrão
-INSERT INTO users (first_name, last_name, username, email, password, role, active) 
-VALUES ('Admin', 'Sistema', 'admin', 'admin@senseisystem.com', '$2b$10$K8K5K8K5K8K5K8K5K8K5KOK5K8K5K8K5K8K5K8K5K8K5K8K5K8K5K8', 'admin', true)
-ON CONFLICT (username) DO NOTHING;
+-- Note: Admin user should be created through the application's registration process
+-- with proper password hashing, not hardcoded in database initialization files
 
 -- Planos de pagamento padrão
 INSERT INTO payment_plans (name, description, amount, frequency) VALUES

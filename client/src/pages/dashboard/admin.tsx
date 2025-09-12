@@ -164,9 +164,9 @@ export default function AdminDashboard() {
         />
         <StatCard 
           title="Inadimplência" 
-          value={m.delinquency} 
+          value={financialData?.metrics?.overdueCount || 0} 
           icon={AlertTriangle}
-          variant={m.delinquency > 0 ? "danger" : "default"}
+          variant={(financialData?.metrics?.overdueCount || 0) > 0 ? "danger" : "default"}
         />
       </section>
 

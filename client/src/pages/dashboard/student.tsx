@@ -66,6 +66,7 @@ export default function StudentDashboard() {
         </h1>
         {studentData && (studentData as any)?.beltLevel && (
           <div className="flex items-center space-x-4">
+            {/* SVG da faixa */}
             <img
               src={`https://agilisbr.com.br/Faixas/${
                 (studentData as any)?.beltLevel === "white"
@@ -81,7 +82,7 @@ export default function StudentDashboard() {
                           : "branca"
               }.svg`}
               alt={`Faixa ${formatBelt((studentData as any)?.beltLevel || "white", (studentData as any)?.stripes || 0)}`}
-              className="w-16 h-16 sm:w-20 sm:h-20 md:w-20 md:h-24 object-contain"
+              className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
               onError={(e) => {
                 // Fallback para bolinha colorida se a imagem não carregar
                 const target = e.target as HTMLImageElement;
@@ -94,13 +95,21 @@ export default function StudentDashboard() {
                 target.parentNode?.appendChild(fallback);
               }}
             />
-            <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
-              Faixa{" "}
-              {formatBelt(
-                (studentData as any)?.beltLevel || "white",
-                (studentData as any)?.stripes || 0,
-              )}
-            </span>
+
+            {/* Ícone de faixa colorido destacado */}
+            <div className="flex items-center space-x-3">
+              <div 
+                className="w-12 h-3 sm:w-16 sm:h-4 md:w-20 md:h-5 rounded-sm shadow-lg ring-2 ring-white/50"
+                style={{ backgroundColor: getBeltColor((studentData as any)?.beltLevel || "white") }}
+              />
+              <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
+                Faixa{" "}
+                {formatBelt(
+                  (studentData as any)?.beltLevel || "white",
+                  (studentData as any)?.stripes || 0,
+                )}
+              </span>
+            </div>
           </div>
         )}
       </div>

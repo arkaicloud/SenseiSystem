@@ -33,7 +33,7 @@ export default function IosSwitch({
       onClick={() => !disabled && onChange(!checked)}
       onKeyDown={handleKeyDown}
       className={[
-        // tamanho iOS 51x31 com padding 2px
+        // tamanho iOS otimizado para web e mobile
         "relative inline-flex h-[30px] w-[51px] cursor-pointer items-center rounded-full p-[2px]",
         "transition-colors duration-200",
         checked ? "bg-[#34C759]" : "bg-[#E9E9EA] dark:bg-[#3a3a3c]",

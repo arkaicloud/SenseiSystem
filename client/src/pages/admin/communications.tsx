@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { createPreviewText } from "@/lib/htmlUtils";
+import { RichContent } from "@/components/ui/rich-content";
 import {
   Plus,
   MessageSquare,
@@ -554,9 +555,12 @@ export default function CommunicationsPage() {
                       </div>
                     </div>
 
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      {createPreviewText(notice.content, 200)}
-                    </p>
+                    <div className="text-gray-600 dark:text-gray-300 mb-4 max-h-24 overflow-y-auto custom-scrollbar-sm">
+                      <RichContent 
+                        content={createPreviewText(notice.content, 200)} 
+                        className="text-sm leading-relaxed"
+                      />
+                    </div>
 
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
                       <span>

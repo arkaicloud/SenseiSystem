@@ -8,7 +8,13 @@ type Props = {
   label?: string;
 };
 
-export default function IosSwitch({ checked, onChange, disabled, id, label }: Props) {
+export default function IosSwitch({
+  checked,
+  onChange,
+  disabled,
+  id,
+  label,
+}: Props) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
@@ -28,10 +34,12 @@ export default function IosSwitch({ checked, onChange, disabled, id, label }: Pr
       onKeyDown={handleKeyDown}
       className={[
         // tamanho iOS 51x31 com padding 2px
-        "relative inline-flex h-[31px] w-[51px] cursor-pointer items-center rounded-full p-[2px]",
+        "relative inline-flex h-[28px] w-[51px] cursor-pointer items-center rounded-full p-[2px]",
         "transition-colors duration-200",
         checked ? "bg-[#34C759]" : "bg-[#E9E9EA] dark:bg-[#3a3a3c]",
-        disabled ? "opacity-50 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-[#34C759]/40",
+        disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "focus:outline-none focus:ring-2 focus:ring-[#34C759]/40",
         // leve borda interna do trilho (iOS tem uma sutileza)
         "shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]",
       ].join(" ")}

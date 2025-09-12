@@ -69,11 +69,25 @@ export default function StudentDashboard() {
         </h1>
         {studentData && (studentData as any)?.beltLevel && (
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-500 shadow-sm">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: getBeltColor((studentData as any)?.beltLevel || 'white') }}
-              ></div>
+            <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10">
+              <img 
+                src={`https://agilisbr.com.br/Faixas/${(studentData as any)?.beltLevel === 'white' ? 'branca' : 
+                     (studentData as any)?.beltLevel === 'blue' ? 'azul' : 
+                     (studentData as any)?.beltLevel === 'purple' ? 'roxa' : 
+                     (studentData as any)?.beltLevel === 'brown' ? 'marrom' : 
+                     (studentData as any)?.beltLevel === 'black' ? 'preta' : 'branca'}.svg`}
+                alt={`Faixa ${formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}`}
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  // Fallback para bolinha colorida se a imagem não carregar
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = document.createElement('div');
+                  fallback.className = 'w-4 h-4 rounded-full';
+                  fallback.style.backgroundColor = getBeltColor((studentData as any)?.beltLevel || 'white');
+                  target.parentNode?.appendChild(fallback);
+                }}
+              />
             </div>
             <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
               Faixa {formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}

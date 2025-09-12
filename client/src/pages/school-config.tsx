@@ -34,7 +34,6 @@ const schoolConfigSchema = z.object({
   youtube: z.string().url("YouTube deve ser uma URL válida").optional().or(z.literal("")),
   tiktok: z.string().url("TikTok deve ser uma URL válida").optional().or(z.literal("")),
   congratsMessage: z.string().optional(),
-  welcomeMessage: z.string().optional(),
   defaultTheme: z.enum(["light", "dark"]).default("light"),
   asaasApiKey: z.string().optional(),
   // Configurações SMTP
@@ -78,7 +77,6 @@ export default function SchoolConfigPage() {
       youtube: currentConfig?.youtube || "",
       tiktok: currentConfig?.tiktok || "",
       congratsMessage: currentConfig?.congratsMessage || "",
-      welcomeMessage: currentConfig?.welcomeMessage || "",
       asaasApiKey: currentConfig?.asaasApiKey || "",
       // Configurações SMTP
       smtpEnabled: currentConfig?.smtpEnabled || false,
@@ -110,7 +108,6 @@ export default function SchoolConfigPage() {
         youtube: currentConfig.youtube || "",
         tiktok: currentConfig.tiktok || "",
         congratsMessage: currentConfig.congratsMessage || "",
-        welcomeMessage: currentConfig.welcomeMessage || "",
         defaultTheme: (currentConfig.defaultTheme as "light" | "dark") || "light",
         asaasApiKey: currentConfig.asaasApiKey || "",
         // Configurações SMTP
@@ -252,7 +249,7 @@ export default function SchoolConfigPage() {
                                     type="radio"
                                     name="logoOption"
                                     value="custom"
-                                    checked={field.value && field.value !== 'default' && field.value.startsWith('data:')}
+                                    checked={Boolean(field.value && field.value !== 'default' && field.value.startsWith('data:'))}
                                     onChange={() => {}}
                                     className="text-blue-600"
                                   />

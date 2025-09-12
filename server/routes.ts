@@ -4304,7 +4304,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.tiktok !== undefined) cleanData.tiktok = req.body.tiktok ? String(req.body.tiktok) : null;
       if (req.body.logoLightUrl !== undefined) cleanData.logoLightUrl = req.body.logoLightUrl ? String(req.body.logoLightUrl) : null;
       if (req.body.logoDarkUrl !== undefined) cleanData.logoDarkUrl = req.body.logoDarkUrl ? String(req.body.logoDarkUrl) : null;
-      if (req.body.welcomeMessage !== undefined) cleanData.welcomeMessage = req.body.welcomeMessage ? String(req.body.welcomeMessage) : null;
       if (req.body.congratsMessage !== undefined) cleanData.congratsMessage = req.body.congratsMessage ? String(req.body.congratsMessage) : null;
 
       // ASAAS configuration - Only update API key if it's not masked

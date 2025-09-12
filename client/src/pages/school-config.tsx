@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, School, Upload, Save, Award, CreditCard } from "lucide-react";
+import { Loader2, School, Upload, Save, Award, CreditCard, Mail, TestTube, AlertCircle } from "lucide-react";
 import type { SchoolConfig } from "@shared/schema";
 
 // Schema para validação do formulário
@@ -37,6 +37,15 @@ const schoolConfigSchema = z.object({
   welcomeMessage: z.string().optional(),
   defaultTheme: z.enum(["light", "dark"]).default("light"),
   asaasApiKey: z.string().optional(),
+  // Configurações SMTP
+  smtpEnabled: z.boolean().optional(),
+  smtpHost: z.string().optional(),
+  smtpPort: z.number().min(1).max(65535).optional().or(z.string().transform(Number)),
+  smtpSecure: z.boolean().optional(),
+  smtpUser: z.string().optional(),
+  smtpPassword: z.string().optional(),
+  smtpFromEmail: z.string().email("Email deve ser válido").optional().or(z.literal("")),
+  smtpFromName: z.string().optional(),
 });
 
 type SchoolConfigForm = z.infer<typeof schoolConfigSchema>;
@@ -71,6 +80,15 @@ export default function SchoolConfigPage() {
       congratsMessage: currentConfig?.congratsMessage || "",
       welcomeMessage: currentConfig?.welcomeMessage || "",
       asaasApiKey: currentConfig?.asaasApiKey || "",
+      // Configurações SMTP
+      smtpEnabled: currentConfig?.smtpEnabled || false,
+      smtpHost: currentConfig?.smtpHost || "",
+      smtpPort: currentConfig?.smtpPort || 587,
+      smtpSecure: currentConfig?.smtpSecure || false,
+      smtpUser: currentConfig?.smtpUser || "",
+      smtpPassword: currentConfig?.smtpPassword || "",
+      smtpFromEmail: currentConfig?.smtpFromEmail || "",
+      smtpFromName: currentConfig?.smtpFromName || "",
     },
   });
 
@@ -95,6 +113,15 @@ export default function SchoolConfigPage() {
         welcomeMessage: currentConfig.welcomeMessage || "",
         defaultTheme: (currentConfig.defaultTheme as "light" | "dark") || "light",
         asaasApiKey: currentConfig.asaasApiKey || "",
+        // Configurações SMTP
+        smtpEnabled: currentConfig.smtpEnabled || false,
+        smtpHost: currentConfig.smtpHost || "",
+        smtpPort: currentConfig.smtpPort || 587,
+        smtpSecure: currentConfig.smtpSecure || false,
+        smtpUser: currentConfig.smtpUser || "",
+        smtpPassword: currentConfig.smtpPassword || "",
+        smtpFromEmail: currentConfig.smtpFromEmail || "",
+        smtpFromName: currentConfig.smtpFromName || "",
       });
     }
   }, [currentConfig, form]);
@@ -637,6 +664,196 @@ export default function SchoolConfigPage() {
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  {/* Seção SMTP Email */}
+                  <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Configurações de Email (SMTP)
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Configure o servidor SMTP para envio automático de emails como confirmações de matrícula, recuperação de senha e comunicados.
+                    </p>
+                    
+                    {/* Habilitar SMTP */}
+                    <div className="mb-6">
+                      <FormField
+                        control={form.control}
+                        name="smtpEnabled"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Habilitar SMTP</FormLabel>
+                              <div className="text-sm text-gray-500">
+                                Ativar envio automático de emails via SMTP personalizado
+                              </div>
+                            </div>
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                data-testid="checkbox-smtp-enabled"
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                checked={field.value}
+                                onChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {form.watch("smtpEnabled") && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Host SMTP */}
+                          <FormField
+                            control={form.control}
+                            name="smtpHost"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Servidor SMTP *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="smtp.gmail.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Porta SMTP */}
+                          <FormField
+                            control={form.control}
+                            name="smtpPort"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Porta SMTP *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    placeholder="587" 
+                                    {...field}
+                                    value={field.value || ''}
+                                    onChange={(e) => field.onChange(Number(e.target.value) || 587)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                                <div className="text-xs text-gray-500">
+                                  587 (TLS), 465 (SSL), 25 (não criptografado)
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Usuário SMTP */}
+                          <FormField
+                            control={form.control}
+                            name="smtpUser"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Usuário SMTP *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="seuemail@gmail.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Senha SMTP */}
+                          <FormField
+                            control={form.control}
+                            name="smtpPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Senha SMTP *</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                <div className="text-xs text-gray-500">
+                                  Para Gmail, use "Senha de App" ao invés da senha normal
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Email do Remetente */}
+                          <FormField
+                            control={form.control}
+                            name="smtpFromEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Remetente</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="noreply@suaacademia.com.br" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Nome do Remetente */}
+                          <FormField
+                            control={form.control}
+                            name="smtpFromName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nome do Remetente</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Sua Academia" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        {/* SSL/TLS */}
+                        <FormField
+                          control={form.control}
+                          name="smtpSecure"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">Usar SSL (porta 465)</FormLabel>
+                                <div className="text-sm text-gray-500">
+                                  Ativar se usar porta 465. Desativar para portas 587 e 25
+                                </div>
+                              </div>
+                              <FormControl>
+                                <input
+                                  type="checkbox"
+                                  data-testid="checkbox-smtp-secure"
+                                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                            <div className="text-sm text-blue-800">
+                              <p className="font-medium mb-2">Provedores Comuns:</p>
+                              <ul className="text-xs space-y-1">
+                                <li><strong>Gmail:</strong> smtp.gmail.com, porta 587, usar "Senha de App"</li>
+                                <li><strong>Outlook:</strong> smtp-mail.outlook.com, porta 587</li>
+                                <li><strong>SendGrid:</strong> smtp.sendgrid.net, porta 587</li>
+                                <li><strong>Mailgun:</strong> smtp.mailgun.org, porta 587</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Botão de Salvar */}

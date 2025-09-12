@@ -4293,6 +4293,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.planType !== undefined) cleanData.planType = String(req.body.planType || "monthly");
       if (req.body.active !== undefined) cleanData.active = Boolean(req.body.active);
       if (req.body.trialEndDate !== undefined) cleanData.trialEndDate = req.body.trialEndDate ? new Date(req.body.trialEndDate) : null;
+      
+      // SMTP Email Configuration
+      if (req.body.smtpEnabled !== undefined) cleanData.smtpEnabled = Boolean(req.body.smtpEnabled);
+      if (req.body.smtpHost !== undefined) cleanData.smtpHost = req.body.smtpHost ? String(req.body.smtpHost) : null;
+      if (req.body.smtpPort !== undefined) cleanData.smtpPort = Number(req.body.smtpPort) || 587;
+      if (req.body.smtpSecure !== undefined) cleanData.smtpSecure = Boolean(req.body.smtpSecure);
+      if (req.body.smtpUser !== undefined) cleanData.smtpUser = req.body.smtpUser ? String(req.body.smtpUser) : null;
+      if (req.body.smtpPassword !== undefined) cleanData.smtpPassword = req.body.smtpPassword ? String(req.body.smtpPassword) : null;
+      if (req.body.smtpFromEmail !== undefined) cleanData.smtpFromEmail = req.body.smtpFromEmail ? String(req.body.smtpFromEmail) : null;
+      if (req.body.smtpFromName !== undefined) cleanData.smtpFromName = req.body.smtpFromName ? String(req.body.smtpFromName) : null;
 
       // Basic validation - only if schoolName is being updated
       if (cleanData.schoolName !== undefined && (!cleanData.schoolName || cleanData.schoolName.trim() === "")) {

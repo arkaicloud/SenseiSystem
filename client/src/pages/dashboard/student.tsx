@@ -64,17 +64,19 @@ export default function StudentDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       {/* Saudação e Faixa Atual */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
           👋 Olá, {user?.firstName} {user?.lastName}!
         </h1>
         {studentData && (studentData as any)?.student && (
-          <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-            <div 
-              className="w-4 h-4 rounded-full border-2 border-gray-400"
-              style={{ backgroundColor: getBeltColor((studentData as any)?.student?.beltLevel || 'white') }}
-            ></div>
-            <span>
-              🥋 Faixa atual: {formatBelt((studentData as any)?.student?.beltLevel || 'white', (studentData as any)?.student?.stripes || 0)}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-500 shadow-sm">
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: getBeltColor((studentData as any)?.student?.beltLevel || 'white') }}
+              ></div>
+            </div>
+            <span className="text-lg font-medium text-gray-700 dark:text-gray-200">
+              Faixa {formatBelt((studentData as any)?.student?.beltLevel || 'white', (studentData as any)?.student?.stripes || 0)}
             </span>
           </div>
         )}

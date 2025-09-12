@@ -118,7 +118,7 @@ const Classes: React.FC = () => {
         <div className="mt-4 md:mt-0">
           <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
                 Nova Aula
               </Button>

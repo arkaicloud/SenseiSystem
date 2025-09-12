@@ -143,7 +143,7 @@ const PaymentPlans: React.FC = () => {
           </div>
           <Dialog open={isAddPlanOpen} onOpenChange={setIsAddPlanOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-secondary hover:bg-secondary-dark text-white font-medium">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
                 Novo Plano
               </Button>

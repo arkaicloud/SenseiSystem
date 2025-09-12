@@ -4006,11 +4006,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== School Configuration Routes =====
-  app.get("/api/school-config", async (req, res) => {
+  app.get("/api/school-config", isAuthenticated, isAdmin, async (req, res) => {
     try {
       res.setHeader('Content-Type', 'application/json');
       const config = await storage.getSchoolConfig();
-      res.json({ config: config || {
+      
+      // Mask sensitive information (passwords, API keys)
+      const maskedConfig = config ? {
+        ...config,
+        smtpPassword: config.smtpPassword ? "••••••••" : "",
+        asaasApiKey: config.asaasApiKey ? "••••••••" : ""
+      } : {
         schoolName: "Academia de Jiu-Jitsu",
         congratsMessage: "🏆 Parabéns!\nVocê acaba de conquistar a sua {beltName}!\n\nQue Deus continue fortalecendo sua fé e determinação nessa jornada.\n\n\"Tudo posso naquele que me fortalece.\"\n(Filipenses 4:13)\n\nOSS!",
         logoUrl: null,
@@ -4018,7 +4024,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: null,
         email: null,
         website: null
-      }});
+      };
+      
+      res.json({ config: maskedConfig });
     } catch (error) {
       res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ message: "Internal server error" });
@@ -4299,8 +4307,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.welcomeMessage !== undefined) cleanData.welcomeMessage = req.body.welcomeMessage ? String(req.body.welcomeMessage) : null;
       if (req.body.congratsMessage !== undefined) cleanData.congratsMessage = req.body.congratsMessage ? String(req.body.congratsMessage) : null;
 
-      // ASAAS configuration
-      if (req.body.asaasApiKey !== undefined) cleanData.asaasApiKey = req.body.asaasApiKey ? String(req.body.asaasApiKey) : null;
+      // ASAAS configuration - Only update API key if it's not masked
+      if (req.body.asaasApiKey !== undefined && req.body.asaasApiKey !== "••••••••" && req.body.asaasApiKey !== "") {
+        cleanData.asaasApiKey = String(req.body.asaasApiKey);
+      }
       if (req.body.asaasCustomerId !== undefined) cleanData.asaasCustomerId = req.body.asaasCustomerId ? String(req.body.asaasCustomerId) : null;
       if (req.body.planValue !== undefined) cleanData.planValue = Number(req.body.planValue) || 19990;
       if (req.body.planType !== undefined) cleanData.planType = String(req.body.planType || "monthly");
@@ -4313,7 +4323,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.smtpPort !== undefined) cleanData.smtpPort = Number(req.body.smtpPort) || 587;
       if (req.body.smtpSecure !== undefined) cleanData.smtpSecure = Boolean(req.body.smtpSecure);
       if (req.body.smtpUser !== undefined) cleanData.smtpUser = req.body.smtpUser ? String(req.body.smtpUser) : null;
-      if (req.body.smtpPassword !== undefined) cleanData.smtpPassword = req.body.smtpPassword ? String(req.body.smtpPassword) : null;
+      // Only update password if it's not masked/empty (keep existing password if masked)
+      if (req.body.smtpPassword !== undefined && req.body.smtpPassword !== "••••••••" && req.body.smtpPassword !== "") {
+        cleanData.smtpPassword = String(req.body.smtpPassword);
+      }
       if (req.body.smtpFromEmail !== undefined) cleanData.smtpFromEmail = req.body.smtpFromEmail ? String(req.body.smtpFromEmail) : null;
       if (req.body.smtpFromName !== undefined) cleanData.smtpFromName = req.body.smtpFromName ? String(req.body.smtpFromName) : null;
 

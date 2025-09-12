@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -13,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Palette, Bell, Shield, User, Moon, Sun } from "lucide-react";
+import { Bell, Shield, User } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -54,17 +56,16 @@ export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
-  // Fetch notification preferences
+  // Preferências de notificação
   const { data: notificationPreferences, isLoading: isLoadingPreferences } =
     useQuery<UserNotificationPreferences>({
       queryKey: ["/api/user/notification-preferences"],
       retry: false,
     });
 
-  // Buscar configuração da escola
+  // Config da escola (se necessário em outra seção)
   const { data: schoolConfig } = useQuery({
     queryKey: ["/api/school-config"],
   });
@@ -90,21 +91,6 @@ export default function Settings() {
     },
   });
 
-  const handleThemeChange = (theme: string) => {
-    updateSchoolConfigMutation.mutate({
-      defaultTheme: theme,
-    });
-
-    // Aplicar tema imediatamente
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  };
-
   // Form para alterar senha
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -115,19 +101,16 @@ export default function Settings() {
     },
   });
 
-  // Mutation para alterar senha
   const changePasswordMutation = useMutation({
     mutationFn: async (data: z.infer<typeof passwordSchema>) => {
       const response = await apiRequest("PUT", "/api/user/change-password", {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Erro ao alterar senha");
       }
-
       return response.json();
     },
     onSuccess: () => {
@@ -139,7 +122,6 @@ export default function Settings() {
       setIsPasswordDialogOpen(false);
     },
     onError: (error: any) => {
-      console.error("Error changing password:", error);
       toast({
         title: "Erro",
         description: error.message || "Falha ao alterar senha",
@@ -148,11 +130,7 @@ export default function Settings() {
     },
   });
 
-  const handlePasswordChange = (data: z.infer<typeof passwordSchema>) => {
-    changePasswordMutation.mutate(data);
-  };
-
-  // Notification preferences mutation with optimistic UI
+  // Mutation com UI otimista para preferências
   const updateNotificationPreferences = useMutation({
     mutationFn: async (preferences: Partial<UserNotificationPreferences>) => {
       const response = await apiRequest(
@@ -167,30 +145,19 @@ export default function Settings() {
       return response.json();
     },
     onMutate: async (newPreferences) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: ["/api/user/notification-preferences"],
       });
-
-      // Snapshot the previous value
       const previousPreferences = queryClient.getQueryData([
         "/api/user/notification-preferences",
       ]);
-
-      // Optimistically update to the new value
       queryClient.setQueryData(
         ["/api/user/notification-preferences"],
-        (old: UserNotificationPreferences) => ({
-          ...old,
-          ...newPreferences,
-        }),
+        (old: UserNotificationPreferences) => ({ ...old, ...newPreferences }),
       );
-
-      // Return a context object with the snapshotted value
       return { previousPreferences };
     },
-    onError: (err, newPreferences, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err: any, _newPreferences, context) => {
       queryClient.setQueryData(
         ["/api/user/notification-preferences"],
         context?.previousPreferences,
@@ -198,19 +165,17 @@ export default function Settings() {
       toast({
         title: "Erro",
         description:
-          err.message || "Erro ao atualizar preferências de notificação",
+          err?.message || "Erro ao atualizar preferências de notificação",
         variant: "destructive",
       });
     },
     onSuccess: () => {
       toast({
         title: "Preferências atualizadas",
-        description:
-          "Suas preferências de notificação foram salvas com sucesso!",
+        description: "Suas preferências foram salvas com sucesso!",
       });
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({
         queryKey: ["/api/user/notification-preferences"],
       });
@@ -223,9 +188,7 @@ export default function Settings() {
       "attendanceNotifications" | "paymentNotifications" | "eventNotifications"
     >,
     value: boolean,
-  ) => {
-    updateNotificationPreferences.mutate({ [key]: value });
-  };
+  ) => updateNotificationPreferences.mutate({ [key]: value });
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -252,72 +215,83 @@ export default function Settings() {
               Configure suas preferências de notificações
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+            {/* Presença */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5 min-w-0">
                 <Label className="text-base">Notificações de presença</Label>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Receber notificações sobre confirmação de presença
                 </div>
               </div>
-              <IosSwitch
-                checked={
-                  notificationPreferences?.attendanceNotifications ?? true
-                }
-                onChange={(checked) =>
-                  handleNotificationToggle("attendanceNotifications", checked)
-                }
-                disabled={
-                  isLoadingPreferences ||
-                  updateNotificationPreferences.isPending
-                }
-                label="Notificações de presença"
-              />
+              <div className="shrink-0">
+                <IosSwitch
+                  checked={
+                    notificationPreferences?.attendanceNotifications ?? true
+                  }
+                  onChange={(v) =>
+                    handleNotificationToggle("attendanceNotifications", v)
+                  }
+                  disabled={
+                    isLoadingPreferences ||
+                    updateNotificationPreferences.isPending
+                  }
+                  label="Notificações de presença"
+                />
+              </div>
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+            {/* Pagamento */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5 min-w-0">
                 <Label className="text-base">Notificações de pagamento</Label>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Receber notificações sobre pagamentos e vencimentos
                 </div>
               </div>
-              <IosSwitch
-                checked={notificationPreferences?.paymentNotifications ?? true}
-                onChange={(checked) =>
-                  handleNotificationToggle("paymentNotifications", checked)
-                }
-                disabled={
-                  isLoadingPreferences ||
-                  updateNotificationPreferences.isPending
-                }
-                label="Notificações de pagamento"
-              />
+              <div className="shrink-0">
+                <IosSwitch
+                  checked={
+                    notificationPreferences?.paymentNotifications ?? true
+                  }
+                  onChange={(v) =>
+                    handleNotificationToggle("paymentNotifications", v)
+                  }
+                  disabled={
+                    isLoadingPreferences ||
+                    updateNotificationPreferences.isPending
+                  }
+                  label="Notificações de pagamento"
+                />
+              </div>
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
+            {/* Eventos */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5 min-w-0">
                 <Label className="text-base">Notificações de eventos</Label>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Receber notificações sobre eventos da escola
                 </div>
               </div>
-
-              <IosSwitch
-                checked={notificationPreferences?.eventNotifications ?? true}
-                onChange={(checked) =>
-                  handleNotificationToggle("eventNotifications", checked)
-                }
-                disabled={
-                  isLoadingPreferences ||
-                  updateNotificationPreferences.isPending
-                }
-                label="Notificações de eventos"
-              />
+              <div className="shrink-0">
+                <IosSwitch
+                  checked={notificationPreferences?.eventNotifications ?? true}
+                  onChange={(v) =>
+                    handleNotificationToggle("eventNotifications", v)
+                  }
+                  disabled={
+                    isLoadingPreferences ||
+                    updateNotificationPreferences.isPending
+                  }
+                  label="Notificações de eventos"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -342,10 +316,12 @@ export default function Settings() {
                 <Input value={user?.lastName || ""} disabled />
               </div>
             </div>
+
             <div className="space-y-2">
               <Label>Email</Label>
               <Input value={user?.email || ""} disabled />
             </div>
+
             <div className="space-y-2">
               <Label>Função</Label>
               <Input
@@ -359,9 +335,13 @@ export default function Settings() {
                 disabled
               />
             </div>
+
             <div className="pt-4">
-              <Button variant="outline" disabled>
-                Editar informações pessoais
+              <Button
+                variant="outline"
+                onClick={() => setIsPasswordDialogOpen(true)}
+              >
+                Alterar senha
               </Button>
               <p className="text-sm text-gray-500 mt-2">
                 Para alterar suas informações pessoais, entre em contato com o
@@ -382,8 +362,9 @@ export default function Settings() {
               Configurações de segurança da sua conta
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <Label className="text-base">Alterar senha</Label>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -393,7 +374,6 @@ export default function Settings() {
               <Button
                 variant="outline"
                 onClick={() => setIsPasswordDialogOpen(true)}
-                data-testid="button-change-password"
               >
                 Alterar senha
               </Button>
@@ -402,15 +382,12 @@ export default function Settings() {
         </Card>
       </div>
 
-      {/* Diálogo para alterar senha */}
+      {/* Diálogo: Alterar senha */}
       <Dialog
         open={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
       >
-        <DialogContent
-          className="max-w-md"
-          data-testid="dialog-change-password"
-        >
+        <DialogContent className="max-w-md">
           <DialogHeader className="pt-2 pr-8">
             <DialogTitle>Alterar Senha</DialogTitle>
             <DialogDescription>
@@ -421,7 +398,9 @@ export default function Settings() {
 
           <Form {...passwordForm}>
             <form
-              onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
+              onSubmit={passwordForm.handleSubmit((data) =>
+                changePasswordMutation.mutate(data),
+              )}
               className="space-y-4"
             >
               <FormField
@@ -434,7 +413,6 @@ export default function Settings() {
                       <Input
                         type="password"
                         {...field}
-                        data-testid="input-current-password"
                         placeholder="Digite sua senha atual"
                       />
                     </FormControl>
@@ -453,7 +431,6 @@ export default function Settings() {
                       <Input
                         type="password"
                         {...field}
-                        data-testid="input-new-password"
                         placeholder="Digite sua nova senha (mín. 8 caracteres)"
                       />
                     </FormControl>
@@ -472,7 +449,6 @@ export default function Settings() {
                       <Input
                         type="password"
                         {...field}
-                        data-testid="input-confirm-password"
                         placeholder="Confirme sua nova senha"
                       />
                     </FormControl>
@@ -481,19 +457,17 @@ export default function Settings() {
                 )}
               />
 
-              <div className="flex justify-end space-x-2 pt-4">
+              <div className="flex justify-end gap-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsPasswordDialogOpen(false)}
-                  data-testid="button-cancel"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={changePasswordMutation.isPending}
-                  data-testid="button-save-password"
                 >
                   {changePasswordMutation.isPending
                     ? "Alterando..."

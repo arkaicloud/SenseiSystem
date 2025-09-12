@@ -257,7 +257,7 @@ const Communications: React.FC = () => {
       content: notice.content,
       level: notice.level,
       audience: notice.audience,
-      eventAt: notice.eventAt ? new Date(notice.eventAt).toISOString().split('T')[0] : ''
+      eventAt: notice.eventAt ? new Date(notice.eventAt).toISOString().slice(0, 16) : ''
     });
     
     // Set content in the editor
@@ -429,9 +429,9 @@ const Communications: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <Label>Data do Evento (Opcional)</Label>
+                <Label>Data e Hora do Evento (Opcional)</Label>
                 <Input
-                  type="date"
+                  type="datetime-local"
                   value={formData.eventAt}
                   onChange={(e) => handleInputChange('eventAt', e.target.value)}
                 />

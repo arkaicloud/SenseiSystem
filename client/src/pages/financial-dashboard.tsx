@@ -595,7 +595,7 @@ export default function FinancialDashboard() {
                 <Checkbox
                   id="showCash"
                   checked={showCashPayments}
-                  onCheckedChange={setShowCashPayments}
+                  onCheckedChange={(checked) => setShowCashPayments(checked === true)}
                 />
                 <label htmlFor="showCash" className="text-sm">
                   Mostrar cobranças recebidas em dinheiro
@@ -606,7 +606,7 @@ export default function FinancialDashboard() {
                 <Checkbox
                   id="hideAdvanced"
                   checked={hideAdvancedPayments}
-                  onCheckedChange={setHideAdvancedPayments}
+                  onCheckedChange={(checked) => setHideAdvancedPayments(checked === true)}
                 />
                 <label htmlFor="hideAdvanced" className="text-sm">
                   Ocultar cobranças antecipadas
@@ -617,7 +617,7 @@ export default function FinancialDashboard() {
                 <Checkbox
                   id="hideNegative"
                   checked={hideNegativePayments}
-                  onCheckedChange={setHideNegativePayments}
+                  onCheckedChange={(checked) => setHideNegativePayments(checked === true)}
                 />
                 <label htmlFor="hideNegative" className="text-sm">
                   Ocultar cobranças canceladas

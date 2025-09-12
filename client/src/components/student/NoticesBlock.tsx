@@ -15,6 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createPreviewText } from "@/lib/htmlUtils";
+import { RichContent } from "@/components/ui/rich-content";
 
 interface Notice {
   id: number;
@@ -189,7 +191,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-              {notice.content}
+              {createPreviewText(notice.content, 100)}
             </p>
 
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
@@ -197,7 +199,13 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
               {notice.eventAt && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR')}</span>
+                  <span>Evento: {new Date(notice.eventAt).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</span>
                 </div>
               )}
             </div>
@@ -236,16 +244,23 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
               {selectedNotice?.eventAt && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>Evento: {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR')}</span>
+                  <span>Evento: {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</span>
                 </div>
               )}
             </div>
           </DialogHeader>
           <DialogDescription asChild>
             <div className="mt-4">
-              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {selectedNotice?.content || ''}
-              </div>
+              <RichContent 
+                content={selectedNotice?.content || ''}
+                className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
+              />
 
               {selectedNotice?.eventAt && (
                 <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -258,7 +273,9 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </p>
                 </div>

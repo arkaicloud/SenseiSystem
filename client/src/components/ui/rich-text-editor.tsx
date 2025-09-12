@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { isValidURL } from '@/lib/htmlUtils';
+import { isValidURL, sanitizeHTML } from '@/lib/htmlUtils';
 import {
   Select,
   SelectContent,
@@ -155,7 +155,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         });
         
         const linkHtml = `<a href="${normalizedUrl}" target="_blank" rel="noopener noreferrer">${escapedText}</a>`;
-        executeCommand('insertHTML', linkHtml);
+        executeCommand('insertHTML', sanitizeHTML(linkHtml));
       } else {
         executeCommand('createLink', normalizedUrl);
         
@@ -213,7 +213,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   // Initialize content when component mounts
   React.useEffect(() => {
     if (editorRef.current && value !== editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = value || '';
+      editorRef.current.innerHTML = sanitizeHTML(value || '');
     }
   }, [value]);
 

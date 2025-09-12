@@ -300,6 +300,53 @@ export const richContentStyles = `
     opacity: 1;
   }
 
+  /* Custom scrollbar styles */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(107, 114, 128, 0.7);
+  }
+
+  .custom-scrollbar-sm {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .custom-scrollbar-sm::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar-sm::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar-sm::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 2px;
+  }
+
+  .custom-scrollbar-sm::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(107, 114, 128, 0.5);
+  }
+
   /* Mobile optimization */
   @media (max-width: 640px) {
     .rich-content img {
@@ -311,6 +358,10 @@ export const richContentStyles = `
     .rich-content img:hover {
       transform: scale(1.01);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
     }
   }
 

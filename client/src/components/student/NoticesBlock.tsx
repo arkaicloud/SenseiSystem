@@ -190,9 +190,11 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
               </Badge>
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3 sm:line-clamp-2">
-              {createPreviewText(notice.content, 150)}
-            </p>
+            <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 max-h-16 overflow-y-auto custom-scrollbar-sm">
+              <p className="leading-relaxed">
+                {createPreviewText(notice.content, 200)}
+              </p>
+            </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span className="truncate">{formatDate(notice.publishAt)}</span>
@@ -226,7 +228,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
 
       {/* Dialog para exibir aviso completo */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="notice-popup">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] flex flex-col" data-testid="notice-popup">
           <DialogHeader className="pt-2 pr-8">
             <div className="flex items-center gap-2 mb-2">
               {selectedNotice && getLevelIcon(selectedNotice.level)}
@@ -256,7 +258,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
             </div>
           </DialogHeader>
           <DialogDescription asChild>
-            <div className="mt-4 px-1">
+            <div className="mt-4 px-1 overflow-y-auto flex-1 max-h-[60vh] custom-scrollbar">
               <RichContent 
                 content={selectedNotice?.content || ''}
                 className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed break-words"

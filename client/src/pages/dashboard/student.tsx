@@ -76,13 +76,13 @@ export default function StudentDashboard() {
                    (studentData as any)?.beltLevel === 'brown' ? 'marrom' : 
                    (studentData as any)?.beltLevel === 'black' ? 'preta' : 'branca'}.svg`}
               alt={`Faixa ${formatBelt((studentData as any)?.beltLevel || 'white', (studentData as any)?.stripes || 0)}`}
-              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain drop-shadow-md"
+              className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
               onError={(e) => {
                 // Fallback para bolinha colorida se a imagem não carregar
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
                 const fallback = document.createElement('div');
-                fallback.className = 'w-8 h-8 rounded-full shadow-md';
+                fallback.className = 'w-6 h-6 rounded-full shadow-sm';
                 fallback.style.backgroundColor = getBeltColor((studentData as any)?.beltLevel || 'white');
                 target.parentNode?.appendChild(fallback);
               }}

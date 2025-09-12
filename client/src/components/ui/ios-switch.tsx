@@ -35,9 +35,9 @@ export default function IosSwitch({
       onClick={() => !disabled && onChange(!checked)}
       onKeyDown={handleKeyDown}
       className={[
-        "relative inline-flex h-7 w-12 cursor-pointer items-center rounded-full transition-colors",
-        checked ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600",
-        disabled ? "opacity-50 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+        "relative inline-flex h-7 w-12 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out",
+        checked ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600", 
+        disabled ? "opacity-50 cursor-not-allowed" : "focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
       ].join(" ")}
     >
       {/* trilho (para borda interna suave no modo claro/escuro) */}
@@ -49,7 +49,7 @@ export default function IosSwitch({
       <span
         aria-hidden="true"
         className={[
-          "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition",
+          "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out",
           checked ? "translate-x-6" : "translate-x-1",
         ].join(" ")}
       />

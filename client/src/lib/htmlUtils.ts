@@ -9,12 +9,12 @@
 export function extractTextFromHTML(html: string): string {
   if (!html) return '';
   
-  // Create a temporary element to parse HTML
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
+  // Use DOMParser for safe HTML parsing without script execution
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
   
   // Get text content and clean up whitespace
-  const text = tempDiv.textContent || tempDiv.innerText || '';
+  const text = doc.body.textContent || doc.body.innerText || '';
   
   // Replace multiple whitespace with single spaces and trim
   return text.replace(/\s+/g, ' ').trim();
@@ -112,9 +112,10 @@ export function isValidURL(url: string): boolean {
 export function sanitizeHTML(html: string): string {
   if (!html) return '';
   
-  // Create a temporary element to parse HTML
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
+  // Use DOMParser for safe HTML parsing without script execution
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const tempDiv = doc.body;
   
   // Process all elements recursively
   function sanitizeElement(element: Element): Element | null {

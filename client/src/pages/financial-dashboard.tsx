@@ -370,42 +370,6 @@ export default function FinancialDashboard() {
           </CardContent>
         </Card>
 
-        {/* Variação de Receita Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Variação de Receita
-            </CardTitle>
-            {/* Icon and color logic for variation */}
-            {metrics?.revenueVariation === 0 ? (
-              <BarChart3 className="h-4 w-4 text-gray-600" />
-            ) : metrics.revenueVariation > 0 ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                metrics?.revenueVariation === 0
-                  ? "text-gray-600"
-                  : metrics.revenueVariation > 0
-                    ? "text-green-600"
-                    : "text-red-600"
-              }`}
-            >
-              {metrics?.revenueVariation.toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Comparado a{" "}
-              {format(new Date().setMonth(new Date().getMonth() - 1), "MMMM", {
-                locale: ptBR,
-              })}
-            </p>
-          </CardContent>
-        </Card>
-
         {/* NOVO: Cobranças Vencidas (overdue) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

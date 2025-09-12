@@ -4349,6 +4349,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test SMTP Configuration
+  app.post("/api/admin/smtp/test", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const { testEmail } = req.body;
+
+      if (!testEmail) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Email de teste é obrigatório" 
+        });
+      }
+
+      // Test SMTP configuration
+      const isConfigValid = await emailService.testEmailConfiguration();
+      
+      if (!isConfigValid) {
+        return res.status(400).json({
+          success: false,
+          message: "Configuração SMTP inválida ou não configurada"
+        });
+      }
+
+      // Send test email
+      await emailService.sendWelcomeEmail(
+        testEmail,
+        `${requestUser.firstName} ${requestUser.lastName}`,
+        "Teste de Configuração"
+      );
+
+      // Log activity
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} testou configuração SMTP para ${testEmail}`,
+        entityType: 'smtp-test',
+        entityId: requestUser.id
+      });
+
+      res.json({
+        success: true,
+        message: "Email de teste enviado com sucesso"
+      });
+    } catch (error) {
+      console.error("Error testing SMTP:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erro ao testar configuração SMTP",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   // ===== Dashboard Customization Routes =====
   app.get("/api/dashboard-customization", isAuthenticated, async (req, res) => {
     try {

@@ -1853,6 +1853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName,
         lastName: user.lastName,
         birthDate: user.birthDate,
+        enrollmentDate: student.enrollmentDate,
         cpf: user.cpf,
         rg: user.rg,
         sex: user.sex,

@@ -1916,6 +1916,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/students/:id", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const { id } = req.params;
+      console.log(`🔧 PUT /api/students/${id} - Request received`);
+      console.log('📦 Request payload:', JSON.stringify(req.body, null, 2));
+      
       const student = await storage.getStudent(Number(id));
 
       if (!student) {
@@ -2014,8 +2017,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only update student data if there are fields to update
       let updatedStudent = student;
+      console.log('🔄 studentUpdateData:', JSON.stringify(studentUpdateData, null, 2));
       if (Object.keys(studentUpdateData).length > 0) {
+        console.log('💾 Calling storage.updateStudent...');
         updatedStudent = await storage.updateStudent(student.id, studentUpdateData);
+        console.log('✅ Storage update result:', JSON.stringify(updatedStudent, null, 2));
+      } else {
+        console.log('⚠️ No student data to update');
       }
       const user = await storage.getUser(student.userId);
 

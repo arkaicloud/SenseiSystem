@@ -787,7 +787,7 @@ export default function StudentEditDialog({
                           <Select
                             disabled={readOnly}
                             value={field.value?.toString() || "0"}
-                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            onValueChange={(value) => field.onChange(parseInt(value, 10) || 0)}
                           >
                             <FormControl>
                               <SelectTrigger>

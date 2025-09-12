@@ -71,7 +71,9 @@ export class AsaasPaymentsService {
     
     // Auto-detect environment based on API key pattern if useSandbox not specified
     const isTestKey = this.apiKey.includes('_test_') || this.apiKey.startsWith('$aact_');
-    const shouldUseSandbox = useSandbox !== undefined ? useSandbox : isTestKey;
+    
+    // If apiKey is provided (from school config), default to production unless explicitly sandbox
+    const shouldUseSandbox = apiKey ? (useSandbox === true) : (useSandbox !== undefined ? useSandbox : isTestKey);
     
     this.baseUrl = shouldUseSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3';
     this.isConfigured = !!this.apiKey;
@@ -94,8 +96,7 @@ export class AsaasPaymentsService {
 
   async getPayments(limit: number = 100, offset: number = 0): Promise<AsaasPaymentsResponse> {
     if (!this.isConfigured) {
-      console.log('⚠️ ASAAS not configured, returning mock data');
-      return this.getMockPayments();
+      throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');
     }
 
     try {
@@ -114,21 +115,13 @@ export class AsaasPaymentsService {
       return response.data;
     } catch (error: any) {
       console.error('❌ Error fetching ASAAS payments:', error.response?.data || error.message);
-      console.log('⚠️ Falling back to mock data');
-      return this.getMockPayments();
+      throw new Error(`Erro ao buscar pagamentos do ASAAS: ${error.response?.data?.errors?.[0]?.description || error.message}`);
     }
   }
 
   async getCustomer(customerId: string): Promise<AsaasCustomer> {
     if (!this.isConfigured) {
-      console.log('⚠️ ASAAS not configured, returning mock customer');
-      return {
-        id: customerId,
-        name: 'Cliente Mock',
-        email: 'mock@example.com',
-        phone: '(00) 00000-0000',
-        cpfCnpj: '000.000.000-00'
-      };
+      throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');
     }
 
     try {
@@ -139,14 +132,7 @@ export class AsaasPaymentsService {
       return response.data;
     } catch (error: any) {
       console.error(`❌ Error fetching customer ${customerId}:`, error.response?.data || error.message);
-      // Return mock instead of throwing
-      return {
-        id: customerId,
-        name: 'Cliente Mock',
-        email: 'mock@example.com',
-        phone: '(00) 00000-0000',
-        cpfCnpj: '000.000.000-00'
-      };
+      throw new Error(`Erro ao buscar cliente ${customerId}: ${error.response?.data?.errors?.[0]?.description || error.message}`);
     }
   }
 

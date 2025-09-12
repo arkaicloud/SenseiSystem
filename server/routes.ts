@@ -6316,80 +6316,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('❌ Error fetching financial data:', error);
 
-      // Return mock data in case of API failure for development
-      const mockData = {
-        payments: [
-          {
-            id: 'mock_1',
-            customer: 'cus_mock_1',
-            customerName: 'João da Silva',
-            customerEmail: 'joao@email.com',
-            value: 199.90,
-            status: 'RECEIVED',
-            dueDate: '2025-08-01',
-            description: 'Mensalidade - Agosto',
-            invoiceUrl: null,
-            paymentLink: null,
-            dateCreated: '2025-08-01',
-            paymentDate: '2025-08-01',
-            clientPaymentDate: null,
-            externalReference: 'COBRANCA_ALUNO_1',
-          },
-          {
-            id: 'mock_2',
-            customer: 'cus_mock_2',
-            customerName: 'Maria Santos',
-            customerEmail: 'maria@email.com',
-            value: 199.90,
-            status: 'PENDING',
-            dueDate: '2025-08-15',
-            description: 'Mensalidade - Agosto',
-            invoiceUrl: 'https://asaas.com/invoice/mock',
-            paymentLink: 'https://asaas.com/payment/mock',
-            dateCreated: '2025-08-01',
-            paymentDate: null,
-            clientPaymentDate: null,
-            externalReference: 'COBRANCA_ALUNO_2',
-          },
-          {
-            id: 'mock_3',
-            customer: 'cus_mock_3',
-            customerName: 'Carlos Oliveira',
-            customerEmail: 'carlos@email.com',
-            value: 199.90,
-            status: 'OVERDUE',
-            dueDate: '2025-07-15',
-            description: 'Mensalidade - Julho',
-            invoiceUrl: 'https://asaas.com/invoice/mock3',
-            paymentLink: 'https://asaas.com/payment/mock3',
-            dateCreated: '2025-07-01',
-            paymentDate: null,
-            clientPaymentDate: null,
-            externalReference: 'COBRANCA_ALUNO_3',
-          }
-        ],
-        metrics: {
-          receivedThisMonth: 199.90,
-          pendingValue: 199.90,
-          overdueCount: 1,
-          defaultRate: 33.33,
-          totalPaymentsThisMonth: 3,
-          nextDueDate: new Date('2025-08-15'),
-          totalReceived: 199.90,
-          totalPending: 199.90,
-          totalOverdue: 199.90,
-        },
-        totalCount: 3
-      };
-
-      // Add new fields to mock data
-      mockData.metrics.averageTicket = mockData.metrics.receivedThisMonth / Math.max(1, mockData.metrics.totalPaymentsThisMonth);
-      mockData.metrics.revenueVariation = 12.5; // Mock 12.5% increase
-      mockData.metrics.previousMonthRevenue = mockData.metrics.receivedThisMonth * 0.89; // Mock previous month
-      mockData.metrics.payingStudentsCount = Math.floor(mockData.metrics.totalPaymentsThisMonth * 0.8);
-
-      console.log('⚠️ Using mock financial data due to API error');
-      res.json(mockData);
+      res.status(500).json({ 
+        error: "Erro ao buscar dados financeiros do ASAAS", 
+        message: error.message || "Verifique a configuração da chave ASAAS"
+      });
     }
   });
 

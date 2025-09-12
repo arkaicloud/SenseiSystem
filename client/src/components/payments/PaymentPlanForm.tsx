@@ -80,7 +80,7 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('plan_name')}</FormLabel>
+              <FormLabel>Nome do Plano</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -94,7 +94,7 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
           name="amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('plan_amount')}</FormLabel>
+              <FormLabel>Valor do Plano</FormLabel>
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
@@ -120,23 +120,23 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
           name="frequency"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('plan_frequency')}</FormLabel>
+              <FormLabel>Frequência do Plano</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('select_frequency')} />
+                    <SelectValue placeholder="Selecione a frequência" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="weekly">{t('weekly')}</SelectItem>
-                  <SelectItem value="biweekly">{t('biweekly')}</SelectItem>
-                  <SelectItem value="monthly">{t('monthly')}</SelectItem>
-                  <SelectItem value="quarterly">{t('quarterly')}</SelectItem>
-                  <SelectItem value="semiannual">{t('semiannual')}</SelectItem>
-                  <SelectItem value="annual">{t('annual')}</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="biweekly">Quinzenal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="quarterly">Trimestral</SelectItem>
+                  <SelectItem value="semiannual">Semestral</SelectItem>
+                  <SelectItem value="annual">Anual</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -149,7 +149,7 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('plan_description')}</FormLabel>
+              <FormLabel>Descrição do Plano</FormLabel>
               <FormControl>
                 <Textarea {...field} />
               </FormControl>
@@ -162,13 +162,13 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
           <Button type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
-                <span className="mr-2">{t('saving')}</span>
+                <span className="mr-2">Salvando...</span>
                 <span className="material-icons animate-spin text-sm">refresh</span>
               </>
             ) : defaultValues?.name ? (
-              t('update_plan')
+              "Atualizar Plano"
             ) : (
-              t('create_plan')
+              "Criar Plano"
             )}
           </Button>
         </div>

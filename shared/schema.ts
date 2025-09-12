@@ -166,6 +166,15 @@ export const schoolConfig = pgTable("school_config", {
   primaryColor: text("primary_color").notNull().default("#3B82F6"), // Cor primária da escola
   secondaryColor: text("secondary_color").notNull().default("#D97659"), // Cor secundária da escola
   attendanceMaxDaysAhead: integer("attendance_max_days_ahead").notNull().default(7), // Máximo de dias para visualizar/confirmar aulas
+  // SMTP Email Configuration
+  smtpEnabled: boolean("smtp_enabled").default(false), // Se email SMTP está habilitado
+  smtpHost: text("smtp_host"), // Host do servidor SMTP (ex: smtp.gmail.com)
+  smtpPort: integer("smtp_port").default(587), // Porta SMTP (587 para TLS, 465 para SSL, 25 para não criptografado)
+  smtpSecure: boolean("smtp_secure").default(false), // Se usa SSL (true para porta 465)
+  smtpUser: text("smtp_user"), // Usuário/Email SMTP
+  smtpPassword: text("smtp_password"), // Senha SMTP (pode ser criptografada)
+  smtpFromEmail: text("smtp_from_email"), // Email remetente padrão
+  smtpFromName: text("smtp_from_name"), // Nome do remetente padrão
   // ASAAS Integration fields
   asaasCustomerId: text("asaas_customer_id"), // Customer ID no ASAAS
   asaasApiKey: text("asaas_api_key"), // API Key ASAAS (pode ser criptografada)

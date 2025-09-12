@@ -255,7 +255,7 @@ const Students: React.FC = () => {
             <p className="text-gray-600">Gerencie os alunos da escola</p>
           </div>
           <Button 
-            className="mt-4 md:mt-0 bg-secondary hover:bg-secondary-dark text-white font-medium"
+            className="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-medium"
             onClick={() => setLocation('/onboarding')}
           >
             + Novo Aluno

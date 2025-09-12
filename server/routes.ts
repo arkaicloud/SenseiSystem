@@ -7019,7 +7019,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Criar notificações para todos os alunos elegíveis
       if (audience === 'ALL' || audience === 'STUDENTS') {
         const allStudents = await db
-          .select({ id: students.id })
+          .select({ 
+            id: students.id,
+            userId: users.id,
+            userEmail: users.email,
+            userFirstName: users.firstName,
+            userLastName: users.lastName
+          })
           .from(students)
           .innerJoin(users, eq(students.userId, users.id))
           .where(eq(users.active, true));
@@ -7035,6 +7041,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 noticeId: notice.id
               }))
             );
+
+          // Send emails to all eligible students
+          console.log(`📧 Sending notice emails to ${allStudents.length} students`);
+          for (const student of allStudents) {
+            try {
+              await emailService.sendSchoolNoticeEmail(
+                student.userEmail,
+                `${student.userFirstName} ${student.userLastName}`,
+                title,
+                content
+              );
+              console.log(`✅ Notice email sent to: ${student.userEmail}`);
+            } catch (emailError) {
+              console.error(`❌ Error sending notice email to ${student.userEmail}:`, emailError);
+              // Don't fail the notice creation if email sending fails
+            }
+          }
         }
       }
 

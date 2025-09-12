@@ -230,6 +230,10 @@ CREATE TRIGGER update_dashboard_customizations_updated_at
 -- DADOS INICIAIS (INSERTS)
 -- ==================================================
 
+-- SECURITY NOTE: Initial user accounts are created without passwords
+-- for security reasons. Passwords must be set through the application's
+-- secure initialization process or first-login password setup.
+
 -- Inserir configuração inicial da escola
 INSERT INTO school_config (
     school_name, 
@@ -272,7 +276,7 @@ INSERT INTO users (
     'Admin',
     'arkaiadm',
     'admin@senseisystem.com.br',
-    '$scrypt$16384$8$1$yK8zRZAJ7eo2jZ2Rj+iSf6WgUJGgVQn2HvT9wD5lLgQ=$H+8Z1MvV2cN9D3gR+7oEkL2hV6X+3wZ4Y9cK+2lT8pQ+', -- senha: password
+    NULL, -- Password must be set through app initialization
     'admin',
     '(11) 99999-9999',
     'São Paulo',
@@ -297,7 +301,7 @@ INSERT INTO users (
     'Silva',
     'prof.joao',
     'joao.professor@senseisystem.com.br',
-    '$scrypt$16384$8$1$yK8zRZAJ7eo2jZ2Rj+iSf6WgUJGgVQn2HvT9wD5lLgQ=$H+8Z1MvV2cN9D3gR+7oEkL2hV6X+3wZ4Y9cK+2lT8pQ+', -- senha: password
+    NULL, -- Password must be set through app initialization
     'instructor',
     '(11) 98888-8888',
     'São Paulo',
@@ -349,10 +353,10 @@ INSERT INTO users (
     state,
     active
 ) VALUES 
-('Maria', 'Santos', 'maria.santos', 'maria@email.com', '$scrypt$16384$8$1$yK8zRZAJ7eo2jZ2Rj+iSf6WgUJGgVQn2HvT9wD5lLgQ=$H+8Z1MvV2cN9D3gR+7oEkL2hV6X+3wZ4Y9cK+2lT8pQ+', 'student', '(11) 97777-7777', '1995-05-15', 'São Paulo', 'SP', true),
-('Carlos', 'Oliveira', 'carlos.oliveira', 'carlos@email.com', '$scrypt$16384$8$1$yK8zRZAJ7eo2jZ2Rj+iSf6WgUJGgVQn2HvT9wD5lLgQ=$H+8Z1MvV2cN9D3gR+7oEkL2hV6X+3wZ4Y9cK+2lT8pQ+', 'student', '(11) 96666-6666', '1988-12-03', 'São Paulo', 'SP', true),
-('Ana', 'Costa', 'ana.costa', 'ana@email.com', '$scrypt$16384$8$1$yK8zRZAJ7eo2jZ2Rj+iSf6WgUJGgVQn2HvT9wD5lLgQ=$H+8Z1MvV2cN9D3gR+7oEkL2hV6X+3wZ4Y9cK+2lT8pQ+', 'student', '(11) 95555-5555', '1992-08-22', 'São Paulo', 'SP', true),
-('Pedro', 'Lima', 'pedro.lima', 'pedro@email.com', '$scrypt$16384$8$1$yK8zRZAJ7eo2jZ2Rj+iSf6WgUJGgVQn2HvT9wD5lLgQ=$H+8Z1MvV2cN9D3gR+7oEkL2hV6X+3wZ4Y9cK+2lT8pQ+', 'student', '(11) 94444-4444', '1985-03-10', 'São Paulo', 'SP', true)
+('Maria', 'Santos', 'maria.santos', 'maria@email.com', NULL, 'student', '(11) 97777-7777', '1995-05-15', 'São Paulo', 'SP', true),
+('Carlos', 'Oliveira', 'carlos.oliveira', 'carlos@email.com', NULL, 'student', '(11) 96666-6666', '1988-12-03', 'São Paulo', 'SP', true),
+('Ana', 'Costa', 'ana.costa', 'ana@email.com', NULL, 'student', '(11) 95555-5555', '1992-08-22', 'São Paulo', 'SP', true),
+('Pedro', 'Lima', 'pedro.lima', 'pedro@email.com', NULL, 'student', '(11) 94444-4444', '1985-03-10', 'São Paulo', 'SP', true)
 ON CONFLICT (username) DO NOTHING;
 
 -- Inserir registros de estudantes (vinculados aos usuários acima)

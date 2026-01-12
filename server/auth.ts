@@ -406,6 +406,30 @@ export async function initializeDefaultAdmin() {
       console.log("Admin user created: admin (adm@senseisystem.com.br)");
     }
 
+    // Create HUIOS BJJ admin user
+    const existingHuiosAdmin = await storage.getUserByEmail("huiosbjj@senseisystem.com.br");
+    const existingHuiosUsername = await storage.getUserByUsername("huiosbjj");
+    
+    if (!existingHuiosAdmin && !existingHuiosUsername) {
+      const hashedPassword = await hashPassword("Huios2026@BJJ");
+      
+      await storage.createUser({
+        firstName: "HUIOS",
+        lastName: "BJJ Admin",
+        username: "huiosbjj",
+        email: "huiosbjj@senseisystem.com.br",
+        password: hashedPassword,
+        role: "admin",
+        active: true,
+        status: "active",
+        phone: null,
+        emergencyContact: null,
+        joinDate: new Date(),
+      });
+      
+      console.log("HUIOS BJJ admin user created: huiosbjj (huiosbjj@senseisystem.com.br)");
+    }
+
     // Create student user
     const existingStudent = await storage.getUserByEmail("aluno@senseisystem.com.br");
     const existingStudentUsername = await storage.getUserByUsername("aluno");

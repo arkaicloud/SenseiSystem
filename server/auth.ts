@@ -558,7 +558,59 @@ async function initializeDefaultClasses() {
       
       console.log(`Created ${classSchedule.length} default classes for HUIOS BJJ`);
     }
+
+    // Create default belt levels
+    await initializeDefaultBeltLevels();
+
   } catch (err) {
     console.error("Error creating default classes:", err);
+  }
+}
+
+// Function to create default belt levels (IBJJF system)
+async function initializeDefaultBeltLevels() {
+  try {
+    const existingBelts = await storage.getBeltLevels();
+    
+    if (existingBelts.length === 0) {
+      console.log("Creating default IBJJF belt levels...");
+      
+      const beltLevels = [
+        // FAIXAS ADULTAS
+        { name: 'Faixa Branca', levelKey: 'white', colorCode: '#FFFFFF', category: 'adult', order: 1 },
+        { name: 'Faixa Azul', levelKey: 'blue', colorCode: '#0066CC', category: 'adult', order: 2 },
+        { name: 'Faixa Roxa', levelKey: 'purple', colorCode: '#800080', category: 'adult', order: 3 },
+        { name: 'Faixa Marrom', levelKey: 'brown', colorCode: '#8B4513', category: 'adult', order: 4 },
+        { name: 'Faixa Preta', levelKey: 'black', colorCode: '#000000', category: 'adult', order: 5 },
+        { name: 'Faixa Coral (Preta e Vermelha)', levelKey: 'coral', colorCode: '#FF6B6B', category: 'adult', order: 6 },
+        { name: 'Faixa Vermelha e Branca', levelKey: 'red_white', colorCode: '#FF0000', category: 'adult', order: 7 },
+        { name: 'Faixa Vermelha', levelKey: 'red', colorCode: '#CC0000', category: 'adult', order: 8 },
+        
+        // FAIXAS INFANTIS
+        { name: 'Faixa Cinza e Branca', levelKey: 'grey_white', colorCode: '#C0C0C0', category: 'child', order: 10 },
+        { name: 'Faixa Cinza', levelKey: 'grey', colorCode: '#808080', category: 'child', order: 11 },
+        { name: 'Faixa Cinza e Preta', levelKey: 'grey_black', colorCode: '#606060', category: 'child', order: 12 },
+        { name: 'Faixa Amarela e Branca', levelKey: 'yellow_white', colorCode: '#FFFF99', category: 'child', order: 13 },
+        { name: 'Faixa Amarela', levelKey: 'yellow', colorCode: '#FFD700', category: 'child', order: 14 },
+        { name: 'Faixa Amarela e Preta', levelKey: 'yellow_black', colorCode: '#DAA520', category: 'child', order: 15 },
+        { name: 'Faixa Laranja e Branca', levelKey: 'orange_white', colorCode: '#FFB366', category: 'child', order: 16 },
+        { name: 'Faixa Laranja', levelKey: 'orange', colorCode: '#FF8C00', category: 'child', order: 17 },
+        { name: 'Faixa Laranja e Preta', levelKey: 'orange_black', colorCode: '#CC7000', category: 'child', order: 18 },
+        { name: 'Faixa Verde e Branca', levelKey: 'green_white', colorCode: '#90EE90', category: 'child', order: 19 },
+        { name: 'Faixa Verde', levelKey: 'green', colorCode: '#228B22', category: 'child', order: 20 },
+        { name: 'Faixa Verde e Preta', levelKey: 'green_black', colorCode: '#006400', category: 'child', order: 21 },
+      ];
+      
+      for (const belt of beltLevels) {
+        await storage.createBeltLevel({
+          ...belt,
+          active: true,
+        });
+      }
+      
+      console.log(`Created ${beltLevels.length} default belt levels`);
+    }
+  } catch (err) {
+    console.error("Error creating default belt levels:", err);
   }
 }

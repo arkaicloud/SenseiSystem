@@ -492,7 +492,73 @@ export async function initializeDefaultAdmin() {
       
       console.log("Student user created: aluno (aluno@senseisystem.com.br)");
     }
+
+    // Create default classes (HUIOS BJJ schedule)
+    await initializeDefaultClasses();
+
   } catch (err) {
     console.error("Error creating default users:", err);
+  }
+}
+
+// Function to create default HUIOS BJJ classes
+async function initializeDefaultClasses() {
+  try {
+    const existingClasses = await storage.getClasses();
+    
+    if (existingClasses.length === 0) {
+      console.log("Creating default HUIOS BJJ class schedule...");
+      
+      const classSchedule = [
+        // SEGUNDA-FEIRA (dayOfWeek = 1)
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 1, startTime: '17:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 1, startTime: '18:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Judô Misto', description: 'Aula de Judô voltada para Jiu-Jitsu', dayOfWeek: 1, startTime: '19:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Feminino - GI', description: 'Aula exclusiva para mulheres com kimono', dayOfWeek: 1, startTime: '20:00', duration: 60, type: 'feminino' as const, maxStudents: 20 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 1, startTime: '21:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        
+        // TERÇA-FEIRA (dayOfWeek = 2)
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 2, startTime: '07:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 2, startTime: '17:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Kids 1 - GI/NOGI', description: 'Aula para crianças de 4 a 7 anos (NOGI na primeira semana do mês)', dayOfWeek: 2, startTime: '19:00', duration: 60, type: 'infantil' as const, maxStudents: 20 },
+        { name: 'Kids 2 - GI/NOGI', description: 'Aula para crianças de 8 a 12 anos (NOGI na primeira semana do mês)', dayOfWeek: 2, startTime: '20:00', duration: 60, type: 'infantil' as const, maxStudents: 20 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 2, startTime: '21:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        
+        // QUARTA-FEIRA (dayOfWeek = 3)
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 3, startTime: '17:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Adulto Misto - NOGI', description: 'Aula de Jiu-Jitsu sem kimono para adultos (acima de 13 anos)', dayOfWeek: 3, startTime: '18:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Kids Projeto ICM - NOGI', description: 'Projeto ICM para crianças de 4 a 12 anos - Sem kimono (aberto para alunos da escola)', dayOfWeek: 3, startTime: '19:00', duration: 60, type: 'infantil' as const, maxStudents: 25 },
+        { name: 'Feminino - GI', description: 'Aula exclusiva para mulheres com kimono', dayOfWeek: 3, startTime: '20:00', duration: 60, type: 'feminino' as const, maxStudents: 20 },
+        { name: 'Adulto Misto Projeto ICM - NOGI', description: 'Projeto ICM para adultos - Sem kimono', dayOfWeek: 3, startTime: '21:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        
+        // QUINTA-FEIRA (dayOfWeek = 4)
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 4, startTime: '07:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 4, startTime: '17:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 4, startTime: '18:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        
+        // SEXTA-FEIRA (dayOfWeek = 5)
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 5, startTime: '07:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Open Mat', description: 'Treino livre - O aluno escolhe o horário e pode convidar amigo para treino (15:30 às 18:20)', dayOfWeek: 5, startTime: '15:30', duration: 170, type: 'misto' as const, maxStudents: 50 },
+        { name: 'Kids 1 - GI/NOGI', description: 'Aula para crianças de 4 a 7 anos (NOGI na primeira semana do mês)', dayOfWeek: 5, startTime: '19:00', duration: 60, type: 'infantil' as const, maxStudents: 20 },
+        { name: 'Kids 2 - GI/NOGI', description: 'Aula para crianças de 8 a 12 anos (NOGI na primeira semana do mês)', dayOfWeek: 5, startTime: '20:00', duration: 60, type: 'infantil' as const, maxStudents: 20 },
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos)', dayOfWeek: 5, startTime: '21:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        
+        // SÁBADO (dayOfWeek = 6)
+        { name: 'Adulto Misto - GI', description: 'Aula de Jiu-Jitsu com kimono para adultos (acima de 13 anos) - Confirmar no grupo', dayOfWeek: 6, startTime: '07:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+        { name: 'Feminino - GI', description: 'Aula exclusiva para mulheres com kimono - Confirmar no grupo', dayOfWeek: 6, startTime: '09:00', duration: 60, type: 'feminino' as const, maxStudents: 20 },
+        { name: 'Adulto Misto - GI (Competição)', description: 'Treino voltado para competição - Confirmar no grupo', dayOfWeek: 6, startTime: '10:00', duration: 60, type: 'misto' as const, maxStudents: 30 },
+      ];
+      
+      for (const classData of classSchedule) {
+        await storage.createClass({
+          ...classData,
+          isActive: true,
+        });
+      }
+      
+      console.log(`Created ${classSchedule.length} default classes for HUIOS BJJ`);
+    }
+  } catch (err) {
+    console.error("Error creating default classes:", err);
   }
 }

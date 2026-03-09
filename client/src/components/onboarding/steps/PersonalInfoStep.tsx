@@ -420,7 +420,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telefone/Celular *</FormLabel>
+                <FormLabel>WhatsApp *</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="(11) 99999-9999"

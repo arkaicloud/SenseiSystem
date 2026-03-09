@@ -241,29 +241,28 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col h-full">
 
-          {/* Top: school name / logo */}
-          <div className="px-7 pt-12 pb-2 flex-shrink-0">
+          {/* Top zone — school name + headline (upper ~45% of screen) */}
+          <div className="flex-shrink-0 px-7 pt-12">
+            {/* School name / logo */}
             {logoUrl && logoUrl !== 'default' ? (
-              <img src={logoUrl} alt={schoolName} className="h-11 w-auto object-contain drop-shadow-lg"
+              <img src={logoUrl} alt={schoolName} className="h-10 w-auto object-contain drop-shadow-lg mb-4"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             ) : (
-              <p className="text-2xl font-black text-white tracking-tight drop-shadow-lg">{schoolName}</p>
+              <p className="text-xl font-black text-white tracking-tight drop-shadow-lg mb-4">{schoolName}</p>
             )}
-          </div>
 
-          {/* Headline — right below school name */}
-          <div className="px-7 pt-3 pb-4 flex-shrink-0">
-            <h1 className="text-[1.9rem] leading-[1.15] font-black text-white drop-shadow-lg mb-1">
+            {/* Headline */}
+            <h1 className="text-[1.85rem] leading-[1.15] font-black text-white drop-shadow-lg mb-1">
               Sua jornada<br />começa aqui.
             </h1>
             <p className="text-white/65 text-sm font-medium">{welcomeMsg}</p>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1" />
+          {/* Flexible spacer — lets the hero image breathe */}
+          <div className="flex-1 min-h-[60px] max-h-[160px]" />
 
-          {/* Bottom: form + social + footer */}
-          <div className="flex-shrink-0 px-7 pb-8">
+          {/* Bottom zone — form + social + footer */}
+          <div className="flex-shrink-0 px-6 pb-8">
             {FormContent}
 
             {/* Social media */}

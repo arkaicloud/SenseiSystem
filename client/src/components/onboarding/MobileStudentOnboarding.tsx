@@ -24,6 +24,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   const [formData, setFormData] = useState<Partial<CompleteFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { register, error } = useAuth();
 
   const totalSteps = 6;
@@ -63,19 +64,27 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
 
   const handleFinalSubmit = async (data: CompleteFormData) => {
     setIsSubmitting(true);
+    setSubmitError(null);
     
     try {
+      const email = (data as any).email || "";
+      if (!email) {
+        throw new Error("Email não encontrado. Por favor, volte e preencha novamente.");
+      }
       // Generate username from email
-      const username = data.email.split('@')[0].toLowerCase();
+      const username = email.split('@')[0].toLowerCase();
       const password = "123456"; // Default password - user can change later
       
       // Create clean data object - extract only primitive values to avoid circular references
       const cleanData = {
         firstName: data.firstName || "",
         lastName: data.lastName || "",
+        email: (data as any).email || "",
+        password: (data as any).password || "123456",
         username: username,
         role: "student" as const,
         phone: data.phone || "",
+        sex: (data as any).sex || null,
         emergencyContact: data.emergencyContact || "",
         emergencyPhone: (data as any).emergencyPhone || "",
         birthDate: data.birthDate || null,
@@ -97,7 +106,15 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         financialResponsibleCpf: (data as any).financialResponsibleCpf || "",
         financialResponsibleRelationship: (data as any).financialResponsibleRelationship || "self",
         paymentPlanId: (data as any).paymentPlanId || null,
-        dueDate: (data as any).dueDate || null
+        dueDate: (data as any).dueDate || null,
+        hasHeartProblem: (data as any).hasHeartProblem || "no",
+        hasChestPain: (data as any).hasChestPain || "no",
+        hasBreathingProblem: (data as any).hasBreathingProblem || "no",
+        hasBloodPressureProblem: (data as any).hasBloodPressureProblem || "no",
+        hasBoneProblem: (data as any).hasBoneProblem || "no",
+        hasOtherHealthProblem: (data as any).hasOtherHealthProblem || "no",
+        takeMedication: (data as any).takeMedication || "no",
+        doctorRecommendation: (data as any).doctorRecommendation || "no",
       };
       
       // Use the register-student endpoint directly instead of auth register
@@ -116,8 +133,9 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       
       setSuccess(true);
       setTimeout(() => onSuccess(), 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Registration failed:", err);
+      setSubmitError(err?.message || "Erro ao finalizar cadastro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -178,9 +196,9 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       {/* Content */}
       <div className="flex-1 px-4 py-4 overflow-y-auto mobile-form-container">
         <div className="max-w-md mx-auto pb-6">
-          {error && (
+          {(error || submitError) && (
             <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{submitError || error}</AlertDescription>
             </Alert>
           )}
 
@@ -227,12 +245,20 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
               )}
 
               {currentStep === 6 && (
-                <PhysicalAssessmentStep
-                  onNext={handlePhysicalAssessment}
-                  onBack={goBack}
-                  defaultValues={formData as PhysicalAssessmentType}
-                  birthDate={formData.birthDate}
-                />
+                <>
+                  <PhysicalAssessmentStep
+                    onNext={handlePhysicalAssessment}
+                    onBack={goBack}
+                    defaultValues={formData as PhysicalAssessmentType}
+                    birthDate={formData.birthDate}
+                  />
+                  {isSubmitting && (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mr-3" />
+                      <span className="text-sm text-gray-600">Finalizando cadastro...</span>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

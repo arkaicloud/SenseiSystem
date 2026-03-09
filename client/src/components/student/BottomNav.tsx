@@ -8,7 +8,7 @@ export default function BottomNav() {
     { 
       to: "/dashboard", 
       icon: Home, 
-      label: "Início",
+      label: "Inicio",
       isActive: location === "/dashboard" || location === "/"
     },
     { 
@@ -20,7 +20,7 @@ export default function BottomNav() {
     { 
       to: "/student/attendance-stats", 
       icon: BarChart3, 
-      label: "Presenças",
+      label: "Presencas",
       isActive: location === "/student/attendance-stats"
     },
     { 
@@ -39,30 +39,47 @@ export default function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 md:hidden bg-background/95 border-t backdrop-blur shadow-[0_-6px_16px_rgba(0,0,0,0.08)] z-50"
+      className="fixed bottom-0 left-0 right-0 md:hidden z-50"
       style={{ 
-        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
-        paddingTop: "8px"
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)",
+        paddingTop: "10px",
+        backgroundColor: "#FFFFFF",
+        borderTop: "1px solid #E8EAF0",
       }}
       aria-label="Student bottom navigation"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-3">
+      <ul className="mx-auto grid max-w-xl grid-cols-5 gap-0 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <li key={item.to}>
               <Link 
                 href={item.to} 
-                className={`flex flex-col items-center justify-center min-h-[44px] text-xs gap-1 transition-colors rounded-lg p-2 ${
-                  item.isActive 
-                    ? "text-foreground font-medium" 
-                    : "text-foreground/80 hover:text-foreground"
-                }`}
+                className="flex flex-col items-center justify-center py-1 transition-colors"
                 aria-current={item.isActive ? "page" : undefined}
-                data-testid={`link-nav-${item.label.toLowerCase()}`}
               >
-                <Icon size={22} strokeWidth={item.isActive ? 2.5 : 2} />
-                <span className="text-xs leading-tight">{item.label}</span>
+                <div 
+                  className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
+                  style={{
+                    backgroundColor: item.isActive ? "#EEF1FF" : "transparent",
+                  }}
+                >
+                  <Icon 
+                    size={22} 
+                    strokeWidth={item.isActive ? 2.5 : 1.8}
+                    style={{ color: item.isActive ? "#2B54FF" : "#B0B0B0" }}
+                  />
+                </div>
+                <span 
+                  className="text-[11px] mt-0.5 font-inter"
+                  style={{ 
+                    color: item.isActive ? "#2B54FF" : "#B0B0B0",
+                    fontWeight: item.isActive ? 600 : 500,
+                    letterSpacing: "0.3px"
+                  }}
+                >
+                  {item.label}
+                </span>
               </Link>
             </li>
           );

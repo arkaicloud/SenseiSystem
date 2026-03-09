@@ -147,13 +147,13 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
           <div key={dayData.date} className="space-y-3">
             <div className="flex items-center gap-2">
               <h3 
-                className={`font-semibold text-lg ${isToday(dayData.date) ? 'text-blue-600' : 'text-foreground'}`}
+                className={`font-semibold text-lg font-inter ${isToday(dayData.date) ? 'text-[#2B54FF]' : 'text-foreground'}`}
                 data-testid={`text-day-header-${dayData.date}`}
               >
                 {formatDayHeader(dayData.date, dayData.dayName)}
               </h3>
               {isToday(dayData.date) && (
-                <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">
+                <Badge variant="default" className="text-xs bg-[#EEF1FF] text-[#2B54FF]">
                   Hoje
                 </Badge>
               )}
@@ -222,8 +222,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
                             size="sm"
                             onClick={() => handleConfirm(classSession, dayData.date)}
                             disabled={isMutating}
-                            className="w-full sm:w-auto text-white font-medium"
-                            style={{ backgroundColor: primaryColor }}
+                            className="w-full sm:w-auto text-white font-medium bg-[#2B54FF] hover:bg-[#1A3FCC] rounded-2xl font-inter"
                             data-testid={`button-confirm-${dayData.date}-${classSession.id}`}
                           >
                             {isMutating ? (

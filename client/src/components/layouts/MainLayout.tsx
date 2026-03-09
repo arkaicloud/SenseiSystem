@@ -230,11 +230,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         )}
         
-        {/* Mobile header */}
-        {isMobile && user && (
+        {/* Mobile header - VYTA style for students, standard for admins */}
+        {isMobile && user && user?.role === 'student' && (
+          <div className="md:hidden" />
+        )}
+        {isMobile && user && user?.role !== 'student' && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
-            {/* Menu button - hide in PWA and for students */}
-            {!isPWA && user?.role !== 'student' && (
+            {!isPWA && (
               <button
                 id="menu-toggle"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-gray-100 dark:active:bg-gray-700 transition-colors duration-200"
@@ -249,7 +251,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </svg>
               </button>
             )}
-            <div className={`flex items-center flex-1 ${isPWA || user?.role === 'student' ? 'justify-center' : ''}`}>
+            <div className={`flex items-center flex-1 ${isPWA ? 'justify-center' : ''}`}>
               <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
@@ -259,13 +261,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Notification Bell */}
               {user?.role === 'admin' && <NotificationBell />}
-              {user?.role === 'student' && studentProfile && typeof studentProfile === 'object' && studentProfile !== null && 'id' in studentProfile && (
-                <StudentBell studentId={(studentProfile as { id: number }).id} />
-              )}
               
-              {/* Theme toggle button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -280,7 +277,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 )}
               </Button>
               
-              {/* Admin & User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2 h-8">
@@ -291,7 +287,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {/* Admin Options */}
                   {user?.role === 'admin' && (
                     <>
                       <DropdownMenuItem asChild>
@@ -315,7 +310,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </>
                   )}
                   
-                  {/* User Options */}
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center space-x-2 w-full">
                       <User className="w-4 h-4" />
@@ -325,7 +319,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   
                   <DropdownMenuSeparator />
                   
-                  {/* Logout */}
                   <DropdownMenuItem 
                     onClick={async () => {
                       try {
@@ -347,11 +340,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {/* Page content */}
         <div 
-          className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user ? "pt-16" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "md:pb-6" : ""}`}
+          className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user && user?.role !== 'student' ? "pt-16" : ""} ${isMobile && user?.role === 'student' ? "pt-0" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "md:pb-6" : ""}`}
           style={user?.role === 'student' ? {
             paddingBottom: isMobile 
-              ? 'calc(72px + env(safe-area-inset-bottom, 0px))' 
-              : '1.5rem' // md:pb-6 equivalent
+              ? 'calc(80px + env(safe-area-inset-bottom, 0px))' 
+              : '1.5rem',
+            ...(isMobile ? { backgroundColor: '#FFFFFF' } : {})
           } : undefined}
         >
           <div className="max-w-full min-w-0">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from '@/hooks/use-translations';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { LogOut, Loader2 } from 'lucide-react';
 
 // Define form validation schema
 const passwordSchema = z
@@ -34,8 +35,18 @@ const passwordSchema = z
 
 export default function StudentSettings() {
   const { t } = useTranslations();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // Form setup for password change
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
@@ -76,6 +87,31 @@ export default function StudentSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Logout card — shown prominently for mobile users */}
+      <Card className="bg-gray-800 border-gray-700 text-white">
+        <CardContent className="pt-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">Sair da conta</p>
+              <p className="text-xs text-gray-400 mt-0.5">{user?.email}</p>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="gap-2"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <LogOut className="w-4 h-4" />
+              )}
+              Sair
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="bg-gray-800 border-gray-700 text-white">
         <CardHeader>
           <CardTitle>{t('settings.changePassword')}</CardTitle>

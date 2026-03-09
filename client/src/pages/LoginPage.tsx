@@ -172,7 +172,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full font-['Inter',sans-serif]">
-
       {/* ════════════════════════════════════
           MOBILE  (< lg): fullscreen hero
           ════════════════════════════════════ */}
@@ -187,7 +186,7 @@ export default function LoginPage() {
               <img src={logoUrl} alt={schoolName} className="h-11 w-auto object-contain drop-shadow-lg"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             ) : (
-              <p className="text-2xl font-black text-white tracking-tight drop-shadow-lg">{schoolName}</p>
+              <p className="font-black text-white tracking-tight drop-shadow-lg text-[30px] text-left mt-[100px] mb-[100px]">{schoolName}</p>
             )}
           </div>
 
@@ -208,7 +207,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-
       {/* ════════════════════════════════════
           DESKTOP  (≥ lg): two-column layout
           ════════════════════════════════════ */}

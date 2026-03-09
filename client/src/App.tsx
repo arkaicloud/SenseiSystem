@@ -30,6 +30,7 @@ import OnboardingPage from "@/pages/onboarding-page";
 import AwaitingApprovalPage from "@/pages/awaiting-approval";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import ChangePasswordPage from "@/pages/change-password";
 import { AuthProvider } from "@/providers/auth-provider";
 import { LanguageProvider } from "@/providers/i18n-provider";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -154,6 +155,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/awaiting-approval" component={AwaitingApprovalPage} />
+      <Route path="/change-password" component={ChangePasswordPage} />
       <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
       <Route path="/auth/reset-password" component={ResetPasswordPage} />
 

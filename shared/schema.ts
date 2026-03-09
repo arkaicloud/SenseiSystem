@@ -113,6 +113,7 @@ export const users = pgTable("users", {
   longestStreak: integer("longest_streak").default(0),
   lastLoginDate: timestamp("last_login_date"),
   totalLogins: integer("total_logins").default(0),
+  mustChangePassword: boolean("must_change_password").default(false),
 });
 
 // Students table

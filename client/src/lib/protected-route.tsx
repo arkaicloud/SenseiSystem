@@ -16,7 +16,6 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user } = useAuth();
 
-  // Redirect to login page if not authenticated
   if (!user) {
     return (
       <Route path={path}>
@@ -25,7 +24,6 @@ export function ProtectedRoute({
     );
   }
 
-  // Redirect pending users to awaiting approval
   if (user.status === 'pending') {
     return (
       <Route path={path}>
@@ -34,12 +32,18 @@ export function ProtectedRoute({
     );
   }
 
-  // Check if user role has access
-  const hasAccess = 
-    allowedRoles.includes("any") || 
+  if (user.mustChangePassword) {
+    return (
+      <Route path={path}>
+        <Redirect to="/change-password" />
+      </Route>
+    );
+  }
+
+  const hasAccess =
+    allowedRoles.includes("any") ||
     (user.role && allowedRoles.includes(user.role as AllowedRoles));
 
-  // Redirect to dashboard if authenticated but unauthorized
   if (!hasAccess) {
     return (
       <Route path={path}>
@@ -48,6 +52,5 @@ export function ProtectedRoute({
     );
   }
 
-  // If authenticated and authorized, render the component
   return <Route path={path} component={Component} />;
 }

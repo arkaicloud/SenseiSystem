@@ -13,6 +13,8 @@ import EmergencyContactStep, { type EmergencyContactType } from "./steps/Emergen
 import AddressStep, { type AddressType } from "./steps/AddressStep";
 import FinalReviewStep, { type CompleteFormData } from "./steps/FinalReviewStep";
 import PhysicalAssessmentStep, { type PhysicalAssessmentType } from "./steps/PhysicalAssessmentStep";
+import ElectronicSignatureStep, { type SignatureData } from "./steps/ElectronicSignatureStep";
+import MedicalCertStep, { type MedicalCertData } from "./steps/MedicalCertStep";
 
 interface MobileStudentOnboardingProps {
   onBack: () => void;
@@ -22,15 +24,29 @@ interface MobileStudentOnboardingProps {
 export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStudentOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<CompleteFormData>>({});
+  const [healthData, setHealthData] = useState<PhysicalAssessmentType | null>(null);
+  const [signatureData, setSignatureData] = useState<SignatureData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { register, error } = useAuth();
 
-  const totalSteps = 6;
+  const totalSteps = 8;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
-  // Step handlers
+  const requiresMedical = healthData
+    ? [
+        healthData.hasHeartProblem,
+        healthData.hasChestPain,
+        healthData.hasBreathingProblem,
+        healthData.hasBloodPressureProblem,
+        healthData.hasBoneProblem,
+        healthData.hasOtherHealthProblem,
+        healthData.takeMedication,
+        healthData.doctorRecommendation,
+      ].some((v) => v === "yes")
+    : false;
+
   const handlePersonalData = (data: PersonalDataType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
@@ -57,24 +73,32 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   };
 
   const handlePhysicalAssessment = (data: PhysicalAssessmentType) => {
+    setHealthData(data);
     setFormData(prev => ({ ...prev, ...data }));
-    // Aqui seguiria para as próximas etapas como no desktop
-    handleFinalSubmit({ ...formData, ...data } as CompleteFormData);
+    setCurrentStep(7);
   };
 
-  const handleFinalSubmit = async (data: CompleteFormData) => {
+  const handleSignature = (data: SignatureData) => {
+    setSignatureData(data);
+    setCurrentStep(8);
+  };
+
+  const handleMedicalCert = (data: MedicalCertData) => {
+    handleFinalSubmit(data);
+  };
+
+  const handleFinalSubmit = async (medData?: MedicalCertData) => {
     setIsSubmitting(true);
     setSubmitError(null);
-    
+
     try {
+      const data = formData as CompleteFormData;
       const email = (data as any).email || "";
       if (!email) {
         throw new Error("Email não encontrado. Por favor, volte e preencha novamente.");
       }
-      // Generate username from email
       const username = email.split('@')[0].toLowerCase();
-      
-      // Create clean data object - extract only primitive values to avoid circular references
+
       const cleanData = {
         firstName: data.firstName || "",
         lastName: data.lastName || "",
@@ -115,22 +139,25 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         hasOtherHealthProblem: (data as any).hasOtherHealthProblem || "no",
         takeMedication: (data as any).takeMedication || "no",
         doctorRecommendation: (data as any).doctorRecommendation || "no",
+        // Signature fields
+        signatureData: signatureData?.signatureData || null,
+        signatureType: signatureData?.signatureType || null,
+        signatureTimestamp: signatureData?.signatureTimestamp || null,
+        signatureLatitude: signatureData?.signatureLatitude || null,
+        signatureLongitude: signatureData?.signatureLongitude || null,
       };
-      
-      // Use the register-student endpoint directly instead of auth register
+
       const response = await fetch('/api/register-student', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cleanData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Falha no cadastro');
       }
-      
+
       setSuccess(true);
       setTimeout(() => onSuccess(), 2000);
     } catch (err: any) {
@@ -142,18 +169,18 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   };
 
   const goBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const stepTitles = [
     "Dados Pessoais",
-    "Contato", 
+    "Contato",
     "Emergência",
     "Endereço",
     "Revisão",
-    "Aptidão Física"
+    "Aptidão Física",
+    "Assinatura",
+    "Atestado Médico",
   ];
 
   if (success) {
@@ -173,97 +200,103 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col safe-area-inset">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10 shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <Button variant="ghost" size="sm" onClick={currentStep > 1 ? goBack : onBack} className="p-1">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header with progress */}
+      <div className="bg-white border-b px-4 pt-4 pb-3 sticky top-0 z-10">
+        <div className="flex items-center justify-between mb-2">
+          <button onClick={currentStep === 1 ? onBack : goBack} className="text-gray-500 hover:text-gray-700">
             <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-lg font-semibold">Cadastro</h1>
-          <div className="w-8" /> {/* Spacer */}
+          </button>
+          <span className="text-sm text-gray-500 font-medium">
+            {currentStep} de {totalSteps}
+          </span>
+          <div className="w-5" />
         </div>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-gray-600">
-            <span>Etapa {currentStep} de {totalSteps}</span>
-            <span>{stepTitles[currentStep - 1]}</span>
-          </div>
-          <Progress value={progressPercentage} className="h-2" />
-        </div>
+        <Progress value={progressPercentage} className="h-1.5" />
+        <p className="text-xs text-gray-500 mt-1.5 text-center">{stepTitles[currentStep - 1]}</p>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 px-4 py-4 overflow-y-auto mobile-form-container">
-        <div className="max-w-md mx-auto pb-6">
-          {(error || submitError) && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{submitError || error}</AlertDescription>
-            </Alert>
-          )}
+      {/* Error */}
+      {submitError && (
+        <div className="mx-4 mt-4">
+          <Alert variant="destructive">
+            <AlertDescription>{submitError}</AlertDescription>
+          </Alert>
+        </div>
+      )}
 
-          <Card className="border-0 shadow-sm mobile-friendly-card">
-            <CardContent className="p-4 sm:p-6 mobile-friendly-form">
-              {currentStep === 1 && (
-                <PersonalDataStep
-                  onNext={handlePersonalData}
-                  defaultValues={formData}
-                />
-              )}
+      {/* Steps */}
+      <div className="flex-1">
+        {currentStep === 1 && (
+          <PersonalDataStep
+            onNext={handlePersonalData}
+            onBack={onBack}
+            defaultValues={formData}
+          />
+        )}
+        {currentStep === 2 && (
+          <ContactInfoStep
+            onNext={handleContactInfo}
+            onBack={goBack}
+            defaultValues={formData}
+          />
+        )}
+        {currentStep === 3 && (
+          <EmergencyContactStep
+            onNext={handleEmergencyContact}
+            onBack={goBack}
+            defaultValues={formData}
+          />
+        )}
+        {currentStep === 4 && (
+          <AddressStep
+            onNext={handleAddress}
+            onBack={goBack}
+            defaultValues={formData}
+          />
+        )}
+        {currentStep === 5 && (
+          <FinalReviewStep
+            onNext={handleFinalReview}
+            onBack={goBack}
+            defaultValues={formData as CompleteFormData}
+          />
+        )}
+        {currentStep === 6 && (
+          <PhysicalAssessmentStep
+            onNext={handlePhysicalAssessment}
+            onBack={goBack}
+            defaultValues={formData}
+            birthDate={(formData as any)?.birthDate}
+          />
+        )}
+        {currentStep === 7 && (
+          <ElectronicSignatureStep
+            onNext={handleSignature}
+            onBack={goBack}
+            isMobile={true}
+          />
+        )}
+        {currentStep === 8 && (
+          <MedicalCertStep
+            onNext={handleMedicalCert}
+            onBack={goBack}
+            requiresMedical={requiresMedical}
+            isMobile={true}
+          />
+        )}
+      </div>
 
-              {currentStep === 2 && (
-                <ContactInfoStep
-                  onNext={handleContactInfo}
-                  onBack={goBack}
-                  defaultValues={formData}
-                />
-              )}
-
-              {currentStep === 3 && (
-                <EmergencyContactStep
-                  onNext={handleEmergencyContact}
-                  onBack={goBack}
-                  defaultValues={formData}
-                />
-              )}
-
-              {currentStep === 4 && (
-                <AddressStep
-                  onNext={handleAddress}
-                  onBack={goBack}
-                  defaultValues={formData}
-                />
-              )}
-
-              {currentStep === 5 && (
-                <FinalReviewStep
-                  onNext={handleFinalReview}
-                  onBack={goBack}
-                  formData={formData as CompleteFormData}
-                  isSubmitting={false}
-                />
-              )}
-
-              {currentStep === 6 && (
-                <>
-                  <PhysicalAssessmentStep
-                    onNext={handlePhysicalAssessment}
-                    onBack={goBack}
-                    defaultValues={formData as PhysicalAssessmentType}
-                    birthDate={formData.birthDate}
-                  />
-                  {isSubmitting && (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mr-3" />
-                      <span className="text-sm text-gray-600">Finalizando cadastro...</span>
-                    </div>
-                  )}
-                </>
-              )}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <Card className="mx-4 max-w-sm w-full">
+            <CardContent className="pt-6 text-center">
+              <div className="w-12 h-12 border-4 border-[#2B54FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm font-medium">Finalizando cadastro...</p>
             </CardContent>
           </Card>
         </div>
-      </div>
+      )}
     </div>
   );
 }

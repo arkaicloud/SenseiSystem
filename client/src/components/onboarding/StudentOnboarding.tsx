@@ -44,7 +44,6 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
     setIsSubmitting(true);
 
     try {
-      // Create clean data object to avoid circular references
       const cleanData = {
         firstName: String(completeData.firstName),
         lastName: String(completeData.lastName),
@@ -62,6 +61,12 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
         city: String(completeData.city || ""),
         state: String(completeData.state || ""),
         zipCode: String(completeData.zipCode || ""),
+        // Signature data from DocumentsStep
+        signatureData: data.signatureData || null,
+        signatureType: data.signatureType || null,
+        signatureTimestamp: data.signatureTimestamp || null,
+        signatureLatitude: data.signatureLatitude || null,
+        signatureLongitude: data.signatureLongitude || null,
       };
 
       await register(completeData.email, completeData.password, cleanData);
@@ -157,9 +162,10 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
           )}
 
           {currentStep === 3 && (
-            <DocumentsStep 
-              onNext={() => handleDocumentsSubmit({})}
+            <DocumentsStep
+              onNext={(data) => handleDocumentsSubmit(data ?? {})}
               onBack={() => setCurrentStep(2)}
+              isSubmitting={isSubmitting}
             />
           )}
         </CardContent>

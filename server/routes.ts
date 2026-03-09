@@ -3657,6 +3657,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Coupon Routes =====
+
+  // Validate a coupon (public — used during onboarding)
+  app.get("/api/coupons/validate/:code", async (req, res) => {
+    try {
+      const { code } = req.params;
+      const coupon = await storage.getCouponByCode(code);
+      if (!coupon) {
+        return res.status(404).json({ message: "Cupom não encontrado" });
+      }
+      if (!coupon.active) {
+        return res.status(400).json({ message: "Cupom inativo" });
+      }
+      if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+        return res.status(400).json({ message: "Cupom expirado" });
+      }
+      if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
+        return res.status(400).json({ message: "Cupom esgotado" });
+      }
+      res.json({
+        valid: true,
+        coupon: {
+          id: coupon.id,
+          code: coupon.code,
+          description: coupon.description,
+          discountPercent: coupon.discountPercent,
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/coupons", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const coupons = await storage.getCoupons();
+      res.json({ coupons });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/coupons", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { insertCouponSchema } = await import("@shared/schema");
+      const parsed = insertCouponSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Dados inválidos", errors: parsed.error.errors });
+      }
+      const existing = await storage.getCouponByCode(parsed.data.code);
+      if (existing) {
+        return res.status(400).json({ message: "Já existe um cupom com este código" });
+      }
+      const coupon = await storage.createCoupon(parsed.data);
+      res.status(201).json({ coupon });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.put("/api/coupons/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const coupon = await storage.getCoupon(id);
+      if (!coupon) {
+        return res.status(404).json({ message: "Cupom não encontrado" });
+      }
+      const updated = await storage.updateCoupon(id, req.body);
+      res.json({ coupon: updated });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.delete("/api/coupons/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const coupon = await storage.getCoupon(id);
+      if (!coupon) {
+        return res.status(404).json({ message: "Cupom não encontrado" });
+      }
+      await storage.deleteCoupon(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // ===== Student Payment Routes =====
   app.get("/api/student-payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -5767,11 +5855,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialResponsibleRelation: studentData.financialResponsibleRelationship || "self",
         asaasCustomerId: null,
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
-        preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5
+        preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5,
+        couponCode: studentData.couponCode || null,
       });
 
       // Create student record
       const student = await storage.createStudent(studentInfo);
+
+      // ===== PROCESSAR CUPOM DE DESCONTO =====
+      if (studentData.couponCode) {
+        try {
+          const coupon = await storage.getCouponByCode(studentData.couponCode);
+          if (coupon && coupon.active) {
+            await storage.incrementCouponUsage(coupon.id);
+            if (coupon.discountPercent === 100) {
+              await storage.updateStudent(student.id, { isScholarship: true });
+            }
+          }
+        } catch (couponErr) {
+          console.warn("Erro ao processar cupom:", couponErr);
+        }
+      }
 
       // ===== PROCESSAR QUESTIONÁRIO DE SAÚDE SE FORNECIDO =====
       if (studentData.healthAnswers && Array.isArray(studentData.healthAnswers) && studentData.healthAnswers.length > 0) {

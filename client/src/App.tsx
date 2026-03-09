@@ -14,6 +14,7 @@ import Classes from "@/pages/classes";
 import NewAttendance from "@/pages/new-attendance";
 import Payments from "@/pages/payments";
 import PaymentPlans from "@/pages/payment-plans";
+import Coupons from "@/pages/coupons";
 import Reports from "@/pages/reports";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
@@ -94,6 +95,11 @@ function Router() {
         path="/payment-plans"
         component={() => <PaymentPlans />}
         allowedRoles={["admin", "instructor"]}
+      />
+      <ProtectedRoute
+        path="/coupons"
+        component={() => <Coupons />}
+        allowedRoles={["admin"]}
       />
       <ProtectedRoute
         path="/communications"

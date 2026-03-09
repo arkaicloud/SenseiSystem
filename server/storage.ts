@@ -15,6 +15,7 @@ import {
   dailyLoginRecords,
   streakAchievements,
   passwordResetTokens,
+  coupons,
   type User,
   type Student,
   type Class,
@@ -38,6 +39,8 @@ import {
   type AttendanceChanges,
   type RiskAction,
   type RiskSettings,
+  type Coupon,
+  type InsertCoupon,
   insertStudentSchema,
   insertUserSchema,
   insertSchoolEventSchema,
@@ -227,6 +230,15 @@ export interface IStorage {
   markPasswordResetTokenAsUsed(tokenId: number): Promise<any | undefined>;
   deleteExpiredPasswordResetTokens(): Promise<any>;
   deletePasswordResetTokensForUser(userId: number): Promise<any>;
+
+  // Coupons
+  getCoupons(): Promise<Coupon[]>;
+  getCoupon(id: number): Promise<Coupon | undefined>;
+  getCouponByCode(code: string): Promise<Coupon | undefined>;
+  createCoupon(coupon: InsertCoupon): Promise<Coupon>;
+  updateCoupon(id: number, coupon: Partial<Coupon>): Promise<Coupon | undefined>;
+  deleteCoupon(id: number): Promise<boolean>;
+  incrementCouponUsage(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1370,10 +1382,17 @@ export class MemStorage implements IStorage {
   }
 
   async deletePasswordResetTokensForUser(userId: number): Promise<any> {
-    // Not implemented for MemStorage, but required by interface
     console.warn("MemStorage: deletePasswordResetTokensForUser not implemented");
     return null;
   }
+
+  async getCoupons(): Promise<Coupon[]> { return []; }
+  async getCoupon(id: number): Promise<Coupon | undefined> { return undefined; }
+  async getCouponByCode(code: string): Promise<Coupon | undefined> { return undefined; }
+  async createCoupon(coupon: InsertCoupon): Promise<Coupon> { throw new Error("Not implemented"); }
+  async updateCoupon(id: number, coupon: Partial<Coupon>): Promise<Coupon | undefined> { return undefined; }
+  async deleteCoupon(id: number): Promise<boolean> { return false; }
+  async incrementCouponUsage(id: number): Promise<void> {}
 }
 
 import connectPgSimple from "connect-pg-simple";
@@ -2516,6 +2535,43 @@ export class DatabaseStorage implements IStorage {
       .delete(passwordResetTokens)
       .where(eq(passwordResetTokens.userId, userId));
     return result;
+  }
+
+  // Coupons
+  async getCoupons(): Promise<Coupon[]> {
+    return await db.select().from(coupons).orderBy(desc(coupons.createdAt));
+  }
+
+  async getCoupon(id: number): Promise<Coupon | undefined> {
+    const [coupon] = await db.select().from(coupons).where(eq(coupons.id, id));
+    return coupon;
+  }
+
+  async getCouponByCode(code: string): Promise<Coupon | undefined> {
+    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code.toUpperCase()));
+    return coupon;
+  }
+
+  async createCoupon(couponData: InsertCoupon): Promise<Coupon> {
+    const [coupon] = await db.insert(coupons).values({
+      ...couponData,
+      code: couponData.code.toUpperCase(),
+    }).returning();
+    return coupon;
+  }
+
+  async updateCoupon(id: number, couponData: Partial<Coupon>): Promise<Coupon | undefined> {
+    const [updated] = await db.update(coupons).set(couponData).where(eq(coupons.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCoupon(id: number): Promise<boolean> {
+    await db.delete(coupons).where(eq(coupons.id, id));
+    return true;
+  }
+
+  async incrementCouponUsage(id: number): Promise<void> {
+    await db.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1` }).where(eq(coupons.id, id));
   }
 }
 

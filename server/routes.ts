@@ -4131,7 +4131,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: config?.phone || null,
         email: config?.email || null,
         website: config?.website || null,
-        logoUrl: config?.logoUrl || null
+        logoUrl: config?.logoUrl || null,
+        instagram: config?.instagram || null,
+        facebook: config?.facebook || null,
+        whatsapp: config?.whatsapp || null,
+        youtube: config?.youtube || null,
+        tiktok: config?.tiktok || null,
       };
 
       res.json(publicInfo);

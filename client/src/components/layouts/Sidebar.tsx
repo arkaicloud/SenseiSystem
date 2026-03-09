@@ -7,7 +7,7 @@ import {
   Loader2, LogOut, Users, Calendar, CreditCard, Settings, User, 
   Home, CheckSquare, MessageSquare, AlertTriangle, GraduationCap, 
   UserCheck, DollarSign, Building2, BarChart3, UserCog, ChevronDown,
-  FileText, Clock, Award, X, Bell
+  FileText, Clock, Award, X, Bell, Ticket
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -119,6 +119,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           label: "Painel Financeiro",
           icon: BarChart3,
           path: "/financial",
+          roles: ["admin"],
+        },
+        {
+          id: "coupons",
+          label: "Cupons",
+          icon: Ticket,
+          path: "/coupons",
           roles: ["admin"],
         },
       ],

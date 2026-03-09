@@ -107,6 +107,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         financialResponsibleRelationship: (data as any).financialResponsibleRelationship || "self",
         paymentPlanId: (data as any).paymentPlanId || null,
         dueDate: (data as any).dueDate || null,
+        couponCode: (data as any).couponCode || null,
         hasHeartProblem: (data as any).hasHeartProblem || "no",
         hasChestPain: (data as any).hasChestPain || "no",
         hasBreathingProblem: (data as any).hasBreathingProblem || "no",

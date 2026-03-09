@@ -145,6 +145,7 @@ export const students = pgTable("students", {
   medicalCertificateStatus: medicalCertificateStatusEnum("medical_certificate_status").default('PENDING'),
   medicalObservations: text("medical_observations"), // Observações médicas
   isScholarship: boolean("is_scholarship").default(false), // Indica se é bolsista
+  couponCode: text("coupon_code"), // Código do cupom utilizado no cadastro
   healthQuestionnaireCompletedAt: timestamp("health_questionnaire_completed_at"),
   agreedToHealthTerms: boolean("agreed_to_health_terms").default(false),
   healthTermsAgreedAt: timestamp("health_terms_agreed_at"),
@@ -735,6 +736,23 @@ export type UserWithStreakData = User & {
     lastLogin: Date | null;
   };
 };
+
+// Coupons table
+export const coupons = pgTable('coupons', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  description: text('description'),
+  discountPercent: integer('discount_percent').notNull(),
+  maxUses: integer('max_uses'),
+  usedCount: integer('used_count').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertCouponSchema = createInsertSchema(coupons).omit({ id: true, usedCount: true, createdAt: true });
+export type InsertCoupon = z.infer<typeof insertCouponSchema>;
+export type Coupon = typeof coupons.$inferSelect;
 
 // Update users relations to include new tables (replace the original)
 export const usersRelationsWithStreak = relations(users, ({ many }) => ({

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, ArrowLeft, User, Phone, Users, Calendar, CreditCard, MapPin } from "lucide-react";
+import { ArrowRight, ArrowLeft, User, Phone, Users, Calendar, CreditCard, MapPin, Ticket, CheckCircle, XCircle, Loader2, GraduationCap } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +78,7 @@ const personalInfoSchema = z.object({
   // Payment plan and due date
   paymentPlanId: z.string().min(1, "Selecione um plano de pagamento"),
   dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  couponCode: z.string().optional(),
 }).refine((data) => {
   // Se não for "self", os campos do responsável financeiro são obrigatórios
   if (data.financialResponsibleRelationship !== "self") {
@@ -112,6 +113,32 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   });
 
   const paymentPlans = paymentPlansData?.plans || [];
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [couponStatus, setCouponStatus] = useState<null | { valid: boolean; discountPercent?: number; description?: string | null; message?: string }>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const applyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponStatus(null);
+    try {
+      const res = await fetch(`/api/coupons/validate/${encodeURIComponent(couponInput.trim().toUpperCase())}`);
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setCouponStatus({ valid: true, discountPercent: data.coupon.discountPercent, description: data.coupon.description });
+        form.setValue("couponCode", couponInput.trim().toUpperCase());
+      } else {
+        setCouponStatus({ valid: false, message: data.message || "Cupom inválido" });
+        form.setValue("couponCode", "");
+      }
+    } catch {
+      setCouponStatus({ valid: false, message: "Erro ao validar cupom" });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   // Títulos das etapas
   const stepTitles = [
@@ -661,6 +688,48 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                 </FormItem>
               )}
             />
+
+
+            {/* Coupon */}
+            <div className="space-y-2 mt-2">
+              <label className="text-sm font-medium">Cupom de desconto (opcional)</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: BOLSA2026"
+                  value={couponInput}
+                  onChange={(e) => {
+                    setCouponInput(e.target.value.toUpperCase());
+                    if (couponStatus) setCouponStatus(null);
+                  }}
+                  className="font-mono uppercase flex-1"
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyCoupon())}
+                />
+                <Button type="button" variant="outline" onClick={applyCoupon} disabled={couponLoading || !couponInput.trim()} className="gap-1 shrink-0">
+                  {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+                  Aplicar
+                </Button>
+              </div>
+              {couponStatus && (
+                couponStatus.valid ? (
+                  <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                    {couponStatus.discountPercent === 100
+                      ? <GraduationCap className="w-4 h-4 mt-0.5 shrink-0" />
+                      : <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+                    <div>
+                      {couponStatus.discountPercent === 100
+                        ? <p className="font-semibold">Bolsista — acesso gratuito aplicado!</p>
+                        : <p className="font-semibold">{couponStatus.discountPercent}% de desconto aplicado!</p>}
+                      {couponStatus.description && <p className="text-xs mt-0.5 opacity-80">{couponStatus.description}</p>}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <XCircle className="w-4 h-4 shrink-0" />
+                    <span>{couponStatus.message}</span>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>

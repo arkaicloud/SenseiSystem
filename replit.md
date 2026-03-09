@@ -150,3 +150,11 @@ Preferred communication style: Simple, everyday language.
 - **Database Duplicate Prevention**: Added checks before inserting payments to prevent unique constraint violations
 - **Variable Reference Fixes**: Corrected "asaasCustomer is not defined" errors by using payment.customer instead
 - **Production Ready**: Both approval workflows (individual and batch) updated with anti-duplicate logic and database safety
+### March 2026 - Coupon/Scholarship System
+- **New Table**: `coupons` (code, description, discountPercent 1-100, maxUses, usedCount, active, expiresAt)
+- **Admin Page**: /coupons — full CRUD (create, edit, delete); visible under Financeiro → Cupons (admin only)
+- **100% discount = Bolsista**: Special "Bolsista" badge + scholarship badge shown in admin table; `isScholarship` flag set on student on registration
+- **Onboarding Integration**: Coupon field added to both Desktop (PersonalInfoStep sub-step 4, after plan+dueDate) and Mobile (PersonalDataStep, after belt/stripes). Mobile also now shows plan selection.
+- **Validate endpoint**: `GET /api/coupons/validate/:code` — public, validates coupon and returns discount info
+- **Usage tracking**: `usedCount` incremented on each registration with that coupon
+- **students.couponCode**: New column stores the coupon code used at registration

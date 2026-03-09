@@ -15,8 +15,9 @@ export default function AwaitingApprovalPage() {
 
   const schoolConfig = schoolConfigResponse?.config || null;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/login';
   };
 
   const handleContactSchool = () => {

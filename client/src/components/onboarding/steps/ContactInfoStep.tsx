@@ -7,8 +7,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ArrowLeft, ArrowRight, Phone } from "lucide-react";
 
 const contactInfoSchema = z.object({
-  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-  whatsapp: z.string().optional(),
+  email: z.string().email("E-mail inválido"),
+  phone: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
 });
 
 export type ContactInfoType = z.infer<typeof contactInfoSchema>;
@@ -23,8 +23,8 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
   const form = useForm<ContactInfoType>({
     resolver: zodResolver(contactInfoSchema),
     defaultValues: {
+      email: "",
       phone: "",
-      whatsapp: "",
       ...defaultValues,
     },
   });
@@ -62,18 +62,15 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <FormField
             control={form.control}
-            name="phone"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Telefone Principal *</FormLabel>
+                <FormLabel className="text-base font-medium">E-mail *</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="(11) 99999-9999" 
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
                     {...field}
-                    onChange={(e) => {
-                      const formatted = formatPhone(e.target.value);
-                      field.onChange(formatted);
-                    }}
                     className="h-12 text-base"
                   />
                 </FormControl>
@@ -84,13 +81,13 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
 
           <FormField
             control={form.control}
-            name="whatsapp"
+            name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">WhatsApp (opcional)</FormLabel>
+                <FormLabel className="text-base font-medium">WhatsApp *</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="(11) 99999-9999" 
+                  <Input
+                    placeholder="(11) 99999-9999"
                     {...field}
                     onChange={(e) => {
                       const formatted = formatPhone(e.target.value);
@@ -99,9 +96,6 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
                     className="h-12 text-base"
                   />
                 </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Se diferente do telefone principal
-                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -112,9 +106,9 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
               Continuar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onBack}
               className="w-full h-12 text-base font-medium"
             >

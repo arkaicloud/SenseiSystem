@@ -14,7 +14,6 @@ const personalDataSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Sobrenome é obrigatório"),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
-  email: z.string().email("E-mail inválido"),
   beltLevel: z.string().min(1, "Selecione a faixa"),
   stripes: z.number().min(0).max(4),
   paymentPlanId: z.string().optional(),
@@ -35,7 +34,6 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
       firstName: "",
       lastName: "",
       birthDate: "",
-      email: "",
       beltLevel: "white",
       stripes: 0,
       paymentPlanId: "",
@@ -144,19 +142,6 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-base font-medium">E-mail *</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="seu@email.com" {...field} className="h-12 text-base" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           {/* Belt Level */}
           <FormField

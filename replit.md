@@ -38,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Communication System**: School announcements, event management, rich text editor, and targeted messaging.
 - **Dashboard and Analytics**: Role-specific dashboards, student progress tracking (belt progression), attendance statistics, and engagement metrics (e.g., risk classification for student retention).
 - **Belt System**: Implementation of IBJJF official belt systems (adult and child categories) with corresponding visual representation and management interfaces.
-- **UI/UX**: Responsive design with mobile-first approach, consistent branding (school logo support), and adaptive components.
+- **UI/UX**: Responsive design with mobile-first approach, consistent branding (school logo support), and adaptive components. Mobile student interface uses the VYTA Design System (Inter font, #2B54FF primary blue electric, hero sections with martial arts banners, pill badges, borderRadius:16 cards, VYTA-styled bottom navigation).
 - **Monorepo Structure**: Shared TypeScript definitions for type safety across frontend and backend.
 
 ## External Dependencies

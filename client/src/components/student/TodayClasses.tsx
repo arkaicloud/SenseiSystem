@@ -187,7 +187,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     size="sm"
                     onClick={() => handleConfirm(classSession)}
                     disabled={isMutating}
-                    className="w-full sm:w-auto text-white font-medium bg-blue-500 hover:bg-blue-600"
+                    className="w-full sm:w-auto text-white font-medium bg-[#2B54FF] hover:bg-[#1A3FCC] rounded-2xl font-inter"
                   >
                     {isMutating ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />

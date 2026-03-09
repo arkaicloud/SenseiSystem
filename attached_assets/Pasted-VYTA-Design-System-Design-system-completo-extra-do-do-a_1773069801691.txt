@@ -1,0 +1,691 @@
+VYTA — Design System
+Design system completo extraído do app VYTA. Use como referência para implementar o mesmo visual em outros projetos React Native (Expo) ou Web.
+
+1. IDENTIDADE
+Nome: VYTA
+Tom visual: Dark mode com acentos azul elétrico — atletismo, performance, foco
+Tom de voz: Direto, motivador, sem enrolação — como um bom personal trainer
+Idioma: Português do Brasil
+
+2. PALETA DE CORES
+// constants/colors.ts
+const Colors = {
+  // Marca
+  primary:      "#2B54FF",  // Azul elétrico — CTA, ativo, destaques
+  primaryDark:  "#1A3FCC",  // Hover e versão escura do primário
+  primaryLight: "#EEF1FF",  // Fundo suave de cards/tags com tema azul
+  // Fundos
+  background:   "#FFFFFF",  // Fundo geral da tela
+  surface:      "#F0F2F7",  // Cards, inputs, chips
+  surfaceAlt:   "#F8F9FC",  // Superfície alternativa mais clara
+  // Texto
+  text:          "#0D0D0D", // Texto principal
+  textSecondary: "#8D8D8D", // Legenda, placeholder, subtítulo
+  textTertiary:  "#B0B0B0", // Texto inativo, tab icon padrão
+  // Bordas
+  border:        "#E8EAF0", // Borda padrão de cards e inputs
+  borderLight:   "#F0F2F7", // Borda mais discreta
+  // Semânticas
+  success:      "#22C55E",  // Confirmação, treino concluído
+  successLight: "#DCFCE7",  // Fundo de badge de sucesso
+  warning:      "#F97316",  // Alerta
+  warningLight: "#FFF0E6",  // Fundo de badge de alerta
+  error:        "#EF4444",  // Erro
+  errorLight:   "#FEE2E2",  // Fundo de badge de erro
+  // Utilidades
+  white:        "#FFFFFF",
+  black:        "#000000",
+  dark:         "#1A1A1A",  // Fundo de hero sections escuras
+  overlay:      "rgba(0,0,0,0.5)",       // Overlay genérico
+  heroOverlay:  "rgba(0,0,0,0.45)",      // Overlay sobre imagem de hero
+  chipBg:       "#F0F2F7",               // Fundo de chips/tags
+};
+Cores especiais de componentes
+// Streak badge (fundo quente)
+streakBg:     "#FFF5EC"
+streakBorder: "#FFD9B8"
+// Heatmap de progresso
+heatCompleted: Colors.primary          // "#2B54FF"
+heatStarted:   "#90A8FF"               // Azul claro
+heatNone:      Colors.surface          // "#F0F2F7"
+// Overlay de loading (tela geração de plano)
+overlayBg:    "#09090F"                // Quase preto
+overlayWord:  Colors.primary           // Palavra motivacional em azul
+Gradientes usados
+// Hero sobre foto de academia
+LinearGradient colors: ["rgba(0,0,0,0.15)", "rgba(0,0,0,0.75)"]
+// Card de treino do dia
+LinearGradient colors: ["transparent", "rgba(0,0,0,0.8)"]
+// Hero da aba Coach
+LinearGradient colors: ["rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]
+// Fade da scrollview de histórico
+LinearGradient colors: ["rgba(255,255,255,0)", "rgba(255,255,255,1)"]
+3. TIPOGRAFIA
+Família: Inter (Google Fonts / @expo-google-fonts/inter)
+
+Token	Família	Tamanho	Uso
+display	Inter_700Bold	28–32px	Saudações hero, títulos grandes
+heading1	Inter_700Bold	22–26px	Nome do treino, títulos de card
+heading2	Inter_700Bold	18–20px	Títulos de seção
+heading3	Inter_600SemiBold	16–17px	Subtítulo de card, nome de item
+body	Inter_400Regular	14–15px	Texto corrido, mensagens de chat
+bodyMedium	Inter_500Medium	14–15px	Labels, metadados
+caption	Inter_500Medium	11–13px	Badges, tags, datas
+brand	Inter_700Bold	22px	Logo "VYTA" com letterSpacing: 2
+motivational	Inter_700Bold	48–56px	Palavras animadas na tela de loading
+Regras de uso
+// Logo da marca
+fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: 2, color: white
+// Saudação no hero
+fontSize: 28, fontFamily: "Inter_700Bold", color: white, lineHeight: 34
+// Subtítulo do hero
+fontSize: 15, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)"
+// Título de seção com link
+fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.text
+fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.primary  // link
+// Badge de dia (pill)
+fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.5, color: white
+// Mensagem de chat — usuário
+fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22, color: white
+// Mensagem de chat — IA
+fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22, color: Colors.text
+4. ESPAÇAMENTO E GRID
+// Margens horizontais padrão de tela
+paddingHorizontal: 20
+// Padding top do body (abaixo do hero)
+paddingTop: 24
+// Gap entre seções
+marginBottom: 24
+// Gap entre elementos de uma seção
+gap: 8   // pequeno (ícone + texto, badge + número)
+gap: 12  // médio (cards lado a lado)
+gap: 14  // seção → conteúdo
+// Padding interno de cards
+padding: 16  // card compacto
+padding: 20  // card padrão
+padding: 24  // card grande
+padding: 28  // card de destaque (empty state)
+// Tab bar height
+height: 60 + insets.bottom  // nativa
+height: 60 + 34             // web (34px bottom inset fixo)
+// Scroll bottom padding (para não ficar atrás da tab bar)
+paddingBottom: 100
+5. BORDER RADIUS
+// Padrões de arredondamento
+borderRadius: 8    // Quadradinhos pequenos (heatmap, day squares)
+borderRadius: 12   // Chips, inputs, tags pequenas
+borderRadius: 16   // Cards padrão, seções de conteúdo
+borderRadius: 20   // Bubbles de chat, buttons pill
+borderRadius: 24   // Botões CTA, streak badge
+borderRadius: 29   // Botão central da tab bar (círculo 58px)
+borderRadius: 999  // Pill total (input do chat)
+6. SOMBRAS
+// Botão central da tab bar (Coach)
+shadowColor: Colors.primary  // "#2B54FF"
+shadowOffset: { width: 0, height: 4 }
+shadowOpacity: 0.4
+shadowRadius: 10
+elevation: 8
+// Cards elevados / botões flutuantes
+shadowColor: "#000"
+shadowOffset: { width: 0, height: 2 }
+shadowOpacity: 0.12
+shadowRadius: 8
+elevation: 4
+// Sombra azul (elementos de destaque com a cor da marca)
+shadowColor: Colors.primary
+shadowOffset: { width: 0, height: 4 }
+shadowOpacity: 0.3
+shadowRadius: 12
+7. COMPONENTES
+7.1 Botão Primário (CTA)
+<Pressable
+  style={({ pressed }) => [
+    styles.btn,
+    pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+  ]}
+>
+  <Text style={styles.btnText}>Bora!</Text>
+</Pressable>
+// Estilos
+btn: {
+  backgroundColor: Colors.primary,  // "#2B54FF"
+  borderRadius: 24,
+  paddingHorizontal: 24,
+  paddingVertical: 12,
+}
+btnText: {
+  fontSize: 15,
+  fontFamily: "Inter_700Bold",
+  color: Colors.white,
+}
+7.2 Botão Outline / Ghost
+// Usado em ações secundárias
+btn: {
+  borderWidth: 1.5,
+  borderColor: Colors.primary,
+  borderRadius: 24,
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  backgroundColor: "transparent",
+}
+btnText: {
+  fontSize: 14,
+  fontFamily: "Inter_600SemiBold",
+  color: Colors.primary,
+}
+7.3 Botão Dashed / Empty State
+// Cards de "crie seu plano"
+card: {
+  borderRadius: 16,
+  borderWidth: 2,
+  borderColor: Colors.primary,
+  borderStyle: "dashed",
+  backgroundColor: Colors.primaryLight,  // "#EEF1FF"
+  padding: 28,
+  alignItems: "center",
+  gap: 8,
+}
+7.4 Card Padrão (superfície clara)
+card: {
+  backgroundColor: Colors.background,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: Colors.border,
+  padding: 16,
+}
+7.5 Card Hero (imagem de fundo)
+// Card com foto de fundo + gradiente escuro
+<Pressable style={styles.heroCard}>
+  <Image
+    source={imageSource}
+    style={StyleSheet.absoluteFillObject}
+    contentFit="cover"
+    placeholder={{ color: "#1A1A1A" }}
+    transition={250}
+  />
+  <LinearGradient
+    colors={["transparent", "rgba(0,0,0,0.8)"]}
+    style={StyleSheet.absoluteFillObject}
+  />
+  <View style={styles.heroCardContent}>
+    {/* conteúdo sobre o gradiente */}
+  </View>
+</Pressable>
+heroCard: {
+  height: 180,
+  borderRadius: 16,
+  overflow: "hidden",
+  backgroundColor: Colors.dark,
+  justifyContent: "flex-end",
+}
+heroCardContent: { padding: 16, gap: 6 }
+7.6 Pill Badge (tag flutuante)
+// Usado sobre imagens (dia da semana, categoria)
+badge: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 5,
+  backgroundColor: "rgba(255,255,255,0.15)",
+  borderRadius: 20,
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  alignSelf: "flex-start",
+}
+badgeText: {
+  fontSize: 11,
+  fontFamily: "Inter_600SemiBold",
+  color: Colors.white,
+  letterSpacing: 0.5,
+}
+7.7 Streak Badge
+streakBadge: {
+  width: 80,
+  backgroundColor: "#FFF5EC",
+  borderRadius: 16,
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 12,
+  gap: 4,
+  borderWidth: 1,
+  borderColor: "#FFD9B8",
+}
+streakNum: {
+  fontSize: 20,
+  fontFamily: "Inter_700Bold",
+  color: Colors.text,
+}
+7.8 Seção com título + link
+// Padrão consistente em todas as telas
+<View style={styles.sectionRow}>
+  <Text style={styles.sectionTitle}>Consistencia</Text>
+  <Pressable onPress={...}>
+    <Text style={styles.sectionLink}>Ver historico</Text>
+  </Pressable>
+</View>
+sectionRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 14,
+}
+sectionTitle: {
+  fontSize: 18,
+  fontFamily: "Inter_700Bold",
+  color: Colors.text,
+}
+sectionLink: {
+  fontSize: 14,
+  fontFamily: "Inter_500Medium",
+  color: Colors.primary,
+}
+7.9 Hero Section (topo de tela com foto)
+// Altura padrão: 280px (home), 150-180px (coach, progress)
+<View style={styles.hero}>
+  <Image
+    source={Images.heroHome}
+    style={StyleSheet.absoluteFillObject}
+    contentFit="cover"
+    placeholder={{ color: "#1A1A1A" }}
+    transition={250}
+  />
+  <LinearGradient
+    colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.75)"]}
+    style={StyleSheet.absoluteFillObject}
+  />
+  <View style={[styles.heroContent, { paddingTop: insets.top + 16 }]}>
+    <Text style={styles.brandName}>VYTA</Text>
+  </View>
+  <View style={styles.heroBottom}>
+    {/* título + CTA na parte de baixo */}
+  </View>
+</View>
+hero: {
+  height: 280,
+  backgroundColor: Colors.dark,
+  overflow: "hidden",
+}
+heroBottom: {
+  position: "absolute",
+  bottom: 24,
+  left: 20,
+  right: 20,
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "flex-end",
+}
+7.10 Chat Bubbles
+// Bubble do usuário (direita, azul)
+bubbleUser: {
+  backgroundColor: Colors.primary,
+  borderRadius: 20,
+  borderBottomRightRadius: 5,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  maxWidth: "76%",
+}
+// Bubble da IA (esquerda, cinza claro)
+bubbleAI: {
+  backgroundColor: Colors.surface,
+  borderRadius: 20,
+  borderBottomLeftRadius: 5,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  maxWidth: "76%",
+}
+// Avatar da IA (ícone sparkles no círculo)
+aiAvatar: {
+  width: 30,
+  height: 30,
+  borderRadius: 15,
+  backgroundColor: Colors.primaryLight,
+  alignItems: "center",
+  justifyContent: "center",
+}
+// Ícone: <Ionicons name="sparkles" size={13} color={Colors.primary} />
+7.11 Input de Chat
+inputContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 16,
+  paddingTop: 10,
+  paddingBottom: insets.bottom + 60 + 8,  // acima da tab bar
+  borderTopWidth: 1,
+  borderTopColor: Colors.border,
+  backgroundColor: Colors.background,
+  gap: 10,
+}
+input: {
+  flex: 1,
+  backgroundColor: Colors.surface,
+  borderRadius: 24,
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  fontSize: 15,
+  fontFamily: "Inter_400Regular",
+  color: Colors.text,
+  minHeight: 42,
+  maxHeight: 120,
+}
+sendButton: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: Colors.primary,
+  alignItems: "center",
+  justifyContent: "center",
+}
+// Ícone: <Ionicons name="send" size={18} color="white" />
+7.12 Quick Action Chips (ações rápidas no chat)
+chip: {
+  backgroundColor: Colors.surface,
+  borderRadius: 20,
+  paddingHorizontal: 14,
+  paddingVertical: 8,
+  borderWidth: 1,
+  borderColor: Colors.border,
+}
+chipText: {
+  fontSize: 13,
+  fontFamily: "Inter_500Medium",
+  color: Colors.text,
+}
+7.13 Exercício / Item de Lista
+exerciseItem: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: Colors.background,
+  borderRadius: 12,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: Colors.border,
+  gap: 14,
+}
+// Numeração do exercício
+exerciseNumber: {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  backgroundColor: Colors.primaryLight,
+  alignItems: "center",
+  justifyContent: "center",
+}
+exerciseNumberText: {
+  fontSize: 13,
+  fontFamily: "Inter_700Bold",
+  color: Colors.primary,
+}
+// Metadados (sets × reps)
+exerciseMeta: {
+  fontSize: 13,
+  fontFamily: "Inter_500Medium",
+  color: Colors.textSecondary,
+}
+7.14 Heatmap de Progresso
+// Cada célula
+const CELL_SIZE = 16
+const CELL_GAP = 3
+cell: {
+  width: CELL_SIZE,
+  height: CELL_SIZE,
+  borderRadius: 4,
+}
+// Estados de cor
+none:      { backgroundColor: Colors.surface }   // "#F0F2F7"
+started:   { backgroundColor: "#90A8FF" }         // Azul claro
+completed: { backgroundColor: Colors.primary }    // "#2B54FF"
+7.15 Overlay de Loading (geração de plano)
+// Cobre a tela toda enquanto a IA trabalha
+overlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: "#09090F",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 999,
+}
+// Anel do ícone central
+iconRing: {
+  width: 90,
+  height: 90,
+  borderRadius: 45,
+  borderWidth: 2,
+  borderColor: Colors.primary,
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 32,
+}
+// Título
+overlayTitle: {
+  fontSize: 24,
+  fontFamily: "Inter_700Bold",
+  color: "#FFFFFF",
+  marginBottom: 8,
+  letterSpacing: 0.5,
+}
+// Subtítulo
+overlaySub: {
+  fontSize: 14,
+  fontFamily: "Inter_400Regular",
+  color: "rgba(255,255,255,0.5)",
+  textAlign: "center",
+  marginBottom: 48,
+}
+// Palavra motivacional animada (fade + scale)
+overlayWord: {
+  fontSize: 52,
+  fontFamily: "Inter_700Bold",
+  color: Colors.primary,
+  letterSpacing: 4,
+  marginBottom: 48,
+}
+// 3 pontos pulsantes embaixo
+dot: {
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: Colors.primary,
+}
+8. ANIMAÇÕES
+8.1 Palavra motivacional (fade + spring)
+// Animated.Value para opacidade e escala
+const wordOpacity = useRef(new Animated.Value(0)).current
+const wordScale   = useRef(new Animated.Value(0.85)).current
+// Entrada da palavra
+Animated.parallel([
+  Animated.timing(wordOpacity, {
+    toValue: 1, duration: 400, useNativeDriver: true
+  }),
+  Animated.spring(wordScale, {
+    toValue: 1, friction: 7, tension: 80, useNativeDriver: true
+  }),
+]).start()
+// Saída após pausa de 700ms
+Animated.timing(wordOpacity, {
+  toValue: 0, duration: 300, useNativeDriver: true
+}).start()
+8.2 Pontos pulsantes (sequência)
+// 3 Animated.Values para os dots
+const [dot1, dot2, dot3] = [
+  useRef(new Animated.Value(0.3)).current,
+  useRef(new Animated.Value(0.3)).current,
+  useRef(new Animated.Value(0.3)).current,
+]
+// Loop sequencial com delay entre cada dot
+const animDot = (dot: Animated.Value, delay: number) =>
+  Animated.loop(
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.timing(dot, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(dot, { toValue: 0.3, duration: 300, useNativeDriver: true }),
+    ])
+  ).start()
+animDot(dot1, 0)
+animDot(dot2, 200)
+animDot(dot3, 400)
+8.3 Feedback tátil (Haptics)
+import * as Haptics from "expo-haptics"
+// Toque leve (enviar mensagem)
+Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+// Toque médio (iniciar ação importante)
+Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+// Toque pesado (iniciar treino)
+Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+// Notificação de sucesso (concluir treino)
+Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+8.4 Pressed state em Pressable
+// Padrão usado em todos os botões e cards clicáveis
+<Pressable
+  style={({ pressed }) => [
+    styles.card,
+    pressed && { opacity: 0.9 }
+  ]}
+>
+9. ÍCONES
+Biblioteca: @expo/vector-icons → Ionicons
+
+Aba / Elemento	Ícone padrão	Ícone ativo
+Home	home-outline	home
+Treino	calendar-outline	calendar
+Coach (central)	sparkles	sparkles
+Progresso	stats-chart-outline	stats-chart
+Perfil	person-outline	person
+Enviar mensagem	send	—
+Voltar	arrow-back	—
+Tempo	time-outline	—
+Exercícios	barbell-outline	—
+IA / Coach	sparkles-outline	—
+Calendário	calendar-outline	—
+Fechar	close	—
+Check	checkmark-circle	—
+Troféu	trophy-outline	—
+Chama (streak)	emoji 🔥	—
+Tamanhos padrão:
+
+tabBar icon:    24px (lateral) / 26px (central)
+hero header:    24-28px
+card inline:    14-16px
+avatar IA:      13px
+10. IMAGENS E MÍDIA
+// Todas as imagens são gerenciadas em constants/images.ts
+// Usando expo-image para performance (caching nativo)
+import { Image } from "expo-image"
+// Padrão de uso
+<Image
+  source={Images.heroHome}
+  style={StyleSheet.absoluteFillObject}
+  contentFit="cover"
+  placeholder={{ color: "#1A1A1A" }}  // cor de placeholder enquanto carrega
+  transition={250}                     // fade de 250ms ao carregar
+/>
+11. TAB BAR CUSTOMIZADA
+// Tab bar absoluta na base da tela, sem texto — apenas ícones
+// O item central (Coach) fica elevado com um círculo azul flutuante
+tabBarContainer: {
+  flexDirection: "row",
+  backgroundColor: Colors.white,
+  borderTopWidth: 1,
+  borderTopColor: Colors.border,
+  height: 60 + insets.bottom,
+  paddingBottom: insets.bottom,
+  position: "absolute",
+  bottom: 0, left: 0, right: 0,
+}
+// Item padrão (lateral)
+tabItem: {
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  paddingTop: 10,
+}
+// Item central (Coach — botão elevado)
+centerTabWrapper: {
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "flex-start",
+  marginTop: -24,             // sobe o botão acima da tab bar
+}
+centerButton: {
+  width: 58,
+  height: 58,
+  borderRadius: 29,
+  backgroundColor: Colors.primary,
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: Colors.primary,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.4,
+  shadowRadius: 10,
+  elevation: 8,
+}
+12. SAFE AREA E WEB
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { Platform } from "react-native"
+const insets = useSafeAreaInsets()
+// Offset do topo da tela
+const webTopInset = Platform.OS === "web" ? 67 : 0
+paddingTop: insets.top + webTopInset + 16
+// Offset do fundo (acima da tab bar)
+const bottomPad = Platform.OS === "web" ? 34 : insets.bottom
+paddingBottom: 60 + bottomPad + 8
+// Regra geral: NUNCA usar valores fixos de padding vertical.
+// Sempre compor com insets.top e insets.bottom.
+13. PADRÃO DE TELA COMPLETO
+Estrutura base de qualquer tela principal:
+
+export default function MyScreen() {
+  const insets = useSafeAreaInsets()
+  const webTopInset = Platform.OS === "web" ? 67 : 0
+  return (
+    <View style={{ flex: 1, backgroundColor: Colors.background }}>
+      {/* Hero com imagem de fundo */}
+      <View style={{ height: 200, backgroundColor: Colors.dark, overflow: "hidden" }}>
+        <Image source={...} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+        <LinearGradient
+          colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.75)"]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={{ paddingTop: insets.top + webTopInset + 16, paddingHorizontal: 20 }}>
+          <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: "white", letterSpacing: 2 }}>
+            VYTA
+          </Text>
+        </View>
+      </View>
+      {/* Conteúdo em scroll */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+      >
+        {/* Seção com título + link */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 14 }}>
+          <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.text }}>
+            Título
+          </Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.primary }}>
+            Ver mais
+          </Text>
+        </View>
+        {/* Cards de conteúdo aqui */}
+      </ScrollView>
+    </View>
+  )
+}
+14. DEPENDÊNCIAS DO DESIGN SYSTEM
+"expo-image":                  "~2.0.1",
+"expo-linear-gradient":        "~14.0.2",
+"expo-haptics":                "~14.0.1",
+"@expo/vector-icons":          "^14.0.2",
+"@expo-google-fonts/inter":    "^0.2.3",
+"react-native-safe-area-context": "4.12.0"
+15. CHECKLIST DE CONSISTÊNCIA
+Ao implementar uma nova tela, verificar:
+
+ Usa useSafeAreaInsets() — sem padding fixo no topo/base
+ Hero com LinearGradient sobre imagem (não cor sólida)
+ fontFamily sempre da família Inter (nunca fontWeight)
+ Cards com borderRadius: 16 e borderColor: Colors.border
+ Botões CTA com borderRadius: 24 e backgroundColor: Colors.primary
+ Pressed state com opacity: 0.9 em todos os Pressable
+ paddingBottom: 100 no ScrollView para não ficar atrás da tab bar
+ Imagens com expo-image + placeholder={{ color: "#1A1A1A" }} + transition={250}
+ Inset web: Platform.OS === "web" ? 67 : 0 no topo
+ Ícones do Ionicons — sem texto nos botões de navegação

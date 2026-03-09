@@ -231,10 +231,10 @@ export default function LoginPage() {
       {/* ══════════════════════════════════════════════
           DESKTOP  (≥ lg) — design system layout
           ══════════════════════════════════════════════ */}
-      <div className="hidden lg:flex min-h-screen">
+      <div className="hidden lg:flex h-screen w-screen overflow-hidden">
 
         {/* ── Left: hero image panel (55%) ── */}
-        <div className="relative w-[55%] flex-shrink-0">
+        <div className="relative w-[55%] flex-shrink-0 h-full">
           <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
           {/* overlay: darker on left for text, fades right */}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,12,20,0.88) 0%, rgba(10,12,20,0.65) 50%, rgba(10,12,20,0.30) 100%)" }} />

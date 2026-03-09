@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, CheckCircle, User, Phone, Users, MapPin, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, User, Phone, Users, MapPin, Loader2, Award } from "lucide-react";
 import type { PersonalDataType } from "./PersonalDataStep";
 import type { ContactInfoType } from "./ContactInfoStep";
 import type { EmergencyContactType } from "./EmergencyContactStep";
@@ -82,6 +82,21 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
               <span className="text-sm text-muted-foreground">E-mail:</span>
               <span className="text-sm font-medium">{formData.email}</span>
             </div>
+            {(formData as any).beltLevel && (
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Faixa:</span>
+                <span className="text-sm font-medium capitalize flex items-center gap-1">
+                  <Award className="w-3.5 h-3.5" />
+                  {(formData as any).beltLevel === 'white' ? 'Branca' :
+                   (formData as any).beltLevel === 'blue' ? 'Azul' :
+                   (formData as any).beltLevel === 'purple' ? 'Roxa' :
+                   (formData as any).beltLevel === 'brown' ? 'Marrom' :
+                   (formData as any).beltLevel === 'black' ? 'Preta' :
+                   (formData as any).beltLevel}
+                  {(formData as any).stripes > 0 && ` · ${(formData as any).stripes} ${(formData as any).stripes === 1 ? 'grau' : 'graus'}`}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

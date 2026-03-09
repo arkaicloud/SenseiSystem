@@ -27,6 +27,11 @@ interface PersonalDataStepProps {
   defaultValues?: Partial<PersonalDataType>;
 }
 
+const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-slate-300 text-sm font-medium";
+const selectContent = "bg-slate-800 border-white/10 text-white";
+const selectItem = "text-white focus:bg-white/10 focus:text-white cursor-pointer";
+
 export default function PersonalDataStep({ onNext, defaultValues }: PersonalDataStepProps) {
   const form = useForm<PersonalDataType>({
     resolver: zodResolver(personalDataSchema),
@@ -75,36 +80,30 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
     }
   };
 
-  const handleSubmit = (data: PersonalDataType) => {
-    onNext(data);
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="flex justify-center mb-3">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-primary" />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onNext)} className="flex flex-col pb-6">
+        {/* Step header */}
+        <div className="px-6 pt-8 pb-6">
+          <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+            <User className="w-6 h-6 text-[#2B54FF]" />
           </div>
+          <h2 className="text-2xl font-bold text-white">Dados Pessoais</h2>
+          <p className="text-sm text-slate-400 mt-1">Vamos começar com suas informações básicas</p>
         </div>
-        <h3 className="text-xl font-semibold mb-2">Dados Pessoais</h3>
-        <p className="text-sm text-muted-foreground px-4">
-          Vamos começar com suas informações básicas
-        </p>
-      </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+        {/* Fields */}
+        <div className="px-6 space-y-5">
           <FormField
             control={form.control}
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Nome *</FormLabel>
+                <FormLabel className={labelCls}>Nome *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seu primeiro nome" {...field} className="h-12 text-base" />
+                  <Input placeholder="Seu primeiro nome" {...field} className={inputCls} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
@@ -114,11 +113,11 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Sobrenome *</FormLabel>
+                <FormLabel className={labelCls}>Sobrenome *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seu sobrenome" {...field} className="h-12 text-base" />
+                  <Input placeholder="Seu sobrenome" {...field} className={inputCls} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
@@ -128,124 +127,106 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             name="birthDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Data de Nascimento *</FormLabel>
+                <FormLabel className={labelCls}>Data de Nascimento *</FormLabel>
                 <FormControl>
                   <Input
                     type="date"
                     {...field}
                     max={new Date().toISOString().split('T')[0]}
-                    className="h-12 text-base"
+                    className={`${inputCls} [color-scheme:dark]`}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
 
-
-          {/* Belt Level */}
           <FormField
             control={form.control}
             name="beltLevel"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Faixa Atual *</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={loadingBelts}
-                >
+                <FormLabel className={labelCls}>Faixa Atual *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange} disabled={loadingBelts}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
-                      <SelectValue placeholder={loadingBelts ? "Carregando faixas..." : "Selecione sua faixa"} />
+                    <SelectTrigger className={`${inputCls} data-[placeholder]:text-slate-500`}>
+                      <SelectValue placeholder={loadingBelts ? "Carregando..." : "Selecione sua faixa"} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    {loadingBelts ? (
-                      <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                    ) : beltOptions.length > 0 ? (
-                      beltOptions.map((belt) => (
-                        <SelectItem key={belt.value} value={belt.value}>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="inline-block w-4 h-4 rounded-sm border border-black/10 flex-shrink-0"
-                              style={{ backgroundColor: belt.color }}
-                            />
-                            {belt.label}
-                          </div>
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <>
-                        <SelectItem value="white">Faixa Branca</SelectItem>
-                        <SelectItem value="blue">Faixa Azul</SelectItem>
-                        <SelectItem value="purple">Faixa Roxa</SelectItem>
-                        <SelectItem value="brown">Faixa Marrom</SelectItem>
-                        <SelectItem value="black">Faixa Preta</SelectItem>
-                      </>
-                    )}
+                  <SelectContent className={selectContent}>
+                    {beltOptions.length > 0
+                      ? beltOptions.map((belt) => (
+                          <SelectItem key={belt.value} value={belt.value} className={selectItem}>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block w-4 h-4 rounded-sm border border-black/10 shrink-0" style={{ backgroundColor: belt.color }} />
+                              {belt.label}
+                            </div>
+                          </SelectItem>
+                        ))
+                      : (
+                        <>
+                          <SelectItem value="white" className={selectItem}>Faixa Branca</SelectItem>
+                          <SelectItem value="blue" className={selectItem}>Faixa Azul</SelectItem>
+                          <SelectItem value="purple" className={selectItem}>Faixa Roxa</SelectItem>
+                          <SelectItem value="brown" className={selectItem}>Faixa Marrom</SelectItem>
+                          <SelectItem value="black" className={selectItem}>Faixa Preta</SelectItem>
+                        </>
+                      )}
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
 
-          {/* Stripes */}
           <FormField
             control={form.control}
             name="stripes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Grau (Listras)</FormLabel>
-                <Select
-                  value={field.value.toString()}
-                  onValueChange={(val) => field.onChange(Number(val))}
-                >
+                <FormLabel className={labelCls}>Grau (Listras)</FormLabel>
+                <Select value={field.value.toString()} onValueChange={(v) => field.onChange(Number(v))}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className={inputCls}>
                       <SelectValue placeholder="Selecione o grau" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className={selectContent}>
                     {[0, 1, 2, 3, 4].map((n) => (
-                      <SelectItem key={n} value={n.toString()}>
+                      <SelectItem key={n} value={n.toString()} className={selectItem}>
                         {n === 0 ? "Sem grau" : `${n} ${n === 1 ? "grau" : "graus"}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Iniciante? Mantenha "Sem grau" com Faixa Branca.
-                </p>
-                <FormMessage />
+                <p className="text-xs text-slate-500 mt-1">Iniciante? Mantenha "Sem grau" com Faixa Branca.</p>
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
 
-          {/* Payment Plan */}
           {paymentPlans.length > 0 && (
             <FormField
               control={form.control}
               name="paymentPlanId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium">Plano de Mensalidade</FormLabel>
+                  <FormLabel className={labelCls}>Plano de Mensalidade</FormLabel>
                   <Select value={field.value || ""} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="h-12 text-base">
+                      <SelectTrigger className={inputCls}>
                         <SelectValue placeholder="Selecione o plano" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className={selectContent}>
                       {paymentPlans.map((plan) => (
-                        <SelectItem key={plan.id} value={plan.id.toString()}>
+                        <SelectItem key={plan.id} value={plan.id.toString()} className={selectItem}>
                           {plan.name} — {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.amount / 100)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -253,44 +234,40 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
 
           {/* Coupon */}
           <div className="space-y-2">
-            <label className="text-base font-medium">Cupom de desconto (opcional)</label>
+            <label className={labelCls}>Cupom de desconto (opcional)</label>
             <div className="flex gap-2">
               <Input
-                placeholder=""
+                placeholder="CÓDIGO"
                 value={couponInput}
-                onChange={(e) => {
-                  setCouponInput(e.target.value.toUpperCase());
-                  if (couponStatus) setCouponStatus(null);
-                }}
-                className="h-12 text-base font-mono uppercase flex-1"
+                onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); if (couponStatus) setCouponStatus(null); }}
+                className={`${inputCls} font-mono uppercase flex-1`}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyCoupon())}
               />
               <Button
                 type="button"
-                variant="outline"
                 onClick={applyCoupon}
                 disabled={couponLoading || !couponInput.trim()}
-                className="h-12 gap-1 shrink-0"
+                className="h-14 px-4 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl shrink-0"
               >
                 {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
-                Aplicar
+                <span className="ml-1.5 text-sm">Aplicar</span>
               </Button>
             </div>
             {couponStatus && (
               couponStatus.valid ? (
-                <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                <div className="flex items-start gap-2 rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                   {couponStatus.discountPercent === 100
                     ? <GraduationCap className="w-4 h-4 mt-0.5 shrink-0" />
                     : <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />}
                   <div>
                     {couponStatus.discountPercent === 100
-                      ? <p className="font-semibold">Bolsista — acesso gratuito aplicado!</p>
+                      ? <p className="font-semibold">Bolsista — acesso gratuito!</p>
                       : <p className="font-semibold">{couponStatus.discountPercent}% de desconto aplicado!</p>}
                     {couponStatus.description && <p className="text-xs mt-0.5 opacity-75">{couponStatus.description}</p>}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                   <XCircle className="w-4 h-4 shrink-0" />
                   <span>{couponStatus.message}</span>
                 </div>
@@ -298,14 +275,15 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             )}
           </div>
 
-          <div className="pt-4">
-            <Button type="submit" className="w-full h-12 text-base font-medium">
+          {/* Submit button */}
+          <div className="pt-2 pb-2">
+            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
               Continuar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </form>
+    </Form>
   );
 }

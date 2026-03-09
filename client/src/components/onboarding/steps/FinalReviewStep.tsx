@@ -1,8 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, CheckCircle, User, Phone, Users, MapPin, Loader2, Award } from "lucide-react";
 import type { PersonalDataType } from "./PersonalDataStep";
 import type { ContactInfoType } from "./ContactInfoStep";
@@ -19,202 +16,125 @@ interface FinalReviewStepProps {
   isSubmitting?: boolean;
 }
 
+const BELT_LABEL: Record<string, string> = {
+  white: "Branca", blue: "Azul", purple: "Roxa", brown: "Marrom", black: "Preta",
+};
+
+function ReviewSection({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+        <Icon className="w-4 h-4 text-[#2B54FF]" />
+        <span className="text-sm font-semibold text-white">{title}</span>
+      </div>
+      <div className="px-4 py-3 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between items-start gap-3">
+      <span className="text-xs text-slate-500 shrink-0">{label}</span>
+      <span className="text-xs text-slate-200 text-right font-medium">{value}</span>
+    </div>
+  );
+}
+
 export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, isSubmitting = false }: FinalReviewStepProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async () => {
-    if (onNext) {
-      onNext(formData);
-      return;
-    }
-    
+    if (onNext) { onNext(formData); return; }
     if (onSubmit) {
       setIsProcessing(true);
-      try {
-        await onSubmit(formData);
-      } finally {
-        setIsProcessing(false);
-      }
+      try { await onSubmit(formData); } finally { setIsProcessing(false); }
     }
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
-  };
-
+  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString("pt-BR") : "";
   const loading = isSubmitting || isProcessing;
 
+  const beltLabel = BELT_LABEL[(formData as any)?.beltLevel] ?? (formData as any)?.beltLevel;
+  const stripes = (formData as any)?.stripes ?? 0;
+  const beltStr = stripes > 0 ? `${beltLabel} · ${stripes} ${stripes === 1 ? "grau" : "graus"}` : beltLabel;
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="flex justify-center mb-3">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-6 h-6 text-green-600" />
-          </div>
+    <div className="flex flex-col pb-6">
+      <div className="px-6 pt-8 pb-6">
+        <div className="w-12 h-12 rounded-2xl bg-green-500/20 border border-green-500/40 flex items-center justify-center mb-4">
+          <CheckCircle className="w-6 h-6 text-green-400" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">Revisão Final</h3>
-        <p className="text-sm text-muted-foreground px-4">
-          Confira se todas as informações estão corretas antes de finalizar
-        </p>
+        <h2 className="text-2xl font-bold text-white">Revisão Final</h2>
+        <p className="text-sm text-slate-400 mt-1">Confira se todas as informações estão corretas</p>
       </div>
 
-      <div className="space-y-4">
-        {/* Dados Pessoais */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-base">
-              <User className="w-4 h-4" />
-              <span>Dados Pessoais</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Nome:</span>
-              <span className="text-sm font-medium">{formData.firstName} {formData.lastName}</span>
+      <div className="px-6 space-y-3">
+        <ReviewSection icon={User} title="Dados Pessoais">
+          <Row label="Nome" value={`${formData.firstName} ${formData.lastName}`} />
+          <Row label="Nascimento" value={formatDate(formData.birthDate)} />
+          <Row label="E-mail" value={formData.email} />
+          {beltLabel && (
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-xs text-slate-500 shrink-0">Faixa</span>
+              <span className="text-xs text-slate-200 font-medium flex items-center gap-1">
+                <Award className="w-3 h-3" />{beltStr}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Nascimento:</span>
-              <span className="text-sm font-medium">{formatDate(formData.birthDate)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">E-mail:</span>
-              <span className="text-sm font-medium">{formData.email}</span>
-            </div>
-            {(formData as any).beltLevel && (
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Faixa:</span>
-                <span className="text-sm font-medium capitalize flex items-center gap-1">
-                  <Award className="w-3.5 h-3.5" />
-                  {(formData as any).beltLevel === 'white' ? 'Branca' :
-                   (formData as any).beltLevel === 'blue' ? 'Azul' :
-                   (formData as any).beltLevel === 'purple' ? 'Roxa' :
-                   (formData as any).beltLevel === 'brown' ? 'Marrom' :
-                   (formData as any).beltLevel === 'black' ? 'Preta' :
-                   (formData as any).beltLevel}
-                  {(formData as any).stripes > 0 && ` · ${(formData as any).stripes} ${(formData as any).stripes === 1 ? 'grau' : 'graus'}`}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Contato */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-base">
-              <Phone className="w-4 h-4" />
-              <span>Contato</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Telefone:</span>
-              <span className="text-sm font-medium">{formData.phone}</span>
-            </div>
-            {formData.whatsapp && (
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">WhatsApp:</span>
-                <span className="text-sm font-medium">{formData.whatsapp}</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Contato de Emergência */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-base">
-              <Users className="w-4 h-4" />
-              <span>Emergência</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Nome:</span>
-              <span className="text-sm font-medium">{formData.emergencyContact}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Parentesco:</span>
-              <span className="text-sm font-medium">{formData.relationship}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Telefone:</span>
-              <span className="text-sm font-medium">{formData.emergencyPhone}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Endereço */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center space-x-2 text-base">
-              <MapPin className="w-4 h-4" />
-              <span>Endereço</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">CEP:</span>
-              <span className="text-sm font-medium">{formData.zipCode}</span>
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Endereço:</span>
-              <div className="font-medium mt-1">
-                {formData.street}, {formData.number}
-                {formData.complement && `, ${formData.complement}`}
-              </div>
-              <div className="font-medium">
-                {formData.neighborhood} - {formData.city}/{formData.state}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Separator />
-
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <div className="flex items-start space-x-3">
-          <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-blue-900 mb-1">Quase lá!</h4>
-            <p className="text-sm text-blue-700">
-              Ao finalizar, você receberá um e-mail de confirmação e poderá acessar sua conta na academia.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col space-y-3 pt-4">
-        <Button 
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full h-12 text-base font-medium"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Finalizando...
-            </>
-          ) : (
-            <>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              {onNext ? "Continuar" : "Finalizar Cadastro"}
-            </>
           )}
-        </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onBack}
-          disabled={loading}
-          className="w-full h-12 text-base font-medium"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
+        </ReviewSection>
+
+        <ReviewSection icon={Phone} title="Contato">
+          <Row label="WhatsApp" value={formData.phone} />
+        </ReviewSection>
+
+        <ReviewSection icon={Users} title="Emergência">
+          <Row label="Nome" value={formData.emergencyContact} />
+          <Row label="Parentesco" value={formData.relationship} />
+          <Row label="Telefone" value={formData.emergencyPhone} />
+        </ReviewSection>
+
+        <ReviewSection icon={MapPin} title="Endereço">
+          <Row label="CEP" value={formData.zipCode} />
+          <Row label="Endereço" value={`${formData.street}, ${formData.number}${formData.complement ? `, ${formData.complement}` : ""}`} />
+          <Row label="Bairro / Cidade" value={`${formData.neighborhood} — ${formData.city}/${formData.state}`} />
+        </ReviewSection>
+
+        {/* Confirmation note */}
+        <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/30 rounded-2xl p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-[#2B54FF] mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-white mb-0.5">Quase lá!</p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Ao avançar, você irá assinar eletronicamente e finalizar o cadastro. Você receberá um e-mail quando for aprovado.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-2 space-y-3">
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base"
+          >
+            {loading ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...</>
+            ) : (
+              <><CheckCircle className="w-4 h-4 mr-2" />{onNext ? "Confirmar e Continuar" : "Finalizar Cadastro"}</>
+            )}
+          </Button>
+          <Button
+            type="button"
+            onClick={onBack}
+            disabled={loading}
+            className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+          </Button>
+        </div>
       </div>
     </div>
   );

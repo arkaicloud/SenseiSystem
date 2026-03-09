@@ -25,52 +25,36 @@ interface AddressStepProps {
   defaultValues?: Partial<AddressType>;
 }
 
+const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-slate-300 text-sm font-medium";
+
 export default function AddressStep({ onNext, onBack, defaultValues }: AddressStepProps) {
   const [isLoadingCep, setIsLoadingCep] = useState(false);
-  
+
   const form = useForm<AddressType>({
     resolver: zodResolver(addressSchema),
-    defaultValues: {
-      zipCode: "",
-      street: "",
-      number: "",
-      complement: "",
-      neighborhood: "",
-      city: "",
-      state: "",
-      ...defaultValues,
-    },
+    defaultValues: { zipCode: "", street: "", number: "", complement: "", neighborhood: "", city: "", state: "", ...defaultValues },
   });
 
-  const handleSubmit = (data: AddressType) => {
-    onNext(data);
-  };
-
   const formatCep = (value: string) => {
-    const numbers = value.replace(/\D/g, "");
-    if (numbers.length <= 5) {
-      return numbers;
-    } else {
-      return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
-    }
+    const n = value.replace(/\D/g, "");
+    return n.length <= 5 ? n : `${n.slice(0, 5)}-${n.slice(5, 8)}`;
   };
 
   const handleCepBlur = async (cep: string) => {
-    const cleanCep = cep.replace(/\D/g, "");
-    if (cleanCep.length === 8) {
+    const clean = cep.replace(/\D/g, "");
+    if (clean.length === 8) {
       setIsLoadingCep(true);
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await response.json();
-        
+        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+        const data = await res.json();
         if (!data.erro) {
           form.setValue("street", data.logradouro || "");
           form.setValue("neighborhood", data.bairro || "");
           form.setValue("city", data.localidade || "");
           form.setValue("state", data.uf || "");
         }
-      } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
+      } catch {
       } finally {
         setIsLoadingCep(false);
       }
@@ -78,48 +62,38 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="flex justify-center mb-3">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <MapPin className="w-6 h-6 text-primary" />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onNext)} className="flex flex-col pb-6">
+        <div className="px-6 pt-8 pb-6">
+          <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+            <MapPin className="w-6 h-6 text-[#2B54FF]" />
           </div>
+          <h2 className="text-2xl font-bold text-white">Endereço</h2>
+          <p className="text-sm text-slate-400 mt-1">Onde você mora? Precisamos do seu endereço completo</p>
         </div>
-        <h3 className="text-xl font-semibold mb-2">Endereço</h3>
-        <p className="text-sm text-muted-foreground px-4">
-          Onde você mora? Precisamos do seu endereço completo
-        </p>
-      </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+        <div className="px-6 space-y-5">
           <FormField
             control={form.control}
             name="zipCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">CEP *</FormLabel>
+                <FormLabel className={labelCls}>CEP *</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Input 
-                      placeholder="00000-000" 
+                    <Input
+                      placeholder="00000-000"
                       {...field}
-                      onChange={(e) => {
-                        const formatted = formatCep(e.target.value);
-                        field.onChange(formatted);
-                      }}
+                      onChange={(e) => field.onChange(formatCep(e.target.value))}
                       onBlur={(e) => handleCepBlur(e.target.value)}
-                      className="h-12 text-base pr-10"
+                      className={`${inputCls} pr-10`}
+                      inputMode="numeric"
                     />
-                    {isLoadingCep && (
-                      <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-4" />
-                    )}
+                    {isLoadingCep && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-5 text-slate-400" />}
                   </div>
                 </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Digite o CEP para preencher automaticamente o endereço
-                </div>
-                <FormMessage />
+                <p className="text-xs text-slate-500 mt-1">Digite o CEP para preencher o endereço automaticamente</p>
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
@@ -129,52 +103,39 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
             name="street"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Logradouro *</FormLabel>
+                <FormLabel className={labelCls}>Logradouro *</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="Nome da rua, avenida..." 
-                    {...field} 
-                    className="h-12 text-base"
-                  />
+                  <Input placeholder="Nome da rua, avenida..." {...field} className={inputCls} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
               name="number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium">Número *</FormLabel>
+                  <FormLabel className={labelCls}>Número *</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="123" 
-                      {...field} 
-                      className="h-12 text-base"
-                    />
+                    <Input placeholder="123" {...field} className={inputCls} inputMode="numeric" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="complement"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium">Complemento</FormLabel>
+                  <FormLabel className={labelCls}>Complemento</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Apto, casa..." 
-                      {...field} 
-                      className="h-12 text-base"
-                    />
+                    <Input placeholder="Apto, casa..." {...field} className={inputCls} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -185,78 +146,60 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
             name="neighborhood"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-medium">Bairro *</FormLabel>
+                <FormLabel className={labelCls}>Bairro *</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="Nome do bairro" 
-                    {...field} 
-                    className="h-12 text-base"
-                  />
+                  <Input placeholder="Nome do bairro" {...field} className={inputCls} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="city"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-medium">Cidade *</FormLabel>
+                <FormItem className="col-span-2">
+                  <FormLabel className={labelCls}>Cidade *</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Cidade" 
-                      {...field} 
-                      className="h-12 text-base"
-                    />
+                    <Input placeholder="Cidade" {...field} className={inputCls} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="state"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium">Estado *</FormLabel>
+                  <FormLabel className={labelCls}>UF *</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="SP" 
+                    <Input
+                      placeholder="SP"
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e.target.value.toUpperCase());
-                      }}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                       maxLength={2}
-                      className="h-12 text-base"
+                      className={inputCls}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
           </div>
 
-          <div className="flex flex-col space-y-3 pt-4">
-            <Button type="submit" className="w-full h-12 text-base font-medium">
-              Continuar
-              <ArrowRight className="w-4 h-4 ml-2" />
+          <div className="pt-2 space-y-3">
+            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
+              Continuar <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onBack}
-              className="w-full h-12 text-base font-medium"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
           </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </form>
+    </Form>
   );
 }

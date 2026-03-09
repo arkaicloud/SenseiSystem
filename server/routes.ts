@@ -39,6 +39,14 @@ import { businessRules } from "./config/businessRules";
 import fs from "fs";
 import crypto from "crypto";
 
+function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let password = '';
+  for (let i = 0; i < 8; i++) {
+    password += chars[crypto.randomInt(0, chars.length)];
+  }
+  return password;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
@@ -1295,14 +1303,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Send welcome email after successful approval
+      // Generate temp password, update user and send welcome email
       try {
+        const tempPassword = generateTempPassword();
+        const hashedTempPassword = await hashPassword(tempPassword);
+        await storage.updateUser(user.id, {
+          password: hashedTempPassword,
+          mustChangePassword: true,
+        });
         await emailService.sendWelcomeEmail(
           user.email,
           `${user.firstName} ${user.lastName}`,
-          `${user.firstName} ${user.lastName}`
+          `${user.firstName} ${user.lastName}`,
+          tempPassword
         );
-        console.log(`✅ Welcome email sent to: ${user.email}`);
+        console.log(`✅ Welcome email with temp password sent to: ${user.email}`);
       } catch (emailError) {
         console.error(`❌ Error sending welcome email to ${user.email}:`, emailError);
         // Don't fail the approval if email sending fails
@@ -1697,7 +1712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: studentData.lastName,
         username: username,
         email: studentData.email,
-        password: studentData.password || 'temporaryPassword123',
+        password: await hashPassword(generateTempPassword()),
         role: "student" as const,
         active: true, // Active by default during registration
         phone: studentData.phone || null,
@@ -5797,7 +5812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: studentData.lastName,
         username: username,
         email: studentData.email,
-        password: studentData.password || 'temporaryPassword123',
+        password: await hashPassword(generateTempPassword()),
         role: "student" as const,
         active: false, // Pending approval
         phone: studentData.phone || null,
@@ -7337,8 +7352,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Criptografar a nova senha
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-      // Atualizar a senha no banco
-      await storage.updateUser(user.id, { password: hashedNewPassword });
+      // Atualizar a senha no banco e limpar flag de troca obrigatória
+      await storage.updateUser(user.id, { 
+        password: hashedNewPassword,
+        mustChangePassword: false,
+      });
 
       console.log(`✅ Password updated successfully for user ${requestUser.id}`);
 

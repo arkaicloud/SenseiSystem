@@ -73,14 +73,13 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       }
       // Generate username from email
       const username = email.split('@')[0].toLowerCase();
-      const password = "123456"; // Default password - user can change later
       
       // Create clean data object - extract only primitive values to avoid circular references
       const cleanData = {
         firstName: data.firstName || "",
         lastName: data.lastName || "",
         email: (data as any).email || "",
-        password: (data as any).password || "123456",
+        password: undefined,
         username: username,
         role: "student" as const,
         phone: data.phone || "",

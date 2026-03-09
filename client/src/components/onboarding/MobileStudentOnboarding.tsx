@@ -1,12 +1,8 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
-// Steps
 import PersonalDataStep, { type PersonalDataType } from "./steps/PersonalDataStep";
 import ContactInfoStep, { type ContactInfoType } from "./steps/ContactInfoStep";
 import EmergencyContactStep, { type EmergencyContactType } from "./steps/EmergencyContactStep";
@@ -29,7 +25,6 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { register, error } = useAuth();
 
   const totalSteps = 8;
   const progressPercentage = (currentStep / totalSteps) * 100;
@@ -87,24 +82,23 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
     handleFinalSubmit(data);
   };
 
-  const handleFinalSubmit = async (medData?: MedicalCertData) => {
+  const handleFinalSubmit = async (_medData?: MedicalCertData) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       const data = formData as CompleteFormData;
       const email = (data as any).email || "";
-      if (!email) {
-        throw new Error("Email não encontrado. Por favor, volte e preencha novamente.");
-      }
+      if (!email) throw new Error("Email não encontrado. Por favor, volte e preencha novamente.");
+
       const username = email.split('@')[0].toLowerCase();
 
       const cleanData = {
         firstName: data.firstName || "",
         lastName: data.lastName || "",
-        email: (data as any).email || "",
+        email,
         password: undefined,
-        username: username,
+        username,
         role: "student" as const,
         phone: data.phone || "",
         sex: (data as any).sex || null,
@@ -139,7 +133,6 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         hasOtherHealthProblem: (data as any).hasOtherHealthProblem || "no",
         takeMedication: (data as any).takeMedication || "no",
         doctorRecommendation: (data as any).doctorRecommendation || "no",
-        // Signature fields
         signatureData: signatureData?.signatureData || null,
         signatureType: signatureData?.signatureType || null,
         signatureTimestamp: signatureData?.signatureTimestamp || null,
@@ -154,14 +147,13 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha no cadastro');
+        const err = await response.json();
+        throw new Error(err.message || 'Falha no cadastro');
       }
 
       setSuccess(true);
-      setTimeout(() => onSuccess(), 2000);
+      setTimeout(() => onSuccess(), 2500);
     } catch (err: any) {
-      console.error("Registration failed:", err);
       setSubmitError(err?.message || "Erro ao finalizar cadastro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
@@ -172,27 +164,18 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const stepTitles = [
-    "Dados Pessoais",
-    "Contato",
-    "Emergência",
-    "Endereço",
-    "Revisão",
-    "Aptidão Física",
-    "Assinatura",
-    "Atestado Médico",
-  ];
+  const stepTitles = ["Dados Pessoais", "Contato", "Emergência", "Endereço", "Revisão", "Saúde", "Assinatura", "Atestado Médico"];
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md mx-auto text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-6">
+        <div className="text-center">
+          <div className="w-20 h-20 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-green-400" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Cadastro Realizado!</h3>
-          <p className="text-muted-foreground">
-            Seu cadastro foi enviado para aprovação. Você receberá um e-mail quando for aprovado.
+          <h3 className="text-2xl font-bold text-white mb-2">Cadastro Enviado!</h3>
+          <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+            Seu cadastro foi enviado para aprovação. Você receberá um e-mail com as credenciais de acesso quando for aprovado.
           </p>
         </div>
       </div>
@@ -200,27 +183,34 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header with progress */}
-      <div className="bg-white border-b px-4 pt-4 pb-3 sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-2">
-          <button onClick={currentStep === 1 ? onBack : goBack} className="text-gray-500 hover:text-gray-700">
-            <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-white/10 px-4 pt-safe-top pt-3 pb-3">
+        <div className="flex items-center justify-between mb-2.5">
+          <button
+            onClick={currentStep === 1 ? onBack : goBack}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:bg-white/10 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-gray-500 font-medium">
-            {currentStep} de {totalSteps}
-          </span>
-          <div className="w-5" />
+          <div className="text-center">
+            <p className="text-xs text-slate-400 font-medium">{stepTitles[currentStep - 1]}</p>
+          </div>
+          <div className="text-xs text-slate-500 font-medium w-9 text-right">
+            {currentStep}/{totalSteps}
+          </div>
         </div>
-        <Progress value={progressPercentage} className="h-1.5" />
-        <p className="text-xs text-gray-500 mt-1.5 text-center">{stepTitles[currentStep - 1]}</p>
+        <Progress
+          value={progressPercentage}
+          className="h-1 bg-white/10 [&>div]:bg-[#2B54FF]"
+        />
       </div>
 
       {/* Error */}
       {submitError && (
-        <div className="mx-4 mt-4">
-          <Alert variant="destructive">
-            <AlertDescription>{submitError}</AlertDescription>
+        <div className="px-4 pt-4">
+          <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
+            <AlertDescription className="text-red-400">{submitError}</AlertDescription>
           </Alert>
         </div>
       )}
@@ -228,38 +218,22 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       {/* Steps */}
       <div className="flex-1">
         {currentStep === 1 && (
-          <PersonalDataStep
-            onNext={handlePersonalData}
-            onBack={onBack}
-            defaultValues={formData}
-          />
+          <PersonalDataStep onNext={handlePersonalData} defaultValues={formData} />
         )}
         {currentStep === 2 && (
-          <ContactInfoStep
-            onNext={handleContactInfo}
-            onBack={goBack}
-            defaultValues={formData}
-          />
+          <ContactInfoStep onNext={handleContactInfo} onBack={goBack} defaultValues={formData} />
         )}
         {currentStep === 3 && (
-          <EmergencyContactStep
-            onNext={handleEmergencyContact}
-            onBack={goBack}
-            defaultValues={formData}
-          />
+          <EmergencyContactStep onNext={handleEmergencyContact} onBack={goBack} defaultValues={formData} />
         )}
         {currentStep === 4 && (
-          <AddressStep
-            onNext={handleAddress}
-            onBack={goBack}
-            defaultValues={formData}
-          />
+          <AddressStep onNext={handleAddress} onBack={goBack} defaultValues={formData} />
         )}
         {currentStep === 5 && (
           <FinalReviewStep
             onNext={handleFinalReview}
             onBack={goBack}
-            defaultValues={formData as CompleteFormData}
+            formData={formData as CompleteFormData}
           />
         )}
         {currentStep === 6 && (
@@ -271,11 +245,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
           />
         )}
         {currentStep === 7 && (
-          <ElectronicSignatureStep
-            onNext={handleSignature}
-            onBack={goBack}
-            isMobile={true}
-          />
+          <ElectronicSignatureStep onNext={handleSignature} onBack={goBack} isMobile={true} />
         )}
         {currentStep === 8 && (
           <MedicalCertStep
@@ -287,14 +257,13 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         )}
       </div>
 
+      {/* Loading overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <Card className="mx-4 max-w-sm w-full">
-            <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 border-4 border-[#2B54FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm font-medium">Finalizando cadastro...</p>
-            </CardContent>
-          </Card>
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center">
+            <div className="w-12 h-12 border-2 border-[#2B54FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-white text-sm font-medium">Finalizando cadastro...</p>
+          </div>
         </div>
       )}
     </div>

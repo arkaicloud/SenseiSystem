@@ -5872,6 +5872,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
         preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5,
         couponCode: studentData.couponCode || null,
+        // Signature fields
+        signatureData: studentData.signatureData || null,
+        signatureType: studentData.signatureType || null,
+        signatureTimestamp: studentData.signatureTimestamp ? new Date(studentData.signatureTimestamp) : null,
+        signatureLatitude: studentData.signatureLatitude || null,
+        signatureLongitude: studentData.signatureLongitude || null,
+        // Medical certificate status based on health answers
+        requiresMedicalCertificate: [
+          studentData.hasHeartProblem, studentData.hasChestPain,
+          studentData.hasBreathingProblem, studentData.hasBloodPressureProblem,
+          studentData.hasBoneProblem, studentData.hasOtherHealthProblem,
+          studentData.takeMedication, studentData.doctorRecommendation,
+        ].some((v) => v === "yes"),
+        medicalCertificateStatus: 'PENDING' as const,
       });
 
       // Create student record

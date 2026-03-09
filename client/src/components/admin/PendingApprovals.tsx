@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle, FileWarning } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -25,6 +25,8 @@ interface PendingUser {
     financialResponsibleCpf?: string;
     financialResponsibleRelation?: string;
     paymentPlanId?: number;
+    requiresMedicalCertificate?: boolean;
+    medicalCertificateStatus?: string;
   };
 }
 
@@ -255,6 +257,18 @@ export default function PendingApprovals() {
                     <span className="text-sm">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
                   </div>
                 </div>
+
+                {/* Atestado médico pendente */}
+                {user.student?.requiresMedicalCertificate && user.student?.medicalCertificateStatus === 'PENDING' && (
+                  <Alert className="border-orange-300 bg-orange-50">
+                    <FileWarning className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      <strong>Atestado médico pendente:</strong> Este aluno possui respostas de saúde
+                      que requerem atestado médico. O atestado ainda não foi enviado. Você pode aprovar
+                      a matrícula, mas o aluno precisa enviar o atestado pelo seu perfil.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {/* Validação de dados */}
                 {!validation.isValid && (

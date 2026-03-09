@@ -152,6 +152,12 @@ export const students = pgTable("students", {
   healthTermsAgreedAt: timestamp("health_terms_agreed_at"),
   // Data de matrícula específica do aluno (diferente da data de cadastro no sistema)
   enrollmentDate: timestamp("enrollment_date").defaultNow(),
+  // Assinatura eletrônica
+  signatureData: text("signature_data"), // base64 PNG da assinatura
+  signatureType: text("signature_type"), // 'drawn' | 'typed'
+  signatureTimestamp: timestamp("signature_timestamp"),
+  signatureLatitude: text("signature_latitude"),
+  signatureLongitude: text("signature_longitude"),
 });
 
 // School Configuration table (tenant information)

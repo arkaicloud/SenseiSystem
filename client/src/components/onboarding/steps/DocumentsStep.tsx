@@ -2,254 +2,293 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, ArrowRight, FileText, Upload, CheckCircle, FileIcon, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, CheckCircle, Upload, X, Clock, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ElectronicSignatureStep, { type SignatureData } from "./ElectronicSignatureStep";
 
 interface DocumentsStepProps {
   onNext: (data?: any) => void;
   onBack: () => void;
   defaultValues?: any;
   isSubmitting?: boolean;
+  requiresMedical?: boolean;
 }
 
-interface DocumentInfo {
-  id: string;
-  name: string;
-  type: string;
-  required: boolean;
-  completed: boolean;
-  uploadedAt?: Date;
-}
+export default function DocumentsStep({
+  onNext,
+  onBack,
+  isSubmitting = false,
+  requiresMedical = false,
+}: DocumentsStepProps) {
+  const [signatureData, setSignatureData] = useState<SignatureData | null>(null);
+  const [medicalFile, setMedicalFile] = useState<File | null>(null);
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
 
-export default function DocumentsStep({ onNext, onBack, isSubmitting = false }: DocumentsStepProps) {
-  const [documents, setDocuments] = useState<DocumentInfo[]>([
-    {
-      id: '1',
-      name: 'Questionário de Saúde',
-      type: 'health_form',
-      required: true,
-      completed: true,
-      uploadedAt: new Date()
-    },
-    {
-      id: '2',
-      name: 'RG ou CNH',
-      type: 'identification',
-      required: true,
-      completed: false
-    },
-    {
-      id: '3',
-      name: 'Atestado Médico',
-      type: 'medical_certificate',
-      required: false,
-      completed: false
-    }
-  ]);
+  const handleSignatureDone = (data: SignatureData) => {
+    setSignatureData(data);
+    setShowSignaturePad(false);
+  };
 
-  const [uploadedFiles, setUploadedFiles] = useState<{[key: string]: File}>({});
-
-  const requiredCompleted = documents.filter(doc => doc.required && doc.completed).length;
-  const totalRequired = documents.filter(doc => doc.required).length;
-  const allRequiredCompleted = requiredCompleted === totalRequired;
-
-  const handleFileUpload = (documentId: string, file: File) => {
-    // Validar tipo de arquivo
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (!allowedTypes.includes(file.type)) {
-      alert('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.');
+  const handleMedicalFile = (f: File) => {
+    const allowed = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    if (!allowed.includes(f.type)) {
+      alert("Tipo não permitido. Use PDF, JPG ou PNG.");
       return;
     }
-
-    // Validar tamanho (máximo 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      alert('Arquivo muito grande. Tamanho máximo: 10MB.');
+    if (f.size > 10 * 1024 * 1024) {
+      alert("Arquivo muito grande. Máximo: 10MB.");
       return;
     }
-
-    console.log(`Uploading file for document ${documentId}:`, file);
-    
-    // Salvar arquivo no estado
-    setUploadedFiles(prev => ({
-      ...prev,
-      [documentId]: file
-    }));
-
-    // Marcar documento como completo
-    setDocuments(prev => prev.map(doc => 
-      doc.id === documentId 
-        ? { ...doc, completed: true, uploadedAt: new Date() }
-        : doc
-    ));
+    setMedicalFile(f);
   };
 
-  const handleDownload = (documentId: string) => {
-    // Implementar download de documento
-    console.log(`Downloading document ${documentId}`);
+  const handleNext = () => {
+    onNext({
+      signatureData: signatureData?.signatureData ?? null,
+      signatureType: signatureData?.signatureType ?? null,
+      signatureTimestamp: signatureData?.signatureTimestamp ?? null,
+      signatureLatitude: signatureData?.signatureLatitude ?? null,
+      signatureLongitude: signatureData?.signatureLongitude ?? null,
+      medicalCertFile: medicalFile,
+      medicalCertSkipped: medicalFile === null,
+    });
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const canFinish = signatureData !== null;
+
+  if (showSignaturePad) {
+    return (
+      <ElectronicSignatureStep
+        onNext={handleSignatureDone}
+        onBack={() => setShowSignaturePad(false)}
+        isMobile={false}
+      />
+    );
+  }
+
+  const completedCount = [true, signatureData !== null].filter(Boolean).length;
 
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold">Documentos</h3>
+        <h3 className="text-lg font-semibold">Documentos e Assinatura</h3>
         <p className="text-sm text-muted-foreground">
-          Envie os documentos necessários para completar sua matrícula.
+          Confirme sua matrícula com assinatura eletrônica.
         </p>
       </div>
 
-      {/* Progress Summary */}
+      {/* Progress */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <h4 className="font-medium">Progresso dos Documentos</h4>
+              <h4 className="font-medium">Progresso</h4>
               <p className="text-sm text-muted-foreground">
-                {requiredCompleted} de {totalRequired} documentos obrigatórios enviados
+                {completedCount} de 2 etapas obrigatórias concluídas
               </p>
             </div>
-            <div className="flex space-x-2">
-              <Badge variant={allRequiredCompleted ? "default" : "secondary"}>
-                {allRequiredCompleted ? "Completo" : "Pendente"}
-              </Badge>
-            </div>
+            <Badge variant={canFinish ? "default" : "secondary"}>
+              {canFinish ? "Pronto para finalizar" : "Pendente"}
+            </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* Documents List */}
-      <div className="space-y-4">
-        {documents.map((document) => (
-          <Card key={document.id} className={`transition-all ${document.completed ? 'border-green-200 bg-green-50/30' : ''}`}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5" />
-                  <span className="text-base">{document.name}</span>
-                  {document.required && (
-                    <Badge variant="outline" className="text-xs">
-                      Obrigatório
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  {document.completed ? (
-                    <Badge variant="default" className="bg-green-600">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Enviado
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">
-                      Pendente
-                    </Badge>
-                  )}
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {document.completed ? (
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <FileIcon className="h-4 w-4" />
-                        <span>Enviado em {document.uploadedAt?.toLocaleDateString('pt-BR')}</span>
-                      </div>
-                      {uploadedFiles[document.id] && (
-                        <div className="text-xs text-blue-600">
-                          {uploadedFiles[document.id].name} ({formatFileSize(uploadedFiles[document.id].size)})
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (uploadedFiles[document.id]) {
-                          // Download do arquivo que foi feito upload
-                          const url = URL.createObjectURL(uploadedFiles[document.id]);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = uploadedFiles[document.id].name;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        } else {
-                          handleDownload(document.id);
-                        }
-                      }}
-                      className="text-xs"
-                    >
-                      <Download className="h-3 w-3 mr-1" />
-                      Baixar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    {document.type === 'identification' && "Envie uma foto nítida do seu RG ou CNH."}
-                    {document.type === 'medical_certificate' && "Atestado médico para atividades físicas (opcional)."}
-                  </p>
-                  
-                  <div className="relative border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center hover:border-muted-foreground/40 transition-colors">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Clique para enviar ou arraste o arquivo</p>
-                      <p className="text-xs text-muted-foreground">
-                        PDF, JPG, PNG até 10MB
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleFileUpload(document.id, file);
-                        }
-                        // Limpar input para permitir re-upload
-                        e.target.value = '';
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* 1 - Health form (already done) */}
+      <Card className="border-green-200 bg-green-50/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Questionário de Saúde
+              <Badge variant="outline" className="text-xs">Obrigatório</Badge>
+            </div>
+            <Badge className="bg-green-600">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Enviado
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Enviado em {new Date().toLocaleDateString("pt-BR")}
+          </p>
+        </CardContent>
+      </Card>
 
-      {/* Success Message */}
-      {allRequiredCompleted && (
+      {/* 2 - Electronic Signature */}
+      <Card className={signatureData ? "border-green-200 bg-green-50/30" : ""}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Assinatura Eletrônica
+              <Badge variant="outline" className="text-xs">Obrigatório</Badge>
+            </div>
+            {signatureData ? (
+              <Badge className="bg-green-600">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Assinado
+              </Badge>
+            ) : (
+              <Badge variant="secondary">Pendente</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {signatureData ? (
+            <div className="space-y-3">
+              <div className="border rounded-lg overflow-hidden bg-white">
+                <img
+                  src={signatureData.signatureData}
+                  alt="Assinatura"
+                  className="w-full max-h-24 object-contain p-2"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>
+                  Tipo: {signatureData.signatureType === "drawn" ? "Desenhada" : "Digitada"} •{" "}
+                  {new Date(signatureData.signatureTimestamp).toLocaleString("pt-BR")}
+                </p>
+                {signatureData.signatureLatitude && (
+                  <p>
+                    Localização: {signatureData.signatureLatitude},{" "}
+                    {signatureData.signatureLongitude}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSignaturePad(true)}
+                className="text-xs"
+              >
+                Refazer assinatura
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Assine digitalmente para confirmar os termos de matrícula. Você pode desenhar
+                com o mouse ou digitar seu nome.
+              </p>
+              <Button onClick={() => setShowSignaturePad(true)} className="w-full sm:w-auto">
+                Assinar agora
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3 - Medical Certificate (optional) */}
+      <Card className={medicalFile ? "border-green-200 bg-green-50/30" : ""}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Atestado Médico
+              {requiresMedical ? (
+                <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                  Requerido
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs">Opcional</Badge>
+              )}
+            </div>
+            {medicalFile ? (
+              <Badge className="bg-green-600">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Enviado
+              </Badge>
+            ) : (
+              <Badge variant="secondary">
+                <Clock className="h-3 w-3 mr-1" />
+                Pendente
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {requiresMedical && !medicalFile && (
+            <Alert className="mb-3 border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800 text-sm">
+                Suas respostas de saúde indicam necessidade de atestado. Você pode enviar agora
+                ou após a matrícula pelo seu perfil.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {medicalFile ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                <span>{medicalFile.name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMedicalFile(null)}
+                className="text-red-500 hover:text-red-600 h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Atestado médico para atividades físicas.{" "}
+                <span className="font-medium">Pode ser enviado depois no seu perfil.</span>
+              </p>
+              <label className="block">
+                <div className="relative border-2 border-dashed border-muted-foreground/20 rounded-lg p-5 text-center hover:border-muted-foreground/40 transition-colors cursor-pointer">
+                  <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm font-medium">Clique para enviar</p>
+                  <p className="text-xs text-muted-foreground">PDF, JPG, PNG até 10MB</p>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleMedicalFile(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              </label>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {canFinish && (
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            Excelente! Todos os documentos obrigatórios foram enviados. Você pode prosseguir para finalizar sua matrícula.
+            Ótimo! Você assinou o termo de matrícula. Clique em "Finalizar Matrícula" para
+            concluir.
+            {!medicalFile && requiresMedical && (
+              <span className="block mt-1 text-orange-700 font-medium">
+                O atestado médico está pendente e pode ser enviado depois.
+              </span>
+            )}
           </AlertDescription>
         </Alert>
       )}
 
       {/* Navigation */}
-      <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 pt-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
         <Button type="button" variant="outline" onClick={onBack} className="w-full sm:w-auto">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <Button 
-          onClick={onNext} 
-          disabled={!allRequiredCompleted}
-          className="w-full sm:w-auto min-w-[140px]"
+        <Button
+          onClick={handleNext}
+          disabled={!canFinish || isSubmitting}
+          className="w-full sm:w-auto min-w-[160px]"
         >
-          Finalizar Matrícula
+          {isSubmitting ? "Finalizando..." : "Finalizar Matrícula"}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

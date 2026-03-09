@@ -1,230 +1,210 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import PaymentPlanForm from "@/components/payments/PaymentPlanForm";
-import { useTranslation } from "react-i18next";
 import { centsToBRL } from "@shared/money";
+import { Plus, Search, Pencil, Trash2, CreditCard } from "lucide-react";
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  weekly:     "Semanal",
+  biweekly:   "Quinzenal",
+  monthly:    "Mensal",
+  quarterly:  "Trimestral",
+  semiannual: "Semestral",
+  annual:     "Anual",
+};
 
 const PaymentPlans: React.FC = () => {
   const { toast } = useToast();
-  const { t } = useTranslation();
-  const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch payment plans
   const { data, isLoading } = useQuery({
-    queryKey: ['/api/payment-plans'],
+    queryKey: ["/api/payment-plans"],
     refetchInterval: false,
   });
 
-  // Add payment plan mutation
-  const { mutate: addPlan, isPending: isAddingPlan } = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest('POST', '/api/payment-plans', data);
+  const { mutate: addPlan, isPending: isAdding } = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await apiRequest("POST", "/api/payment-plans", payload);
       return res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Plano adicionado com sucesso",
-      });
-      setIsAddPlanOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/payment-plans'] });
+      toast({ title: "Plano criado com sucesso!" });
+      setIsAddOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/payment-plans"] });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao adicionar plano: ${error}`,
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erro ao criar plano", variant: "destructive" });
     },
   });
 
-  // Update payment plan mutation
-  const { mutate: updatePlan, isPending: isUpdatingPlan } = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: any }) => {
-      const res = await apiRequest('PUT', `/api/payment-plans/${id}`, data);
+  const { mutate: updatePlan, isPending: isUpdating } = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest("PUT", `/api/payment-plans/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Plano atualizado com sucesso",
-      });
+      toast({ title: "Plano atualizado com sucesso!" });
       setSelectedPlan(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/payment-plans'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payment-plans"] });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao atualizar plano: ${error}`,
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erro ao atualizar plano", variant: "destructive" });
     },
   });
 
-  // Delete payment plan mutation
-  const { mutate: deletePlan, isPending: isDeletingPlan } = useMutation({
+  const { mutate: deletePlan, isPending: isDeleting } = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('DELETE', `/api/payment-plans/${id}`);
+      const res = await apiRequest("DELETE", `/api/payment-plans/${id}`);
       return res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Plano excluído com sucesso",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/payment-plans'] });
+      toast({ title: "Plano excluído com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/payment-plans"] });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao excluir plano: ${error}`,
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Erro ao excluir plano", variant: "destructive" });
     },
   });
 
   const plans = (data as any)?.plans || [];
-
-  // Filter plans by search query
   const filteredPlans = plans.filter((plan: any) => {
-    const planName = plan.name.toLowerCase();
-    const planDescription = (plan.description || '').toLowerCase();
-    const query = searchQuery.toLowerCase();
-
-    return planName.includes(query) || planDescription.includes(query);
+    const q = searchQuery.toLowerCase();
+    return plan.name.toLowerCase().includes(q) || (plan.description || "").toLowerCase().includes(q);
   });
 
-  const handleAddPlan = (data: any) => {
-    addPlan(data);
-  };
-
-  const handleUpdatePlan = (data: any) => {
-    if (selectedPlan) {
-      updatePlan({ id: selectedPlan.id, data });
-    }
-  };
-
-  const handleDeletePlan = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este plano?")) {
+  const handleDelete = (id: number) => {
+    if (confirm("Tem certeza que deseja excluir este plano? Esta ação não pode ser desfeita.")) {
       deletePlan(id);
     }
   };
 
-  // Usando a função de formatação de moeda brasileira
-
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-montserrat font-bold text-2xl text-primary">Planos de Pagamento</h1>
-          <p className="text-gray-600">Gerencie os planos de pagamento</p>
+          <h1 className="text-2xl font-bold text-foreground">Planos de Pagamento</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Gerencie os planos disponíveis para os alunos</p>
         </div>
-        <div className="mt-4 md:mt-0 flex">
-          <div className="relative mr-2">
+
+        <div className="flex items-center gap-2">
+          {/* Busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
-              placeholder="Buscar planos..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Buscar plano..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 w-48"
             />
-            <div className="absolute left-3 top-2.5 text-gray-400">
-              <span className="material-icons text-sm">search</span>
-            </div>
           </div>
-          <Dialog open={isAddPlanOpen} onOpenChange={setIsAddPlanOpen}>
+
+          {/* Novo plano */}
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
-                <span className="material-icons mr-1 text-sm">add</span>
-                Novo Plano
+              <Button size="sm" className="gap-2">
+                <Plus className="w-4 h-4" />
+                Novo plano
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Adicionar Novo Plano</DialogTitle>
-              <PaymentPlanForm 
-                onSubmit={handleAddPlan}
-                isLoading={isAddingPlan}
+            <DialogContent className="sm:max-w-[520px]">
+              <DialogHeader>
+                <DialogTitle>Criar novo plano</DialogTitle>
+              </DialogHeader>
+              <PaymentPlanForm
+                onSubmit={addPlan}
+                onCancel={() => setIsAddOpen(false)}
+                isLoading={isAdding}
               />
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
+      {/* ── Content ── */}
       <Card>
-        <CardHeader>
-          <CardTitle>Planos de Pagamento</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8">Carregando planos...</div>
+            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
+              Carregando planos...
+            </div>
           ) : filteredPlans.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              {searchQuery ? "Nenhum plano encontrado para a busca" : "Nenhum plano encontrado"}
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <CreditCard className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {searchQuery ? `Nenhum plano encontrado para "${searchQuery}"` : "Nenhum plano cadastrado ainda."}
+              </p>
+              {!searchQuery && (
+                <Button size="sm" variant="outline" onClick={() => setIsAddOpen(true)} className="gap-2 mt-1">
+                  <Plus className="w-4 h-4" />
+                  Criar primeiro plano
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nome
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Valor
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Frequência
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Descrição
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nome</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valor</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Frequência</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Descrição</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {filteredPlans.map((plan: any) => (
-                    <tr key={plan.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{plan.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{centsToBRL(plan.amount)}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {plan.frequency === 'monthly' ? 'Mensal' : 
-                           plan.frequency === 'quarterly' ? 'Trimestral' : 
-                           plan.frequency === 'yearly' ? 'Anual' : plan.frequency}
-                        </div>
+                    <tr key={plan.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-medium text-foreground">{plan.name}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">{plan.description || '-'}</div>
+                        <span className="text-sm font-semibold text-foreground">{centsToBRL(plan.amount)}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => setSelectedPlan(plan)}
-                          className="text-primary hover:text-primary-dark mr-3"
-                        >
-                          <span className="material-icons text-sm">edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeletePlan(plan.id)}
-                          className="text-red-500 hover:text-red-700"
-                          disabled={isDeletingPlan}
-                        >
-                          <span className="material-icons text-sm">delete</span>
-                        </button>
+                      <td className="px-6 py-4">
+                        <Badge variant="secondary" className="text-xs">
+                          {FREQUENCY_LABELS[plan.frequency] || plan.frequency}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground max-w-xs truncate block">
+                          {plan.description || <span className="text-muted-foreground/40 italic">—</span>}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 h-8 text-xs"
+                            onClick={() => setSelectedPlan(plan)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 h-8 text-xs text-destructive hover:text-destructive hover:border-destructive/50"
+                            onClick={() => handleDelete(plan.id)}
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Excluir
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -235,20 +215,23 @@ const PaymentPlans: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Plan Dialog */}
+      {/* ── Edit Dialog ── */}
       {selectedPlan && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedPlan(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Editar Plano</DialogTitle>
-            <PaymentPlanForm 
+          <DialogContent className="sm:max-w-[520px]">
+            <DialogHeader>
+              <DialogTitle>Editar plano</DialogTitle>
+            </DialogHeader>
+            <PaymentPlanForm
               defaultValues={{
                 name: selectedPlan.name,
                 amount: selectedPlan.amount,
                 frequency: selectedPlan.frequency,
-                description: selectedPlan.description || '',
+                description: selectedPlan.description || "",
               }}
-              onSubmit={handleUpdatePlan}
-              isLoading={isUpdatingPlan}
+              onSubmit={(data) => updatePlan({ id: selectedPlan.id, data })}
+              onCancel={() => setSelectedPlan(null)}
+              isLoading={isUpdating}
             />
           </DialogContent>
         </Dialog>

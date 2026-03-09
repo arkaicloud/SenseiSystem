@@ -2,7 +2,6 @@ import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPaymentPlanSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,14 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
 import { brlToCents, centsToBRL, formatBRLInput } from "@shared/money";
 
-// Form schema with price input as string (will be converted to cents)
 const paymentPlanFormSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório" }),
   amount: z.string().min(1, { message: "Valor é obrigatório" }),
-  frequency: z.string(),
+  frequency: z.string().min(1, { message: "Frequência é obrigatória" }),
   description: z.string().optional(),
 });
 
@@ -37,36 +35,48 @@ type PaymentPlanFormValues = z.infer<typeof paymentPlanFormSchema>;
 interface PaymentPlanFormProps {
   defaultValues?: Partial<{
     name: string;
-    amount: number; // This comes in cents from API
+    amount: number;
     frequency: string;
     description: string;
   }>;
   onSubmit: (data: { name: string; amount: number; frequency: string; description?: string }) => void;
+  onCancel?: () => void;
   isLoading: boolean;
 }
+
+const FREQUENCIES = [
+  { value: "weekly",     label: "Semanal" },
+  { value: "biweekly",  label: "Quinzenal" },
+  { value: "monthly",   label: "Mensal" },
+  { value: "quarterly", label: "Trimestral" },
+  { value: "semiannual",label: "Semestral" },
+  { value: "annual",    label: "Anual" },
+];
 
 const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
   defaultValues,
   onSubmit,
+  onCancel,
   isLoading,
 }) => {
-  const { t } = useTranslation();
-  
+  const isEditing = !!defaultValues?.name;
+
   const form = useForm<PaymentPlanFormValues>({
     resolver: zodResolver(paymentPlanFormSchema),
     defaultValues: {
       name: defaultValues?.name || "",
-      amount: defaultValues?.amount ? centsToBRL(defaultValues.amount).replace('R$', '').trim() : "",
+      amount: defaultValues?.amount
+        ? centsToBRL(defaultValues.amount).replace("R$", "").trim()
+        : "",
       frequency: defaultValues?.frequency || "monthly",
       description: defaultValues?.description || "",
     },
   });
 
   const handleFormSubmit = (data: PaymentPlanFormValues) => {
-    const amountInCents = brlToCents(data.amount);
     onSubmit({
       name: data.name,
-      amount: amountInCents,
+      amount: brlToCents(data.amount),
       frequency: data.frequency,
       description: data.description,
     });
@@ -74,101 +84,108 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-5">
+
+        {/* Nome */}
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('plan_name')}</FormLabel>
+              <FormLabel>Nome do plano</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder="Ex: Mensal Básico" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('plan_amount')}</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-gray-500">R$</span>
-                  <Input 
-                    type="text" 
-                    className="pl-9" 
-                    {...field}
-                    placeholder="110,00"
-                    onChange={(e) => {
-                      const formatted = formatBRLInput(e.target.value);
-                      field.onChange(formatted);
-                    }}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="frequency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('plan_frequency')}</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+        {/* Valor + Frequência — lado a lado */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('select_frequency')} />
-                  </SelectTrigger>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">R$</span>
+                    <Input
+                      type="text"
+                      className="pl-9"
+                      placeholder="110,00"
+                      {...field}
+                      onChange={(e) => field.onChange(formatBRLInput(e.target.value))}
+                    />
+                  </div>
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="weekly">{t('weekly')}</SelectItem>
-                  <SelectItem value="biweekly">{t('biweekly')}</SelectItem>
-                  <SelectItem value="monthly">{t('monthly')}</SelectItem>
-                  <SelectItem value="quarterly">{t('quarterly')}</SelectItem>
-                  <SelectItem value="semiannual">{t('semiannual')}</SelectItem>
-                  <SelectItem value="annual">{t('annual')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
+          <FormField
+            control={form.control}
+            name="frequency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Frequência</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {FREQUENCIES.map(({ value, label }) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Descrição */}
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('plan_description')}</FormLabel>
+              <FormLabel>Descrição <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea
+                  placeholder="Descreva o que está incluído neste plano..."
+                  rows={3}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="submit" disabled={isLoading}>
+        {/* Botões */}
+        <div className="flex justify-end gap-3 pt-2">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+              Cancelar
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading} className="min-w-[130px]">
             {isLoading ? (
               <>
-                <span className="mr-2">{t('saving')}</span>
-                <span className="material-icons animate-spin text-sm">refresh</span>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
               </>
-            ) : defaultValues?.name ? (
-              t('update_plan')
+            ) : isEditing ? (
+              "Salvar alterações"
             ) : (
-              t('create_plan')
+              "Criar plano"
             )}
           </Button>
         </div>

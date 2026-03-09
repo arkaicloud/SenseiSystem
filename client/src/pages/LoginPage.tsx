@@ -189,30 +189,37 @@ export default function LoginPage() {
     <div className="min-h-screen w-full font-['Inter',sans-serif]">
 
       {/* ══════════════════════════════════════════════
-          MOBILE  (< lg) — fullscreen hero, unchanged
+          MOBILE  (< lg) — estilo VYTA
           ══════════════════════════════════════════════ */}
       <div className="lg:hidden fixed inset-0 overflow-hidden">
-        <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/85" />
+        <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        {/* overlay: topo levemente escuro → base bem escura para legibilidade do form */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.75) 65%, rgba(0,0,0,0.92) 100%)" }} />
 
         <div className="relative z-10 flex flex-col h-full">
-          <div className="flex-shrink-0 px-7 pt-12">
+
+          {/* ── TOPO: nome da escola (estilo "VYTA") ── */}
+          <div className="flex-shrink-0 px-6 pt-12">
             {logoUrl && logoUrl !== 'default' ? (
-              <img src={logoUrl} alt={schoolName} className="h-10 w-auto object-contain drop-shadow-lg mb-4"
+              <img src={logoUrl} alt={schoolName} className="h-10 w-auto object-contain drop-shadow-lg"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             ) : (
-              <p className="text-xl font-black text-white tracking-tight drop-shadow-lg mb-4">{schoolName}</p>
+              <p className="text-[1.75rem] font-black text-white tracking-tight leading-none drop-shadow-lg">{schoolName}</p>
             )}
-            <h1 className="text-[1.85rem] leading-[1.15] font-black text-white drop-shadow-lg mb-1">
-              Sua jornada<br />começa aqui.
-            </h1>
-            <p className="text-white/65 text-sm font-medium">{welcomeMsg}</p>
           </div>
 
-          <div className="flex-1 min-h-[60px] max-h-[160px]" />
+          {/* ── MEIO: espaço flexível (imagem aparece) ── */}
+          <div className="flex-1" />
 
+          {/* ── BASE: headline + form + footer ── */}
           <div className="flex-shrink-0 px-6 pb-8">
+            <h1 className="text-[2.1rem] leading-[1.15] font-black text-white drop-shadow-md mb-1">
+              Sua jornada<br />começa aqui.
+            </h1>
+            <p className="text-white/55 text-sm mb-6">{welcomeMsg}</p>
+
             {MobileForm}
+
             <SocialIcons className="mt-5 justify-center" />
             <p className="text-center text-white/25 text-[11px] mt-3">
               SenseiSystem · Todos os direitos reservados.

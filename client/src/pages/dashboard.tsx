@@ -79,7 +79,7 @@ const Dashboard: React.FC = () => {
     totalStudents: statsData.totalStudents || 0,
     classesThisMonth: statsData.totalClasses || 0,
     avgAttendance: statsData.averageAttendance ? `${Math.round(statsData.averageAttendance * 100)}%` : "0%",
-    revenue: statsData.revenueThisMonth ? `R$ ${statsData.revenueThisMonth.toLocaleString('pt-BR')}` : "R$ 0"
+    revenue: statsData.revenueThisMonth ? centsToBRL(statsData.revenueThisMonth) : "R$ 0,00"
   } : {
     totalStudents: 0,
     classesThisMonth: 0,

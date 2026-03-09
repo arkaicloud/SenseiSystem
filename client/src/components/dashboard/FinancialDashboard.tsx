@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { formatCurrencyBRL } from "@/lib/utils";
+import { formatMoney } from "@/lib/formatters";
 import { TrendingUp, TrendingDown, Clock, AlertTriangle, RefreshCw, Users } from "lucide-react";
 
 interface FinancialMetric {
@@ -31,7 +31,7 @@ export function FinancialDashboard() {
   const metrics = [
     {
       title: "Recebido no Mês",
-      value: formatCurrencyBRL(stats.totalReceived),
+      value: formatMoney(stats.totalReceived),
       change: `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}%`,
       changeType: stats.revenueGrowth >= 0 ? 'positive' : 'negative',
       description: "vs mês anterior",
@@ -41,7 +41,7 @@ export function FinancialDashboard() {
     },
     {
       title: "Valores Pendentes",
-      value: formatCurrencyBRL(stats.pendingAmount),
+      value: formatMoney(stats.pendingAmount),
       change: null,
       changeType: 'neutral',
       description: "A receber este mês",
@@ -51,7 +51,7 @@ export function FinancialDashboard() {
     },
     {
       title: "Valores em Atraso",
-      value: formatCurrencyBRL(stats.overdueAmount),
+      value: formatMoney(stats.overdueAmount),
       change: null,
       changeType: 'negative',
       description: "Requer atenção",
@@ -61,7 +61,7 @@ export function FinancialDashboard() {
     },
     {
       title: "Receita Recorrente",
-      value: formatCurrencyBRL(stats.monthlyRecurring),
+      value: formatMoney(stats.monthlyRecurring),
       change: `${stats.totalStudents} alunos`,
       changeType: 'positive',
       description: "Estimativa mensal",

@@ -271,7 +271,7 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             <label className="text-base font-medium">Cupom de desconto (opcional)</label>
             <div className="flex gap-2">
               <Input
-                placeholder="Ex: BOLSA2026"
+                placeholder="Informe seu cupom de desconto"
                 value={couponInput}
                 onChange={(e) => {
                   setCouponInput(e.target.value.toUpperCase());

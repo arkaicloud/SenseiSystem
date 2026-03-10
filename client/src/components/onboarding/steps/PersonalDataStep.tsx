@@ -185,53 +185,47 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                 }
               };
 
+              const nativeSel = "h-14 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
+
               return (
                 <FormItem>
                   <FormLabel className={labelCls}>Data de Nascimento *</FormLabel>
                   <div className="grid grid-cols-3 gap-2">
-                    <Select
+                    <select
                       value={day || ""}
-                      onValueChange={(v) => update(v, month || "", year || "")}
+                      onChange={(e) => update(e.target.value, month || "", year || "")}
+                      className={nativeSel}
                     >
-                      <SelectTrigger className={`${inputCls} text-sm`}>
-                        <SelectValue placeholder="Dia" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContent}>
-                        {days.map((d) => (
-                          <SelectItem key={d} value={d} className={selectItem}>{d}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
+                      <option value="" disabled>Dia</option>
+                      {days.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                    <select
                       value={month || ""}
-                      onValueChange={(v) => {
+                      onChange={(e) => {
+                        const v = e.target.value;
                         const maxDay = new Date(Number(year || 2000), Number(v), 0).getDate();
                         const safeDay = day && Number(day) > maxDay ? String(maxDay).padStart(2, "0") : day || "";
                         update(safeDay, v, year || "");
                       }}
+                      className={nativeSel}
                     >
-                      <SelectTrigger className={`${inputCls} text-sm`}>
-                        <SelectValue placeholder="Mês" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContent}>
-                        {months.map((m) => (
-                          <SelectItem key={m.value} value={m.value} className={selectItem}>{m.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
+                      <option value="" disabled>Mês</option>
+                      {months.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))}
+                    </select>
+                    <select
                       value={year || ""}
-                      onValueChange={(v) => update(day || "", month || "", v)}
+                      onChange={(e) => update(day || "", month || "", e.target.value)}
+                      className={nativeSel}
                     >
-                      <SelectTrigger className={`${inputCls} text-sm`}>
-                        <SelectValue placeholder="Ano" />
-                      </SelectTrigger>
-                      <SelectContent className={selectContent}>
-                        {years.map((y) => (
-                          <SelectItem key={y} value={String(y)} className={selectItem}>{y}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="" disabled>Ano</option>
+                      {years.map((y) => (
+                        <option key={y} value={String(y)}>{y}</option>
+                      ))}
+                    </select>
                   </div>
                   <FormMessage className="text-red-400 text-xs" />
                 </FormItem>

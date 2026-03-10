@@ -10,10 +10,39 @@ import { ArrowRight, User, Ticket, CheckCircle, XCircle, Loader2, GraduationCap 
 import { useBeltLevels } from "@/hooks/useBeltLevels";
 import { useQuery } from "@tanstack/react-query";
 
+// CPF validation (módulo 11)
+const validateCPF = (input: string): boolean => {
+  const cpf = (input || "").replace(/\D+/g, "");
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+  const calcDV = (base: string, start: number) => {
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) sum += Number(base[i]) * (start - i);
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  const dv1 = calcDV(cpf.slice(0, 9), 10);
+  const dv2 = calcDV(cpf.slice(0, 9) + String(dv1), 11);
+  return cpf.endsWith(`${dv1}${dv2}`);
+};
+
+const formatCPF = (value: string): string => {
+  const n = value.replace(/\D/g, "").slice(0, 11);
+  return n
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+};
+
 const personalDataSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório"),
   lastName: z.string().min(1, "Sobrenome é obrigatório"),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
+  sex: z.enum(["M", "F"], { errorMap: () => ({ message: "Selecione o gênero" }) }),
+  cpf: z.string()
+    .min(1, "CPF é obrigatório")
+    .refine(validateCPF, "CPF inválido — verifique os dígitos"),
+  rg: z.string().min(1, "RG é obrigatório"),
   beltLevel: z.string().min(1, "Selecione a faixa"),
   stripes: z.number().min(0).max(4),
   paymentPlanId: z.string().optional(),
@@ -39,6 +68,9 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
       firstName: "",
       lastName: "",
       birthDate: "",
+      sex: "M",
+      cpf: "",
+      rg: "",
       beltLevel: "white",
       stripes: 0,
       paymentPlanId: "",
@@ -92,55 +124,124 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
           <p className="text-sm text-slate-400 mt-1">Vamos começar com suas informações básicas</p>
         </div>
 
-        {/* Fields */}
         <div className="px-6 space-y-5">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className={labelCls}>Nome *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Seu primeiro nome" {...field} className={inputCls} />
-                </FormControl>
-                <FormMessage className="text-red-400" />
-              </FormItem>
-            )}
-          />
+          {/* Nome + Sobrenome */}
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={labelCls}>Nome *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nome" {...field} className={inputCls} />
+                  </FormControl>
+                  <FormMessage className="text-red-400 text-xs" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={labelCls}>Sobrenome *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Sobrenome" {...field} className={inputCls} />
+                  </FormControl>
+                  <FormMessage className="text-red-400 text-xs" />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className={labelCls}>Sobrenome *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Seu sobrenome" {...field} className={inputCls} />
-                </FormControl>
-                <FormMessage className="text-red-400" />
-              </FormItem>
-            )}
-          />
+          {/* Nascimento + Gênero */}
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={labelCls}>Nascimento *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      max={new Date().toISOString().split('T')[0]}
+                      className={`${inputCls} [color-scheme:dark]`}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-400 text-xs" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="sex"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={labelCls}>Gênero *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className={inputCls}>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className={selectContent}>
+                      <SelectItem value="M" className={selectItem}>Masculino</SelectItem>
+                      <SelectItem value="F" className={selectItem}>Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-red-400 text-xs" />
+                </FormItem>
+              )}
+            />
+          </div>
 
+          {/* CPF */}
           <FormField
             control={form.control}
-            name="birthDate"
+            name="cpf"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className={labelCls}>Data de Nascimento *</FormLabel>
+                <FormLabel className={labelCls}>CPF *</FormLabel>
                 <FormControl>
                   <Input
-                    type="date"
+                    placeholder="000.000.000-00"
                     {...field}
-                    max={new Date().toISOString().split('T')[0]}
-                    className={`${inputCls} [color-scheme:dark]`}
+                    value={formatCPF(field.value || "")}
+                    onChange={(e) => field.onChange(formatCPF(e.target.value))}
+                    maxLength={14}
+                    inputMode="numeric"
+                    className={inputCls}
                   />
                 </FormControl>
-                <FormMessage className="text-red-400" />
+                <FormMessage className="text-red-400 text-xs" />
               </FormItem>
             )}
           />
 
+          {/* RG */}
+          <FormField
+            control={form.control}
+            name="rg"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className={labelCls}>RG *</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="00.000.000-0"
+                    {...field}
+                    inputMode="numeric"
+                    className={inputCls}
+                  />
+                </FormControl>
+                <FormMessage className="text-red-400 text-xs" />
+              </FormItem>
+            )}
+          />
+
+          {/* Faixa */}
           <FormField
             control={form.control}
             name="beltLevel"
@@ -149,7 +250,7 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                 <FormLabel className={labelCls}>Faixa Atual *</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange} disabled={loadingBelts}>
                   <FormControl>
-                    <SelectTrigger className={`${inputCls} data-[placeholder]:text-slate-500`}>
+                    <SelectTrigger className={inputCls}>
                       <SelectValue placeholder={loadingBelts ? "Carregando..." : "Selecione sua faixa"} />
                     </SelectTrigger>
                   </FormControl>
@@ -174,11 +275,12 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                       )}
                   </SelectContent>
                 </Select>
-                <FormMessage className="text-red-400" />
+                <FormMessage className="text-red-400 text-xs" />
               </FormItem>
             )}
           />
 
+          {/* Grau */}
           <FormField
             control={form.control}
             name="stripes"
@@ -200,11 +302,12 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-slate-500 mt-1">Iniciante? Mantenha "Sem grau" com Faixa Branca.</p>
-                <FormMessage className="text-red-400" />
+                <FormMessage className="text-red-400 text-xs" />
               </FormItem>
             )}
           />
 
+          {/* Plano de Mensalidade */}
           {paymentPlans.length > 0 && (
             <FormField
               control={form.control}
@@ -226,13 +329,13 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
           )}
 
-          {/* Coupon */}
+          {/* Cupom */}
           <div className="space-y-2">
             <label className={labelCls}>Cupom de desconto (opcional)</label>
             <div className="flex gap-2">
@@ -275,7 +378,6 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             )}
           </div>
 
-          {/* Submit button */}
           <div className="pt-2 pb-2">
             <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
               Continuar

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -60,6 +60,59 @@ const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placehold
 const labelCls = "text-slate-300 text-sm font-medium";
 const selectContent = "bg-slate-800 border-white/10 text-white";
 const selectItem = "text-white focus:bg-white/10 focus:text-white cursor-pointer";
+const nativeSel = "h-14 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
+
+// Componente com estado local para evitar reset ao selecionar parcialmente
+function BirthDatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const initParts = value ? value.split("-") : ["", "", ""];
+  const [selYear, setSelYear] = useState(initParts[0] || "");
+  const [selMonth, setSelMonth] = useState(initParts[1] || "");
+  const [selDay, setSelDay] = useState(initParts[2] || "");
+
+  useEffect(() => {
+    if (selDay && selMonth && selYear) {
+      onChange(`${selYear}-${selMonth}-${selDay}`);
+    }
+  }, [selDay, selMonth, selYear]);
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => currentYear - 3 - i);
+  const months = [
+    { value: "01", label: "Janeiro" }, { value: "02", label: "Fevereiro" },
+    { value: "03", label: "Março" }, { value: "04", label: "Abril" },
+    { value: "05", label: "Maio" }, { value: "06", label: "Junho" },
+    { value: "07", label: "Julho" }, { value: "08", label: "Agosto" },
+    { value: "09", label: "Setembro" }, { value: "10", label: "Outubro" },
+    { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
+  ];
+  const daysInMonth = selYear && selMonth
+    ? new Date(Number(selYear), Number(selMonth), 0).getDate()
+    : 31;
+  const days = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, "0"));
+
+  const handleMonthChange = (v: string) => {
+    const maxDay = new Date(Number(selYear || 2000), Number(v), 0).getDate();
+    if (selDay && Number(selDay) > maxDay) setSelDay(String(maxDay).padStart(2, "0"));
+    setSelMonth(v);
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <select value={selDay} onChange={(e) => setSelDay(e.target.value)} className={nativeSel}>
+        <option value="" disabled>Dia</option>
+        {days.map((d) => <option key={d} value={d}>{d}</option>)}
+      </select>
+      <select value={selMonth} onChange={(e) => handleMonthChange(e.target.value)} className={nativeSel}>
+        <option value="" disabled>Mês</option>
+        {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+      </select>
+      <select value={selYear} onChange={(e) => setSelYear(e.target.value)} className={nativeSel}>
+        <option value="" disabled>Ano</option>
+        {years.map((y) => <option key={y} value={String(y)}>{y}</option>)}
+      </select>
+    </div>
+  );
+}
 
 export default function PersonalDataStep({ onNext, defaultValues }: PersonalDataStepProps) {
   const form = useForm<PersonalDataType>({

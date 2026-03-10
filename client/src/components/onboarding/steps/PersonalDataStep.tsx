@@ -155,48 +155,112 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
             />
           </div>
 
-          {/* Nascimento + Gênero */}
-          <div className="grid grid-cols-2 gap-3">
-            <FormField
-              control={form.control}
-              name="birthDate"
-              render={({ field }) => (
+          {/* Nascimento */}
+          <FormField
+            control={form.control}
+            name="birthDate"
+            render={({ field }) => {
+              const parts = field.value ? field.value.split("-") : ["", "", ""];
+              const [year, month, day] = parts;
+              const currentYear = new Date().getFullYear();
+              const years = Array.from({ length: 100 }, (_, i) => currentYear - 3 - i);
+              const months = [
+                { value: "01", label: "Janeiro" }, { value: "02", label: "Fevereiro" },
+                { value: "03", label: "Março" }, { value: "04", label: "Abril" },
+                { value: "05", label: "Maio" }, { value: "06", label: "Junho" },
+                { value: "07", label: "Julho" }, { value: "08", label: "Agosto" },
+                { value: "09", label: "Setembro" }, { value: "10", label: "Outubro" },
+                { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
+              ];
+              const daysInMonth = year && month
+                ? new Date(Number(year), Number(month), 0).getDate()
+                : 31;
+              const days = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, "0"));
+
+              const update = (newDay: string, newMonth: string, newYear: string) => {
+                if (newDay && newMonth && newYear) {
+                  field.onChange(`${newYear}-${newMonth}-${newDay}`);
+                } else {
+                  field.onChange("");
+                }
+              };
+
+              return (
                 <FormItem>
-                  <FormLabel className={labelCls}>Nascimento *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      max={new Date().toISOString().split('T')[0]}
-                      className={`${inputCls} [color-scheme:dark]`}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400 text-xs" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="sex"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={labelCls}>Gênero *</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className={inputCls}>
-                        <SelectValue placeholder="Selecione" />
+                  <FormLabel className={labelCls}>Data de Nascimento *</FormLabel>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select
+                      value={day || ""}
+                      onValueChange={(v) => update(v, month || "", year || "")}
+                    >
+                      <SelectTrigger className={`${inputCls} text-sm`}>
+                        <SelectValue placeholder="Dia" />
                       </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className={selectContent}>
-                      <SelectItem value="M" className={selectItem}>Masculino</SelectItem>
-                      <SelectItem value="F" className={selectItem}>Feminino</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <SelectContent className={selectContent}>
+                        {days.map((d) => (
+                          <SelectItem key={d} value={d} className={selectItem}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={month || ""}
+                      onValueChange={(v) => {
+                        const maxDay = new Date(Number(year || 2000), Number(v), 0).getDate();
+                        const safeDay = day && Number(day) > maxDay ? String(maxDay).padStart(2, "0") : day || "";
+                        update(safeDay, v, year || "");
+                      }}
+                    >
+                      <SelectTrigger className={`${inputCls} text-sm`}>
+                        <SelectValue placeholder="Mês" />
+                      </SelectTrigger>
+                      <SelectContent className={selectContent}>
+                        {months.map((m) => (
+                          <SelectItem key={m.value} value={m.value} className={selectItem}>{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={year || ""}
+                      onValueChange={(v) => update(day || "", month || "", v)}
+                    >
+                      <SelectTrigger className={`${inputCls} text-sm`}>
+                        <SelectValue placeholder="Ano" />
+                      </SelectTrigger>
+                      <SelectContent className={selectContent}>
+                        {years.map((y) => (
+                          <SelectItem key={y} value={String(y)} className={selectItem}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
-              )}
-            />
-          </div>
+              );
+            }}
+          />
+
+          {/* Gênero */}
+          <FormField
+            control={form.control}
+            name="sex"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className={labelCls}>Gênero *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className={inputCls}>
+                      <SelectValue placeholder="Selecione o gênero" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className={selectContent}>
+                    <SelectItem value="M" className={selectItem}>Masculino</SelectItem>
+                    <SelectItem value="F" className={selectItem}>Feminino</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage className="text-red-400 text-xs" />
+              </FormItem>
+            )}
+          />
 
           {/* CPF */}
           <FormField

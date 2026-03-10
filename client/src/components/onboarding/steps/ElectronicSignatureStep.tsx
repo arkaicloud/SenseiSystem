@@ -12,7 +12,6 @@ export interface SignatureData {
   signatureTimestamp: string;
   signatureLatitude: string | null;
   signatureLongitude: string | null;
-  dueDate?: string;
 }
 
 interface ElectronicSignatureStepProps {
@@ -23,7 +22,6 @@ interface ElectronicSignatureStepProps {
   formData?: Record<string, any>;
 }
 
-const DUE_DATE_OPTIONS = [5, 10, 15, 20, 25];
 const MONTHS_PT = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 
 function formatCurrency(cents: number) {
@@ -47,7 +45,6 @@ export default function ElectronicSignatureStep({
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [timestamp] = useState(new Date());
   const [hasReadTerms, setHasReadTerms] = useState(false);
-  const [selectedDueDate, setSelectedDueDate] = useState<number>(5);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
 
   // Fetch payment plans to display plan info
@@ -161,7 +158,6 @@ export default function ElectronicSignatureStep({
       signatureTimestamp: timestamp.toISOString(),
       signatureLatitude: location?.lat ?? null,
       signatureLongitude: location?.lng ?? null,
-      dueDate: String(selectedDueDate),
     });
   };
 
@@ -258,7 +254,7 @@ export default function ElectronicSignatureStep({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400">Vencimento:</span>
-                  <span className="font-semibold text-white">Dia {selectedDueDate} de cada mês</span>
+                  <span className="font-semibold text-white">Dia {formData.dueDate || "5"} de cada mês</span>
                 </div>
               </div>
             </div>
@@ -321,29 +317,6 @@ export default function ElectronicSignatureStep({
               <p>{cityDateStr}</p>
             </div>
           </div>
-        </div>
-
-        {/* ── Data de vencimento ── */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-white mb-1">📅 Data de Vencimento da Mensalidade</p>
-          <p className="text-xs text-slate-400 mb-3">Escolha o dia do mês para o vencimento do boleto/Pix:</p>
-          <div className="flex gap-2 flex-wrap">
-            {DUE_DATE_OPTIONS.map((day) => (
-              <button
-                key={day}
-                type="button"
-                onClick={() => setSelectedDueDate(day)}
-                className={`flex-1 min-w-[52px] h-11 rounded-xl border text-sm font-bold transition-all ${
-                  selectedDueDate === day
-                    ? "bg-[#2B54FF] border-[#2B54FF] text-white"
-                    : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
-                }`}
-              >
-                {day}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-slate-500 mt-2">Vencimento confirmado: Dia <strong className="text-slate-300">{selectedDueDate}</strong> de cada mês</p>
         </div>
 
         {/* ── Confirmar leitura ── */}

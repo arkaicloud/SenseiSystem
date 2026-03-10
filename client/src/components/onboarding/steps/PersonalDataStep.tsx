@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowRight, User, Ticket, CheckCircle, XCircle, Loader2, GraduationCap } from "lucide-react";
+import { ArrowRight, User } from "lucide-react";
 import { useBeltLevels } from "@/hooks/useBeltLevels";
-import { useQuery } from "@tanstack/react-query";
 
 // CPF validation (módulo 11)
 const validateCPF = (input: string): boolean => {
@@ -45,8 +44,6 @@ const personalDataSchema = z.object({
   rg: z.string().min(1, "RG é obrigatório"),
   beltLevel: z.string().min(1, "Selecione a faixa"),
   stripes: z.number().min(0).max(4),
-  paymentPlanId: z.string().optional(),
-  couponCode: z.string().optional(),
 });
 
 export type PersonalDataType = z.infer<typeof personalDataSchema>;
@@ -126,44 +123,12 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
       rg: "",
       beltLevel: "white",
       stripes: 0,
-      paymentPlanId: "",
-      couponCode: "",
       ...defaultValues,
     },
   });
 
   const watchedBirthDate = form.watch("birthDate");
   const { beltOptions, isLoading: loadingBelts } = useBeltLevels(watchedBirthDate || undefined, true);
-
-  const { data: paymentPlansData } = useQuery<{ plans: Array<{ id: number; name: string; amount: number; description: string }> }>({
-    queryKey: ["/api/payment-plans"],
-  });
-  const paymentPlans = paymentPlansData?.plans || [];
-
-  const [couponInput, setCouponInput] = useState(defaultValues?.couponCode || "");
-  const [couponStatus, setCouponStatus] = useState<null | { valid: boolean; discountPercent?: number; description?: string | null; message?: string }>(null);
-  const [couponLoading, setCouponLoading] = useState(false);
-
-  const applyCoupon = async () => {
-    if (!couponInput.trim()) return;
-    setCouponLoading(true);
-    setCouponStatus(null);
-    try {
-      const res = await fetch(`/api/coupons/validate/${encodeURIComponent(couponInput.trim().toUpperCase())}`);
-      const data = await res.json();
-      if (res.ok && data.valid) {
-        setCouponStatus({ valid: true, discountPercent: data.coupon.discountPercent, description: data.coupon.description });
-        form.setValue("couponCode", couponInput.trim().toUpperCase());
-      } else {
-        setCouponStatus({ valid: false, message: data.message || "Cupom inválido" });
-        form.setValue("couponCode", "");
-      }
-    } catch {
-      setCouponStatus({ valid: false, message: "Erro ao validar cupom" });
-    } finally {
-      setCouponLoading(false);
-    }
-  };
 
   return (
     <Form {...form}>
@@ -352,77 +317,6 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
               </FormItem>
             )}
           />
-
-          {/* Plano de Mensalidade */}
-          {paymentPlans.length > 0 && (
-            <FormField
-              control={form.control}
-              name="paymentPlanId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={labelCls}>Plano de Mensalidade</FormLabel>
-                  <Select value={field.value || ""} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className={inputCls}>
-                        <SelectValue placeholder="Selecione o plano" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className={selectContent}>
-                      {paymentPlans.map((plan) => (
-                        <SelectItem key={plan.id} value={plan.id.toString()} className={selectItem}>
-                          {plan.name} — {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.amount / 100)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="text-red-400 text-xs" />
-                </FormItem>
-              )}
-            />
-          )}
-
-          {/* Cupom */}
-          <div className="space-y-2">
-            <label className={labelCls}>Cupom de desconto (opcional)</label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="CÓDIGO"
-                value={couponInput}
-                onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); if (couponStatus) setCouponStatus(null); }}
-                className={`${inputCls} font-mono uppercase flex-1`}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyCoupon())}
-              />
-              <Button
-                type="button"
-                onClick={applyCoupon}
-                disabled={couponLoading || !couponInput.trim()}
-                className="h-14 px-4 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl shrink-0"
-              >
-                {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
-                <span className="ml-1.5 text-sm">Aplicar</span>
-              </Button>
-            </div>
-            {couponStatus && (
-              couponStatus.valid ? (
-                <div className="flex items-start gap-2 rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  {couponStatus.discountPercent === 100
-                    ? <GraduationCap className="w-4 h-4 mt-0.5 shrink-0" />
-                    : <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />}
-                  <div>
-                    {couponStatus.discountPercent === 100
-                      ? <p className="font-semibold">Bolsista — acesso gratuito!</p>
-                      : <p className="font-semibold">{couponStatus.discountPercent}% de desconto aplicado!</p>}
-                    {couponStatus.description && <p className="text-xs mt-0.5 opacity-75">{couponStatus.description}</p>}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
-                  <XCircle className="w-4 h-4 shrink-0" />
-                  <span>{couponStatus.message}</span>
-                </div>
-              )
-            )}
-          </div>
 
           <div className="pt-2 pb-2">
             <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">

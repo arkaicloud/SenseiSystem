@@ -7,6 +7,7 @@ import PersonalDataStep, { type PersonalDataType } from "./steps/PersonalDataSte
 import ContactInfoStep, { type ContactInfoType } from "./steps/ContactInfoStep";
 import EmergencyContactStep, { type EmergencyContactType } from "./steps/EmergencyContactStep";
 import AddressStep, { type AddressType } from "./steps/AddressStep";
+import PaymentAndResponsibleStep, { type PaymentAndResponsibleType } from "./steps/PaymentAndResponsibleStep";
 import FinalReviewStep, { type CompleteFormData } from "./steps/FinalReviewStep";
 import PhysicalAssessmentStep, { type PhysicalAssessmentType } from "./steps/PhysicalAssessmentStep";
 import ElectronicSignatureStep, { type SignatureData } from "./steps/ElectronicSignatureStep";
@@ -19,15 +20,12 @@ interface MobileStudentOnboardingProps {
 
 export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStudentOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<Partial<CompleteFormData>>({});
+  const [formData, setFormData] = useState<Partial<CompleteFormData & Record<string, any>>>({});
   const [healthData, setHealthData] = useState<PhysicalAssessmentType | null>(null);
   const [signatureData, setSignatureData] = useState<SignatureData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const totalSteps = 8;
-  const progressPercentage = (currentStep / totalSteps) * 100;
 
   const requiresMedical = healthData
     ? [
@@ -42,53 +40,72 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
       ].some((v) => v === "yes")
     : false;
 
+  // Steps: 1=Personal, 2=Contact, 3=Emergency, 4=Address, 5=Payment, 6=Review, 7=Health, 8=Signature, 9=MedicalCert(if needed)
+  const totalSteps = requiresMedical ? 9 : 8;
+
+  const stepTitles = [
+    "Dados Pessoais",
+    "Contato",
+    "Emergência",
+    "Endereço",
+    "Pagamento",
+    "Revisão",
+    "Saúde",
+    "Assinatura",
+    "Atestado Médico",
+  ];
+  const progressPercentage = (currentStep / totalSteps) * 100;
+
   const handlePersonalData = (data: PersonalDataType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
   };
-
   const handleContactInfo = (data: ContactInfoType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(3);
   };
-
   const handleEmergencyContact = (data: EmergencyContactType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(4);
   };
-
   const handleAddress = (data: AddressType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(5);
   };
-
-  const handleFinalReview = (data: CompleteFormData) => {
+  const handlePayment = (data: PaymentAndResponsibleType) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(6);
   };
-
-  const handlePhysicalAssessment = (data: PhysicalAssessmentType) => {
-    setHealthData(data);
+  const handleFinalReview = (data: CompleteFormData) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(7);
   };
-
-  const handleSignature = (data: SignatureData) => {
-    setSignatureData(data);
+  const handlePhysicalAssessment = (data: PhysicalAssessmentType) => {
+    setHealthData(data);
+    setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(8);
   };
-
+  const handleSignature = (data: SignatureData) => {
+    setSignatureData(data);
+    if (requiresMedical) {
+      setCurrentStep(9);
+    } else {
+      handleFinalSubmit(undefined, data);
+    }
+  };
   const handleMedicalCert = (data: MedicalCertData) => {
     handleFinalSubmit(data);
   };
 
-  const handleFinalSubmit = async (_medData?: MedicalCertData) => {
+  const handleFinalSubmit = async (_medData?: MedicalCertData, sigData?: SignatureData) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const usedSignature = sigData || signatureData;
+
     try {
-      const data = formData as CompleteFormData;
-      const email = (data as any).email || "";
+      const data = formData as CompleteFormData & Record<string, any>;
+      const email = data.email || "";
       if (!email) throw new Error("Email não encontrado. Por favor, volte e preencha novamente.");
 
       const username = email.split('@')[0].toLowerCase();
@@ -101,9 +118,9 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         username,
         role: "student" as const,
         phone: data.phone || "",
-        sex: (data as any).sex || null,
+        sex: data.sex || null,
         emergencyContact: data.emergencyContact || "",
-        emergencyPhone: (data as any).emergencyPhone || "",
+        emergencyPhone: data.emergencyPhone || "",
         birthDate: data.birthDate || null,
         street: data.street || "",
         number: data.number || "",
@@ -112,32 +129,32 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         city: data.city || "",
         state: data.state || "",
         zipCode: data.zipCode || "",
-        cpf: (data as any).cpf || "",
-        rg: (data as any).rg || "",
-        beltLevel: (data as any).beltLevel || "white",
-        stripes: (data as any).stripes || 0,
-        medicalConditions: (data as any).medicalConditions || "",
-        financialResponsibleName: (data as any).financialResponsibleName || "",
-        financialResponsibleEmail: (data as any).financialResponsibleEmail || "",
-        financialResponsiblePhone: (data as any).financialResponsiblePhone || "",
-        financialResponsibleCpf: (data as any).financialResponsibleCpf || "",
-        financialResponsibleRelationship: (data as any).financialResponsibleRelationship || "self",
-        paymentPlanId: (data as any).paymentPlanId || null,
-        dueDate: signatureData?.dueDate || (data as any).dueDate || null,
-        couponCode: (data as any).couponCode || null,
-        hasHeartProblem: (data as any).hasHeartProblem || "no",
-        hasChestPain: (data as any).hasChestPain || "no",
-        hasBreathingProblem: (data as any).hasBreathingProblem || "no",
-        hasBloodPressureProblem: (data as any).hasBloodPressureProblem || "no",
-        hasBoneProblem: (data as any).hasBoneProblem || "no",
-        hasOtherHealthProblem: (data as any).hasOtherHealthProblem || "no",
-        takeMedication: (data as any).takeMedication || "no",
-        doctorRecommendation: (data as any).doctorRecommendation || "no",
-        signatureData: signatureData?.signatureData || null,
-        signatureType: signatureData?.signatureType || null,
-        signatureTimestamp: signatureData?.signatureTimestamp || null,
-        signatureLatitude: signatureData?.signatureLatitude || null,
-        signatureLongitude: signatureData?.signatureLongitude || null,
+        cpf: data.cpf || "",
+        rg: data.rg || "",
+        beltLevel: data.beltLevel || "white",
+        stripes: data.stripes || 0,
+        medicalConditions: data.medicalConditions || "",
+        financialResponsibleName: data.financialResponsibleName || "",
+        financialResponsibleEmail: data.financialResponsibleEmail || "",
+        financialResponsiblePhone: data.financialResponsiblePhone || "",
+        financialResponsibleCpf: data.financialResponsibleCpf || "",
+        financialResponsibleRelationship: data.financialResponsibleRelationship === "other" ? "other" : "self",
+        paymentPlanId: data.paymentPlanId || null,
+        dueDate: data.dueDate || null,
+        couponCode: data.couponCode || null,
+        hasHeartProblem: data.hasHeartProblem || "no",
+        hasChestPain: data.hasChestPain || "no",
+        hasBreathingProblem: data.hasBreathingProblem || "no",
+        hasBloodPressureProblem: data.hasBloodPressureProblem || "no",
+        hasBoneProblem: data.hasBoneProblem || "no",
+        hasOtherHealthProblem: data.hasOtherHealthProblem || "no",
+        takeMedication: data.takeMedication || "no",
+        doctorRecommendation: data.doctorRecommendation || "no",
+        signatureData: usedSignature?.signatureData || null,
+        signatureType: usedSignature?.signatureType || null,
+        signatureTimestamp: usedSignature?.signatureTimestamp || null,
+        signatureLatitude: usedSignature?.signatureLatitude || null,
+        signatureLongitude: usedSignature?.signatureLongitude || null,
       };
 
       const response = await fetch('/api/register-student', {
@@ -163,8 +180,6 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   const goBack = () => {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
-
-  const stepTitles = ["Dados Pessoais", "Contato", "Emergência", "Endereço", "Revisão", "Saúde", "Assinatura", "Atestado Médico"];
 
   if (success) {
     return (
@@ -200,10 +215,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
             {currentStep}/{totalSteps}
           </div>
         </div>
-        <Progress
-          value={progressPercentage}
-          className="h-1 bg-white/10 [&>div]:bg-[#2B54FF]"
-        />
+        <Progress value={progressPercentage} className="h-1 bg-white/10 [&>div]:bg-[#2B54FF]" />
       </div>
 
       {/* Error */}
@@ -230,13 +242,20 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
           <AddressStep onNext={handleAddress} onBack={goBack} defaultValues={formData} />
         )}
         {currentStep === 5 && (
+          <PaymentAndResponsibleStep
+            onNext={handlePayment}
+            onBack={goBack}
+            defaultValues={formData}
+          />
+        )}
+        {currentStep === 6 && (
           <FinalReviewStep
             onNext={handleFinalReview}
             onBack={goBack}
             formData={formData as CompleteFormData}
           />
         )}
-        {currentStep === 6 && (
+        {currentStep === 7 && (
           <PhysicalAssessmentStep
             onNext={handlePhysicalAssessment}
             onBack={goBack}
@@ -244,10 +263,15 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
             birthDate={(formData as any)?.birthDate}
           />
         )}
-        {currentStep === 7 && (
-          <ElectronicSignatureStep onNext={handleSignature} onBack={goBack} isMobile={true} formData={formData as Record<string, any>} />
-        )}
         {currentStep === 8 && (
+          <ElectronicSignatureStep
+            onNext={handleSignature}
+            onBack={goBack}
+            isMobile={true}
+            formData={formData as Record<string, any>}
+          />
+        )}
+        {currentStep === 9 && (
           <MedicalCertStep
             onNext={handleMedicalCert}
             onBack={goBack}

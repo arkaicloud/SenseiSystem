@@ -64,7 +64,7 @@ export function useBeltLevels(birthDate?: string | Date, usePublicEndpoint?: boo
   // Always include Faixa Branca (white) regardless of age — it's the universal starting belt
   const beltOptions: BeltOption[] = ageCategory === 'all' 
     ? allBeltOptions 
-    : allBeltOptions.filter(belt => belt.category === ageCategory || belt.levelKey === 'white');
+    : allBeltOptions.filter(belt => belt.category === ageCategory || belt.value === 'white');
 
   // Get belt options by category
   const adultBeltOptions = allBeltOptions.filter(belt => belt.category === 'adult');

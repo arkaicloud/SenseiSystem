@@ -42,7 +42,7 @@ const QUESTIONS = [
 const labelCls = "text-slate-300 text-sm font-medium leading-relaxed";
 const inputCls = "bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
 
-function YesNoToggle({ value, onChange, id }: { value: string; onChange: (v: "yes" | "no") => void; id: string }) {
+function YesNoToggle({ value, onChange, id }: { value?: string; onChange: (v: "yes" | "no") => void; id: string }) {
   return (
     <div className="flex gap-2 mt-2">
       <button
@@ -77,16 +77,9 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
   const form = useForm<PhysicalAssessmentType>({
     resolver: zodResolver(physicalAssessmentSchema),
     defaultValues: {
-      hasHeartProblem: "no",
-      hasChestPain: "no",
-      hasBreathingProblem: "no",
-      hasBloodPressureProblem: "no",
-      hasBoneProblem: "no",
-      hasOtherHealthProblem: "no",
-      takeMedication: "no",
-      doctorRecommendation: "no",
       medicalConditions: "",
       ...defaultValues,
+      // Sem defaults para as perguntas — usuário deve selecionar explicitamente
     },
   });
 
@@ -101,7 +94,7 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
             <Heart className="w-6 h-6 text-red-400" />
           </div>
           <h2 className="text-2xl font-bold text-white">Questionário de Saúde</h2>
-          <p className="text-sm text-slate-400 mt-1">Para sua segurança, responda as perguntas abaixo</p>
+          <p className="text-sm text-slate-400 mt-1">Para sua segurança, responda todas as perguntas abaixo</p>
         </div>
 
         <div className="px-6 space-y-5">
@@ -111,7 +104,13 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
               control={form.control}
               name={q.name}
               render={({ field }) => (
-                <FormItem className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <FormItem className={`rounded-2xl p-4 border transition-colors ${
+                  field.value
+                    ? field.value === "yes"
+                      ? "bg-orange-500/10 border-orange-500/30"
+                      : "bg-white/5 border-white/10"
+                    : "bg-white/5 border-white/20"
+                }`}>
                   <FormLabel className={labelCls}>
                     <span className="text-[#2B54FF] font-bold mr-1">{i + 1}.</span> {q.label}
                   </FormLabel>
@@ -122,7 +121,7 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
                       id={`q-${q.name}`}
                     />
                   </FormControl>
-                  <FormMessage className="text-red-400 text-xs" />
+                  <FormMessage className="text-red-400 text-xs mt-1" />
                 </FormItem>
               )}
             />

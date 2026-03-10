@@ -212,78 +212,13 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
           <FormField
             control={form.control}
             name="birthDate"
-            render={({ field }) => {
-              const parts = field.value ? field.value.split("-") : ["", "", ""];
-              const [year, month, day] = parts;
-              const currentYear = new Date().getFullYear();
-              const years = Array.from({ length: 100 }, (_, i) => currentYear - 3 - i);
-              const months = [
-                { value: "01", label: "Janeiro" }, { value: "02", label: "Fevereiro" },
-                { value: "03", label: "Março" }, { value: "04", label: "Abril" },
-                { value: "05", label: "Maio" }, { value: "06", label: "Junho" },
-                { value: "07", label: "Julho" }, { value: "08", label: "Agosto" },
-                { value: "09", label: "Setembro" }, { value: "10", label: "Outubro" },
-                { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
-              ];
-              const daysInMonth = year && month
-                ? new Date(Number(year), Number(month), 0).getDate()
-                : 31;
-              const days = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, "0"));
-
-              const update = (newDay: string, newMonth: string, newYear: string) => {
-                if (newDay && newMonth && newYear) {
-                  field.onChange(`${newYear}-${newMonth}-${newDay}`);
-                } else {
-                  field.onChange("");
-                }
-              };
-
-              const nativeSel = "h-14 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
-
-              return (
-                <FormItem>
-                  <FormLabel className={labelCls}>Data de Nascimento *</FormLabel>
-                  <div className="grid grid-cols-3 gap-2">
-                    <select
-                      value={day || ""}
-                      onChange={(e) => update(e.target.value, month || "", year || "")}
-                      className={nativeSel}
-                    >
-                      <option value="" disabled>Dia</option>
-                      {days.map((d) => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={month || ""}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        const maxDay = new Date(Number(year || 2000), Number(v), 0).getDate();
-                        const safeDay = day && Number(day) > maxDay ? String(maxDay).padStart(2, "0") : day || "";
-                        update(safeDay, v, year || "");
-                      }}
-                      className={nativeSel}
-                    >
-                      <option value="" disabled>Mês</option>
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={year || ""}
-                      onChange={(e) => update(day || "", month || "", e.target.value)}
-                      className={nativeSel}
-                    >
-                      <option value="" disabled>Ano</option>
-                      {years.map((y) => (
-                        <option key={y} value={String(y)}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <FormMessage className="text-red-400 text-xs" />
-                </FormItem>
-              );
-            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className={labelCls}>Data de Nascimento *</FormLabel>
+                <BirthDatePicker value={field.value || ""} onChange={field.onChange} />
+                <FormMessage className="text-red-400 text-xs" />
+              </FormItem>
+            )}
           />
 
           {/* Gênero */}

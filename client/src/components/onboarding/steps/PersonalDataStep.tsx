@@ -132,8 +132,9 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
     },
   });
 
-  const watchedBirthDate = form.watch("birthDate");
-  const { beltOptions, isLoading: loadingBelts } = useBeltLevels(watchedBirthDate || undefined, true);
+  // No onboarding, sempre mostra todas as faixas (sem filtro por idade)
+  // O admin pode ajustar depois se necessário
+  const { beltOptions, isLoading: loadingBelts } = useBeltLevels(undefined, true);
 
   const { data: paymentPlansData } = useQuery<{ plans: Array<{ id: number; name: string; amount: number; description: string }> }>({
     queryKey: ["/api/payment-plans"],

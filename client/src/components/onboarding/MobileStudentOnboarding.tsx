@@ -123,7 +123,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         financialResponsibleCpf: (data as any).financialResponsibleCpf || "",
         financialResponsibleRelationship: (data as any).financialResponsibleRelationship || "self",
         paymentPlanId: (data as any).paymentPlanId || null,
-        dueDate: (data as any).dueDate || null,
+        dueDate: signatureData?.dueDate || (data as any).dueDate || null,
         couponCode: (data as any).couponCode || null,
         hasHeartProblem: (data as any).hasHeartProblem || "no",
         hasChestPain: (data as any).hasChestPain || "no",
@@ -245,7 +245,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
           />
         )}
         {currentStep === 7 && (
-          <ElectronicSignatureStep onNext={handleSignature} onBack={goBack} isMobile={true} />
+          <ElectronicSignatureStep onNext={handleSignature} onBack={goBack} isMobile={true} formData={formData as Record<string, any>} />
         )}
         {currentStep === 8 && (
           <MedicalCertStep

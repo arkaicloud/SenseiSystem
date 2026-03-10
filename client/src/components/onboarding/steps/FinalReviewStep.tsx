@@ -74,6 +74,9 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
         <ReviewSection icon={User} title="Dados Pessoais">
           <Row label="Nome" value={`${formData.firstName} ${formData.lastName}`} />
           <Row label="Nascimento" value={formatDate(formData.birthDate)} />
+          <Row label="Gênero" value={(formData as any).sex === "M" ? "Masculino" : (formData as any).sex === "F" ? "Feminino" : undefined} />
+          <Row label="CPF" value={(formData as any).cpf} />
+          <Row label="RG" value={(formData as any).rg} />
           <Row label="E-mail" value={formData.email} />
           {beltLabel && (
             <div className="flex justify-between items-center gap-3">

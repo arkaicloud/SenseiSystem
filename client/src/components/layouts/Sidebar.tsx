@@ -71,6 +71,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           roles: ["admin", "instructor"],
         },
         {
+          id: "aprovacoes-pendentes",
+          label: "Aprovações Pendentes",
+          icon: UserCheck,
+          path: "/admin/pending-approvals",
+          roles: ["admin"],
+        },
+        {
           id: "alunos-risco",
           label: "Engajamento em Baixa",
           icon: AlertTriangle,
@@ -279,8 +286,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
         <item.icon className={cn("w-5 h-5 mr-3", level > 0 && "w-4 h-4 mr-2")} />
         <span className="flex-1">{item.label}</span>
 
-        {/* Badge para pedidos pendentes */}
-        {item.id === "pedidos-pendentes" && pendingCount > 0 && (
+        {/* Badge para pedidos/aprovações pendentes */}
+        {(item.id === "pedidos-pendentes" || item.id === "aprovacoes-pendentes") && pendingCount > 0 && (
           <Badge 
             variant="destructive" 
             className="ml-2 h-5 w-5 flex items-center justify-center text-xs p-0"

@@ -17,17 +17,17 @@ import {
 
 // Dashboard Skeleton - Componente de loading
 const DashboardSkeleton = () => (
-  <div className="space-y-6">
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+  <div className="space-y-4 md:space-y-6">
+    <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
       {[...Array(6)].map((_, i) => (
         <Card key={i} className="animate-pulse">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-                <div className="h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-3 bg-gray-200 rounded w-20"></div>
+                <div className="h-6 bg-gray-200 rounded w-12"></div>
               </div>
-              <div className="h-10 w-10 bg-gray-200 rounded-lg"></div>
+              <div className="h-8 w-8 bg-gray-200 rounded-lg"></div>
             </div>
           </CardContent>
         </Card>

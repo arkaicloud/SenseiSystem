@@ -1178,9 +1178,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User is already active" });
       }
 
-      // For students, payment plan is required
+      // For students, payment plan is required (unless bolsista)
       if (user.role === 'student' && !planId) {
-        return res.status(400).json({ message: "Payment plan is required for student approval" });
+        const studentCheck = await storage.getStudentByUserId(user.id);
+        if (!studentCheck?.isScholarship) {
+          return res.status(400).json({ message: "Payment plan is required for student approval" });
+        }
       }
 
       // Activate the user and set status to active
@@ -6073,8 +6076,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           const student = await storage.getStudentByUserId(userId);
-          if (!student || !student.paymentPlanId) {
-            const errorMsg = `dados do aluno ou plano de pagamento não encontrados`;
+          if (!student) {
+            const errorMsg = `dados do aluno não encontrados`;
+            results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+            results.userResults.push({
+              userId,
+              userName: `${user.firstName} ${user.lastName}`,
+              status: 'error',
+              message: errorMsg
+            });
+            results.failed++;
+            continue;
+          }
+
+          // Bolsistas: aprovação direta sem plano e sem ASAAS
+          if (student.isScholarship) {
+            const updatedUser = await storage.updateUser(userId, { active: true, status: 'active' });
+            if (updatedUser) {
+              try {
+                const tempPassword = generateTempPassword();
+                const hashedTempPassword = await hashPassword(tempPassword);
+                await storage.updateUser(userId, { password: hashedTempPassword, mustChangePassword: true });
+                await emailService.sendWelcomeEmail(user.email, `${user.firstName} ${user.lastName}`, `${user.firstName} ${user.lastName}`, tempPassword);
+              } catch (emailErr) {
+                console.error(`❌ Erro ao enviar e-mail para bolsista ${userId}:`, emailErr);
+              }
+              results.userResults.push({ userId, userName: `${user.firstName} ${user.lastName}`, status: 'success', message: 'Bolsista aprovado com sucesso' });
+              results.successful++;
+            } else {
+              results.userResults.push({ userId, userName: `${user.firstName} ${user.lastName}`, status: 'error', message: 'Erro ao ativar bolsista' });
+              results.failed++;
+            }
+            continue;
+          }
+
+          if (!student.paymentPlanId) {
+            const errorMsg = `plano de pagamento não encontrado`;
             results.errors.push(`Usuário ${userId}: ${errorMsg}`);
             results.userResults.push({
               userId,

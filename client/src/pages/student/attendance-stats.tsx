@@ -7,7 +7,7 @@ import {
   startOfMonth, getDay, isAfter, isSameMonth, isSameDay,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import bannerImg from '@assets/621387397_17974307141985971_9069113612466888890_n_1773257987376.webp';
+import bannerImg from '@assets/Gemini_Generated_Image_1wgua31wgua31wgu_1773260928822.png';
 import AttendanceHistory from '@/components/student/AttendanceHistory';
 
 interface AttendanceData {

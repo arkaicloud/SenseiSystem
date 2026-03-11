@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import LanguageSwitcher from '@/components/layout/language-switcher';
-import loginBg from '@assets/karate-fighters_1773070189914.jpg';
+import loginBg from '@assets/623672939_18075453335579318_4231356417421325038_n_1773257814964.webp';
 
 export default function Login() {
   const { t } = useTranslations();

@@ -124,6 +124,25 @@ export default function SchoolConfigPage() {
   }, [currentConfig, form]);
 
   // Mutation para salvar configurações
+  const [testEmailAddress, setTestEmailAddress] = React.useState("");
+
+  const testSmtpMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await apiRequest("POST", "/api/admin/smtp/test", { testEmail: email });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Erro ao testar SMTP");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "E-mail de teste enviado!", description: `Verifique a caixa de entrada de ${testEmailAddress}.` });
+    },
+    onError: (error: any) => {
+      toast({ title: "Falha no teste SMTP", description: error.message, variant: "destructive" });
+    },
+  });
+
   const updateConfigMutation = useMutation({
     mutationFn: async (data: SchoolConfigForm) => {
       const response = await apiRequest("PATCH", "/api/school-config", data);
@@ -848,6 +867,38 @@ export default function SchoolConfigPage() {
                               </ul>
                             </div>
                           </div>
+                        </div>
+
+                        {/* Testar conexão SMTP */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <p className="text-sm font-medium text-gray-800 mb-3 flex items-center gap-2">
+                            <TestTube className="h-4 w-4" />
+                            Testar Conexão SMTP
+                          </p>
+                          <div className="flex gap-2">
+                            <Input
+                              type="email"
+                              placeholder="seu@email.com"
+                              value={testEmailAddress}
+                              onChange={(e) => setTestEmailAddress(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={!testEmailAddress || testSmtpMutation.isPending}
+                              onClick={() => testSmtpMutation.mutate(testEmailAddress)}
+                            >
+                              {testSmtpMutation.isPending ? (
+                                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Enviando...</>
+                              ) : (
+                                <><Mail className="h-4 w-4 mr-2" />Enviar teste</>
+                              )}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Salve as configurações antes de testar. Um e-mail de boas-vindas será enviado para o endereço acima.
+                          </p>
                         </div>
                       </div>
                     )}

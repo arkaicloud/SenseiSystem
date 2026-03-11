@@ -24,6 +24,10 @@ export default function StudentDashboard() {
     queryKey: ["/api/classes/today"],
   });
 
+  const { data: schoolInfo } = useQuery<{ schoolName: string }>({
+    queryKey: ["/api/school/public-info"],
+  });
+
   if (isStudentLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -67,7 +71,7 @@ export default function StudentDashboard() {
         <div className="vyta-hero-content flex flex-col justify-between h-full p-5 pt-6">
           <div>
             <span className="text-[22px] font-bold text-white tracking-[2px] font-inter">
-              SENSEI
+              {schoolInfo?.schoolName?.split(' ')[0]?.toUpperCase() ?? "HUIOS"}
             </span>
           </div>
           <div className="space-y-2">

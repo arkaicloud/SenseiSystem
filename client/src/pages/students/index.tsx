@@ -49,10 +49,11 @@ export default function StudentsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogReadOnly, setEditDialogReadOnly] = useState(false);
   
-  // Get students
-  const { data: students, isLoading } = useQuery<Student[]>({
+  // Get students (API returns paginated { items, total, ... })
+  const { data: studentsData, isLoading } = useQuery<any>({
     queryKey: ['/api/students'],
   });
+  const students: Student[] = studentsData?.items || [];
   
   // Student mutations
   const activateStudentMutation = useMutation({

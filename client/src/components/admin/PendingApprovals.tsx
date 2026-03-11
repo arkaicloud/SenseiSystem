@@ -42,40 +42,60 @@ interface PaymentPlan {
 export default function PendingApprovals() {
   const { toast } = useToast();
 
-  // Buscar usuários pendentes
   const { data: pendingUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ['/api/users/pending'],
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
+    refetchInterval: 30000,
   });
 
-  // Buscar planos de pagamento
   const { data: paymentPlans } = useQuery({
     queryKey: ['/api/payment-plans'],
   });
 
-  // Mutation para aprovar aluno
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/financial-stats'] });
+  };
+
+  // Mutation para aprovar aluno normal
   const approveMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest(`/api/admin/student/${userId}/approve`, {
+      return await apiRequest(`/api/users/${userId}/approve`, {
         method: 'POST',
       });
     },
-    onSuccess: (response, userId) => {
-      toast({
-        title: "Aluno aprovado com sucesso!",
-        description: "A cobrança foi criada automaticamente no ASAAS.",
-      });
-      
-      // Invalidar queries para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/financial-stats'] });
+    onSuccess: () => {
+      toast({ title: "Aluno aprovado com sucesso!" });
+      invalidateAll();
     },
     onError: (error: any) => {
-      console.error('Error approving student:', error);
       toast({
         title: "Erro ao aprovar aluno",
-        description: error.message || "Erro desconhecido. Verifique a configuração do ASAAS.",
+        description: error.message || "Verifique a configuração do ASAAS.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para aprovar como bolsista (marca isScholarship=true + aprova)
+  const approveScholarshipMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return await apiRequest(`/api/users/${userId}/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ isScholarship: true }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Bolsista aprovado com sucesso!",
+        description: "O aluno foi marcado como bolsista e ativado.",
+      });
+      invalidateAll();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao aprovar bolsista",
+        description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
     },
@@ -89,10 +109,7 @@ export default function PendingApprovals() {
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Aluno rejeitado",
-        description: "O cadastro foi removido do sistema.",
-      });
+      toast({ title: "Aluno rejeitado", description: "O cadastro foi removido do sistema." });
       queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
     },
     onError: (error: any) => {
@@ -117,7 +134,6 @@ export default function PendingApprovals() {
     const issues: string[] = [];
     const isScholarship = user.student?.isScholarship === true;
 
-    // Bolsistas não precisam de plano de pagamento nem de responsável financeiro
     if (!isScholarship) {
       if (!user.student?.financialResponsibleName) {
         issues.push('Nome do responsável financeiro não informado');
@@ -130,10 +146,20 @@ export default function PendingApprovals() {
       }
     }
 
-    return {
-      isValid: issues.length === 0,
-      issues
-    };
+    return { isValid: issues.length === 0, issues };
+  };
+
+  // Verifica se o único problema é a falta de plano (sem dados financeiros também ausentes)
+  const isMissingOnlyPlan = (user: PendingUser): boolean => {
+    const isScholarship = user.student?.isScholarship === true;
+    if (isScholarship) return false;
+    const { issues } = validateStudentData(user);
+    return issues.length === 1 && issues[0] === 'Plano de pagamento não selecionado';
+  };
+
+  // Verifica se o único problema é o plano E dados financeiros (cenário de bolsista não marcado)
+  const canApproveAsScholarship = (user: PendingUser): boolean => {
+    return user.student !== undefined && !user.student?.isScholarship;
   };
 
   if (loadingUsers) {
@@ -173,7 +199,8 @@ export default function PendingApprovals() {
       <div className="grid gap-6">
         {pendingUsers.users.map((user: PendingUser) => {
           const validation = validateStudentData(user);
-          
+          const isPendingApprove = approveMutation.isPending || approveScholarshipMutation.isPending;
+
           return (
             <Card key={user.id} className={`border-l-4 ${validation.isValid ? 'border-l-green-500' : 'border-l-yellow-500'}`}>
               <CardHeader>
@@ -202,7 +229,6 @@ export default function PendingApprovals() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {/* Dados do Aluno */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm text-muted-foreground">Dados do Aluno</h4>
@@ -258,7 +284,6 @@ export default function PendingApprovals() {
                   </div>
                 </div>
 
-                {/* Plano de Pagamento */}
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm text-muted-foreground">Plano de Pagamento</h4>
                   <div className="flex items-center gap-2">
@@ -278,7 +303,6 @@ export default function PendingApprovals() {
                   </div>
                 </div>
 
-                {/* Atestado médico pendente */}
                 {user.student?.requiresMedicalCertificate && user.student?.medicalCertificateStatus === 'PENDING' && (
                   <Alert className="border-orange-300 bg-orange-50">
                     <FileWarning className="h-4 w-4 text-orange-600" />
@@ -290,7 +314,6 @@ export default function PendingApprovals() {
                   </Alert>
                 )}
 
-                {/* Validação de dados */}
                 {!validation.isValid && (
                   <Alert>
                     <AlertTriangle className="h-4 w-4" />
@@ -305,25 +328,48 @@ export default function PendingApprovals() {
                   </Alert>
                 )}
 
-                {/* Botões de Ação */}
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={() => approveMutation.mutate(user.id)}
-                    disabled={!validation.isValid || approveMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {approveMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Aprovando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Aprovar e Criar Cobrança
-                      </>
-                    )}
-                  </Button>
+                <div className="flex flex-wrap gap-3 pt-4">
+                  {/* Botão aprovar normal */}
+                  {validation.isValid && (
+                    <Button
+                      onClick={() => approveMutation.mutate(user.id)}
+                      disabled={isPendingApprove}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {approveMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Aprovando...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Aprovar e Criar Cobrança
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Botão aprovar como bolsista — aparece quando não tem isScholarship marcado */}
+                  {canApproveAsScholarship(user) && (
+                    <Button
+                      onClick={() => approveScholarshipMutation.mutate(user.id)}
+                      disabled={isPendingApprove}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {approveScholarshipMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Aprovando...
+                        </>
+                      ) : (
+                        <>
+                          <GraduationCap className="h-4 w-4 mr-2" />
+                          Aprovar como Bolsista
+                        </>
+                      )}
+                    </Button>
+                  )}
 
                   <Button
                     variant="destructive"

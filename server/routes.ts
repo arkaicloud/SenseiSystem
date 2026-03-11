@@ -1167,7 +1167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { planId } = req.body;
+      const { planId, isScholarship: approveAsScholarship } = req.body;
       const user = await storage.getUser(Number(id));
 
       if (!user) {
@@ -1176,6 +1176,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (user.active) {
         return res.status(400).json({ message: "User is already active" });
+      }
+
+      // If admin is approving as scholarship, mark the student first
+      if (approveAsScholarship && user.role === 'student') {
+        const studentToMark = await storage.getStudentByUserId(user.id);
+        if (studentToMark) {
+          await storage.updateStudent(studentToMark.id, { isScholarship: true });
+        }
       }
 
       // For students, payment plan is required (unless bolsista)

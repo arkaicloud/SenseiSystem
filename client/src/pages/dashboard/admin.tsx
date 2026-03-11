@@ -51,14 +51,14 @@ const StatCard = ({ title, value, icon: Icon, variant }: {
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+          <div className="space-y-1 md:space-y-2 min-w-0 mr-2">
+            <p className="text-xs md:text-sm font-medium text-muted-foreground leading-tight">{title}</p>
+            <p className="text-xl md:text-2xl font-bold truncate">{value}</p>
           </div>
-          <div className={`p-2 rounded-lg ${variantClasses[variant || 'default']}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${variantClasses[variant || 'default']}`}>
+            <Icon className="h-4 w-4 md:h-5 md:w-5" />
           </div>
         </div>
       </CardContent>
@@ -145,19 +145,19 @@ export default function AdminDashboard() {
   const monthlyRevenue = financialData?.metrics?.totalReceived || 0;
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-4 md:space-y-6">
+      <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
         <StatCard title="Alunos Ativos" value={m.activeStudents} icon={Users} />
-        <StatCard title="Aulas Realizadas (mês)" value={m.classesHeld} icon={CalendarCheck} />
+        <StatCard title="Aulas (mês)" value={m.classesHeld} icon={CalendarCheck} />
         <StatCard 
-          title="Taxa de Presença" 
+          title="Presença" 
           value={`${Math.round(m.attendanceRate*100)}%`} 
           icon={UserCheck} 
           variant={m.attendanceRate < 0.6 ? "danger" : "success"} 
         />
-        <StatCard title="Receita Mensal" value={`R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={DollarSign} />
+        <StatCard title="Receita" value={`R$\u00a0${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={DollarSign} />
         <StatCard 
-          title="Engajamento em Baixa" 
+          title="Baixo Engaj." 
           value={m.lowEngagement} 
           icon={AlertTriangle}
           variant={m.lowEngagement > 0 ? "danger" : "default"}

@@ -96,9 +96,9 @@ export default function AttendanceStatsPage() {
     return count;
   }, [presentDates, now]);
 
-  // Build 4 months for the heatmap (oldest → newest)
+  // Build 4 months for the heatmap (newest → oldest)
   const heatmapMonths = useMemo(() => {
-    return [3, 2, 1, 0].map(i => {
+    return [0, 1, 2, 3].map(i => {
       const d = subMonths(now, i);
       const year = d.getFullYear();
       const month = d.getMonth();

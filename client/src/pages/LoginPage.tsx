@@ -194,7 +194,7 @@ export default function LoginPage() {
       <div className="lg:hidden fixed inset-0 overflow-hidden">
         <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
         {/* overlay: topo levemente escuro → base bem escura para legibilidade do form */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.75) 65%, rgba(0,0,0,0.92) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,0.97) 100%)" }} />
 
         <div className="relative z-10 flex flex-col h-full">
 
@@ -237,7 +237,7 @@ export default function LoginPage() {
         <div className="relative w-[55%] flex-shrink-0 h-full">
           <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
           {/* overlay: darker on left for text, fades right */}
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,12,20,0.88) 0%, rgba(10,12,20,0.65) 50%, rgba(10,12,20,0.30) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,12,20,0.95) 0%, rgba(10,12,20,0.80) 50%, rgba(10,12,20,0.55) 100%)" }} />
 
           <div className="relative z-10 flex flex-col h-full px-14 py-12 justify-between">
             {/* School name / logo — small, blue, uppercase */}

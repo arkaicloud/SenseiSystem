@@ -8,8 +8,8 @@ import { Calendar, CreditCard, ChevronRight } from "lucide-react";
 import { TodayClasses } from "@/components/student/TodayClasses";
 import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { Link } from "wouter";
-import heroImg from "@assets/karate-fighters-tatami-fighting-championship_1773070189913.jpg";
-import beltImg from "@assets/karate-player-tying-his-belt_1773070189914.jpg";
+import heroImg from "@assets/624574771_18079720685017980_2189994859424208973_n_1773257827421.webp";
+import beltImg from "@assets/625059123_18131137756460034_1846111418313140375_n_1773257794639.webp";
 
 export default function StudentDashboard() {
   const { t } = useTranslations();

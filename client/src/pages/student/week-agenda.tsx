@@ -3,7 +3,7 @@ import { WeekAgenda } from '@/components/student/WeekAgenda';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import type { SchoolConfig } from '@shared/schema';
-import bannerImg from '@assets/two-judo-wrestlers-showing-their-technical-skills-fight-club_1773070189916.jpg';
+import bannerImg from '@assets/623449849_18045399212708855_7947584487158988012_n_1773257854375.webp';
 
 interface StudentProfile {
   id: number;

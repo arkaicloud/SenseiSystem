@@ -78,7 +78,7 @@ export class EmailService {
       const schoolName = schoolConfig?.schoolName || 'SenseiSystem';
       
       // URL base do sistema
-      const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+      const baseUrl = (process.env.BASE_URL || 'https://huiosbjj.arkaicloud.com.br').replace(/\/$/, '');
       const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
       
       const fromEmail = schoolConfig?.smtpFromEmail || process.env.EMAIL_FROM || `noreply@senseisystem.com.br`;
@@ -282,7 +282,7 @@ export class EmailService {
         </div>
       </div>` : '';
 
-    const baseUrl = process.env.BASE_URL || 'https://senseisystem.com.br';
+    const baseUrl = (process.env.BASE_URL || 'https://huiosbjj.arkaicloud.com.br').replace(/\/$/, '');
 
     return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -360,7 +360,7 @@ export class EmailService {
 
       <!-- Botão de acesso -->
       <div style="text-align: center; margin: 32px 0 24px;">
-        <a href="${baseUrl}"
+        <a href="${baseUrl}/login"
            style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
           Acessar o Sistema →
         </a>

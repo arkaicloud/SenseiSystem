@@ -207,75 +207,116 @@ export default function NewAttendancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="flex flex-col lg:flex-row h-screen">
+    <div className="bg-slate-50 dark:bg-slate-900">
+      <div className="flex flex-col lg:flex-row lg:min-h-screen">
         
-        {/* Sidebar */}
-        <div className="lg:w-80 bg-white dark:bg-slate-800 border-r dark:border-slate-700 p-4 space-y-4 overflow-auto">
+        {/* Left panel: date + classes */}
+        <div className="lg:w-80 bg-white dark:bg-slate-800 border-b lg:border-b-0 lg:border-r dark:border-slate-700 p-3 lg:p-4 lg:space-y-4 lg:overflow-auto lg:sticky lg:top-0 lg:h-screen">
           
-          {/* Calendar */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Selecionar Data</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="w-full"
-                data-testid="attendance-calendar"
+          {/* Mobile: compact row layout */}
+          <div className="flex gap-3 lg:hidden">
+            {/* Date selector (compact) */}
+            <div className="flex-shrink-0">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Data</p>
+              <input
+                type="date"
+                value={selectedDate.toISOString().split('T')[0]}
+                onChange={(e) => e.target.value && setSelectedDate(new Date(e.target.value + 'T12:00:00'))}
+                className="border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white"
               />
-              
-              {/* Quick date buttons */}
-              <div className="mt-3 flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedDate(new Date())}
-                  className="text-xs"
-                  data-testid="button-today"
-                >
-                  Hoje
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Classes do Dia */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Aulas de Hoje</CardTitle>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {classes.length} aulas encontradas
+            {/* Classes list (horizontal scroll on mobile) */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                Aulas — {formatDate(selectedDate)}
               </p>
-            </CardHeader>
-            <CardContent className="p-3 space-y-3">
               {classesLoading ? (
-                <div className="text-center py-4 text-sm">Carregando...</div>
+                <p className="text-sm text-slate-400 py-1">Carregando...</p>
               ) : classes.length === 0 ? (
-                <div className="text-center py-4 text-sm text-slate-500">
-                  Nenhuma aula encontrada
-                </div>
+                <p className="text-sm text-slate-400 py-1">Nenhuma aula</p>
               ) : (
-                classes.map((classItem: ClassWithStats) => (
-                  <ClassCard
-                    key={classItem.id}
-                    class={classItem}
-                    onOpen={(id) => {
-                      const selected = classes.find((c: ClassWithStats) => c.id === id);
-                      setSelectedClass(selected || null);
-                      setIsClassStarted(false); // Reset class status
-                    }}
-                  />
-                ))
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {classes.map((classItem: ClassWithStats) => (
+                    <button
+                      key={classItem.id}
+                      onClick={() => { setSelectedClass(classItem); setIsClassStarted(false); }}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                        selectedClass?.id === classItem.id
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600'
+                      }`}
+                    >
+                      {classItem.startTime} · {classItem.name}
+                    </button>
+                  ))}
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* Desktop: full calendar + cards */}
+          <div className="hidden lg:block space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Selecionar Data</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="w-full"
+                  data-testid="attendance-calendar"
+                />
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedDate(new Date())}
+                    className="text-xs"
+                    data-testid="button-today"
+                  >
+                    Hoje
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Aulas de Hoje</CardTitle>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {classes.length} aulas encontradas
+                </p>
+              </CardHeader>
+              <CardContent className="p-3 space-y-3">
+                {classesLoading ? (
+                  <div className="text-center py-4 text-sm">Carregando...</div>
+                ) : classes.length === 0 ? (
+                  <div className="text-center py-4 text-sm text-slate-500">
+                    Nenhuma aula encontrada
+                  </div>
+                ) : (
+                  classes.map((classItem: ClassWithStats) => (
+                    <ClassCard
+                      key={classItem.id}
+                      class={classItem}
+                      onOpen={(id) => {
+                        const selected = classes.find((c: ClassWithStats) => c.id === id);
+                        setSelectedClass(selected || null);
+                        setIsClassStarted(false);
+                      }}
+                    />
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Main Area */}
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 p-3 lg:p-6 overflow-auto">
           {!selectedClass ? (
             <div className="h-full flex items-center justify-center text-center">
               <div className="text-slate-500 dark:text-slate-400">

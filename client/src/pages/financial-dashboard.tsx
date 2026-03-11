@@ -249,10 +249,10 @@ export default function FinancialDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">
               Painel Financeiro
             </h1>
             <p className="text-muted-foreground">
@@ -263,7 +263,7 @@ export default function FinancialDashboard() {
         </div>
 
         {/* Skeleton Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -328,11 +328,11 @@ export default function FinancialDashboard() {
   const filteredPayments = getFilteredPayments();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight">
             Painel Financeiro
           </h1>
           <p className="text-muted-foreground">
@@ -353,7 +353,7 @@ export default function FinancialDashboard() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-6">
         {/* Ticket Médio Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -301,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
     return (
       <div key={item.id} className="mb-1">
         {item.path ? (
-          <Link href={item.path}>
+          <Link href={item.path} onClick={isMobile ? onClose : undefined}>
             {ItemContent}
           </Link>
         ) : (

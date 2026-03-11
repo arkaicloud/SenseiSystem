@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle, FileWarning } from 'lucide-react';
+import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle, FileWarning, GraduationCap } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -27,6 +27,8 @@ interface PendingUser {
     paymentPlanId?: number;
     requiresMedicalCertificate?: boolean;
     medicalCertificateStatus?: string;
+    isScholarship?: boolean;
+    couponCode?: string;
   };
 }
 
@@ -113,17 +115,19 @@ export default function PendingApprovals() {
 
   const validateStudentData = (user: PendingUser): { isValid: boolean; issues: string[] } => {
     const issues: string[] = [];
-    
-    if (!user.student?.financialResponsibleName) {
-      issues.push('Nome do responsável financeiro não informado');
-    }
-    
-    if (!user.student?.financialResponsibleCpf) {
-      issues.push('CPF do responsável financeiro não informado');
-    }
-    
-    if (!user.student?.paymentPlanId) {
-      issues.push('Plano de pagamento não selecionado');
+    const isScholarship = user.student?.isScholarship === true;
+
+    // Bolsistas não precisam de plano de pagamento nem de responsável financeiro
+    if (!isScholarship) {
+      if (!user.student?.financialResponsibleName) {
+        issues.push('Nome do responsável financeiro não informado');
+      }
+      if (!user.student?.financialResponsibleCpf) {
+        issues.push('CPF do responsável financeiro não informado');
+      }
+      if (!user.student?.paymentPlanId) {
+        issues.push('Plano de pagamento não selecionado');
+      }
     }
 
     return {
@@ -218,34 +222,39 @@ export default function PendingApprovals() {
 
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm text-muted-foreground">Responsável Financeiro</h4>
-                    <div className="space-y-1">
-                      {user.student?.financialResponsibleName ? (
-                        <div className="text-sm">
-                          <strong>{user.student.financialResponsibleName}</strong>
-                          {user.student.financialResponsibleRelation && (
-                            <span className="text-muted-foreground ml-2">
-                              ({user.student.financialResponsibleRelation})
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-red-600">Nome não informado</div>
-                      )}
-                      
-                      {user.student?.financialResponsibleCpf ? (
-                        <div className="text-sm text-muted-foreground">
-                          CPF: {user.student.financialResponsibleCpf}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-red-600">CPF não informado</div>
-                      )}
-
-                      {user.student?.financialResponsibleEmail && (
-                        <div className="text-sm text-muted-foreground">
-                          {user.student.financialResponsibleEmail}
-                        </div>
-                      )}
-                    </div>
+                    {user.student?.isScholarship ? (
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">Bolsista — isento de pagamento</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {user.student?.financialResponsibleName ? (
+                          <div className="text-sm">
+                            <strong>{user.student.financialResponsibleName}</strong>
+                            {user.student.financialResponsibleRelation && (
+                              <span className="text-muted-foreground ml-2">
+                                ({user.student.financialResponsibleRelation})
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-red-600">Nome não informado</div>
+                        )}
+                        {user.student?.financialResponsibleCpf ? (
+                          <div className="text-sm text-muted-foreground">
+                            CPF: {user.student.financialResponsibleCpf}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-red-600">CPF não informado</div>
+                        )}
+                        {user.student?.financialResponsibleEmail && (
+                          <div className="text-sm text-muted-foreground">
+                            {user.student.financialResponsibleEmail}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -253,8 +262,19 @@ export default function PendingApprovals() {
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm text-muted-foreground">Plano de Pagamento</h4>
                   <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
+                    {user.student?.isScholarship ? (
+                      <>
+                        <GraduationCap className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">
+                          Bolsista{user.student.couponCode ? ` — Cupom: ${user.student.couponCode}` : ''}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 

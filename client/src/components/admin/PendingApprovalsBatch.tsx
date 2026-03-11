@@ -54,6 +54,8 @@ interface PendingUser {
     financialResponsiblePhone?: string;
     financialResponsibleRelation?: string;
     paymentPlanId?: number;
+    isScholarship?: boolean;
+    couponCode?: string;
   };
 }
 
@@ -95,17 +97,19 @@ export default function PendingApprovalsBatch() {
   // Validation function
   const validateStudentData = (user: PendingUser) => {
     const issues: string[] = [];
-    
-    if (!user.student?.financialResponsibleName) {
-      issues.push("Nome do responsável financeiro não informado");
-    }
-    
-    if (!user.student?.financialResponsibleCpf) {
-      issues.push("CPF do responsável financeiro não informado");
-    }
-    
-    if (!user.student?.paymentPlanId) {
-      issues.push("Plano de pagamento não selecionado");
+    const isScholarship = user.student?.isScholarship === true;
+
+    // Bolsistas não precisam de plano de pagamento nem de responsável financeiro
+    if (!isScholarship) {
+      if (!user.student?.financialResponsibleName) {
+        issues.push("Nome do responsável financeiro não informado");
+      }
+      if (!user.student?.financialResponsibleCpf) {
+        issues.push("CPF do responsável financeiro não informado");
+      }
+      if (!user.student?.paymentPlanId) {
+        issues.push("Plano de pagamento não selecionado");
+      }
     }
 
     return {

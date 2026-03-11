@@ -107,7 +107,7 @@ export default function StudentDashboard() {
 
       <div className="px-5 pt-6 pb-24 space-y-6">
         <div className="vyta-card-hero">
-          <img src={beltImg} alt="Treino" />
+          <img src={beltImg} alt="Treino" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 65%' }} />
           <div className="vyta-card-hero-gradient" />
           <div className="vyta-card-hero-content">
             <span className="vyta-pill mb-2">

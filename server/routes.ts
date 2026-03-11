@@ -1343,6 +1343,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Resend welcome email to a user
+  app.post("/api/users/:id/resend-email", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await storage.getUser(Number(id));
+
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      if (!user.active) {
+        return res.status(400).json({ message: "Usuário ainda não foi aprovado" });
+      }
+
+      const tempPassword = generateTempPassword();
+      const hashedTempPassword = await hashPassword(tempPassword);
+      await storage.updateUser(user.id, {
+        password: hashedTempPassword,
+        mustChangePassword: true,
+      });
+
+      await emailService.sendWelcomeEmail(
+        user.email,
+        `${user.firstName} ${user.lastName}`,
+        `${user.firstName} ${user.lastName}`,
+        tempPassword
+      );
+
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `E-mail de boas-vindas reenviado para ${user.firstName} ${user.lastName} (${user.email})`,
+        entityType: 'user',
+        entityId: user.id
+      });
+
+      res.json({ success: true, message: `E-mail reenviado para ${user.email}` });
+    } catch (error) {
+      console.error("Error resending welcome email:", error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : "Erro ao reenviar e-mail"
+      });
+    }
+  });
+
   // Reject user
   app.post("/api/users/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
     try {

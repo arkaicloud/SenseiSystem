@@ -33,7 +33,7 @@ import {
 import BeltIcon from '@/components/ui/belt-icon';
 import StudentEditDialog from '@/components/students/StudentEditDialog';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Edit2, Mail } from 'lucide-react';
+import { Eye, Edit2, Mail, MoreVertical, Search, Plus } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function StudentsPage() {
@@ -158,28 +158,123 @@ export default function StudentsPage() {
   
   return (
     <Layout title={t('common.students')}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <Card className="bg-gray-800 border-gray-700 text-white">
-          <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-            <CardTitle>{t('common.students')}</CardTitle>
-            <div className="flex space-x-2">
+      <div className="max-w-7xl mx-auto">
+
+        {/* Header */}
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-xl font-bold text-gray-100">{t('common.students')}</h1>
+          <div className="flex gap-2">
+            <div className="relative flex-1 sm:flex-none">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
               <Input
-                className="w-full sm:w-auto bg-gray-700 border-gray-600 text-white"
-                placeholder="Search by name or CPF..."
+                className="pl-8 w-full sm:w-56 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                placeholder="Nome ou CPF..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              
-              {canManageStudents && (
-                <Button onClick={() => setLocation('/onboarding')}>
-                  <i className="fas fa-plus mr-2"></i>
-                  {t('student.addStudent')}
-                </Button>
-              )}
             </div>
-          </CardHeader>
-          
-          <CardContent>
+            {canManageStudents && (
+              <Button onClick={() => setLocation('/onboarding')} size="sm" className="flex-shrink-0">
+                <Plus className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">{t('student.addStudent')}</span>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile card list (hidden on md+) */}
+        <div className="md:hidden space-y-2">
+          {isLoading ? (
+            <div className="text-center py-8 text-gray-400">Carregando...</div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">Nenhum aluno encontrado</div>
+          ) : (
+            filteredStudents.map((student) => (
+              <div
+                key={student.id}
+                className="bg-gray-800 border border-gray-700 rounded-xl p-3 flex items-center gap-3"
+              >
+                {/* Belt stripe */}
+                <div className="flex-shrink-0">
+                  <BeltIcon belt={student.currentBelt} className="w-8 h-8" />
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white text-sm truncate">{student.name}</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {t(`student.${student.currentBelt}Belt`)}
+                    {student.currentGrade > 0 && ` · ${student.currentGrade}°`}
+                    {' · '}
+                    {formatDate(student.joinDate, locale)}
+                  </p>
+                </div>
+
+                {/* Status pill */}
+                <span className={`flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
+                  student.isActive ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
+                }`}>
+                  {student.isActive ? 'Ativo' : 'Inativo'}
+                </span>
+
+                {/* Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-gray-400">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-gray-700 border-gray-600 text-white">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => openViewDialog(student.id, student.name)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" /> Ver Perfil
+                    </DropdownMenuItem>
+                    {canManageStudents && (
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => openEditDialogForEdit(student.id, student.name)}
+                      >
+                        <Edit2 className="w-4 h-4 mr-2" /> Editar
+                      </DropdownMenuItem>
+                    )}
+                    {(student as any).userId && canManageStudents && (
+                      <DropdownMenuItem
+                        className="cursor-pointer text-blue-400"
+                        onClick={() => resendEmailMutation.mutate((student as any).userId)}
+                        disabled={resendEmailMutation.isPending}
+                      >
+                        <Mail className="w-4 h-4 mr-2" /> Reenviar E-mail
+                      </DropdownMenuItem>
+                    )}
+                    {canManageStudents && (
+                      student.isActive ? (
+                        <DropdownMenuItem
+                          className="cursor-pointer text-red-400"
+                          onClick={() => deactivateStudentMutation.mutate(student.id)}
+                        >
+                          {t('student.deactivate')}
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          className="cursor-pointer text-green-400"
+                          onClick={() => activateStudentMutation.mutate(student.id)}
+                        >
+                          {t('student.activate')}
+                        </DropdownMenuItem>
+                      )
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop table (hidden on mobile) */}
+        <Card className="hidden md:block bg-gray-800 border-gray-700 text-white">
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -194,20 +289,16 @@ export default function StudentsPage() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">
-                        {t('common.loading')}
-                      </TableCell>
+                      <TableCell colSpan={5} className="text-center py-4">{t('common.loading')}</TableCell>
                     </TableRow>
                   ) : filteredStudents.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4 text-gray-400">
-                        No students found
-                      </TableCell>
+                      <TableCell colSpan={5} className="text-center py-4 text-gray-400">Nenhum aluno encontrado</TableCell>
                     </TableRow>
                   ) : (
                     filteredStudents.map((student) => (
-                      <TableRow 
-                        key={student.id} 
+                      <TableRow
+                        key={student.id}
                         className="border-gray-700 cursor-pointer hover:bg-gray-700/50"
                         onDoubleClick={() => canManageStudents && openEditDialogForEdit(student.id, student.name)}
                       >
@@ -224,44 +315,25 @@ export default function StudentsPage() {
                         <TableCell>{formatDate(student.joinDate, locale)}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            student.isActive 
-                              ? 'bg-green-900 text-green-300' 
-                              : 'bg-red-900 text-red-300'
+                            student.isActive ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
                           }`}>
                             {student.isActive ? t('student.active') : t('student.inactive')}
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            {/* View Button (Eye icon) */}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => openViewDialog(student.id, student.name)}
-                              data-testid={`button-view-student-${student.id}`}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              {t('common.view')}
+                            <Button variant="outline" size="sm" onClick={() => openViewDialog(student.id, student.name)}>
+                              <Eye className="h-4 w-4 mr-1" />{t('common.view')}
                             </Button>
-
                             {canManageStudents && (
                               <>
-                                {/* Edit Button */}
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => openEditDialogForEdit(student.id, student.name)}
-                                  data-testid={`button-edit-student-${student.id}`}
-                                >
-                                  <Edit2 className="h-4 w-4 mr-1" />
-                                  {t('common.edit')}
+                                <Button variant="outline" size="sm" onClick={() => openEditDialogForEdit(student.id, student.name)}>
+                                  <Edit2 className="h-4 w-4 mr-1" />{t('common.edit')}
                                 </Button>
-
-                                {/* Actions dropdown */}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="sm">
-                                      <i className="fas fa-ellipsis-v"></i>
+                                      <MoreVertical className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="bg-gray-700 border-gray-600 text-white">
@@ -275,18 +347,12 @@ export default function StudentsPage() {
                                       </DropdownMenuItem>
                                     )}
                                     {student.isActive ? (
-                                      <DropdownMenuItem 
-                                        className="cursor-pointer text-red-400"
-                                        onClick={() => deactivateStudentMutation.mutate(student.id)}
-                                      >
-                                        <i className="fas fa-user-minus mr-2"></i> {t('student.deactivate')}
+                                      <DropdownMenuItem className="cursor-pointer text-red-400" onClick={() => deactivateStudentMutation.mutate(student.id)}>
+                                        {t('student.deactivate')}
                                       </DropdownMenuItem>
                                     ) : (
-                                      <DropdownMenuItem 
-                                        className="cursor-pointer text-green-400"
-                                        onClick={() => activateStudentMutation.mutate(student.id)}
-                                      >
-                                        <i className="fas fa-user-plus mr-2"></i> {t('student.activate')}
+                                      <DropdownMenuItem className="cursor-pointer text-green-400" onClick={() => activateStudentMutation.mutate(student.id)}>
+                                        {t('student.activate')}
                                       </DropdownMenuItem>
                                     )}
                                   </DropdownMenuContent>
@@ -304,9 +370,7 @@ export default function StudentsPage() {
           </CardContent>
         </Card>
       </div>
-      
 
-      {/* Student Edit Dialog */}
       {selectedStudentId && (
         <StudentEditDialog
           studentId={selectedStudentId}

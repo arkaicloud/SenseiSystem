@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Eye, EyeOff, Loader2, Mail, Lock, Shield, Clock, Users } from "lucide-react";
 import AppLoadingScreen from "@/components/loading/AppLoadingScreen";
-import bgImage from "@assets/Gemini_Generated_Image_ws20d5ws20d5ws20_1773261696595.png";
+import bgImage from "@assets/Gemini_Generated_Image_boh1h9boh1h9boh1_1773262221249.png";
 
 interface SchoolConfig {
   config: {

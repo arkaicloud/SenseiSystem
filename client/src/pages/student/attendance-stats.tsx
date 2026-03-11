@@ -1,39 +1,154 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, BarChart3 } from 'lucide-react';
-import AttendanceHistory from '@/components/student/AttendanceHistory';
+import {
+  Flame, CheckCircle2, Target, BarChart3, BookOpen,
+} from 'lucide-react';
+import {
+  format, subMonths, subDays, getDaysInMonth, startOfMonth,
+  getDay, isAfter,
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import bannerImg from '@assets/medium-shot-woman-fighter-looking-down_1773070189915.jpg';
+import AttendanceHistory from '@/components/student/AttendanceHistory';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface AttendanceData {
+  attendances: Array<{
+    id: number;
+    date: string;
+    status: 'present' | 'absent' | 'late';
+    class: { id: number; name: string; startTime: string; instructorId: number | null } | null;
+  }>;
+  stats: {
+    totalClasses: number;
+    presentCount: number;
+    absentCount: number;
+    attendanceRate: number;
+  };
+  period: { month: number; year: number } | null;
+}
 
 export default function AttendanceStatsPage() {
   const { user } = useAuth();
+  const now = useMemo(() => new Date(), []);
 
   const { data: studentData, isLoading: isStudentLoading } = useQuery({
     queryKey: ['/api/student/profile', user?.id],
     enabled: !!user?.id,
   });
 
-  const { data: attendanceData, isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ['/api/student/attendance-current-month', user?.id],
-    enabled: !!user?.id,
+  const studentId = (studentData as any)?.id;
+
+  const monthsToFetch = useMemo(
+    () => [0, 1, 2, 3, 4].map(i => {
+      const d = subMonths(now, i);
+      return { month: d.getMonth() + 1, year: d.getFullYear() };
+    }),
+    [now]
+  );
+
+  const attendanceQueries = useQueries({
+    queries: monthsToFetch.map(({ month, year }) => ({
+      queryKey: [`/api/student/attendance-history/${studentId}?month=${month}&year=${year}`],
+      enabled: !!studentId,
+    })),
   });
+
+  const presentDates = useMemo(() => {
+    const set = new Set<string>();
+    attendanceQueries.forEach(q => {
+      const data = q.data as AttendanceData | undefined;
+      if (!data) return;
+      data.attendances
+        .filter(a => a.status === 'present' || a.status === 'late')
+        .forEach(a => set.add(a.date.split('T')[0]));
+    });
+    return set;
+  }, [attendanceQueries]);
+
+  const totalStats = useMemo(() => {
+    let totalPresent = 0;
+    let totalClasses = 0;
+    attendanceQueries.forEach(q => {
+      const data = q.data as AttendanceData | undefined;
+      if (!data) return;
+      totalPresent += data.stats.presentCount;
+      totalClasses += data.stats.totalClasses;
+    });
+    return {
+      totalPresent,
+      totalClasses,
+      rate: totalClasses > 0 ? Math.round((totalPresent / totalClasses) * 100) : 0,
+    };
+  }, [attendanceQueries]);
+
+  const streak = useMemo(() => {
+    if (presentDates.size === 0) return 0;
+    let count = 0;
+    let d = new Date(now);
+    const todayStr = format(d, 'yyyy-MM-dd');
+    if (!presentDates.has(todayStr)) d = subDays(d, 1);
+    while (presentDates.has(format(d, 'yyyy-MM-dd'))) {
+      count++;
+      d = subDays(d, 1);
+    }
+    return count;
+  }, [presentDates, now]);
+
+  // Build 4 months for the heatmap (oldest → newest)
+  const heatmapMonths = useMemo(() => {
+    return [3, 2, 1, 0].map(i => {
+      const d = subMonths(now, i);
+      const year = d.getFullYear();
+      const month = d.getMonth();
+      const daysCount = getDaysInMonth(d);
+      const firstDow = getDay(startOfMonth(d));
+      const monthName = format(d, 'MMM', { locale: ptBR });
+
+      const cells: Array<{
+        day: number | null;
+        dateStr: string | null;
+        isPresent: boolean;
+        isToday: boolean;
+        isFuture: boolean;
+      }> = [];
+
+      for (let e = 0; e < firstDow; e++) {
+        cells.push({ day: null, dateStr: null, isPresent: false, isToday: false, isFuture: false });
+      }
+      for (let day = 1; day <= daysCount; day++) {
+        const cellDate = new Date(year, month, day);
+        const dateStr = format(cellDate, 'yyyy-MM-dd');
+        cells.push({
+          day,
+          dateStr,
+          isPresent: presentDates.has(dateStr),
+          isToday: dateStr === format(now, 'yyyy-MM-dd'),
+          isFuture: isAfter(cellDate, now),
+        });
+      }
+      return { monthName, cells };
+    });
+  }, [presentDates, now]);
+
+  const currentMonthName = now.toLocaleDateString('pt-BR', { month: 'long' });
+  const currentYear = now.getFullYear();
 
   if (isStudentLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#2B54FF]/20"></div>
-          <div className="h-4 w-48 bg-gray-200 rounded"></div>
+          <div className="w-12 h-12 rounded-full bg-[#2B54FF]/20" />
+          <div className="h-4 w-48 bg-gray-200 rounded" />
         </div>
       </div>
     );
   }
 
-  const currentMonthName = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-  const currentYear = new Date().getFullYear();
-
   return (
     <div className="font-inter -mx-3 -mt-3 md:mx-0 md:mt-0">
+      {/* Hero banner */}
       <div className="vyta-hero h-[180px] md:rounded-2xl">
         <img
           src={bannerImg}
@@ -44,19 +159,124 @@ export default function AttendanceStatsPage() {
         <div className="vyta-hero-content flex flex-col justify-end h-full p-5 pb-5">
           <span className="vyta-pill mb-2 w-fit">
             <BarChart3 className="w-3 h-3" />
-            Estatisticas
+            Estatísticas
           </span>
           <h1 className="text-[26px] font-bold text-white leading-[32px] font-inter">
-            Presencas
+            Presenças
           </h1>
           <p className="text-[14px] text-white/70 font-inter mt-1">
-            Acompanhe sua evolucao no tatame
+            Acompanhe sua evolução no tatame
           </p>
         </div>
       </div>
 
-      <div className="px-4 pt-6 pb-24 space-y-6 md:px-6">
-        {(studentData as any)?.id && (
+      {/* ── MOBILE LAYOUT ── */}
+      <div className="md:hidden px-4 pt-5 pb-28 space-y-5">
+
+        {/* Streak card */}
+        <div
+          className="rounded-2xl p-6 flex flex-col items-center gap-1 relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #1636cc 0%, #2B54FF 55%, #6b87ff 100%)' }}
+        >
+          <div
+            className="absolute inset-0 opacity-25"
+            style={{ background: 'radial-gradient(circle at 50% 20%, white, transparent 65%)' }}
+          />
+          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-2 relative z-10">
+            <Flame className="w-7 h-7 text-white" strokeWidth={2} />
+          </div>
+          <span className="text-[56px] font-bold text-white leading-none relative z-10 font-inter">
+            {streak}
+          </span>
+          <span className="text-[13px] text-white/90 font-semibold font-inter relative z-10 tracking-wide uppercase">
+            Sequência Atual
+          </span>
+          <span className="text-[12px] text-white/60 font-inter relative z-10">
+            {streak === 1 ? 'dia consecutivo' : 'dias consecutivos'}
+          </span>
+        </div>
+
+        {/* Consistency heatmap */}
+        <div>
+          <h2 className="text-[17px] font-bold text-[#0D0D0D] dark:text-white font-inter mb-3">
+            Consistência
+          </h2>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 overflow-x-auto">
+            <div className="flex gap-3 min-w-max">
+              {heatmapMonths.map(({ monthName, cells }) => (
+                <div key={monthName} className="flex flex-col items-start">
+                  <span className="text-[10px] font-semibold text-[#8D8D8D] font-inter mb-1.5 capitalize tracking-wide">
+                    {monthName}
+                  </span>
+                  <div className="grid grid-cols-7 gap-[3px]">
+                    {cells.map((cell, idx) => (
+                      <div
+                        key={idx}
+                        className="w-[17px] h-[17px] rounded-[4px] transition-colors"
+                        style={{
+                          backgroundColor: !cell.day
+                            ? 'transparent'
+                            : cell.isFuture
+                            ? '#F0F2F7'
+                            : cell.isPresent
+                            ? '#2B54FF'
+                            : '#DDEAFF',
+                          boxShadow: cell.isToday && !cell.isFuture
+                            ? '0 0 0 2px #2B54FF'
+                            : undefined,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-4 justify-end">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-[3px] bg-[#2B54FF]" />
+                <span className="text-[10px] text-[#8D8D8D] font-inter">Treinou</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-[3px] bg-[#DDEAFF]" />
+                <span className="text-[10px] text-[#8D8D8D] font-inter">Sem treino</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-[#EEF1FF] flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-[#2B54FF]" />
+            </div>
+            <span className="text-[32px] font-bold text-[#0D0D0D] dark:text-white font-inter leading-none">
+              {totalStats.totalPresent}
+            </span>
+            <span className="text-[11px] text-[#8D8D8D] font-inter text-center leading-tight">
+              Treinos Feitos
+            </span>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-[#EEF1FF] flex items-center justify-center">
+              <Target className="w-5 h-5 text-[#2B54FF]" />
+            </div>
+            <span className="text-[32px] font-bold text-[#0D0D0D] dark:text-white font-inter leading-none">
+              {totalStats.rate}%
+            </span>
+            <span className="text-[11px] text-[#8D8D8D] font-inter text-center leading-tight">
+              Taxa de Conclusão
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── DESKTOP LAYOUT (unchanged) ── */}
+      <div className="hidden md:block px-6 pt-6 pb-12 space-y-6">
+        {studentId && (
           <div className="vyta-card p-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-[#EEF1FF] flex items-center justify-center">
@@ -66,117 +286,33 @@ export default function AttendanceStatsPage() {
                 {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)} {currentYear}
               </h3>
             </div>
-
-            {isAttendanceLoading ? (
-              <div className="animate-pulse space-y-3">
-                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-3 bg-gray-200 rounded-full w-full"></div>
-              </div>
-            ) : (() => {
-              const attendanceCount = (attendanceData as any)?.attendanceCount || 0;
-              const totalClasses = (attendanceData as any)?.totalClasses || 16;
-              const attendancePercentage = totalClasses > 0 ? Math.round((attendanceCount / totalClasses) * 100) : 0;
-
-              const getGameStatus = () => {
-                if (attendancePercentage >= 60) {
-                  return {
-                    level: "EXCELENTE",
-                    color: "#22C55E",
-                    bgColor: "#DCFCE7",
-                    message: "Voce e um guerreiro do tatame!",
-                    emoji: "🏆"
-                  };
-                } else if (attendancePercentage >= 50) {
-                  return {
-                    level: "BOM TRABALHO",
-                    color: "#22C55E",
-                    bgColor: "#DCFCE7",
-                    message: "Continue firme, esta no caminho!",
-                    emoji: "✅"
-                  };
-                } else if (attendancePercentage >= 25) {
-                  return {
-                    level: "PODE MELHORAR",
-                    color: "#F97316",
-                    bgColor: "#FFF0E6",
-                    message: "Cada aula conta na sua evolucao!",
-                    emoji: "💪"
-                  };
-                } else {
-                  return {
-                    level: "VAMOS COMECAR",
-                    color: "#2B54FF",
-                    bgColor: "#EEF1FF",
-                    message: "Hora de acelerar sua jornada!",
-                    emoji: "🚀"
-                  };
-                }
-              };
-
-              const gameStatus = getGameStatus();
-
+            {(() => {
+              const data = (attendanceQueries[0]?.data as AttendanceData | undefined);
+              const attendanceCount = data?.stats.presentCount || 0;
+              const totalClasses = data?.stats.totalClasses || 16;
+              const pct = totalClasses > 0 ? Math.round((attendanceCount / totalClasses) * 100) : 0;
               return (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{gameStatus.emoji}</span>
-                      <span
-                        className="text-[11px] font-bold tracking-wider font-inter px-2 py-1 rounded-full"
-                        style={{ color: gameStatus.color, backgroundColor: gameStatus.bgColor }}
-                      >
-                        {gameStatus.level}
-                      </span>
-                    </div>
-                    <span className="text-[28px] font-bold font-inter" style={{ color: gameStatus.color }}>
-                      {Math.min(attendancePercentage, 100)}%
-                    </span>
+                    <span className="text-[32px] font-bold text-[#2B54FF] font-inter">{attendanceCount}</span>
+                    <span className="text-[28px] font-bold text-[#22C55E] font-inter">{pct}%</span>
                   </div>
-
-                  <div>
-                    <span className="text-[32px] font-bold text-[#2B54FF] font-inter">
-                      {attendanceCount}
-                    </span>
-                    <span className="text-[14px] text-[#8D8D8D] ml-2 font-inter">
-                      de {totalClasses} aulas
-                    </span>
+                  <div className="w-full bg-[#F0F2F7] rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#2B54FF] transition-all duration-700"
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="w-full bg-[#F0F2F7] rounded-full h-3 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 ease-out"
-                        style={{
-                          width: `${Math.min(attendancePercentage, 100)}%`,
-                          backgroundColor: gameStatus.color
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[11px] text-[#B0B0B0] font-inter">
-                      <span>0%</span>
-                      <span>50%</span>
-                      <span>100%</span>
-                    </div>
-                  </div>
-
-                  <p className="text-[14px] font-medium font-inter" style={{ color: gameStatus.color }}>
-                    {gameStatus.message}
+                  <p className="text-sm text-muted-foreground">
+                    {attendanceCount} de {totalClasses} aulas no mês atual
                   </p>
-
-                  {attendancePercentage < 60 && (
-                    <p className="text-[12px] text-[#8D8D8D] font-inter">
-                      {attendancePercentage < 50
-                        ? `Faltam ${Math.max(0, Math.ceil((totalClasses * 0.5) - attendanceCount))} aulas para 50%`
-                        : `Faltam ${Math.max(0, Math.ceil((totalClasses * 0.6) - attendanceCount))} aulas para Excelente!`
-                      }
-                    </p>
-                  )}
                 </div>
               );
             })()}
           </div>
         )}
 
-        {(studentData as any)?.id && <AttendanceHistory studentId={(studentData as any)?.id} />}
+        {studentId && <AttendanceHistory studentId={studentId} />}
       </div>
     </div>
   );

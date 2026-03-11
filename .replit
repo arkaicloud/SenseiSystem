@@ -42,3 +42,11 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_database:1.0.0"]
+
+[userenv]
+
+[userenv.development]
+BASE_URL = "https://cf32d654-5ec3-4698-9d8d-66678f2d0c8a-00-1g0fsmxw656el.kirk.replit.dev"
+
+[userenv.production]
+BASE_URL = "https://huiosbjj.arkaicloud.com.br"

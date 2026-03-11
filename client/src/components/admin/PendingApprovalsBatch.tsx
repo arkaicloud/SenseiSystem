@@ -495,44 +495,92 @@ export default function PendingApprovalsBatch() {
                   validation.isValid ? 'border-l-green-500' : 'border-l-yellow-500'
                 } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Selection Checkbox */}
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleUserSelection(user.id)}
-                        disabled={!validation.isValid}
-                        className="mt-1"
-                      />
+                <CardContent className="p-3 md:p-5">
+                  {/* Top row: checkbox + name + badge + actions */}
+                  <div className="flex items-start gap-3">
+                    {/* Checkbox */}
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleUserSelection(user.id)}
+                      disabled={!validation.isValid}
+                      className="mt-1 shrink-0"
+                    />
 
-                      {/* User Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold">{user.firstName} {user.lastName}</h3>
-                          {getStatusBadge(user)}
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Name + badge + action buttons row */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold leading-tight truncate">
+                            {user.firstName} {user.lastName}
+                          </h3>
+                          <div className="mt-1">{getStatusBadge(user)}</div>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            {user.email}
-                          </div>
-                          {user.phone && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
-                              {user.phone}
-                            </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleExpanded(user.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+
+                          {!validation.isValid && user.student?.id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingStudent(user.student!.id)}
+                              className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Cadastrado há {daysSinceJoin} dia{daysSinceJoin !== 1 ? 's' : ''}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            {getPaymentPlanName(user.student?.paymentPlanId)}
-                          </div>
+
+                          {validation.isValid && (
+                            <Button
+                              size="sm"
+                              onClick={() => approveMutation.mutate(user.id)}
+                              disabled={approveMutation.isPending}
+                              className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {approveMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Info grid */}
+                      <div className="grid grid-cols-1 gap-y-1 text-xs text-muted-foreground mb-3">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Mail className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{user.email}</span>
+                        </div>
+                        {user.phone && (
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5 shrink-0" />
+                            <span>{user.phone}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 shrink-0" />
+                          <span>Cadastrado há {daysSinceJoin} dia{daysSinceJoin !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
+                        </div>
+                      </div>
 
                         {/* User Status (ASAAS errors, etc.) */}
                         {userStatuses.has(user.id) && (
@@ -613,49 +661,6 @@ export default function PendingApprovalsBatch() {
                             </div>
                           </div>
                         )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleExpanded(user.id)}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                      
-                      {/* Edit Button - shows when data is incomplete */}
-                      {!validation.isValid && user.student?.id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingStudent(user.student!.id)}
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {validation.isValid && (
-                        <Button
-                          size="sm"
-                          onClick={() => approveMutation.mutate(user.id)}
-                          disabled={approveMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          {approveMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <CheckCircle className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>

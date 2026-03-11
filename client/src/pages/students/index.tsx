@@ -33,7 +33,8 @@ import {
 import BeltIcon from '@/components/ui/belt-icon';
 import StudentEditDialog from '@/components/students/StudentEditDialog';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Edit2 } from 'lucide-react';
+import { Eye, Edit2, Mail } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function StudentsPage() {
   const { t, locale } = useTranslations();
@@ -90,6 +91,24 @@ export default function StudentsPage() {
     }
   });
   
+  const resendEmailMutation = useMutation({
+    mutationFn: (userId: number) =>
+      apiRequest("POST", `/api/users/${userId}/resend-email`),
+    onSuccess: (_, userId) => {
+      toast({
+        title: "E-mail reenviado",
+        description: "As credenciais de acesso foram enviadas com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao reenviar e-mail",
+        description: error?.message || "Não foi possível enviar o e-mail.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createStudentMutation = useMutation({
     mutationFn: (data: any) => api.students.create(data),
     onSuccess: () => {
@@ -245,6 +264,15 @@ export default function StudentsPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="bg-gray-700 border-gray-600 text-white">
+                                    {(student as any).userId && (
+                                      <DropdownMenuItem
+                                        className="cursor-pointer text-blue-400"
+                                        onClick={() => resendEmailMutation.mutate((student as any).userId)}
+                                        disabled={resendEmailMutation.isPending}
+                                      >
+                                        <Mail className="w-4 h-4 mr-2" /> Reenviar E-mail
+                                      </DropdownMenuItem>
+                                    )}
                                     {student.isActive ? (
                                       <DropdownMenuItem 
                                         className="cursor-pointer text-red-400"

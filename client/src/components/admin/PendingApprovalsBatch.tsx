@@ -246,18 +246,21 @@ export default function PendingApprovalsBatch() {
   const approveMutation = useMutation({
     mutationFn: async (userId: number) => {
       const user = pendingUsers?.users?.find((u: PendingUser) => u.id === userId);
+      const isScholarship = user?.student?.isScholarship === true;
       const planId = user?.student?.paymentPlanId;
-      
-      if (!planId) {
+
+      if (!isScholarship && !planId) {
         throw new Error("Plano de pagamento é obrigatório para aprovação");
       }
-      
+
+      const body = isScholarship ? { isScholarship: true } : { planId };
+
       const response = await fetch(`/api/users/${userId}/approve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify(body),
       });
       
       if (!response.ok) {

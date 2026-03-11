@@ -344,7 +344,7 @@ export default function PendingApprovals() {
                       ) : (
                         <>
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Aprovar e Criar Cobrança
+                          {user.student?.isScholarship ? 'Aprovar Bolsista' : 'Aprovar e Criar Cobrança'}
                         </>
                       )}
                     </Button>

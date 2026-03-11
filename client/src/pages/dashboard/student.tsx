@@ -66,6 +66,7 @@ export default function StudentDashboard() {
           src={heroImg}
           alt="BJJ Training"
           className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: 'center 20%' }}
         />
         <div className="vyta-hero-gradient" />
         <div className="vyta-hero-content flex flex-col justify-between h-full p-5 pt-6">
@@ -107,7 +108,7 @@ export default function StudentDashboard() {
 
       <div className="px-5 pt-6 pb-24 space-y-6">
         <div className="vyta-card-hero">
-          <img src={beltImg} alt="Treino" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 65%' }} />
+          <img src={beltImg} alt="Treino" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 30%' }} />
           <div className="vyta-card-hero-gradient" />
           <div className="vyta-card-hero-content">
             <span className="vyta-pill mb-2">

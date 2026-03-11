@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Shield, User } from "lucide-react";
+import { Bell, Shield, User, LogOut } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -53,7 +53,7 @@ const passwordSchema = z
   });
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -374,6 +374,18 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Logout — mobile only */}
+      <div className="md:hidden">
+        <Button
+          variant="outline"
+          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 font-semibold h-12 rounded-xl gap-2"
+          onClick={() => logout()}
+        >
+          <LogOut className="w-4 h-4" />
+          Sair da conta
+        </Button>
       </div>
 
       {/* Diálogo: Alterar senha */}

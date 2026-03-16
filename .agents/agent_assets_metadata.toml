@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "ePSbKpsk6Rfy0Wdpfcxwo"
+uri = "file://public/sensei-design-brief.md"
+type = "text"
+title = "SenseiSystem — Design Brief & Resumo do Produto"

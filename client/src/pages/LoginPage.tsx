@@ -224,6 +224,12 @@ export default function LoginPage() {
             <p className="text-center text-white/25 text-[11px] mt-3">
               SenseiSystem · Todos os direitos reservados.
             </p>
+            <p className="text-center text-[11px] mt-1">
+              <a href="https://arkaicloud.com.br" target="_blank" rel="noopener noreferrer"
+                className="text-white/35 hover:text-white/60 transition-colors">
+                Desenvolvido por Arkai
+              </a>
+            </p>
           </div>
         </div>
       </div>
@@ -278,6 +284,10 @@ export default function LoginPage() {
             <div>
               <SocialIcons className="mb-4" />
               <p className="text-xs text-white/25">SenseiSystem · Todos os direitos reservados.</p>
+              <a href="https://arkaicloud.com.br" target="_blank" rel="noopener noreferrer"
+                className="text-xs text-white/35 hover:text-white/60 transition-colors mt-1 block">
+                Desenvolvido por Arkai
+              </a>
             </div>
           </div>
         </div>

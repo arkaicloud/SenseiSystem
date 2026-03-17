@@ -1096,8 +1096,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/pending", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const users = await storage.getUsers();
-      // Only return inactive users
-      const pendingUsers = users.filter(u => !u.active);
+      // Only return users with status 'pending' — blocked users must NOT appear here
+      const pendingUsers = users.filter(u => u.status === 'pending');
 
       // Include student data for each pending user
       const usersWithStudentData = await Promise.all(

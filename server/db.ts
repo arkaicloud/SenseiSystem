@@ -43,9 +43,11 @@ const connectionConfig = getConnectionConfig();
 // Log da conexão (apenas em desenvolvimento)
 if (process.env.NODE_ENV === 'development') {
   if (connectionConfig) {
-    const logUrl = process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@') || 
-      `postgres://${process.env.PGUSER}:****@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`;
-    console.log('Conectando ao banco PostgreSQL:', logUrl);
+    const activeUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || 
+      `postgres://${process.env.PGUSER}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`;
+    const logUrl = activeUrl.replace(/:[^:@]*@/, ':****@');
+    const source = process.env.NEON_DATABASE_URL ? '🟢 NEON (custom)' : '🔵 Replit (managed)';
+    console.log(`Conectando ao banco PostgreSQL [${source}]:`, logUrl);
   } else {
     console.log('⚠️ Nenhuma configuração de banco de dados disponível');
   }

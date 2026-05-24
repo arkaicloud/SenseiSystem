@@ -8,7 +8,7 @@ packages = ["jq"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["node", "./dist/index.cjs"]
+run = ["node", "./dist/index.js"]
 build = ["npm", "run", "build"]
 
 [[ports]]
@@ -43,6 +43,7 @@ waitForPort = 5000
 [agent]
 integrations = ["javascript_database:1.0.0"]
 stack = "FULLSTACK_JS"
+expertMode = true
 
 [userenv]
 

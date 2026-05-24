@@ -9,6 +9,11 @@ const { Pool } = pg;
 
 // Build connection string from individual PG variables if DATABASE_URL is not available
 function getConnectionConfig() {
+  // Prefer NEON_DATABASE_URL if set (allows overriding Replit's managed DATABASE_URL)
+  if (process.env.NEON_DATABASE_URL) {
+    return { connectionString: process.env.NEON_DATABASE_URL };
+  }
+
   if (process.env.DATABASE_URL) {
     return { connectionString: process.env.DATABASE_URL };
   }

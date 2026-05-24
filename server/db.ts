@@ -9,11 +9,6 @@ const { Pool } = pg;
 
 // Build connection string from individual PG variables if DATABASE_URL is not available
 function getConnectionConfig() {
-  // Prefer NEON_DATABASE_URL if set (allows overriding Replit's managed DATABASE_URL)
-  if (process.env.NEON_DATABASE_URL) {
-    return { connectionString: process.env.NEON_DATABASE_URL };
-  }
-
   if (process.env.DATABASE_URL) {
     return { connectionString: process.env.DATABASE_URL };
   }
@@ -43,11 +38,10 @@ const connectionConfig = getConnectionConfig();
 // Log da conexão (apenas em desenvolvimento)
 if (process.env.NODE_ENV === 'development') {
   if (connectionConfig) {
-    const activeUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || 
+    const activeUrl = process.env.DATABASE_URL || 
       `postgres://${process.env.PGUSER}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`;
     const logUrl = activeUrl.replace(/:[^:@]*@/, ':****@');
-    const source = process.env.NEON_DATABASE_URL ? '🟢 NEON (custom)' : '🔵 Replit (managed)';
-    console.log(`Conectando ao banco PostgreSQL [${source}]:`, logUrl);
+    console.log('Conectando ao banco PostgreSQL [🔵 Replit (managed)]:', logUrl);
   } else {
     console.log('⚠️ Nenhuma configuração de banco de dados disponível');
   }

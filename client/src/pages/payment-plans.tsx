@@ -8,7 +8,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import PaymentPlanForm from "@/components/payments/PaymentPlanForm";
 import { centsToBRL } from "@shared/money";
-import { Plus, Search, Pencil, Trash2, CreditCard } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, CreditCard, Users } from "lucide-react";
 
 const FREQUENCY_LABELS: Record<string, string> = {
   weekly:     "Semanal",
@@ -168,7 +168,15 @@ const PaymentPlans: React.FC = () => {
                   {filteredPlans.map((plan: any) => (
                     <tr key={plan.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-foreground">{plan.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">{plan.name}</span>
+                          {plan.isFamily && (
+                            <Badge className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-0 gap-1">
+                              <Users className="w-3 h-3" />
+                              Família · {plan.maxStudents || 2} alunos
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm font-semibold text-foreground">{centsToBRL(plan.amount)}</span>
@@ -228,6 +236,8 @@ const PaymentPlans: React.FC = () => {
                 amount: selectedPlan.amount,
                 frequency: selectedPlan.frequency,
                 description: selectedPlan.description || "",
+                isFamily: selectedPlan.isFamily ?? false,
+                maxStudents: selectedPlan.maxStudents ?? 2,
               }}
               onSubmit={(data) => updatePlan({ id: selectedPlan.id, data })}
               onCancel={() => setSelectedPlan(null)}

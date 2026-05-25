@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import { brlToCents, centsToBRL, formatBRLInput } from "@shared/money";
 
 const paymentPlanFormSchema = z.object({
@@ -28,6 +28,8 @@ const paymentPlanFormSchema = z.object({
   amount: z.string().min(1, { message: "Valor é obrigatório" }),
   frequency: z.string().min(1, { message: "Frequência é obrigatória" }),
   description: z.string().optional(),
+  isFamily: z.boolean().default(false),
+  maxStudents: z.number().min(2).max(10).default(2),
 });
 
 type PaymentPlanFormValues = z.infer<typeof paymentPlanFormSchema>;
@@ -38,8 +40,10 @@ interface PaymentPlanFormProps {
     amount: number;
     frequency: string;
     description: string;
+    isFamily: boolean;
+    maxStudents: number;
   }>;
-  onSubmit: (data: { name: string; amount: number; frequency: string; description?: string }) => void;
+  onSubmit: (data: { name: string; amount: number; frequency: string; description?: string; isFamily: boolean; maxStudents: number }) => void;
   onCancel?: () => void;
   isLoading: boolean;
 }
@@ -70,8 +74,12 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
         : "",
       frequency: defaultValues?.frequency || "monthly",
       description: defaultValues?.description || "",
+      isFamily: defaultValues?.isFamily ?? false,
+      maxStudents: defaultValues?.maxStudents ?? 2,
     },
   });
+
+  const isFamily = form.watch("isFamily");
 
   const handleFormSubmit = (data: PaymentPlanFormValues) => {
     onSubmit({
@@ -79,6 +87,8 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
       amount: brlToCents(data.amount),
       frequency: data.frequency,
       description: data.description,
+      isFamily: data.isFamily,
+      maxStudents: data.isFamily ? data.maxStudents : 1,
     });
   };
 
@@ -94,7 +104,7 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
             <FormItem>
               <FormLabel>Nome do plano</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Mensal Básico" {...field} />
+                <Input placeholder="Ex: Família Mensal" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -168,6 +178,74 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
             </FormItem>
           )}
         />
+
+        {/* Plano Família toggle */}
+        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+          <FormField
+            control={form.control}
+            name="isFamily"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <FormLabel className="text-sm font-medium cursor-pointer mb-0">
+                      Plano Família
+                    </FormLabel>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={field.value}
+                    onClick={() => field.onChange(!field.value)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      field.value ? "bg-primary" : "bg-input"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                        field.value ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Permite vincular múltiplos alunos sob um mesmo responsável financeiro
+                </p>
+              </FormItem>
+            )}
+          />
+
+          {isFamily && (
+            <FormField
+              control={form.control}
+              name="maxStudents"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Máximo de alunos</FormLabel>
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {[2, 3, 4, 5, 6].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n} alunos
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
 
         {/* Botões */}
         <div className="flex justify-end gap-3 pt-2">

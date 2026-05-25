@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Users, Plus, ArrowRight } from "lucide-react";
 
 import PersonalDataStep, { type PersonalDataType } from "./steps/PersonalDataStep";
 import ContactInfoStep, { type ContactInfoType } from "./steps/ContactInfoStep";
@@ -18,6 +18,18 @@ interface MobileStudentOnboardingProps {
   onSuccess: () => void;
 }
 
+type FamilyPrefillData = {
+  financialResponsibleName: string;
+  financialResponsibleCpf: string;
+  financialResponsibleEmail: string;
+  financialResponsiblePhone: string;
+  financialResponsibleRelationship: "other";
+  paymentPlanId: string;
+  dueDate: string;
+  maxStudents: number;
+  registeredCount: number;
+};
+
 export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStudentOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<CompleteFormData & Record<string, any>>>({});
@@ -26,6 +38,10 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Family plan state
+  const [familyPrefill, setFamilyPrefill] = useState<FamilyPrefillData | null>(null);
+  const [lastSubmittedName, setLastSubmittedName] = useState<string>("");
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -172,8 +188,32 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         throw new Error(err.message || 'Falha no cadastro');
       }
 
+      // Track submitted name for family flow screen
+      setLastSubmittedName(`${data.firstName || ""} ${data.lastName || ""}`.trim() || "Aluno");
+
+      // Check if this was a family plan
+      const isFamily = !!(data as any).isFamily;
+      const maxStudents = (data as any).maxStudents || 2;
+      const currentRegisteredCount = (familyPrefill?.registeredCount || 0) + 1;
+
+      if (isFamily && currentRegisteredCount < maxStudents) {
+        // Prepare prefill data for the next student in the family
+        setFamilyPrefill({
+          financialResponsibleName: data.financialResponsibleName || "",
+          financialResponsibleCpf: data.financialResponsibleCpf || "",
+          financialResponsibleEmail: data.financialResponsibleEmail || "",
+          financialResponsiblePhone: data.financialResponsiblePhone || "",
+          financialResponsibleRelationship: "other",
+          paymentPlanId: data.paymentPlanId || "",
+          dueDate: data.dueDate || "5",
+          maxStudents,
+          registeredCount: currentRegisteredCount,
+        });
+      } else {
+        setFamilyPrefill(null);
+      }
+
       setSuccess(true);
-      setTimeout(() => onSuccess(), 2500);
     } catch (err: any) {
       setSubmitError(err?.message || "Erro ao finalizar cadastro. Tente novamente.");
     } finally {
@@ -185,26 +225,110 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
+  const startNextFamilyStudent = () => {
+    if (!familyPrefill) return;
+    // Reset form for next student, keep responsible/payment prefilled
+    setFormData({});
+    setHealthData(null);
+    setSignatureData(null);
+    setSubmitError(null);
+    setSuccess(false);
+    setCurrentStep(1);
+  };
+
+  const handleDone = () => {
+    setFamilyPrefill(null);
+    setTimeout(() => onSuccess(), 400);
+  };
+
+  // Success screen
   if (success) {
+    const canAddMore = familyPrefill !== null;
+    const registeredCount = familyPrefill?.registeredCount || 1;
+    const maxStudents = familyPrefill?.maxStudents || 2;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-6">
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-green-400" />
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-green-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Cadastro Enviado!</h3>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+              O cadastro de <span className="text-white font-medium">{lastSubmittedName}</span> foi enviado para aprovação. Um e-mail será enviado quando aprovado.
+            </p>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Cadastro Enviado!</h3>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-            Seu cadastro foi enviado para aprovação. Você receberá um e-mail com as credenciais de acesso quando for aprovado.
-          </p>
+
+          {canAddMore && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5 mb-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-[#2B54FF]/20 border border-[#2B54FF]/30 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5 text-[#2B54FF]" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Plano Família</p>
+                  <p className="text-slate-400 text-xs">
+                    {registeredCount} de {maxStudents} alunos cadastrados
+                  </p>
+                </div>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-1.5 mb-4">
+                <div
+                  className="bg-[#2B54FF] h-1.5 rounded-full transition-all"
+                  style={{ width: `${(registeredCount / maxStudents) * 100}%` }}
+                />
+              </div>
+              <button
+                onClick={startNextFamilyStudent}
+                className="w-full h-12 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar outro aluno
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={handleDone}
+            className={`w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              canAddMore
+                ? "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
+                : "bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white"
+            }`}
+          >
+            {canAddMore ? "Concluir sem adicionar" : (
+              <>Voltar ao início <ArrowRight className="w-4 h-4" /></>
+            )}
+          </button>
         </div>
       </div>
     );
   }
 
+  // Family plan prefill for payment step
+  const paymentDefaultValues = familyPrefill ? {
+    financialResponsibleName: familyPrefill.financialResponsibleName,
+    financialResponsibleCpf: familyPrefill.financialResponsibleCpf,
+    financialResponsibleEmail: familyPrefill.financialResponsibleEmail,
+    financialResponsiblePhone: familyPrefill.financialResponsiblePhone,
+    financialResponsibleRelationship: familyPrefill.financialResponsibleRelationship,
+    paymentPlanId: familyPrefill.paymentPlanId,
+    dueDate: familyPrefill.dueDate,
+  } : undefined;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col">
       {/* Sticky header */}
       <div className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-white/10 px-4 pt-safe-top pt-3 pb-3">
+        {familyPrefill && (
+          <div className="flex items-center gap-2 mb-2 bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-lg px-3 py-1.5">
+            <Users className="w-3.5 h-3.5 text-[#2B54FF] shrink-0" />
+            <p className="text-xs text-[#7B9FFF]">
+              Plano Família — aluno {familyPrefill.registeredCount + 1} de {familyPrefill.maxStudents}
+            </p>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-2.5">
           <button
             onClick={currentStep === 1 ? onBack : goBack}
@@ -249,7 +373,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
           <PaymentAndResponsibleStep
             onNext={handlePayment}
             onBack={goBack}
-            defaultValues={formData}
+            defaultValues={paymentDefaultValues || formData}
           />
         )}
         {currentStep === 6 && (

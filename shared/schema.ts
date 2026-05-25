@@ -334,6 +334,8 @@ export const paymentPlans = pgTable("payment_plans", {
   frequency: text("frequency").notNull(), // monthly, quarterly, etc.
   description: text("description"),
   isScholarship: boolean("is_scholarship").default(false), // Indica se é plano de bolsista
+  isFamily: boolean("is_family").default(false), // Plano família — suporta múltiplos alunos
+  maxStudents: integer("max_students").default(2), // Máximo de alunos no plano família
 });
 
 // Student payments table

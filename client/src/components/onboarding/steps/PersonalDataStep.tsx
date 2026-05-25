@@ -34,8 +34,10 @@ const formatCPF = (value: string): string => {
 };
 
 const personalDataSchema = z.object({
-  firstName: z.string().min(1, "Nome é obrigatório"),
-  lastName: z.string().min(1, "Sobrenome é obrigatório"),
+  fullName: z.string().min(3, "Nome completo é obrigatório").refine(
+    (v) => v.trim().split(/\s+/).length >= 2,
+    "Informe nome e sobrenome"
+  ),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
   sex: z.enum(["M", "F"], { errorMap: () => ({ message: "Selecione o gênero" }) }),
   cpf: z.string()
@@ -46,7 +48,19 @@ const personalDataSchema = z.object({
   stripes: z.number().min(0).max(4),
 });
 
-export type PersonalDataType = z.infer<typeof personalDataSchema>;
+type PersonalDataSchemaType = z.infer<typeof personalDataSchema>;
+
+// External type keeps firstName/lastName for compatibility with rest of the app
+export type PersonalDataType = {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  sex: "M" | "F";
+  cpf: string;
+  rg: string;
+  beltLevel: string;
+  stripes: number;
+};
 
 interface PersonalDataStepProps {
   onNext: (data: PersonalDataType) => void;
@@ -59,7 +73,6 @@ const selectContent = "bg-slate-800 border-white/10 text-white";
 const selectItem = "text-white focus:bg-white/10 focus:text-white cursor-pointer";
 const nativeSel = "h-14 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
 
-// Componente com estado local para evitar reset ao selecionar parcialmente
 function BirthDatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const initParts = value ? value.split("-") : ["", "", ""];
   const [selYear, setSelYear] = useState(initParts[0] || "");
@@ -112,27 +125,36 @@ function BirthDatePicker({ value, onChange }: { value: string; onChange: (v: str
 }
 
 export default function PersonalDataStep({ onNext, defaultValues }: PersonalDataStepProps) {
-  const form = useForm<PersonalDataType>({
+  const combinedFullName = defaultValues
+    ? [defaultValues.firstName, defaultValues.lastName].filter(Boolean).join(" ")
+    : "";
+
+  const form = useForm<PersonalDataSchemaType>({
     resolver: zodResolver(personalDataSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      birthDate: "",
-      sex: "M",
-      cpf: "",
-      rg: "",
-      beltLevel: "white",
-      stripes: 0,
-      ...defaultValues,
+      fullName: combinedFullName,
+      birthDate: defaultValues?.birthDate || "",
+      sex: defaultValues?.sex || "M",
+      cpf: defaultValues?.cpf || "",
+      rg: defaultValues?.rg || "",
+      beltLevel: defaultValues?.beltLevel || "white",
+      stripes: defaultValues?.stripes || 0,
     },
   });
 
   const watchedBirthDate = form.watch("birthDate");
   const { beltOptions, isLoading: loadingBelts } = useBeltLevels(watchedBirthDate || undefined, true);
 
+  const handleSubmit = (data: PersonalDataSchemaType) => {
+    const parts = data.fullName.trim().split(/\s+/);
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(" ") || "-";
+    onNext({ ...data, firstName, lastName });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onNext)} className="flex flex-col pb-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col pb-6">
         {/* Step header */}
         <div className="px-6 pt-8 pb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
@@ -143,35 +165,20 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
         </div>
 
         <div className="px-6 space-y-5">
-          {/* Nome + Sobrenome */}
-          <div className="grid grid-cols-2 gap-3">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={labelCls}>Nome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome" {...field} className={inputCls} />
-                  </FormControl>
-                  <FormMessage className="text-red-400 text-xs" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={labelCls}>Sobrenome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Sobrenome" {...field} className={inputCls} />
-                  </FormControl>
-                  <FormMessage className="text-red-400 text-xs" />
-                </FormItem>
-              )}
-            />
-          </div>
+          {/* Nome Completo */}
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className={labelCls}>Nome Completo *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome e sobrenome" {...field} className={inputCls} />
+                </FormControl>
+                <FormMessage className="text-red-400 text-xs" />
+              </FormItem>
+            )}
+          />
 
           {/* Nascimento */}
           <FormField

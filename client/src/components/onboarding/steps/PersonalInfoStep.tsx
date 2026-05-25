@@ -41,8 +41,10 @@ const formatCPF = (value: string): string => {
 };
 
 const personalInfoSchema = z.object({
-  firstName: z.string().min(1, "Nome é obrigatório"),
-  lastName: z.string().min(1, "Sobrenome é obrigatório"),
+  fullName: z.string().min(3, "Nome completo é obrigatório").refine(
+    (v) => v.trim().split(/\s+/).length >= 2,
+    "Informe nome e sobrenome"
+  ),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
   sex: z.enum(["M", "F"], {
     errorMap: () => ({ message: "Selecione o gênero" })
@@ -93,7 +95,10 @@ const personalInfoSchema = z.object({
   path: ["financialResponsibleName"]
 });
 
-export type PersonalInfoData = z.infer<typeof personalInfoSchema>;
+export type PersonalInfoData = z.infer<typeof personalInfoSchema> & {
+  firstName: string;
+  lastName: string;
+};
 
 interface PersonalInfoStepProps {
   onNext: (data: PersonalInfoData) => void;
@@ -155,8 +160,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   const form = useForm<PersonalInfoData>({
     resolver: zodResolver(personalInfoSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      fullName: defaultValues ? [defaultValues.firstName, defaultValues.lastName].filter(Boolean).join(" ") : "",
       birthDate: "",
       sex: "M" as "M" | "F",
       email: "",
@@ -225,7 +229,13 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   };
 
   const handleSubmit = (data: PersonalInfoData) => {
-    onNext(data);
+    const parts = (data.fullName || "").trim().split(/\s+/);
+    const outData = {
+      ...data,
+      firstName: parts[0] || "",
+      lastName: parts.slice(1).join(" ") || "-",
+    };
+    onNext(outData);
   };
 
   const formatPhone = (value: string) => {
@@ -262,7 +272,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   // Campos por etapa
   const getFieldsForStep = (step: number): (keyof PersonalInfoData)[] => {
     switch (step) {
-      case 1: return ["firstName", "lastName", "birthDate", "sex", "cpf", "rg"];
+      case 1: return ["fullName", "birthDate", "sex", "cpf", "rg"];
       case 2: return ["email", "phone"];
       case 3: return ["emergencyContact", "emergencyPhone"];
       case 4: return ["financialResponsibleRelationship", "paymentPlanId", "dueDate"];
@@ -281,34 +291,19 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
             Informe seus dados pessoais de identificação.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite seu nome" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Sobrenome *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite seu sobrenome" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome Completo *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Digite seu nome completo" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <FormField
@@ -515,7 +510,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                   // Se for "self", preencher automaticamente os dados
                   if (value === "self") {
                     const currentData = form.getValues();
-                    form.setValue("financialResponsibleName", `${currentData.firstName} ${currentData.lastName}`.trim());
+                    form.setValue("financialResponsibleName", (currentData.fullName || "").trim());
                     form.setValue("financialResponsibleEmail", currentData.email);
                     form.setValue("financialResponsiblePhone", currentData.phone);
                     form.setValue("financialResponsibleCpf", currentData.cpf);

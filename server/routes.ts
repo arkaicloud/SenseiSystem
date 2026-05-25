@@ -48,6 +48,40 @@ function generateTempPassword(): string {
   return password;
 }
 
+/**
+ * Auto-link a student to a guardian based on financialResponsibleCpf.
+ * Checks if any user has a CPF matching the student's responsible CPF.
+ * If found and the relation is not 'self', sets guardian_id on the student.
+ * Safe to call on every approval — does nothing if no match found.
+ */
+async function autoLinkGuardianByCpf(studentId: number, financialResponsibleCpf: string | null | undefined, financialResponsibleRelation: string | null | undefined): Promise<void> {
+  // Skip if student is their own financial responsible
+  if (!financialResponsibleCpf || financialResponsibleRelation === 'self') return;
+
+  // Normalize CPF: strip non-digits for comparison
+  const cpfNormalized = financialResponsibleCpf.replace(/\D/g, '');
+  if (cpfNormalized.length < 11) return;
+
+  try {
+    const allUsers = await storage.getUsers();
+    const guardianUser = allUsers.find(u => {
+      if (!u.cpf) return false;
+      return u.cpf.replace(/\D/g, '') === cpfNormalized;
+    });
+
+    if (guardianUser) {
+      if (!db) return;
+      await db.execute(sql`UPDATE students SET guardian_id = ${guardianUser.id} WHERE id = ${studentId}`);
+      console.log(`✅ Auto-link: Aluno (student_id=${studentId}) vinculado ao responsável ${guardianUser.firstName} ${guardianUser.lastName} (user_id=${guardianUser.id})`);
+    } else {
+      console.log(`ℹ️ Auto-link: Nenhum usuário encontrado com CPF ${cpfNormalized.slice(0, 3)}*** para student_id=${studentId}`);
+    }
+  } catch (err) {
+    console.error(`⚠️ Auto-link guardian error for student ${studentId}:`, err);
+    // Non-critical: don't throw, just log
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
@@ -1436,6 +1470,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } else {
           return res.status(404).json({ message: "Student profile not found" });
+        }
+      }
+
+      // Auto-link guardian by CPF (family plan support)
+      if (user.role === 'student') {
+        const studentForLink = await storage.getStudentByUserId(user.id);
+        if (studentForLink) {
+          await autoLinkGuardianByCpf(
+            studentForLink.id,
+            studentForLink.financialResponsibleCpf,
+            studentForLink.financialResponsibleRelation
+          );
         }
       }
 

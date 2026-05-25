@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, CreditCard, User, Users, GraduationCap, CheckCircle, XCircle, Loader2, Ticket } from "lucide-react";
+import { ArrowLeft, ArrowRight, CreditCard, User, Users, GraduationCap, CheckCircle, XCircle, Loader2, Ticket, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 const DUE_DATE_OPTIONS = [5, 10, 15, 20, 25];
@@ -66,7 +66,10 @@ const paymentSchema = z.object({
   }
 });
 
-export type PaymentAndResponsibleType = z.infer<typeof paymentSchema>;
+export type PaymentAndResponsibleType = z.infer<typeof paymentSchema> & {
+  isFamily?: boolean;
+  maxStudents?: number;
+};
 
 interface Props {
   onNext: (data: PaymentAndResponsibleType) => void;
@@ -97,10 +100,13 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
   const isScholarship = form.watch("isScholarship");
   const relationship = form.watch("financialResponsibleRelationship");
 
-  const { data: plansData } = useQuery<{ plans: Array<{ id: number; name: string; amount: number; description: string }> }>({
+  const { data: plansData } = useQuery<{ plans: Array<{ id: number; name: string; amount: number; description: string; isFamily?: boolean; maxStudents?: number }> }>({
     queryKey: ["/api/payment-plans"],
   });
   const plans = (plansData?.plans || []).filter(p => !(p as any).isScholarship);
+
+  const selectedPlanObj = plans.find(p => p.id.toString() === form.watch("paymentPlanId"));
+  const selectedIsFamily = selectedPlanObj?.isFamily ?? false;
 
   const [couponInput, setCouponInput] = useState(defaultValues?.couponCode || "");
   const [couponStatus, setCouponStatus] = useState<null | { valid: boolean; discountPercent?: number; description?: string | null; message?: string }>(
@@ -144,9 +150,18 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
     form.setValue("isScholarship", false);
   };
 
+  const handleSubmit = (data: PaymentAndResponsibleType) => {
+    const planObj = plans.find(p => p.id.toString() === data.paymentPlanId);
+    onNext({
+      ...data,
+      isFamily: planObj?.isFamily ?? false,
+      maxStudents: planObj?.maxStudents ?? 1,
+    });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onNext)} className="flex flex-col pb-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col pb-6">
         <div className="px-6 pt-8 pb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
             <CreditCard className="w-6 h-6 text-[#2B54FF]" />
@@ -222,8 +237,19 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                             }`}
                           >
                             <div>
-                              <p className={`text-sm font-semibold ${field.value === plan.id.toString() ? "text-white" : "text-slate-300"}`}>{plan.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className={`text-sm font-semibold ${field.value === plan.id.toString() ? "text-white" : "text-slate-300"}`}>{plan.name}</p>
+                                {plan.isFamily && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2B54FF]/20 text-[#7B9FFF]">
+                                    <Home className="w-2.5 h-2.5" />
+                                    Família · {plan.maxStudents || 2}
+                                  </span>
+                                )}
+                              </div>
                               {plan.description && <p className="text-xs text-slate-500 mt-0.5">{plan.description}</p>}
+                              {plan.isFamily && field.value === plan.id.toString() && (
+                                <p className="text-xs text-[#7B9FFF] mt-1">Você poderá adicionar até {plan.maxStudents || 2} alunos neste plano</p>
+                              )}
                             </div>
                             <div className="text-right ml-3 shrink-0">
                               <p className={`text-base font-bold ${field.value === plan.id.toString() ? "text-[#2B54FF]" : "text-slate-300"}`}>

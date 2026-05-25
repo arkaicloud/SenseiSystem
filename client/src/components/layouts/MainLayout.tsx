@@ -14,6 +14,7 @@ import { useTheme } from "@/hooks/use-theme";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { StudentBell } from "@/components/student/StudentBell";
 import BottomNav from "@/components/student/BottomNav";
+import { StudentSwitcher } from "@/components/guardian/StudentSwitcher";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -144,6 +145,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Student Switcher for guardians */}
+              <StudentSwitcher />
+
               {/* Notification Bell */}
               {user?.role === 'admin' && <NotificationBell />}
               {user?.role === 'student' && studentProfile && typeof studentProfile === 'object' && studentProfile !== null && 'id' in studentProfile && (
@@ -261,6 +265,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             
             <div className="flex items-center space-x-2">
+              {/* Student Switcher for guardians - mobile */}
+              <StudentSwitcher />
+
               {user?.role === 'admin' && <NotificationBell />}
               
               <Button

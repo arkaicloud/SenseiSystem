@@ -4,6 +4,7 @@ import { useBootLoader } from '@/hooks/useBootLoader';
 import { useLocation } from 'wouter';
 import { AppLoadingOverlay } from '@/components/loading/AppLoadingOverlay';
 import MainLayout from '@/components/layouts/MainLayout';
+import GuardianSelectPage from '@/pages/guardian-select';
 
 interface RootGuardProps {
   children: React.ReactNode;
@@ -49,6 +50,16 @@ export function RootGuard({ children }: RootGuardProps) {
 
   // Render main layout if user is authenticated
   if (user) {
+    // Guardian users who haven't selected a student yet go to selection screen
+    if (user.role === 'guardian' && 
+        !location.startsWith('/guardian') && 
+        !location.startsWith('/settings') &&
+        !location.startsWith('/change-password')) {
+      const hasActiveStudent = !!sessionStorage.getItem('activeStudentId');
+      if (!hasActiveStudent) {
+        return <GuardianSelectPage />;
+      }
+    }
     return <MainLayout>{children}</MainLayout>;
   }
 

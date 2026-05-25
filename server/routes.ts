@@ -1092,6 +1092,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====Guardian / Family Plan Routes=====
+
+  // GET /api/guardian/dependents — list all students linked to this user as guardian
+  app.get("/api/guardian/dependents", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      if (!db) return res.status(500).json({ error: "Database not available" });
+
+      const rows = await db.execute(sql`
+        SELECT s.id AS "studentId", s.user_id AS "userId",
+               u.first_name AS "firstName", u.last_name AS "lastName",
+               s.belt_level AS "beltLevel", s.stripes, s.avatar_color AS "avatarColor"
+        FROM students s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.guardian_id = ${requestUser.id}
+        ORDER BY u.first_name
+      `);
+
+      res.json({ dependents: rows.rows });
+    } catch (error) {
+      console.error("Error fetching guardian dependents:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // POST /api/guardian/link — link a student to a guardian (admin only)
+  app.post("/api/guardian/link", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { studentId, guardianUserId } = req.body;
+      if (!studentId || !guardianUserId) {
+        return res.status(400).json({ error: "studentId and guardianUserId are required" });
+      }
+      if (!db) return res.status(500).json({ error: "Database not available" });
+
+      await db.execute(sql`
+        UPDATE students SET guardian_id = ${guardianUserId} WHERE id = ${studentId}
+      `);
+
+      res.json({ success: true, message: "Aluno vinculado ao responsável com sucesso" });
+    } catch (error) {
+      console.error("Error linking guardian:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // DELETE /api/guardian/unlink/:studentId — remove guardian link (admin only)
+  app.delete("/api/guardian/unlink/:studentId", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      if (isNaN(studentId)) return res.status(400).json({ error: "Invalid studentId" });
+      if (!db) return res.status(500).json({ error: "Database not available" });
+
+      await db.execute(sql`UPDATE students SET guardian_id = NULL WHERE id = ${studentId}`);
+      res.json({ success: true, message: "Vínculo removido com sucesso" });
+    } catch (error) {
+      console.error("Error unlinking guardian:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // GET /api/guardian/student/:studentId/profile — guardian views a dependent's profile
+  app.get("/api/guardian/student/:studentId/profile", isAuthenticated, async (req, res) => {
+    try {
+      const requestUser = (req as any).user;
+      const studentId = parseInt(req.params.studentId);
+      if (isNaN(studentId)) return res.status(400).json({ error: "Invalid studentId" });
+      if (!db) return res.status(500).json({ error: "Database not available" });
+
+      // Verify this user is the guardian of this student (or is admin)
+      const linkCheck = await db.execute(sql`
+        SELECT id FROM students WHERE id = ${studentId} AND guardian_id = ${requestUser.id}
+      `);
+      if (linkCheck.rows.length === 0 && requestUser.role !== 'admin') {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const student = await storage.getStudent(studentId);
+      if (!student) return res.status(404).json({ error: "Student not found" });
+
+      const studentUser = await storage.getUser(student.userId);
+      res.json({ student, user: studentUser });
+    } catch (error) {
+      console.error("Error fetching dependent profile:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // GET /api/admin/guardian-users — list guardian-eligible users (admin)
+  app.get("/api/admin/guardian-users", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getUsers();
+      const eligible = allUsers
+        .filter(u => u.status === 'active' && (u.role === 'guardian' || u.role === 'student'))
+        .map(u => ({ id: u.id, firstName: u.firstName, lastName: u.lastName, role: u.role, email: u.email }));
+      res.json({ users: eligible });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // GET /api/admin/students-with-guardians — all students with their guardian info
+  app.get("/api/admin/students-with-guardians", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      if (!db) return res.status(500).json({ error: "Database not available" });
+
+      const rows = await db.execute(sql`
+        SELECT s.id, s.user_id AS "userId",
+               u.first_name AS "firstName", u.last_name AS "lastName",
+               s.belt_level AS "beltLevel",
+               s.guardian_id AS "guardianId",
+               gu.first_name || ' ' || gu.last_name AS "guardianName",
+               gu.email AS "guardianEmail"
+        FROM students s
+        JOIN users u ON u.id = s.user_id
+        LEFT JOIN users gu ON gu.id = s.guardian_id
+        ORDER BY u.first_name
+      `);
+
+      res.json({ students: rows.rows });
+    } catch (error) {
+      console.error("Error fetching students with guardians:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get pending users (inactive users waiting for approval)
   app.get("/api/users/pending", isAuthenticated, isAdmin, async (req, res) => {
     try {

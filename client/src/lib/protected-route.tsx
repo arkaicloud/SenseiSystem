@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect, Route } from "wouter";
 
-type AllowedRoles = "admin" | "instructor" | "student" | "any";
+type AllowedRoles = "admin" | "instructor" | "student" | "guardian" | "any";
 
 interface ProtectedRouteProps {
   path: string;

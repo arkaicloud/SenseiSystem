@@ -48,7 +48,7 @@ export const loginSchema = z.object({
 });
 
 // Enums
-export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student']);
+export const userRoleEnum = pgEnum('user_role', ['admin', 'instructor', 'student', 'guardian']);
 export const beltLevelEnum = pgEnum('belt_level', [
   // Adult belts - IBJJF Adult System
   'white', 'blue', 'purple', 'brown', 'black', 'coral', 'red_white', 'red',
@@ -158,6 +158,8 @@ export const students = pgTable("students", {
   signatureTimestamp: timestamp("signature_timestamp"),
   signatureLatitude: text("signature_latitude"),
   signatureLongitude: text("signature_longitude"),
+  // Responsável/Guardian link
+  guardianId: integer("guardian_id").references(() => users.id, { onDelete: 'set null' }),
 });
 
 // School Configuration table (tenant information)

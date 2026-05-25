@@ -41,6 +41,9 @@ import StudentsAtRiskPage from "./pages/students-at-risk";
 import SettingsPage from "./pages/settings";
 import AsaasPaymentsPage from "./pages/asaas-payments";
 import CommunicationsPage from "./pages/admin/communications";
+import GuardianSelectPage from "@/pages/guardian-select";
+import GuardianManagementPage from "@/pages/admin/guardian-management";
+import { GuardianProvider } from "@/contexts/guardian-context";
 
 function Router() {
   return (
@@ -151,6 +154,18 @@ function Router() {
         allowedRoles={["student"]}
       />
 
+      {/* Guardian routes */}
+      <ProtectedRoute
+        path="/guardian/select"
+        component={() => <GuardianSelectPage />}
+        allowedRoles={["guardian", "student"] as any}
+      />
+      <ProtectedRoute
+        path="/admin/family-plans"
+        component={() => <GuardianManagementPage />}
+        allowedRoles={["admin"]}
+      />
+
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
@@ -170,18 +185,20 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <ThemeProvider>
-              <div className="w-full h-full min-h-screen m-0 p-0">
-                <Toaster />
-                <PendingRouteGuard>
-                  <RootGuard>
-                    <Router />
-                  </RootGuard>
-                </PendingRouteGuard>
-              </div>
-            </ThemeProvider>
-          </TooltipProvider>
+          <GuardianProvider>
+            <TooltipProvider>
+              <ThemeProvider>
+                <div className="w-full h-full min-h-screen m-0 p-0">
+                  <Toaster />
+                  <PendingRouteGuard>
+                    <RootGuard>
+                      <Router />
+                    </RootGuard>
+                  </PendingRouteGuard>
+                </div>
+              </ThemeProvider>
+            </TooltipProvider>
+          </GuardianProvider>
         </AuthProvider>
       </LanguageProvider>
     </QueryClientProvider>

@@ -44,7 +44,8 @@ export default function ElectronicSignatureStep({
   const [location, setLocation] = useState<{ lat: string; lng: string } | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [timestamp] = useState(new Date());
-  const [hasReadTerms, setHasReadTerms] = useState(false);
+  // Desktop doesn't show a terms checkbox (no contract displayed), so auto-accept there
+  const [hasReadTerms, setHasReadTerms] = useState(!isMobile);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
 
   // Fetch payment plans to display plan info

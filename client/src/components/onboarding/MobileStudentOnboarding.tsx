@@ -238,8 +238,17 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
 
   const handleDone = () => {
     setFamilyPrefill(null);
-    setTimeout(() => onSuccess(), 400);
+    window.location.href = "/";
   };
+
+  // Countdown for auto-redirect on success screen
+  const [countdown, setCountdown] = useState(10);
+  useEffect(() => {
+    if (!success) return;
+    if (countdown <= 0) { window.location.href = "/"; return; }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [success, countdown]);
 
   // Success screen
   if (success) {
@@ -257,6 +266,9 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
             <h3 className="text-2xl font-bold text-white mb-2">Cadastro Enviado!</h3>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
               O cadastro de <span className="text-white font-medium">{lastSubmittedName}</span> foi enviado para aprovação. Um e-mail será enviado quando aprovado.
+            </p>
+            <p className="text-slate-500 text-xs mt-3">
+              Redirecionando para o login em <span className="text-slate-300 font-medium">{countdown}s</span>...
             </p>
           </div>
 
@@ -289,17 +301,21 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
             </div>
           )}
 
+          {/* Nova matrícula (always visible, secondary) */}
+          <button
+            onClick={() => { setSuccess(false); setFamilyPrefill(null); setFormData({}); setHealthData(null); setSignatureData(null); setSubmitError(null); setCurrentStep(1); }}
+            className="w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 mb-3"
+          >
+            <Plus className="w-4 h-4" />
+            Nova matrícula
+          </button>
+
           <button
             onClick={handleDone}
-            className={`w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              canAddMore
-                ? "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
-                : "bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white"
-            }`}
+            className="w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
           >
-            {canAddMore ? "Concluir sem adicionar" : (
-              <>Voltar ao início <ArrowRight className="w-4 h-4" /></>
-            )}
+            <ArrowLeft className="w-4 h-4" />
+            Voltar ao menu
           </button>
         </div>
       </div>

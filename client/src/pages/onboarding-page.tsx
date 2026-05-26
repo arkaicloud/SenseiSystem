@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, User, Heart, FileText, ArrowLeft } from "lucide-react";
+import { CheckCircle, User, Heart, FileText, ArrowLeft, Plus, Home } from "lucide-react";
 import PersonalInfoStep, { type PersonalInfoData } from "@/components/onboarding/steps/PersonalInfoStep";
 import HealthFormStep from "@/components/onboarding/steps/HealthFormStep";
 import DocumentsStep from "@/components/onboarding/steps/DocumentsStep";
@@ -214,15 +214,48 @@ export default function OnboardingPage() {
     { number: 3, title: "Documentos", icon: FileText },
   ];
 
+  // Countdown auto-redirect after success
+  const [countdown, setCountdown] = useState(10);
+  const countdownRef = useRef(countdown);
+  countdownRef.current = countdown;
+  useEffect(() => {
+    if (!success) return;
+    if (countdown <= 0) { window.location.href = "/"; return; }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [success, countdown]);
+
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <ReviewStep />
-          <div className="text-center mt-6">
-            <p className="text-sm text-muted-foreground">
-              Você pode fechar esta aba e retornar à página principal.
-            </p>
+        <div className="w-full max-w-md text-center">
+          <div className="w-20 h-20 rounded-full bg-green-100 border border-green-200 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Cadastro Enviado!</h2>
+          <p className="text-muted-foreground text-sm mb-1">
+            Sua solicitação foi enviada para aprovação. Você receberá um e-mail quando for aprovado.
+          </p>
+          <p className="text-muted-foreground/60 text-xs mb-8">
+            Redirecionando para o login em <span className="font-medium text-foreground">{countdown}s</span>...
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => { setSuccess(false); setCurrentStep(1); setOnboardingData({} as any); }}
+              variant="outline"
+              className="w-full h-11 flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Nova matrícula
+            </Button>
+            <Button
+              onClick={() => { window.location.href = "/"; }}
+              className="w-full h-11 flex items-center justify-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Voltar ao menu
+            </Button>
           </div>
         </div>
       </div>

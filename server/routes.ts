@@ -82,6 +82,79 @@ async function autoLinkGuardianByCpf(studentId: number, financialResponsibleCpf:
   }
 }
 
+/**
+ * Auto-create or find a guardian user account using the financial responsible's email.
+ * Called on every student approval (individual and batch).
+ * - If a user with that email already exists → link them as guardian_id
+ * - If not → create a new guardian account, send temp password, then link
+ */
+async function autoSetupGuardianAccount(studentId: number, student: any, studentUser: any): Promise<void> {
+  try {
+    const relation = student.financialResponsibleRelation;
+    if (!relation || relation === 'self') return;
+
+    const responsibleEmail = (student.financialResponsibleEmail || '').trim().toLowerCase();
+    const responsibleName = (student.financialResponsibleName || '').trim();
+    if (!responsibleEmail || !responsibleName) return;
+
+    // Already has a guardian_id set → nothing to do
+    if (student.guardianId) return;
+
+    const allUsers = await storage.getUsers();
+    const existing = allUsers.find(u => (u.email || '').toLowerCase() === responsibleEmail);
+
+    if (existing) {
+      if (db) {
+        await db.execute(sql`UPDATE students SET guardian_id = ${existing.id} WHERE id = ${studentId} AND guardian_id IS NULL`);
+        console.log(`✅ Guardian linked (existing account): student ${studentId} → user ${existing.id} (${responsibleEmail})`);
+      }
+      return;
+    }
+
+    // Create a new guardian user account
+    const nameParts = responsibleName.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || firstName;
+    const tempPassword = generateTempPassword();
+    const hashedPassword = await hashPassword(tempPassword);
+
+    const guardianUser = await storage.createUser({
+      firstName,
+      lastName,
+      email: responsibleEmail,
+      password: hashedPassword,
+      role: 'student' as any,
+      active: true,
+      cpf: student.financialResponsibleCpf || null,
+      phone: student.financialResponsiblePhone || null,
+      mustChangePassword: true,
+      status: 'active',
+    } as any);
+
+    if (guardianUser && db) {
+      await db.execute(sql`UPDATE students SET guardian_id = ${guardianUser.id} WHERE id = ${studentId}`);
+      console.log(`✅ Guardian account created & linked: ${responsibleEmail} → student ${studentId}`);
+
+      // Send welcome email to guardian
+      const childName = `${studentUser.firstName} ${studentUser.lastName}`;
+      try {
+        await emailService.sendWelcomeEmail(
+          responsibleEmail,
+          responsibleName,
+          childName,
+          tempPassword
+        );
+        console.log(`📧 Guardian welcome email sent to: ${responsibleEmail}`);
+      } catch (emailErr) {
+        console.error(`⚠️ Failed to send guardian welcome email to ${responsibleEmail}:`, emailErr);
+      }
+    }
+  } catch (err) {
+    console.error(`⚠️ autoSetupGuardianAccount error for student ${studentId}:`, err);
+    // Non-critical
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
@@ -1509,7 +1582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Auto-link guardian by CPF (family plan support)
+      // Auto-link guardian by CPF + create guardian account if needed (core behavior)
       if (user.role === 'student') {
         const studentForLink = await storage.getStudentByUserId(user.id);
         if (studentForLink) {
@@ -1518,6 +1591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             studentForLink.financialResponsibleCpf,
             studentForLink.financialResponsibleRelation
           );
+          await autoSetupGuardianAccount(studentForLink.id, studentForLink, user);
         }
       }
 
@@ -6316,6 +6390,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               } catch (emailErr) {
                 console.error(`❌ Erro ao enviar e-mail para bolsista ${userId}:`, emailErr);
               }
+              // Auto-setup guardian (core behavior)
+              await autoLinkGuardianByCpf(student.id, student.financialResponsibleCpf, student.financialResponsibleRelation);
+              await autoSetupGuardianAccount(student.id, student, user);
               results.userResults.push({ userId, userName: `${user.firstName} ${user.lastName}`, status: 'success', message: 'Bolsista aprovado com sucesso' });
               results.successful++;
             } else {
@@ -6462,6 +6539,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               continue;
             }
 
+            // Auto-setup guardian (core behavior)
+            await autoLinkGuardianByCpf(student.id, student.financialResponsibleCpf, student.financialResponsibleRelation);
+            await autoSetupGuardianAccount(student.id, student, user);
             results.userResults.push({
               userId,
               userName: `${user.firstName} ${user.lastName}`,
@@ -6500,6 +6580,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               continue;
             }
 
+            // Auto-setup guardian (core behavior)
+            await autoLinkGuardianByCpf(student.id, student.financialResponsibleCpf, student.financialResponsibleRelation);
+            await autoSetupGuardianAccount(student.id, student, user);
             results.userResults.push({
               userId,
               userName: `${user.firstName} ${user.lastName}`,

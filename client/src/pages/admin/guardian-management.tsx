@@ -12,7 +12,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Users, Link2, Link2Off, Search, Plus, UserCheck } from "lucide-react";
+import { Users, Link2, Link2Off, Search, RefreshCw } from "lucide-react";
 
 interface GuardianUser {
   id: number;
@@ -67,6 +67,21 @@ export default function GuardianManagementPage() {
     },
   });
 
+  const syncByCpfMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/guardian/sync-by-cpf", {});
+      if (!res.ok) throw new Error((await res.json()).error);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Sincronização concluída!", description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/students-with-guardians"] });
+    },
+    onError: (e: any) => {
+      toast({ title: "Erro na sincronização", description: e.message, variant: "destructive" });
+    },
+  });
+
   const unlinkMutation = useMutation({
     mutationFn: async (studentId: number) => {
       const res = await apiRequest("DELETE", `/api/guardian/unlink/${studentId}`, undefined);
@@ -109,14 +124,26 @@ export default function GuardianManagementPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <Users className="w-6 h-6 text-[#2B54FF]" />
-          Planos Família
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Vincule alunos a responsáveis para gerenciamento de planos família.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Users className="w-6 h-6 text-[#2B54FF]" />
+            Planos Família
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Vincule alunos a responsáveis para gerenciamento de planos família.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => syncByCpfMutation.mutate()}
+          disabled={syncByCpfMutation.isPending}
+          className="shrink-0 flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${syncByCpfMutation.isPending ? "animate-spin" : ""}`} />
+          Sincronizar por CPF
+        </Button>
       </div>
 
       {/* Stats */}

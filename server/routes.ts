@@ -1186,6 +1186,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/guardian/sync-by-cpf — retroactive: link all students to guardians by CPF match (admin only)
+  app.post("/api/guardian/sync-by-cpf", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      if (!db) return res.status(500).json({ error: "Database not available" });
+
+      const rows = await db.execute(sql`
+        SELECT s.id AS student_id, s.financial_responsible_cpf, s.financial_responsible_relation
+        FROM students s
+        WHERE s.guardian_id IS NULL
+          AND s.financial_responsible_cpf IS NOT NULL
+          AND s.financial_responsible_relation != 'self'
+      `);
+
+      let linked = 0;
+      let skipped = 0;
+      const allUsers = await storage.getUsers();
+
+      for (const row of rows.rows as any[]) {
+        const cpfNorm = (row.financial_responsible_cpf || "").replace(/\D/g, "");
+        if (cpfNorm.length < 11) { skipped++; continue; }
+        const guardian = allUsers.find(u => u.cpf && u.cpf.replace(/\D/g, "") === cpfNorm);
+        if (guardian) {
+          await db.execute(sql`UPDATE students SET guardian_id = ${guardian.id} WHERE id = ${row.student_id}`);
+          linked++;
+        } else {
+          skipped++;
+        }
+      }
+
+      res.json({ success: true, linked, skipped, message: `${linked} aluno(s) vinculado(s), ${skipped} sem correspondência.` });
+    } catch (error) {
+      console.error("Error syncing guardians by CPF:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // GET /api/guardian/student/:studentId/profile — guardian views a dependent's profile
   app.get("/api/guardian/student/:studentId/profile", isAuthenticated, async (req, res) => {
     try {

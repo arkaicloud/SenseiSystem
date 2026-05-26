@@ -408,7 +408,7 @@ export default function ElectronicSignatureStep({
           <div className="flex items-center gap-2 text-sm">
             <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
             {locationStatus === "granted" && location ? (
-              <span className="text-green-400">Localização confirmada ({location.lat}, {location.lng})</span>
+              <span className="text-green-400">Localização confirmada</span>
             ) : locationStatus === "denied" ? (
               <span className="text-orange-400">Localização não autorizada</span>
             ) : locationStatus === "loading" ? (

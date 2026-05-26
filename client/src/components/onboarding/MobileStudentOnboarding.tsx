@@ -241,14 +241,6 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
     window.location.href = "/";
   };
 
-  // Countdown for auto-redirect on success screen
-  const [countdown, setCountdown] = useState(10);
-  useEffect(() => {
-    if (!success) return;
-    if (countdown <= 0) { window.location.href = "/"; return; }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [success, countdown]);
 
   // Success screen
   if (success) {
@@ -266,9 +258,6 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
             <h3 className="text-2xl font-bold text-white mb-2">Cadastro Enviado!</h3>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
               O cadastro de <span className="text-white font-medium">{lastSubmittedName}</span> foi enviado para aprovação. Um e-mail será enviado quando aprovado.
-            </p>
-            <p className="text-slate-500 text-xs mt-3">
-              Redirecionando para o login em <span className="text-slate-300 font-medium">{countdown}s</span>...
             </p>
           </div>
 

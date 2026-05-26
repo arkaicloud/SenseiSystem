@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -214,17 +214,6 @@ export default function OnboardingPage() {
     { number: 3, title: "Documentos", icon: FileText },
   ];
 
-  // Countdown auto-redirect after success
-  const [countdown, setCountdown] = useState(10);
-  const countdownRef = useRef(countdown);
-  countdownRef.current = countdown;
-  useEffect(() => {
-    if (!success) return;
-    if (countdown <= 0) { window.location.href = "/"; return; }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [success, countdown]);
-
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center p-4">
@@ -233,11 +222,8 @@ export default function OnboardingPage() {
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Cadastro Enviado!</h2>
-          <p className="text-muted-foreground text-sm mb-1">
+          <p className="text-muted-foreground text-sm mb-8">
             Sua solicitação foi enviada para aprovação. Você receberá um e-mail quando for aprovado.
-          </p>
-          <p className="text-muted-foreground/60 text-xs mb-8">
-            Redirecionando para o login em <span className="font-medium text-foreground">{countdown}s</span>...
           </p>
 
           <div className="flex flex-col gap-3">

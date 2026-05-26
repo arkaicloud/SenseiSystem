@@ -150,6 +150,12 @@ export default function ElectronicSignatureStep({
     );
   };
 
+  // Auto-request location when signature step loads
+  useEffect(() => {
+    if (locationStatus === "idle") requestLocation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSubmit = () => {
     if (!hasSigned || !hasReadTerms) return;
     const canvas = canvasRef.current;

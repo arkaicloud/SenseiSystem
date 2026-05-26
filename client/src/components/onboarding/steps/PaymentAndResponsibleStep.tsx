@@ -242,7 +242,7 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                                 {plan.isFamily && (
                                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2B54FF]/20 text-[#7B9FFF]">
                                     <Home className="w-2.5 h-2.5" />
-                                    Família · {plan.maxStudents || 2}
+                                    Até {plan.maxStudents || 2} alunos
                                   </span>
                                 )}
                               </div>

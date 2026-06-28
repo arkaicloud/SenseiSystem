@@ -116,7 +116,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
 
   return (
-    <div className="flex w-full h-full min-h-screen bg-white dark:bg-gray-900 relative m-0 p-0">
+    <div className="flex w-full h-full min-h-screen bg-slate-50 dark:bg-gray-900 relative m-0 p-0">
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div 

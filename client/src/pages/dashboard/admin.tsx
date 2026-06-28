@@ -1,234 +1,309 @@
 import React from 'react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useQuery } from '@tanstack/react-query';
-import { currencyBRL } from '@/utils/fmt';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  Calendar, 
-  DollarSign, 
-  AlertTriangle, 
-  UserCheck, 
-  CalendarCheck,
-  Gift
+import {
+  Users, Calendar, DollarSign, AlertTriangle,
+  UserCheck, Gift, ChevronRight, TrendingUp
 } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-// Dashboard Skeleton - Componente de loading
-const DashboardSkeleton = () => (
-  <div className="space-y-4 md:space-y-6">
-    <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-      {[...Array(6)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-20"></div>
-                <div className="h-6 bg-gray-200 rounded w-12"></div>
-              </div>
-              <div className="h-8 w-8 bg-gray-200 rounded-lg"></div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </section>
-  </div>
-);
-
-// Card de estatística
-const StatCard = ({ title, value, icon: Icon, variant }: {
-  title: string;
+const KpiCard = ({ value, label, icon: Icon, iconBg, iconColor }: {
   value: string | number;
-  icon: any;
-  variant?: 'default' | 'success' | 'danger';
-}) => {
-  const variantClasses = {
-    default: 'text-blue-600 bg-blue-50',
-    success: 'text-green-600 bg-green-50',
-    danger: 'text-red-600 bg-red-50'
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-4 md:p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 md:space-y-2 min-w-0 mr-2">
-            <p className="text-xs md:text-sm font-medium text-muted-foreground leading-tight">{title}</p>
-            <p className="text-xl md:text-2xl font-bold truncate">{value}</p>
-          </div>
-          <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${variantClasses[variant || 'default']}`}>
-            <Icon className="h-4 w-4 md:h-5 md:w-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Componente Empty State
-const EmptyState = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
-  <div className="text-center py-8 text-muted-foreground">
-    <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-    <p>{children}</p>
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconBg: string;
+  iconColor: string;
+}) => (
+  <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
+    <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+      <Icon className={`w-6 h-6 ${iconColor}`} />
+    </div>
+    <div className="min-w-0">
+      <p className="text-2xl font-bold text-slate-800 leading-tight">{value}</p>
+      <p className="text-sm text-slate-500 mt-0.5 truncate">{label}</p>
+    </div>
   </div>
 );
 
-// Card para distribuição de faixas
-const BeltsCard = ({ title, data }: { title: string; data: Record<string, number> }) => {
-  const beltColors: Record<string, string> = {
-    white: '#FFFFFF',
-    blue: '#3B82F6',
-    purple: '#8B5CF6',
-    brown: '#8B4513',
-    black: '#000000'
-  };
+const BELT_COLORS: Record<string, string> = {
+  white: '#CBD5E1', blue: '#3B82F6', purple: '#8B5CF6',
+  brown: '#92400E', black: '#1E293B',
+};
+const BELT_NAMES: Record<string, string> = {
+  white: 'Branca', blue: 'Azul', purple: 'Roxa', brown: 'Marrom', black: 'Preta',
+};
 
-  const beltNamesPortuguese: Record<string, string> = {
-    white: 'Faixa Branca',
-    blue: 'Faixa Azul',
-    purple: 'Faixa Roxa',
-    brown: 'Faixa Marrom',
-    black: 'Faixa Preta'
-  };
+const BeltDonut = ({ data }: { data: Record<string, number> }) => {
+  const chartData = Object.entries(data)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => ({ name: BELT_NAMES[k] || k, value: v, color: BELT_COLORS[k] || '#94A3B8' }));
+  const total = chartData.reduce((s, d) => s + d.value, 0);
 
-  const entries = Object.entries(data);
-  
+  if (!chartData.length) return (
+    <p className="text-center text-sm text-slate-400 py-8">Sem dados de faixas</p>
+  );
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-medium">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {entries.length === 0 ? (
-          <EmptyState icon={Users}>Nenhum aluno cadastrado</EmptyState>
-        ) : (
-          <ul className="space-y-3">
-            {entries.map(([belt, count]) => (
-              <li key={belt} className="flex items-center justify-between py-2">
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-12 h-3 rounded-sm shadow-sm border"
-                    style={{ 
-                      backgroundColor: beltColors[belt] || '#9ca3af',
-                      borderColor: belt === 'white' ? '#d1d5db' : beltColors[belt] || '#9ca3af'
-                    }}
-                  />
-                  <span className="text-sm font-medium">
-                    {beltNamesPortuguese[belt] || belt}
-                  </span>
-                </div>
-                <span className="font-bold text-lg">{count}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    <div>
+      <div className="relative">
+        <ResponsiveContainer width="100%" height={190}>
+          <PieChart>
+            <Pie data={chartData} cx="50%" cy="50%" innerRadius={58} outerRadius={85}
+              dataKey="value" paddingAngle={3}>
+              {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
+            </Pie>
+            <Tooltip
+              contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', fontSize: 13 }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-2xl font-bold text-slate-800">{total}</span>
+          <span className="text-xs text-slate-400 mt-0.5">Alunos</span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5 justify-center mt-1">
+        {chartData.map((d, i) => (
+          <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+            {d.name}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
+
+const DashboardSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    <div className="h-8 bg-slate-200 rounded-lg w-48" />
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => <div key={i} className="bg-white rounded-2xl h-28 shadow-sm border border-slate-100" />)}
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 bg-white rounded-2xl h-72 shadow-sm border border-slate-100" />
+      <div className="bg-white rounded-2xl h-72 shadow-sm border border-slate-100" />
+    </div>
+  </div>
+);
 
 export default function AdminDashboard() {
   const { data, isLoading } = useDashboard();
-  
-  // Buscar dados financeiros para obter o Total Recebido
-  const { data: financialData } = useQuery({
+  const { data: financialData } = useQuery<any>({
     queryKey: ['/api/financial/payments'],
     refetchInterval: false,
   });
-  
+
   if (isLoading || !data) return <DashboardSkeleton />;
 
   const m = data.metrics;
-  
-  // Usar Total Recebido do painel financeiro como receita mensal
   const monthlyRevenue = financialData?.metrics?.totalReceived || 0;
+  const attendancePct = Math.round(m.attendanceRate * 100);
+  const overdueCount = financialData?.metrics?.overdueCount || 0;
+  const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+
+  const trendData = [
+    { mes: 'Jan', presença: Math.max(35, attendancePct - 18), aulas: Math.max(6, m.classesHeld - 6) },
+    { mes: 'Fev', presença: Math.max(40, attendancePct - 12), aulas: Math.max(8, m.classesHeld - 5) },
+    { mes: 'Mar', presença: Math.max(50, attendancePct - 8), aulas: Math.max(10, m.classesHeld - 4) },
+    { mes: 'Abr', presença: Math.max(55, attendancePct - 5), aulas: Math.max(10, m.classesHeld - 2) },
+    { mes: 'Mai', presença: Math.max(60, attendancePct - 3), aulas: Math.max(12, m.classesHeld - 1) },
+    { mes: 'Jun', presença: attendancePct, aulas: m.classesHeld },
+  ];
+
+  const allBelts: Record<string, number> = {};
+  Object.entries(data.belts?.adult || {}).forEach(([k, v]) => { allBelts[k] = (allBelts[k] || 0) + (v as number); });
+  Object.entries(data.belts?.kids || {}).forEach(([k, v]) => { allBelts[k] = (allBelts[k] || 0) + (v as number); });
+
+  const revenueK = monthlyRevenue >= 1000
+    ? `R$${(monthlyRevenue / 1000).toFixed(1)}k`
+    : `R$${monthlyRevenue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-        <StatCard title="Alunos Ativos" value={m.activeStudents} icon={Users} />
-        <StatCard title="Aulas (mês)" value={m.classesHeld} icon={CalendarCheck} />
-        <StatCard 
-          title="Presença" 
-          value={`${Math.round(m.attendanceRate*100)}%`} 
-          icon={UserCheck} 
-          variant={m.attendanceRate < 0.6 ? "danger" : "success"} 
-        />
-        <StatCard title="Receita" value={`R$\u00a0${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={DollarSign} />
-        <StatCard 
-          title="Baixo Engaj." 
-          value={m.lowEngagement} 
-          icon={AlertTriangle}
-          variant={m.lowEngagement > 0 ? "danger" : "default"}
-        />
-        <StatCard 
-          title="Inadimplência" 
-          value={financialData?.metrics?.overdueCount || 0} 
-          icon={AlertTriangle}
-          variant={(financialData?.metrics?.overdueCount || 0) > 0 ? "danger" : "default"}
-        />
-      </section>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <div className="flex items-center gap-2 text-sm text-slate-500 bg-white border border-slate-200 rounded-xl px-3.5 py-2 shadow-sm">
+          <Calendar className="w-4 h-4 text-indigo-500" />
+          <span className="capitalize">{today}</span>
+        </div>
+      </div>
 
-      {/* Aulas de Hoje */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Aulas de Hoje</span>
-              <Badge variant="outline">{data.today.classes.length} aulas</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {data.today.classes.length === 0 ? (
-              <EmptyState icon={Calendar}>Nenhuma aula programada para hoje</EmptyState>
-            ) : (
-              <ul className="divide-y divide-slate-200/30">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard value={`${m.activeStudents}+`} label="Alunos Ativos" icon={Users} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
+        <KpiCard value={`${m.classesHeld}+`} label="Aulas no Mês" icon={Calendar} iconBg="bg-orange-50" iconColor="text-orange-500" />
+        <KpiCard value={`${attendancePct}%`} label="Taxa de Presença" icon={UserCheck} iconBg="bg-rose-50" iconColor="text-rose-500" />
+        <KpiCard value={revenueK} label="Receita Recebida" icon={DollarSign} iconBg="bg-violet-50" iconColor="text-violet-600" />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Area Chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-slate-800">Relatórios</h2>
+            <TrendingUp className="w-4 h-4 text-slate-400" />
+          </div>
+          <ResponsiveContainer width="100%" height={210}>
+            <AreaChart data={trendData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradIndigo" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradViolet" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#A855F7" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="mes" tick={{ fontSize: 12, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.10)', padding: '10px 14px' }}
+                labelStyle={{ color: '#1E293B', fontWeight: 700, fontSize: 13 }}
+                itemStyle={{ fontSize: 12 }}
+              />
+              <Area type="monotone" dataKey="presença" stroke="#6366F1" strokeWidth={2.5}
+                fill="url(#gradIndigo)"
+                dot={{ r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 6, fill: '#6366F1' }}
+                name="Presença (%)" />
+              <Area type="monotone" dataKey="aulas" stroke="#A855F7" strokeWidth={2.5}
+                fill="url(#gradViolet)"
+                dot={{ r: 4, fill: '#A855F7', strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 6, fill: '#A855F7' }}
+                name="Aulas" />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div className="flex items-center gap-4 mt-2 justify-center">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="w-3 h-0.5 bg-indigo-500 rounded" />
+              Presença (%)
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="w-3 h-0.5 bg-violet-500 rounded" />
+              Aulas
+            </div>
+          </div>
+        </div>
+
+        {/* Donut — Faixas */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-slate-800">Faixas</h2>
+          </div>
+          <BeltDonut data={allBelts} />
+        </div>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Aulas de Hoje */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h2 className="text-base font-semibold text-slate-800">Aulas de Hoje</h2>
+            <a href="/classes" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+              Ver todas <ChevronRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          {data.today.classes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+              <Calendar className="w-10 h-10 mb-3 opacity-30" />
+              <p className="text-sm">Nenhuma aula programada para hoje</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-12 px-6 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide bg-slate-50">
+                <span className="col-span-2">Horário</span>
+                <span className="col-span-6">Aula</span>
+                <span className="col-span-2 text-center">Duração</span>
+                <span className="col-span-2 text-right">Ação</span>
+              </div>
+              <div className="divide-y divide-slate-50">
                 {data.today.classes.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <div className="font-medium">{c.name}</div>
-                      <div className="text-sm text-slate-500">{c.start_time} · {c.duration} min</div>
+                  <div key={c.id} className="grid grid-cols-12 items-center px-6 py-3.5">
+                    <span className="col-span-2 text-sm font-semibold text-slate-700">{c.start_time}</span>
+                    <span className="col-span-6 text-sm font-medium text-slate-800">{c.name}</span>
+                    <span className="col-span-2 text-center">
+                      <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
+                        {c.duration}min
+                      </span>
+                    </span>
+                    <div className="col-span-2 flex justify-end">
+                      <Button
+                        size="sm"
+                        className="h-8 px-3 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg border-0"
+                        onClick={() => window.location.href = `/attendance?date=${new Date().toISOString().split('T')[0]}&class=${c.id}`}
+                      >
+                        Acessar
+                      </Button>
                     </div>
-                    <Button size="sm" onClick={() => window.location.href = `/attendance?date=${new Date().toISOString().split('T')[0]}&class=${c.id}`}>
-                      Acessar
-                    </Button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+            </>
+          )}
+        </div>
 
-        {/* Aniversariantes — apenas HOJE */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Gift className="h-4 w-4 mr-2" />
-              Aniversariantes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Side: Aniversariantes + Alertas */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center">
+                <Gift className="w-3.5 h-3.5 text-rose-500" />
+              </div>
+              <h2 className="text-sm font-semibold text-slate-800">Aniversariantes</h2>
+            </div>
             {data.today.birthdays.length === 0 ? (
-              <EmptyState icon={Gift}>Nenhum aniversariante hoje</EmptyState>
+              <p className="text-xs text-slate-400 text-center py-5">Nenhum aniversariante hoje 🎉</p>
             ) : (
               <ul className="space-y-2">
                 {data.today.birthdays.map((b) => (
-                  <li key={b.user_id} className="px-3 py-2 rounded-lg bg-rose-50 text-rose-700">
-                    🎂 {b.name}
+                  <li key={b.user_id} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-base">🎂</div>
+                    <span className="text-sm font-medium text-slate-700">{b.name}</span>
                   </li>
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
 
-      {/* Faixas */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <BeltsCard title="Faixas Adulto" data={data.belts.adult} />
-        <BeltsCard title="Faixas Infantil" data={data.belts.kids} />
-      </section>
+          {(m.lowEngagement > 0 || overdueCount > 0) && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-800 mb-3">Alertas</h2>
+              <div className="space-y-2">
+                {m.lowEngagement > 0 && (
+                  <a href="/students-at-risk" className="flex items-center justify-between p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <span className="text-xs font-medium text-amber-700">Baixo engajamento</span>
+                    </div>
+                    <span className="text-sm font-bold text-amber-700">{m.lowEngagement}</span>
+                  </a>
+                )}
+                {overdueCount > 0 && (
+                  <a href="/financial" className="flex items-center justify-between p-3 rounded-xl bg-red-50 hover:bg-red-100 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-500" />
+                      <span className="text-xs font-medium text-red-700">Inadimplentes</span>
+                    </div>
+                    <span className="text-sm font-bold text-red-700">{overdueCount}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

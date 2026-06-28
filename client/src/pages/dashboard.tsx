@@ -223,9 +223,9 @@ const Dashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {classesLoading ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">{t('carregandoAulas') || 'Carregando aulas...'}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">{t('carregandoAulas') || 'Carregando aulas...'}</div>
           ) : todaysClasses.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
               {t('nenhumaAulaAgendada') || 'Nenhuma aula agendada para hoje'}
             </div>
           ) : (
@@ -289,11 +289,11 @@ const Dashboard: React.FC = () => {
         </div>
 
         {isOverduePaymentsLoading ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
             {t('carregandoAlunos') || 'Carregando alunos...'}
           </div>
         ) : studentsRequiringAttention.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
             {t('nenhumAlunoComPendencia') || 'Nenhum aluno com pendência'}
           </div>
         ) : (

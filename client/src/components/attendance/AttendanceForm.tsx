@@ -84,7 +84,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl font-bold mb-1 md:mb-2">{classInfo.name}</h2>
         <p className="text-gray-600 text-sm md:text-base">

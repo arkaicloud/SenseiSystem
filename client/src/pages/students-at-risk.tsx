@@ -347,8 +347,8 @@ const StudentsAtRisk: React.FC = () => {
 
                   {/* Show current notes if any */}
                   {student.notes && (
-                    <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border-l-4 border-blue-400">
-                      <p className="text-sm text-gray-700">
+                    <div className="mt-3 p-3 bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded border-l-4 border-blue-400">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
                         <strong>Observação:</strong> {student.notes}
                       </p>
                     </div>

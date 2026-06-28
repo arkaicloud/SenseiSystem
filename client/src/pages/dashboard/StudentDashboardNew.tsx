@@ -128,8 +128,8 @@ export default function StudentDashboardNew() {
 
   if (isStudentLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] bg-gray-50">
-        <div className="text-gray-600">Carregando...</div>
+      <div className="flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-600 dark:text-gray-400">Carregando...</div>
       </div>
     );
   }
@@ -181,9 +181,9 @@ export default function StudentDashboardNew() {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -193,9 +193,9 @@ export default function StudentDashboardNew() {
               >
                 <span className="text-white font-bold text-sm">S</span>
               </div>
-              <h1 className="text-xl font-bold text-gray-900">SenseiSystem</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">SenseiSystem</h1>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Painel do Aluno
             </div>
           </div>
@@ -206,11 +206,11 @@ export default function StudentDashboardNew() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
           {/* Saudação Topo */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-4">
               <div className="text-4xl">👋</div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   Olá, {user?.firstName}!
                 </h1>
                 <div className="flex items-center gap-4 mt-1">
@@ -219,10 +219,10 @@ export default function StudentDashboardNew() {
                       className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                       style={{ backgroundColor: beltColorCode }}
                     />
-                    <span className="text-gray-600">{beltName}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{beltName}</span>
                   </div>
-                  <span className="text-gray-400 hidden sm:inline">•</span>
-                  <span className="text-gray-600 hidden sm:inline">
+                  <span className="text-gray-400 dark:text-gray-500 hidden sm:inline">•</span>
+                  <span className="text-gray-600 dark:text-gray-400 hidden sm:inline">
                     Desde {studentData?.enrollmentDate ? 
                       new Date(studentData.enrollmentDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) :
                       'este mês'

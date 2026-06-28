@@ -164,19 +164,19 @@ const Reports: React.FC = () => {
                       <div className="text-sm font-medium text-gray-500">Period:</div>
                       <div className="flex border rounded-md overflow-hidden">
                         <button 
-                          className={`px-3 py-1 text-sm ${periodFilter === 'week' ? 'bg-primary text-white' : 'bg-white text-gray-600'}`}
+                          className={`px-3 py-1 text-sm ${periodFilter === 'week' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                           onClick={() => setPeriodFilter('week')}
                         >
                           Week
                         </button>
                         <button 
-                          className={`px-3 py-1 text-sm ${periodFilter === 'month' ? 'bg-primary text-white' : 'bg-white text-gray-600'}`}
+                          className={`px-3 py-1 text-sm ${periodFilter === 'month' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                           onClick={() => setPeriodFilter('month')}
                         >
                           Month
                         </button>
                         <button 
-                          className={`px-3 py-1 text-sm ${periodFilter === 'year' ? 'bg-primary text-white' : 'bg-white text-gray-600'}`}
+                          className={`px-3 py-1 text-sm ${periodFilter === 'year' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                           onClick={() => setPeriodFilter('year')}
                         >
                           Year
@@ -270,25 +270,25 @@ const Reports: React.FC = () => {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {students
                         .filter((student: any) => (student.attendanceRate || 0) < 50)
                         .slice(0, 5)
                         .map((student: any) => (
-                          <tr key={student.id}>
+                          <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <span className="font-medium text-sm">
+                                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                  <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
                                     {student.user.firstName.charAt(0)}
                                     {student.user.lastName.charAt(0)}
                                   </span>
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {student.user.firstName} {student.user.lastName}
                                   </div>
-                                  <div className="text-sm text-gray-500">
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
                                     {student.user.email}
                                   </div>
                                 </div>
@@ -299,7 +299,7 @@ const Reports: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
                                   <div 
                                     className="bg-status-danger h-2 rounded-full" 
                                     style={{ width: `${student.attendanceRate || 30}%` }}
@@ -308,7 +308,7 @@ const Reports: React.FC = () => {
                                 <span className="text-sm">{student.attendanceRate || 30}%</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                               2 weeks ago
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -390,52 +390,52 @@ const Reports: React.FC = () => {
                 <div className="text-center py-8">Loading payment data...</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Student
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Plan
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Amount
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Status
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Date
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {payments.slice(0, 10).map((payment: any) => (
-                        <tr key={payment.id}>
+                        <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {payment.student.user.firstName} {payment.student.user.lastName}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{payment.plan.name}</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">{payment.plan.name}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {formatCurrency(payment.amount)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              payment.status === 'paid' ? 'bg-green-100 text-status-success' :
-                              payment.status === 'pending' ? 'bg-yellow-100 text-status-warning' :
-                              'bg-red-100 text-status-danger'
+                              payment.status === 'paid' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
+                              payment.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
+                              'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
                             }`}>
                               {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {payment.status === 'paid' && payment.paidDate 
                               ? formatDateShort(new Date(payment.paidDate))
                               : formatDateShort(new Date(payment.dueDate))}

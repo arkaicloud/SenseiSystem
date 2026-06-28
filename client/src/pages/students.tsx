@@ -293,22 +293,22 @@ const Students: React.FC = () => {
         </div>
 
         {/* Tabela */}
-        <div className="overflow-x-auto rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-white dark:bg-gray-800 dark:border-gray-700">
           {isFetching && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Carregando alunos...
             </div>
           )}
           
           {!isFetching && (!data?.items || data.items.length === 0) && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Nenhum aluno encontrado
             </div>
           )}
 
           {!isFetching && data?.items && data.items.length > 0 && (
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-slate-50 dark:bg-gray-700">
                 <tr className="[&>th]:px-3 [&>th]:py-3 text-left">
                   {isMobile && <th className="w-12"></th>}
                   <th>ID</th>
@@ -328,7 +328,7 @@ const Students: React.FC = () => {
                 {data.items.map((student) => (
                   <tr 
                     key={student.id} 
-                    className="border-t hover:bg-gray-50"
+                    className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                     onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}
                   >
                     {isMobile && (
@@ -336,22 +336,22 @@ const Students: React.FC = () => {
                         <StudentActions student={student} isMobile={true} />
                       </td>
                     )}
-                    <td className="text-gray-900 font-medium">{student.id}</td>
+                    <td className="text-gray-900 dark:text-gray-100 font-medium">{student.id}</td>
                     <td>
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-700">
+                          <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
                               {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
                             </span>
                           </div>
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
                             {student.user.firstName} {student.user.lastName}
                           </div>
                           {isMobile && (
-                            <div className="text-sm text-gray-500">{student.user.email}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">{student.user.email}</div>
                           )}
                         </div>
                       </div>
@@ -361,15 +361,15 @@ const Students: React.FC = () => {
                         <td>
                           <BeltWithLabel level={student.beltLevel as any} stripes={student.stripes} />
                         </td>
-                        <td className="text-gray-500">{student.user.email}</td>
-                        <td className="text-gray-500">{student.user.phone || 'Não informado'}</td>
+                        <td className="text-gray-500 dark:text-gray-400">{student.user.email}</td>
+                        <td className="text-gray-500 dark:text-gray-400">{student.user.phone || 'Não informado'}</td>
                       </>
                     )}
                     <td>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        student.user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        student.user.active === true ? 'bg-green-100 text-green-800' : 
-                        'bg-red-100 text-red-800'
+                        student.user.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
+                        student.user.active === true ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 
+                        'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
                       }`}>
                         <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
                           student.user.status === 'pending' ? 'bg-yellow-400' :

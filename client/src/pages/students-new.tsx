@@ -421,7 +421,7 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-2 sm:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-2 sm:p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="all">Todos ({students.length})</TabsTrigger>

@@ -64,14 +64,14 @@ const BeltDistribution: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="font-montserrat font-bold">Distribuição de Faixas</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="font-montserrat font-bold text-gray-900 dark:text-gray-100">Distribuição de Faixas</h3>
         </div>
         <div className="p-4">
           <div className="animate-pulse space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
             ))}
           </div>
         </div>
@@ -90,9 +90,9 @@ const BeltDistribution: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-montserrat font-bold">Distribuição de Faixas</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="font-montserrat font-bold text-gray-900 dark:text-gray-100">Distribuição de Faixas</h3>
       </div>
       <div className="p-4">
         {distribution.map((belt) => (
@@ -100,11 +100,11 @@ const BeltDistribution: React.FC = () => {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
                 <Belt level={belt.level} className="mr-2" />
-                <span>{belt.name}</span>
+                <span className="text-gray-800 dark:text-gray-200">{belt.name}</span>
               </div>
-              <span className="font-medium">{belt.count}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">{belt.count}</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div
                 className={`${getBeltBarColor(belt.level)} h-2 rounded-full`}
                 style={{ width: `${belt.percentage}%` }}
@@ -113,20 +113,20 @@ const BeltDistribution: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className="p-4 border-t border-gray-200">
-        <h4 className="font-medium mb-2">Upcoming Belt Tests</h4>
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Upcoming Belt Tests</h4>
         <div className="text-sm">
           {upcomingTests.map((test, index) => (
             <div
               key={index}
               className={`mb-2 pb-2 ${
-                index < upcomingTests.length - 1 ? 'border-b border-gray-100' : ''
+                index < upcomingTests.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''
               } flex justify-between`}
             >
-              <span className="capitalize">
+              <span className="capitalize text-gray-700 dark:text-gray-300">
                 {test.from} to {test.to}
               </span>
-              <span className="font-medium">{test.date}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">{test.date}</span>
             </div>
           ))}
         </div>

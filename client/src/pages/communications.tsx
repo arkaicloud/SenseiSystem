@@ -443,7 +443,7 @@ const Communications: React.FC = () => {
               <Label>Conteúdo</Label>
               
               {/* Barra de Ferramentas */}
-              <div className="border rounded-t-lg p-2 bg-gray-50 flex flex-wrap gap-2">
+              <div className="border rounded-t-lg p-2 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex flex-wrap gap-2">
                 <Button
                   type="button"
                   size="sm"

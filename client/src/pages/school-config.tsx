@@ -231,7 +231,7 @@ export default function SchoolConfigPage() {
                             {field.value && (
                               <div className="space-y-2">
                                 <p className="text-sm font-medium text-gray-700">Preview do Logo:</p>
-                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
                                   <img 
                                     src={field.value} 
                                     alt="Logo preview" 
@@ -870,8 +870,8 @@ export default function SchoolConfigPage() {
                         </div>
 
                         {/* Testar conexão SMTP */}
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <p className="text-sm font-medium text-gray-800 mb-3 flex items-center gap-2">
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                             <TestTube className="h-4 w-4" />
                             Testar Conexão SMTP
                           </p>

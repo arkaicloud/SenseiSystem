@@ -104,18 +104,11 @@ export default function AdminDashboard() {
 
   const m = data.metrics;
   const monthlyRevenue = financialData?.metrics?.totalReceived || 0;
-  const attendancePct = Math.round(m.attendanceRate * 100);
   const overdueCount = financialData?.metrics?.overdueCount || 0;
   const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
-  const trendData = [
-    { mes: 'Jan', presença: Math.max(35, attendancePct - 18), aulas: Math.max(6, m.classesHeld - 6) },
-    { mes: 'Fev', presença: Math.max(40, attendancePct - 12), aulas: Math.max(8, m.classesHeld - 5) },
-    { mes: 'Mar', presença: Math.max(50, attendancePct - 8), aulas: Math.max(10, m.classesHeld - 4) },
-    { mes: 'Abr', presença: Math.max(55, attendancePct - 5), aulas: Math.max(10, m.classesHeld - 2) },
-    { mes: 'Mai', presença: Math.max(60, attendancePct - 3), aulas: Math.max(12, m.classesHeld - 1) },
-    { mes: 'Jun', presença: attendancePct, aulas: m.classesHeld },
-  ];
+  // Real attendance trend from API (last 6 months, actual counts)
+  const trendData: { mes: string; presencas: number }[] = m.monthlyTrend ?? [];
 
   const allBelts: Record<string, number> = {};
   Object.entries(data.belts?.adult || {}).forEach(([k, v]) => { allBelts[k] = (allBelts[k] || 0) + (v as number); });
@@ -140,7 +133,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard value={`${m.activeStudents}+`} label="Alunos Ativos" icon={Users} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
         <KpiCard value={`${m.classesHeld}+`} label="Aulas no Mês" icon={Calendar} iconBg="bg-orange-50" iconColor="text-orange-500" />
-        <KpiCard value={`${attendancePct}%`} label="Taxa de Presença" icon={UserCheck} iconBg="bg-rose-50" iconColor="text-rose-500" />
+        <KpiCard value={`${m.monthlyAttendanceCount ?? 0}`} label="Presenças no Mês" icon={UserCheck} iconBg="bg-rose-50" iconColor="text-rose-500" />
         <KpiCard value={revenueK} label="Receita Recebida" icon={DollarSign} iconBg="bg-violet-50" iconColor="text-violet-600" />
       </div>
 
@@ -171,26 +164,17 @@ export default function AdminDashboard() {
                 labelStyle={{ color: '#1E293B', fontWeight: 700, fontSize: 13 }}
                 itemStyle={{ fontSize: 12 }}
               />
-              <Area type="monotone" dataKey="presença" stroke="#6366F1" strokeWidth={2.5}
+              <Area type="monotone" dataKey="presencas" stroke="#6366F1" strokeWidth={2.5}
                 fill="url(#gradIndigo)"
                 dot={{ r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#fff' }}
                 activeDot={{ r: 6, fill: '#6366F1' }}
-                name="Presença (%)" />
-              <Area type="monotone" dataKey="aulas" stroke="#A855F7" strokeWidth={2.5}
-                fill="url(#gradViolet)"
-                dot={{ r: 4, fill: '#A855F7', strokeWidth: 2, stroke: '#fff' }}
-                activeDot={{ r: 6, fill: '#A855F7' }}
-                name="Aulas" />
+                name="Presenças" />
             </AreaChart>
           </ResponsiveContainer>
           <div className="flex items-center gap-4 mt-2 justify-center">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <div className="w-3 h-0.5 bg-indigo-500 rounded" />
-              Presença (%)
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <div className="w-3 h-0.5 bg-violet-500 rounded" />
-              Aulas
+              Alunos presentes por mês
             </div>
           </div>
         </div>

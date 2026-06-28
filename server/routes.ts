@@ -213,7 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         todayClassesResult,
         birthdaysResult,
         beltStatsAdultResult,
-        beltStatsKidsResult
+        beltStatsKidsResult,
+        monthlyTrendResult
       ] = await Promise.all([
         // Active Students
         db.select({ count: count() })
@@ -364,7 +365,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(users.active, true),
             eq(beltLevels.category, 'child')
           ))
-          .groupBy(students.beltLevel)
+          .groupBy(students.beltLevel),
+
+        // Monthly attendance trend — last 6 months (present + confirmed counts)
+        db.execute(sql`
+          SELECT
+            TO_CHAR(DATE_TRUNC('month', date AT TIME ZONE 'UTC'), 'Mon') AS mes,
+            DATE_TRUNC('month', date AT TIME ZONE 'UTC') AS month_date,
+            COUNT(*) AS presencas
+          FROM attendance
+          WHERE status IN ('present', 'confirmed')
+            AND date >= DATE_TRUNC('month', NOW() AT TIME ZONE 'UTC') - INTERVAL '5 months'
+          GROUP BY DATE_TRUNC('month', date AT TIME ZONE 'UTC')
+          ORDER BY month_date ASC
+        `)
       ]);
 
       // Process results
@@ -376,6 +390,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const attendanceRate = attendanceData?.totalAttendances > 0 
         ? (attendanceData.presentAttendances / attendanceData.totalAttendances) 
         : 0;
+
+      // Monthly attendance count (current month)
+      const monthlyAttendanceCount = Number(attendanceData?.totalAttendances || 0);
+
+      // Build 6-month trend with real data, filling missing months with 0
+      const trendRows = (monthlyTrendResult as any).rows ?? monthlyTrendResult ?? [];
+      const trendMap: Record<string, number> = {};
+      trendRows.forEach((r: any) => {
+        const key = String(r.mes || r.MES || '');
+        trendMap[key] = Number(r.presencas || r.PRESENCAS || 0);
+      });
+      const MONTHS_PT: Record<string, string> = {
+        Jan: 'Jan', Feb: 'Fev', Mar: 'Mar', Apr: 'Abr',
+        May: 'Mai', Jun: 'Jun', Jul: 'Jul', Aug: 'Ago',
+        Sep: 'Set', Oct: 'Out', Nov: 'Nov', Dec: 'Dez',
+      };
+      const monthlyTrend: { mes: string; presencas: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const enMes = d.toLocaleString('en-US', { month: 'short' }); // Jan, Feb…
+        const ptMes = MONTHS_PT[enMes] || enMes;
+        const count = trendMap[enMes] || trendMap[ptMes] || 0;
+        monthlyTrend.push({ mes: ptMes, presencas: count });
+      }
 
       const [studentPaymentsRevenue, asaasRevenue] = await monthlyRevenueResult;
       const monthlyRevenue = (studentPaymentsRevenue[0]?.revenue || 0) + (asaasRevenue[0]?.revenue || 0);
@@ -429,6 +467,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           activeStudents,
           classesHeld,
           attendanceRate,
+          monthlyAttendanceCount,
+          monthlyTrend,
           monthlyRevenue,
           atRiskStudents,
           delinquency,

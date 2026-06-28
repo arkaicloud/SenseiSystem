@@ -7053,13 +7053,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? new AsaasPaymentsService(config.asaasApiKey)
         : new AsaasPaymentsService();
 
-      // Fetch all payments for this customer
-      const allPayments = await asaasService.getPaymentsWithCustomers(200);
-      const customerPayments = allPayments.filter(
-        p => p.customer === customerId && (p.status === 'PENDING' || p.status === 'OVERDUE')
-      );
+      // Fetch only THIS customer's pending/overdue payments directly (avoids rate limit from full fetch)
+      const customerPayments = await asaasService.getPaymentsByCustomerId(customerId, ['PENDING', 'OVERDUE']);
 
       console.log(`🗑️ Cancelling ${customerPayments.length} payments for customer ${customerId}`);
+
+      if (customerPayments.length === 0) {
+        return res.json({ success: true, cancelled: 0, failed: 0, total: 0, message: 'Nenhuma cobrança pendente encontrada' });
+      }
 
       // Group by installment to avoid duplicate calls, handle standalone separately
       const cancelledInstallments = new Set<string>();
@@ -7081,6 +7082,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
 
+      console.log(`✅ Cancelled ${succeeded} tasks, ${failed} failed for customer ${customerId}`);
+
       const user = (req as any).user;
       if (user) {
         await storage.createActivityLog({
@@ -7095,6 +7098,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, cancelled: succeeded, failed, total: cancelTasks.length });
     } catch (error: any) {
       console.error('❌ Error cancelling customer payments:', error);
+      res.status(500).json({ success: false, message: error.message || 'Erro ao cancelar cobranças' });
+    }
+  });
+
+  // Cancel all pending/overdue payments for a customer found by CPF
+  app.delete("/api/financial/cancel-by-cpf", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { cpf } = req.body || {};
+      if (!cpf) {
+        return res.status(400).json({ success: false, message: 'CPF é obrigatório' });
+      }
+
+      const config = await storage.getSchoolConfig();
+      const asaasService = config?.asaasApiKey
+        ? new AsaasPaymentsService(config.asaasApiKey)
+        : new AsaasPaymentsService();
+
+      // Find customer by CPF
+      const customer = await asaasService.findCustomerByCpf(cpf);
+      if (!customer) {
+        return res.status(404).json({ success: false, message: `Nenhum cliente ASAAS encontrado com CPF ${cpf}` });
+      }
+
+      console.log(`🔍 Found ASAAS customer: ${customer.name} (${customer.id}) for CPF ${cpf}`);
+
+      const customerPayments = await asaasService.getPaymentsByCustomerId(customer.id, ['PENDING', 'OVERDUE']);
+      console.log(`🗑️ Cancelling ${customerPayments.length} payments for customer ${customer.id} (${customer.name})`);
+
+      if (customerPayments.length === 0) {
+        return res.json({ success: true, cancelled: 0, failed: 0, total: 0, customerName: customer.name, message: 'Nenhuma cobrança pendente encontrada' });
+      }
+
+      const cancelledInstallments = new Set<string>();
+      const cancelTasks: Promise<any>[] = [];
+      for (const p of customerPayments) {
+        const installmentId = (p as any).installment;
+        if (installmentId) {
+          if (!cancelledInstallments.has(installmentId)) {
+            cancelledInstallments.add(installmentId);
+            cancelTasks.push(asaasService.cancelInstallmentPayments(installmentId));
+          }
+        } else {
+          cancelTasks.push(asaasService.cancelPayment(p.id));
+        }
+      }
+
+      const results = await Promise.allSettled(cancelTasks);
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      const failedReasons = results
+        .filter(r => r.status === 'rejected')
+        .map((r: any) => r.reason?.message || 'Erro desconhecido');
+
+      const user = (req as any).user;
+      if (user) {
+        await storage.createActivityLog({
+          userId: user.id,
+          activity: `${user.firstName} ${user.lastName} cancelou ${succeeded} cobranças de ${customer.name} (CPF: ${cpf}) via ASAAS`,
+          entityType: 'payment',
+          entityId: 0,
+          timestamp: new Date()
+        });
+      }
+
+      res.json({ success: true, customerId: customer.id, customerName: customer.name, cancelled: succeeded, failed, total: cancelTasks.length, failedReasons });
+    } catch (error: any) {
+      console.error('❌ Error cancelling payments by CPF:', error);
       res.status(500).json({ success: false, message: error.message || 'Erro ao cancelar cobranças' });
     }
   });

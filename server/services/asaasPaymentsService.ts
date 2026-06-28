@@ -195,6 +195,51 @@ export class AsaasPaymentsService {
     }
   }
 
+  // Fetch payments directly filtered by customer ID (avoids fetching all payments)
+  async getPaymentsByCustomerId(customerId: string, statuses: string[] = ['PENDING', 'OVERDUE']): Promise<AsaasPayment[]> {
+    if (!this.isConfigured) {
+      throw new Error('ASAAS não configurado.');
+    }
+
+    const allPayments: AsaasPayment[] = [];
+    for (const status of statuses) {
+      try {
+        let offset = 0;
+        while (true) {
+          const response = await axios.get(`${this.baseUrl}/payments`, {
+            headers: this.getHeaders(),
+            params: { customer: customerId, status, limit: 100, offset },
+            timeout: 30000,
+          });
+          const data: AsaasPayment[] = response.data?.data || [];
+          allPayments.push(...data);
+          if (data.length < 100) break;
+          offset += 100;
+        }
+      } catch (error: any) {
+        console.warn(`⚠️ Could not fetch ${status} payments for customer ${customerId}:`, error.response?.data || error.message);
+      }
+    }
+    return allPayments;
+  }
+
+  // Find customer by CPF in ASAAS
+  async findCustomerByCpf(cpfCnpj: string): Promise<AsaasCustomer | null> {
+    if (!this.isConfigured) return null;
+    try {
+      const clean = cpfCnpj.replace(/\D/g, '');
+      const response = await axios.get(`${this.baseUrl}/customers`, {
+        headers: this.getHeaders(),
+        params: { cpfCnpj: clean, limit: 10 },
+        timeout: 15000,
+      });
+      return response.data?.data?.[0] || null;
+    } catch (error: any) {
+      console.error('❌ Error finding customer by CPF:', error.response?.data || error.message);
+      return null;
+    }
+  }
+
   private getMockPayments(): AsaasPaymentsResponse {
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());

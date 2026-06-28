@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeltWithLabel } from "@/components/ui/belt";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDateShort, formatCurrency } from "@/lib/utils";
+import { sanitizeHTML } from "@/lib/htmlUtils";
 
 const Reports: React.FC = () => {
   const [periodFilter, setPeriodFilter] = useState("month");
@@ -127,7 +128,7 @@ const Reports: React.FC = () => {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <p className="text-gray-800" dangerouslySetInnerHTML={{ __html: log.activity }} />
+                            <p className="text-gray-800" dangerouslySetInnerHTML={{ __html: sanitizeHTML(log.activity) }} />
                             <p className="text-sm text-gray-500 mt-1">
                               {formatDate(date)} at {date.toLocaleTimeString()}
                             </p>

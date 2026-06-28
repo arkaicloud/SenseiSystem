@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from "react";
+import { sanitizeHTML } from "@/lib/htmlUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -611,7 +612,7 @@ const Communications: React.FC = () => {
 
                     <div 
                       className="text-gray-600 dark:text-gray-300 mb-4 prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: notice.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHTML(notice.content) }}
                     />
 
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">

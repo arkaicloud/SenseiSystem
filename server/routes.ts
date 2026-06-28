@@ -68,9 +68,9 @@ async function autoLinkGuardianByCpf(studentId: number, financialResponsibleCpf:
     if (guardianUser) {
       if (!db) return;
       await db.execute(sql`UPDATE students SET guardian_id = ${guardianUser.id} WHERE id = ${studentId}`);
-      console.log(`✅ Auto-link: Aluno (student_id=${studentId}) vinculado ao responsável ${guardianUser.firstName} ${guardianUser.lastName} (user_id=${guardianUser.id})`);
+      console.log(`✅ Auto-link: student_id=${studentId} → guardian user_id=${guardianUser.id}`);
     } else {
-      console.log(`ℹ️ Auto-link: Nenhum usuário encontrado com CPF ${cpfNormalized.slice(0, 3)}*** para student_id=${studentId}`);
+      console.log(`ℹ️ Auto-link: no guardian found for student_id=${studentId}`);
     }
   } catch (err) {
     console.error(`⚠️ Auto-link guardian error for student ${studentId}:`, err);
@@ -102,7 +102,7 @@ async function autoSetupGuardianAccount(studentId: number, student: any, student
     if (existing) {
       if (db) {
         await db.execute(sql`UPDATE students SET guardian_id = ${existing.id} WHERE id = ${studentId} AND guardian_id IS NULL`);
-        console.log(`✅ Guardian linked (existing account): student ${studentId} → user ${existing.id} (${responsibleEmail})`);
+        console.log(`✅ Guardian linked (existing account): student ${studentId} → user ${existing.id}`);
       }
       return;
     }
@@ -129,7 +129,7 @@ async function autoSetupGuardianAccount(studentId: number, student: any, student
 
     if (guardianUser && db) {
       await db.execute(sql`UPDATE students SET guardian_id = ${guardianUser.id} WHERE id = ${studentId}`);
-      console.log(`✅ Guardian account created & linked: ${responsibleEmail} → student ${studentId}`);
+      console.log(`✅ Guardian account created & linked: student ${studentId} → user ${guardianUser.id}`);
 
       // Send welcome email to guardian
       const childName = `${studentUser.firstName} ${studentUser.lastName}`;
@@ -140,9 +140,9 @@ async function autoSetupGuardianAccount(studentId: number, student: any, student
           childName,
           tempPassword
         );
-        console.log(`📧 Guardian welcome email sent to: ${responsibleEmail}`);
+        console.log(`📧 Guardian welcome email sent (user_id=${guardianUser.id})`);
       } catch (emailErr) {
-        console.error(`⚠️ Failed to send guardian welcome email to ${responsibleEmail}:`, emailErr);
+        console.error(`⚠️ Failed to send guardian welcome email (user_id=${guardianUser.id}):`, emailErr);
       }
     }
   } catch (err) {
@@ -1490,7 +1490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const config = await storage.getSchoolConfig();
                 const asaasService = new AsaasService(config?.asaasApiKey);
 
-                console.log('🎯 ARKAIDEV: Processando aprovação individual com anti-duplicata:', user.firstName, user.lastName);
+                console.log(`🎯 Processando aprovação individual: user_id=${user.id}`);
 
                 // Prepare student data for ASAAS with responsavel data
                 const alunoData = {
@@ -1605,9 +1605,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `${user.firstName} ${user.lastName}`,
           tempPassword
         );
-        console.log(`✅ Welcome email with temp password sent to: ${user.email}`);
+        console.log(`✅ Welcome email sent (user_id=${user.id})`);
       } catch (emailError) {
-        console.error(`❌ Error sending welcome email to ${user.email}:`, emailError);
+        console.error(`❌ Error sending welcome email (user_id=${user.id}):`, emailError);
         // Don't fail the approval if email sending fails
       }
 
@@ -2787,7 +2787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
       const userSex = userData.sex?.toLowerCase() || 'misto';
 
-      console.log(`👤 Usuário: ${userData.firstName}, sexo: ${userSex}, criança: ${isChild}`);
+      console.log(`👤 Buscando aulas — sexo: ${userSex}, criança: ${isChild}`);
 
       // Buscar todas as aulas ativas
       const allClasses = await storage.getClassesWithInstructors();
@@ -4632,7 +4632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user) {
         // Don't reveal that email doesn't exist
-        console.log(`⚠️ Password reset requested for non-existent email: ${email}`);
+        console.log(`⚠️ Password reset requested for unknown email`);
         return res.json({ message: successMessage });
       }
 
@@ -4657,7 +4657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           resetToken
         );
 
-        console.log(`✅ Password reset email sent to: ${email}`);
+        console.log(`✅ Password reset email sent (user_id=${user.id})`);
 
         // Log activity
         await storage.createActivityLog({
@@ -4741,7 +4741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date()
       });
 
-      console.log(`✅ Password reset completed for user: ${user.email}`);
+      console.log(`✅ Password reset completed (user_id=${user.id})`);
 
       res.json({ 
         message: "Senha atualizada com sucesso! Você já pode fazer login com sua nova senha." 
@@ -6301,7 +6301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log('✅ Student registration completed:', user.firstName, user.lastName, '- Pending approval');
+      console.log(`✅ Student registration completed (user_id=${user.id}) - Pending approval`);
 
       res.json({ 
         success: true,
@@ -6425,7 +6425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.getSchoolConfig();
       const asaasService = new AsaasService(config?.asaasApiKey);
 
-                console.log(`🎯 ARKAIDEV: Processando aluno com verificação anti-duplicata: ${user.firstName} ${user.lastName}`);
+                console.log(`🎯 Processando ASAAS anti-duplicata: user_id=${user.id}`);
 
                 // Prepare student data for ASAAS with responsavel data
                 const alunoData = {
@@ -6982,7 +6982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.getSchoolConfig();
       const asaasService = new AsaasService(config?.asaasApiKey);
 
-      console.log(`🔍 Verificando cliente ASAAS - CPF: ${cpf}, Email: ${email}`);
+      console.log(`🔍 Verificando cliente ASAAS...`);
 
       const syncResult = await asaasService.syncExistingAsaasData(
         (cpf as string) || (email as string) // Ensure it's treated as a string
@@ -7538,9 +7538,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 title,
                 content
               );
-              console.log(`✅ Notice email sent to: ${student.userEmail}`);
+              console.log(`✅ Notice email sent (student_id=${student.id})`);
             } catch (emailError) {
-              console.error(`❌ Error sending notice email to ${student.userEmail}:`, emailError);
+              console.error(`❌ Error sending notice email (student_id=${student.id}):`, emailError);
               // Don't fail the notice creation if email sending fails
             }
           }

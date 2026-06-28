@@ -2,11 +2,55 @@
 import "./env";
 
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDefaultAdmin } from "./auth";
 
 const app = express();
+
+// Security headers (helmet)
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disabled to not break Vite/React in dev
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// Rate limiter for authentication endpoints (login, forgot password)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { message: "Muitas tentativas. Tente novamente em 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter limiter for registration (public endpoint)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: { message: "Limite de cadastros atingido. Tente novamente em 1 hora." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter for password reset
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { message: "Muitas solicitações de redefinição. Tente novamente em 1 hora." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiters to sensitive public endpoints
+app.use("/api/login", authLimiter);
+app.use("/api/auth/forgot-password", passwordResetLimiter);
+app.use("/api/auth/reset-password", passwordResetLimiter);
+app.use("/api/register-student", registerLimiter);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -55,9 +99,11 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
     res.status(status).json({ message });
-    throw err;
+    // Only rethrow in development to avoid crashing production on handled errors
+    if (process.env.NODE_ENV === "development") {
+      throw err;
+    }
   });
 
   // importantly only setup vite in development and after

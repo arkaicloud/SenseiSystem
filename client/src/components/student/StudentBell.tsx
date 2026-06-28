@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Bell, X } from "lucide-react";
+import { sanitizeHTML } from "@/lib/htmlUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -202,7 +203,7 @@ export const StudentBell = ({ studentId }: StudentBellProps) => {
             <div 
               className="whitespace-pre-wrap text-sm prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ 
-                __html: selectedNotification?.content || '' 
+                __html: sanitizeHTML(selectedNotification?.content || '') 
               }}
             />
           </div>

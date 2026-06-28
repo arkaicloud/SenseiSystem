@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 import { Bell, CalendarDays, Award, CheckCircle2 } from "lucide-react";
+import { sanitizeHTML } from "@/lib/htmlUtils";
 
 interface Notification {
   id: number;
@@ -58,7 +59,7 @@ const StudentNotifications: React.FC<StudentNotificationsProps> = ({
                   <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100">{notification.title}</h4>
                   <div 
                     className="text-sm text-gray-600 mb-2 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: notification.message }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(notification.message) }}
                   />
                   <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{notification.date}</div>
                 </div>

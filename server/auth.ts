@@ -67,13 +67,23 @@ export const isSelfOrStaff = (req: Request, res: Response, next: NextFunction) =
 
 export function setupAuth(app: Express) {
   // Setup session middleware
+  if (!process.env.SESSION_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('FATAL: SESSION_SECRET env var is not set. Set a strong random secret in production.');
+    } else {
+      console.warn('⚠️  SESSION_SECRET not set — using insecure default for development only.');
+    }
+  }
+
   const sessionOptions: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "senseisystem-secret-key",
+    secret: process.env.SESSION_SECRET || "senseisystem-dev-only-not-for-production",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      maxAge: 24 * 60 * 60 * 1000, // 1 day (reduced from 30)
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     }
   };
 
@@ -112,7 +122,7 @@ export function setupAuth(app: Express) {
               });
               user.status = 'active';
               user.active = true;
-              console.log(`✅ Admin user auto-approved: ${user.email}`);
+              console.log(`✅ Admin user auto-approved (user_id=${user.id})`);
             } catch (error) {
               console.error('❌ Failed to auto-approve admin:', error);
             }
@@ -242,8 +252,6 @@ export function setupAuth(app: Express) {
 
   // Login route
   app.post("/api/login", (req, res, next) => {
-    console.log('📧 Login attempt for:', req.body.email);
-    
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error('🔥 Authentication error:', err);
@@ -251,11 +259,8 @@ export function setupAuth(app: Express) {
       }
       
       if (!user) {
-        console.log('❌ Authentication failed:', info?.message || "No user found");
         return res.status(401).json({ message: "Email ou senha incorretos" });
       }
-      
-      console.log('✅ User authenticated:', user.email);
       
       req.login(user, async (err: any) => {
         if (err) {
@@ -273,12 +278,9 @@ export function setupAuth(app: Express) {
             timestamp: new Date()
           });
           
-          console.log('📝 Activity log created for login');
-          
           // Update login streak
           try {
             await storage.updateLoginStreak(user.id);
-            console.log('🔥 Login streak updated for user:', user.id);
           } catch (streakError) {
             console.error('⚠️ Failed to update login streak:', streakError);
             // Don't fail the login for streak tracking failures
@@ -290,7 +292,6 @@ export function setupAuth(app: Express) {
         
         // Return user without password
         const { password, ...userWithoutPassword } = user;
-        console.log('🎉 Login successful for:', user.email);
         return res.json({ user: userWithoutPassword });
       });
     })(req, res, next);
@@ -387,7 +388,7 @@ export async function initializeDefaultAdmin() {
     const existingAdminUsername = await storage.getUserByUsername("admin");
     
     if (!existingAdmin && !existingAdminUsername) {
-      const hashedPassword = await hashPassword("12345678");
+      const hashedPassword = await hashPassword(process.env.ADMIN_DEFAULT_PASSWORD || "12345678");
       
       await storage.createUser({
         firstName: "Administrador",
@@ -403,7 +404,7 @@ export async function initializeDefaultAdmin() {
         joinDate: new Date(),
       });
       
-      console.log("Admin user created: admin (adm@senseisystem.com.br)");
+      console.log("Admin user created: adm@senseisystem.com.br");
     }
 
     // Create HUIOS BJJ admin user

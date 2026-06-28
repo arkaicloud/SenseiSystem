@@ -2,6 +2,7 @@
 import "./env";
 
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
@@ -9,6 +10,23 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeDefaultAdmin } from "./auth";
 
 const app = express();
+
+// CORS — only allow same origin (the app is self-hosted, no cross-origin API use)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
+  : [];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (same-origin, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 
 // Security headers (helmet)
 app.use(

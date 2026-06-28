@@ -698,9 +698,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const userIdNumber = parseInt(userId);
+      const requestUser = (req as any).user;
 
       if (isNaN(userIdNumber)) {
         return res.status(400).json({ error: 'Invalid user ID' });
+      }
+
+      // Students can only view their own profile; admins and instructors can view any
+      if (requestUser.id !== userIdNumber && requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ error: 'Acesso negado' });
       }
 
       const student = await storage.getStudentByUserId(userIdNumber);
@@ -763,9 +769,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const userIdNumber = parseInt(userId);
+      const requestUser = (req as any).user;
 
       if (isNaN(userIdNumber)) {
         return res.status(400).json({ error: 'Invalid user ID' });
+      }
+
+      // Students can only view their own attendance; admins and instructors can view any
+      if (requestUser.id !== userIdNumber && requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
+        return res.status(403).json({ error: 'Acesso negado' });
       }
 
       const student = await storage.getStudentByUserId(userIdNumber);
@@ -1164,6 +1176,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/attendance/user/:userId", isAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
 
       // Verificar se o usuário pode acessar esses dados
       if (req.user!.id !== userId && req.user!.role === 'student') {
@@ -2964,6 +2980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/classes/:id/enrollments", isAuthenticated, async (req, res) => {
     try {
       const classId = parseInt(req.params.id);
+      if (isNaN(classId)) return res.status(400).json({ message: "ID de aula inválido" });
 
       const enrollments = await db
         .select({
@@ -5300,7 +5317,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Webhook to receive notifications from ASAAS
   app.post("/webhooks/asaas", async (req, res) => {
     try {
-      console.log('🔔 ASAAS Webhook received:', req.body);
+      // Validate ASAAS access token if configured
+      const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
+      if (webhookToken) {
+        const receivedToken = req.headers['asaas-access-token'];
+        if (receivedToken !== webhookToken) {
+          console.warn('⚠️ ASAAS webhook rejected: invalid token');
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+      }
+
+      console.log('🔔 ASAAS Webhook received');
 
       const event = req.body;
 
@@ -6036,6 +6063,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ASAAS webhook to update payment statuses
   app.post("/api/webhook/asaas", async (req, res) => {
     try {
+      // Validate ASAAS access token if configured
+      const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
+      if (webhookToken) {
+        const receivedToken = req.headers['asaas-access-token'];
+        if (receivedToken !== webhookToken) {
+          console.warn('⚠️ ASAAS webhook rejected: invalid token');
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+      }
+
       const { event, payment } = req.body;
 
       if (!payment?.id) {
@@ -7005,7 +7042,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== CPF VALIDATION ROUTES =====
 
-  // GET: Verificar se CPF já existe no sistema
+  // GET: Verificar se CPF já existe no sistema (usado no onboarding público)
+  // Retorna apenas boolean para evitar enumeração de dados de alunos
   app.get("/api/validate-cpf/:cpf", async (req: Request, res: Response) => {
     try {
       const cpf = req.params.cpf;
@@ -7017,15 +7055,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Buscar direto no banco de dados usando SQL para evitar problemas do Drizzle
       const result = await db.execute(sql`
-        SELECT 
-          s.id,
-          s.user_id,
-          u.first_name,
-          u.last_name,
-          u.cpf,
-          u.active
+        SELECT 1
         FROM students s
         INNER JOIN users u ON s.user_id = u.id
         WHERE u.cpf = ${cpf}
@@ -7033,16 +7064,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
 
       if (result.rows.length > 0) {
-        const student = result.rows[0] as any;
         return res.json({
           success: true,
           exists: true,
-          message: "CPF já cadastrado no sistema",
-          student: {
-            id: student.id,
-            name: `${student.first_name} ${student.last_name}`,
-            active: student.active
-          }
+          message: "CPF já cadastrado no sistema"
         });
       }
 

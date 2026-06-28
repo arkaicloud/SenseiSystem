@@ -3024,6 +3024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           first_name: users.firstName,
           last_name: users.lastName,
           belt_level: students.beltLevel,
+          stripes: students.stripes,
           is_enrolled: sql<boolean>`true`,
         })
         .from(classEnrollments)
@@ -3072,6 +3073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             first_name: users.firstName,
             last_name: users.lastName,
             belt_level: students.beltLevel,
+            stripes: students.stripes,
             is_enrolled: sql<boolean>`false`,
           })
           .from(students)
@@ -3085,7 +3087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         first_name: s.first_name,
         last_name: s.last_name,
         belt_level: s.belt_level,
-        is_enrolled: s.is_enrolled,
+        stripes: s.stripes ?? 0,
         attendance_status: attMap[s.student_id] ?? null,
         has_self_confirmed: attMap[s.student_id] === 'confirmed',
       })).sort((a, b) =>

@@ -9,8 +9,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import {
   ChevronLeft, ChevronRight, Search, Users, CheckCircle2, XCircle,
-  Clock, Calendar, Save, Loader2, UserCheck, LayoutList, Check, X,
-  AlertTriangle
+  Clock, Calendar, Save, Loader2, UserCheck, LayoutList, Check, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -35,7 +34,7 @@ interface RosterStudent {
   first_name: string;
   last_name: string;
   belt_level?: string;
-  is_enrolled: boolean;
+  stripes?: number;
   attendance_status: string | null;   // 'confirmed' | 'present' | 'absent' | null
   has_self_confirmed: boolean;        // true when status === 'confirmed'
 }
@@ -48,6 +47,15 @@ const BELT_COLORS: Record<string, string> = {
   green: "#22c55e", orange: "#f97316", yellow: "#eab308",
 };
 
+const BELT_PT: Record<string, string> = {
+  white: "Branca", blue: "Azul", purple: "Roxa",
+  brown: "Marrom", black: "Preta", red: "Vermelha",
+  green: "Verde", orange: "Laranja", yellow: "Amarela",
+  "grey/white": "Cinza/Branca", grey: "Cinza",
+  "grey/black": "Cinza/Preta", "yellow/black": "Amarela/Preta",
+  "orange/black": "Laranja/Preta", "green/black": "Verde/Preta",
+};
+
 function beltColor(belt?: string) {
   if (!belt) return "#94a3b8";
   const k = belt.toLowerCase();
@@ -55,6 +63,15 @@ function beltColor(belt?: string) {
     if (k.includes(key)) return val;
   }
   return "#94a3b8";
+}
+
+function beltPt(belt?: string) {
+  if (!belt) return "";
+  const k = belt.toLowerCase();
+  for (const [key, val] of Object.entries(BELT_PT)) {
+    if (k === key || k.includes(key)) return val;
+  }
+  return belt;
 }
 
 function initials(first: string, last: string) {
@@ -183,17 +200,15 @@ function StudentRow({
           <p className="text-sm font-semibold text-slate-700 truncate">
             {student.first_name} {student.last_name}
           </p>
-          {!student.is_enrolled && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 flex-shrink-0">
-              <AlertTriangle className="w-2.5 h-2.5" /> Não matriculado
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {student.belt_level && (
             <span className="flex items-center gap-1 text-[11px] text-slate-400">
-              <span className="w-2 h-2 rounded-full inline-block" style={{ background: bc }} />
-              {student.belt_level}
+              <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ background: bc }} />
+              {beltPt(student.belt_level)}
+              {(student.stripes ?? 0) > 0 && Array.from({ length: student.stripes! }).map((_, i) => (
+                <span key={i} className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+              ))}
             </span>
           )}
           {student.has_self_confirmed && !localStatus && (
@@ -304,7 +319,7 @@ export default function AttendancePage() {
           first_name: s.first_name || parts[0] || "",
           last_name: s.last_name || parts.slice(1).join(" ") || "",
           belt_level: s.belt_level,
-          is_enrolled: s.is_enrolled ?? true,
+          stripes: s.stripes ?? 0,
           attendance_status: s.attendance_status ?? null,
           has_self_confirmed: s.has_self_confirmed ?? (s.attendance_status === "confirmed"),
         } as RosterStudent;

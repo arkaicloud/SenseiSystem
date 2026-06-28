@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SenseiSystem — Controle de Presenças</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface2: #1a1f2b;
+    --surface3: #232938;
+    --border: #2a3042;
+    --accent: #e8b84b;
+    --accent-dim: #e8b84b1a;
+    --text: #f0f2f7;
+    --text2: #8b95aa;
+    --text3: #4e5a70;
+    --present: #22c55e;
+    --absent: #ef4444;
+    --r: 10px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 34px; height: 34px;
+    background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; color: #000;
+  }
+  .header-title { font-size: 15px; font-weight: 700; }
+  .header-sub { font-size: 11px; color: var(--text2); }
+  .instructor-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 12px;
+    font-size: 12px; color: var(--text2);
+  }
+  .instructor-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+  }
+
+  /* LAYOUT */
+  .main { display: flex; height: calc(100vh - 61px); overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 290px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+
+  /* CALENDAR */
+  .cal-header {
+    padding: 16px 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cal-month { font-size: 14px; font-weight: 700; }
+  .cal-nav { display: flex; gap: 4px; }
+  .cal-nav button {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .cal-nav button:hover { background: var(--surface3); }
+
+  .cal-grid { padding: 0 12px 12px; }
+  .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+  .cal-wd { text-align: center; font-size: 10px; font-weight: 700; color: var(--text3); padding: 4px 0; text-transform: uppercase; }
+  .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-weight: 500;
+    position: relative; transition: all 0.15s;
+    border: 1px solid transparent; color: var(--text2);
+  }
+  .cal-day:hover { background: var(--surface2); color: var(--text); }
+  .cal-day.has-class { color: var(--text); }
+  .cal-day.has-class::after {
+    content: ''; width: 4px; height: 4px;
+    background: var(--accent); border-radius: 50%;
+    position: absolute; bottom: 3px;
+  }
+  .cal-day.today { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .cal-day.selected { background: var(--accent); color: #000 !important; font-weight: 700; }
+  .cal-day.selected::after { background: #000; }
+  .cal-day.empty { pointer-events: none; opacity: 0; }
+
+  /* CLASSES SECTION */
+  .classes-section { padding: 0 14px 16px; border-top: 1px solid var(--border); flex: 1; padding-top: 14px; }
+  .classes-section-title {
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .class-date-label { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
+
+  .class-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 12px 12px 12px 16px;
+    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .class-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--accent);
+  }
+  .class-card:hover { border-color: var(--accent); background: var(--surface3); }
+  .class-card.active { border-color: var(--accent); background: var(--accent-dim); }
+  .class-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .class-meta { display: flex; gap: 8px; font-size: 11px; color: var(--text2); flex-wrap: wrap; }
+  .checkin-badge {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: var(--accent-dim); border: 1px solid #e8b84b44;
+    color: var(--accent); font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+  }
+
+  /* CONTENT */
+  .content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+    color: var(--text3); text-align: center; padding: 40px;
+  }
+  .empty-icon { font-size: 52px; opacity: 0.35; }
+  .empty-title { font-size: 17px; font-weight: 700; color: var(--text2); }
+  .empty-sub { font-size: 13px; max-width: 260px; line-height: 1.7; }
+
+  /* DETAIL HEADER */
+  .class-detail-header {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .class-detail-name { font-size: 20px; font-weight: 800; margin-bottom: 5px; }
+  .class-detail-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text2); flex-wrap: wrap; }
+  .class-detail-meta span { display: flex; align-items: center; gap: 5px; }
+
+  .stats-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat-chip {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; text-align: center; min-width: 76px;
+  }
+  .s-num { font-size: 24px; font-weight: 800; }
+  .s-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
+  .s-total .s-num { color: var(--text); }
+  .s-present .s-num { color: var(--present); }
+  .s-absent .s-num { color: var(--absent); }
+  .s-pending .s-num { color: var(--text3); }
+
+  /* BULK BAR */
+  .bulk-bar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
+  }
+  .bulk-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; pointer-events: none; }
+  .search-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px 8px 32px;
+    color: var(--text); font-size: 13px; width: 190px; outline: none;
+    font-family: inherit; transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-tabs { display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .filter-tab {
+    padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    color: var(--text2); transition: all 0.15s; border: none;
+    background: transparent; font-family: inherit; white-space: nowrap;
+  }
+  .filter-tab.active { background: var(--surface3); color: var(--text); }
+
+  .bulk-actions { display: flex; gap: 6px; align-items: center; }
+
+  .btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 8px 13px; border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    border: 1px solid; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-present { background: #22c55e1a; border-color: #22c55e44; color: var(--present); }
+  .btn-present:hover { background: #22c55e28; }
+  .btn-absent { background: #ef44441a; border-color: #ef444444; color: var(--absent); }
+  .btn-absent:hover { background: #ef444428; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #000; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  /* STUDENT LIST */
+  .student-list { display: flex; flex-direction: column; gap: 5px; }
+  .s-section-label {
+    font-size: 10px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    padding: 10px 0 4px;
+  }
+
+  .student-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 11px 14px;
+    display: flex; align-items: center; gap: 10px;
+    transition: all 0.15s; cursor: pointer; user-select: none;
+  }
+  .student-row:hover { border-color: var(--surface3); background: var(--surface2); }
+  .student-row.sel { border-color: var(--accent); background: var(--accent-dim); }
+  .student-row.row-present { border-left: 3px solid var(--present); padding-left: 12px; }
+  .student-row.row-absent { border-left: 3px solid var(--absent); padding-left: 12px; }
+
+  .s-check {
+    width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; transition: all 0.15s; color: transparent;
+  }
+  .student-row.sel .s-check { background: var(--accent); border-color: var(--accent); color: #000; }
+
+  .s-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; background: var(--surface3);
+    border: 2px solid var(--border);
+  }
+  .s-info { flex: 1; min-width: 0; }
+  .s-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s-sub { font-size: 11px; color: var(--text2); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+
+  .s-checkin-time { font-size: 11px; color: var(--text2); white-space: nowrap; }
+
+  .att-toggle {
+    display: flex; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; flex-shrink: 0;
+  }
+  .att-btn {
+    padding: 7px 12px; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none; background: transparent;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .att-btn.p { color: var(--text3); }
+  .att-btn.p:hover, .att-btn.p.on { background: #22c55e22; color: var(--present); }
+  .att-btn.a { color: var(--text3); }
+  .att-btn.a:hover, .att-btn.a.on { background: #ef444422; color: var(--absent); }
+
+  .s-status {
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+  }
+  .s-status.present { background: #22c55e1a; color: var(--present); border: 1px solid #22c55e33; }
+  .s-status.absent { background: #ef44441a; color: var(--absent); border: 1px solid #ef444433; }
+  .s-status.pending { background: var(--surface3); color: var(--text3); border: 1px solid var(--border); }
+
+  /* SAVE BANNER */
+  .save-banner {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--accent);
+    border-radius: 14px; padding: 12px 20px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 8px 40px #000c; z-index: 200;
+    opacity: 0; pointer-events: none; transition: all 0.25s; white-space: nowrap;
+  }
+  .save-banner.show { opacity: 1; pointer-events: auto; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; top: 70px; right: 16px;
+    background: var(--surface); border: 1px solid #22c55e44;
+    border-radius: 10px; padding: 12px 16px; font-size: 13px; font-weight: 600;
+    z-index: 300; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 24px #0008;
+    opacity: 0; transform: translateX(20px);
+    transition: all 0.25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  /* RESPONSIVE MOBILE */
+  @media (max-width: 768px) {
+    .main { flex-direction: column; height: auto; overflow: visible; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: none; }
+    .content { padding: 12px; min-height: 60vh; }
+    .class-detail-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .stats-row { width: 100%; }
+    .stat-chip { flex: 1; }
+    .bulk-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .bulk-left { flex-direction: column; }
+    .search-input { width: 100%; }
+    .filter-tabs { overflow-x: auto; }
+    .s-checkin-time { display: none; }
+    .header-sub { display: none; }
+    .save-banner { left: 12px; right: 12px; transform: none; justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-mark">S</div>
+    <div>
+      <div class="header-title">SenseiSystem</div>
+      <div class="header-sub">Controle de Presenças</div>
+    </div>
+  </div>
+  <div class="instructor-pill">
+    <div class="instructor-avatar">RP</div>
+    Prof. Rafael
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="sidebar" id="sidebar">
+    <div class="cal-header">
+      <div class="cal-month" id="cal-month"></div>
+      <div class="cal-nav">
+        <button onclick="changeMonth(-1)">&#8249;</button>
+        <button onclick="changeMonth(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-weekdays">
+        <div class="cal-wd">D</div><div class="cal-wd">S</div><div class="cal-wd">T</div>
+        <div class="cal-wd">Q</div><div class="cal-wd">Q</div><div class="cal-wd">S</div><div class="cal-wd">S</div>
+      </div>
+      <div class="cal-days" id="cal-days"></div>
+    </div>
+
+    <div class="classes-section">
+      <div class="classes-section-title">
+        <span>Aulas do dia</span>
+        <span id="classes-count" style="color:var(--accent);font-size:11px;"></span>
+      </div>
+      <div id="class-date-label" class="class-date-label" style="display:none;"></div>
+      <div id="class-list">
+        <div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px;">
+          &#8592; Selecione uma data
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">&#129355;</div>
+      <div class="empty-title">Selecione uma aula</div>
+      <div class="empty-sub">Clique em uma data no calendário e escolha a aula para registrar as presenças.</div>
+    </div>
+    <div id="class-detail" style="display:none;flex-direction:column;gap:14px;"></div>
+  </div>
+
+</div>
+
+<div class="save-banner" id="save-banner">
+  <span style="font-size:16px;">&#128190;</span>
+  <div style="font-size:13px;font-weight:600;"><span id="changed-count" style="color:var(--accent);">0</span> alterações pendentes</div>
+  <button class="btn btn-primary" onclick="saveAttendance()">Salvar presenças</button>
+  <button class="btn btn-ghost" onclick="hideBanner()">Descartar</button>
+</div>
+
+<div class="toast" id="toast">
+  <span style="color:var(--present);font-size:15px;">&#10003;</span>
+  <span id="toast-msg">Salvo!</span>
+</div>
+
+<script>
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS_BR = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const BELT_COLORS = {
+  'Branca':'#e5e7eb','Azul':'#3b82f6','Roxa':'#8b5cf6',
+  'Marrom':'#b45309','Preta':'#6b7280','Verde':'#22c55e','Kids':'#f97316'
+};
+
+// Dias com aulas
+const CLASS_DAYS = ['2025-06-02','2025-06-04','2025-06-06','2025-06-09','2025-06-11',
+  '2025-06-13','2025-06-16','2025-06-18','2025-06-20','2025-06-23',
+  '2025-06-25','2025-06-27','2025-06-28','2025-06-30'];
+
+const CLASSES = {
+  '2025-06-28': [
+    {id:1, name:'BJJ Fundamental', time:'07:00', dur:'60min', room:'Tatame A', checkins:8, total:12},
+    {id:2, name:'Jiu-Jitsu Avançado', time:'09:00', dur:'90min', room:'Tatame A', checkins:5, total:9},
+    {id:3, name:'Kids BJJ', time:'14:00', dur:'45min', room:'Tatame B', checkins:10, total:14},
+    {id:4, name:'Sparring Livre', time:'19:00', dur:'90min', room:'Tatame A', checkins:6, total:11},
+  ],
+  '2025-06-25': [
+    {id:5, name:'BJJ Fundamental', time:'07:00', dur:'60min', room:'Tatame A', checkins:9, total:12},
+    {id:6, name:'Competição Prep', time:'18:00', dur:'90min', room:'Tatame A', checkins:7, total:8},
+  ],
+  '2025-06-27': [
+    {id:7, name:'BJJ Fundamental', time:'07:00', dur:'60min', room:'Tatame A', checkins:6, total:12},
+    {id:8, name:'No-Gi', time:'20:00', dur:'60min', room:'Tatame B', checkins:4, total:9},
+  ],
+};
+
+const STUDENTS = {
+  1: [
+    {id:1,name:'Carlos Mendes',belt:'Azul',checkin:'06:52',status:'pending'},
+    {id:2,name:'Ana Paula Silva',belt:'Branca',checkin:'06:55',status:'pending'},
+    {id:3,name:'João Ferreira',belt:'Roxa',checkin:'06:58',status:'pending'},
+    {id:4,name:'Mariana Costa',belt:'Azul',checkin:'07:01',status:'pending'},
+    {id:5,name:'Pedro Alves',belt:'Branca',checkin:'07:03',status:'pending'},
+    {id:6,name:'Lucia Ramos',belt:'Verde',checkin:'07:05',status:'pending'},
+    {id:7,name:'Diego Santos',belt:'Azul',checkin:'07:08',status:'pending'},
+    {id:8,name:'Fernanda Lima',belt:'Branca',checkin:'07:10',status:'pending'},
+    {id:9,name:'Ricardo Souza',belt:'Marrom',checkin:null,status:'pending'},
+    {id:10,name:'Beatriz Nunes',belt:'Azul',checkin:null,status:'pending'},
+    {id:11,name:'Thiago Melo',belt:'Branca',checkin:null,status:'pending'},
+    {id:12,name:'Camila Rocha',belt:'Roxa',checkin:null,status:'pending'},
+  ],
+  2: [
+    {id:13,name:'André Nascimento',belt:'Marrom',checkin:'08:55',status:'pending'},
+    {id:14,name:'Patrícia Gomes',belt:'Roxa',checkin:'08:58',status:'pending'},
+    {id:15,name:'Marcos Vieira',belt:'Preta',checkin:'09:00',status:'pending'},
+    {id:16,name:'Sílvia Barros',belt:'Marrom',checkin:'09:02',status:'pending'},
+    {id:17,name:'Gustavo Lopes',belt:'Roxa',checkin:null,status:'pending'},
+    {id:18,name:'Helena Cruz',belt:'Marrom',checkin:null,status:'pending'},
+    {id:19,name:'Felipe Santana',belt:'Roxa',checkin:null,status:'pending'},
+    {id:20,name:'Vanessa Moura',belt:'Preta',checkin:null,status:'pending'},
+    {id:21,name:'Rafael Cardoso',belt:'Marrom',checkin:null,status:'pending'},
+  ],
+  3: [
+    {id:22,name:'Lucas Ferreira',belt:'Kids',checkin:'13:50',status:'pending'},
+    {id:23,name:'Sofia Almeida',belt:'Kids',checkin:'13:52',status:'pending'},
+    {id:24,name:'Mateus Costa',belt:'Kids',checkin:'13:55',status:'pending'},
+    {id:25,name:'Isabella Neto',belt:'Kids',checkin:'13:57',status:'pending'},
+    {id:26,name:'Gabriel Lima',belt:'Kids',checkin:'14:00',status:'pending'},
+    {id:27,name:'Laura Pereira',belt:'Kids',checkin:'14:02',status:'pending'},
+    {id:28,name:'Arthur Ribeiro',belt:'Kids',checkin:'14:03',status:'pending'},
+    {id:29,name:'Valentina Dias',belt:'Kids',checkin:'14:05',status:'pending'},
+    {id:30,name:'Nicolas Souza',belt:'Kids',checkin:'14:07',status:'pending'},
+    {id:31,name:'Júlia Mendes',belt:'Kids',checkin:'14:08',status:'pending'},
+    {id:32,name:'Henrique Teles',belt:'Kids',checkin:null,status:'pending'},
+    {id:33,name:'Maria Clara',belt:'Kids',checkin:null,status:'pending'},
+    {id:34,name:'Daniel Farias',belt:'Kids',checkin:null,status:'pending'},
+    {id:35,name:'Giovanna Lima',belt:'Kids',checkin:null,status:'pending'},
+  ],
+  4: [
+    {id:36,name:'Bruno Tavares',belt:'Roxa',checkin:'18:55',status:'pending'},
+    {id:37,name:'Letícia Moura',belt:'Azul',checkin:'18:57',status:'pending'},
+    {id:38,name:'Rodrigo Pinto',belt:'Marrom',checkin:'19:00',status:'pending'},
+    {id:39,name:'Aline Souza',belt:'Roxa',checkin:'19:01',status:'pending'},
+    {id:40,name:'Fábio Lima',belt:'Azul',checkin:'19:03',status:'pending'},
+    {id:41,name:'Cristina Alves',belt:'Roxa',checkin:'19:05',status:'pending'},
+    {id:42,name:'Paulo Mendes',belt:'Preta',checkin:null,status:'pending'},
+    {id:43,name:'Juliana Ramos',belt:'Marrom',checkin:null,status:'pending'},
+    {id:44,name:'Alexandre Costa',belt:'Azul',checkin:null,status:'pending'},
+    {id:45,name:'Débora Nunes',belt:'Roxa',checkin:null,status:'pending'},
+    {id:46,name:'Leandro Santos',belt:'Marrom',checkin:null,status:'pending'},
+  ],
+};
+
+// STATE
+let curYear = 2025, curMonth = 5;
+let selDate = null, selClass = null;
+let students = [], selected = new Set(), filter = 'all', searchQ = '';
+
+// CALENDAR
+function renderCal() {
+  document.getElementById('cal-month').textContent = MONTHS[curMonth] + ' ' + curYear;
+  const c = document.getElementById('cal-days');
+  c.innerHTML = '';
+  const today = new Date();
+  const first = new Date(curYear, curMonth, 1).getDay();
+  const days = new Date(curYear, curMonth+1, 0).getDate();
+
+  for (let i=0;i<first;i++) {
+    const e=document.createElement('div'); e.className='cal-day empty'; c.appendChild(e);
+  }
+  for (let d=1;d<=days;d++) {
+    const ds = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const e = document.createElement('div');
+    e.className = 'cal-day';
+    e.textContent = d;
+    if (CLASS_DAYS.includes(ds)) e.classList.add('has-class');
+    if (today.getFullYear()===curYear && today.getMonth()===curMonth && today.getDate()===d) e.classList.add('today');
+    if (selDate===ds) e.classList.add('selected');
+    e.onclick = () => selectDate(ds);
+    c.appendChild(e);
+  }
+}
+
+function changeMonth(d) {
+  curMonth+=d;
+  if(curMonth>11){curMonth=0;curYear++;}
+  if(curMonth<0){curMonth=11;curYear--;}
+  renderCal();
+}
+
+function selectDate(ds) {
+  selDate=ds; selClass=null; students=[]; selected.clear();
+  renderCal(); renderClassList(); showEmpty();
+}
+
+function renderClassList() {
+  const cl = document.getElementById('class-list');
+  const dl = document.getElementById('class-date-label');
+  const cc = document.getElementById('classes-count');
+  const classes = CLASSES[selDate]||[];
+
+  if (selDate) {
+    const [y,m,d]=selDate.split('-');
+    const dt=new Date(+y,+m-1,+d);
+    dl.textContent = DAYS_BR[dt.getDay()] + ', ' + d+'/'+m;
+    dl.style.display='block';
+    cc.textContent = classes.length ? classes.length+' aula'+(classes.length>1?'s':'') : '';
+  }
+
+  if (!classes.length) {
+    cl.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:12px;">Nenhuma aula nesta data</div>';
+    return;
+  }
+  cl.innerHTML = classes.map(c=>`
+    <div class="class-card ${selClass&&selClass.id===c.id?'active':''}" onclick="selectClass(${c.id})">
+      <div class="class-name">${c.name}</div>
+      <div class="class-meta">
+        <span>&#128336; ${c.time}</span>
+        <span>&#9201; ${c.dur}</span>
+        <span>&#128205; ${c.room}</span>
+      </div>
+      <div class="checkin-badge">${c.checkins}/${c.total}</div>
+    </div>
+  `).join('');
+}
+
+function selectClass(id) {
+  const all = Object.values(CLASSES).flat();
+  selClass = all.find(c=>c.id===id);
+  students = JSON.parse(JSON.stringify(STUDENTS[id]||[]));
+  selected.clear(); filter='all'; searchQ='';
+  renderClassList(); renderDetail();
+  hideBanner();
+}
+
+function showEmpty() {
+  document.getElementById('empty-state').style.display='flex';
+  document.getElementById('class-detail').style.display='none';
+}
+
+function renderDetail() {
+  document.getElementById('empty-state').style.display='none';
+  const det = document.getElementById('class-detail');
+  det.style.display='flex';
+
+  const total=students.length;
+  const present=students.filter(s=>s.status==='present').length;
+  const absent=students.filter(s=>s.status==='absent').length;
+  const pending=students.filter(s=>s.status==='pending').length;
+  const withCI=students.filter(s=>s.checkin).length;
+
+  let filtered = students.filter(s=>{
+    const ms=!searchQ||s.name.toLowerCase().includes(searchQ.toLowerCase());
+    const mf=filter==='all'||s.status===filter||(filter==='checkin'&&s.checkin);
+    return ms&&mf;
+  });
+
+  const [y,m,d]=selDate.split('-');
+
+  // Group for display
+  const withCheckin = filtered.filter(s=>s.checkin);
+  const withoutCheckin = filtered.filter(s=>!s.checkin);
+
+  det.innerHTML = `
+    <div class="class-detail-header">
+      <div>
+        <div class="class-detail-name">${selClass.name}</div>
+        <div class="class-detail-meta">
+          <span>&#128197; ${d}/${m}/${y}</span>
+          <span>&#128336; ${selClass.time} &middot; ${selClass.dur}</span>
+          <span>&#128205; ${selClass.room}</span>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-chip s-total"><div class="s-num">${total}</div><div class="s-label">Alunos</div></div>
+        <div class="stat-chip s-present"><div class="s-num">${present}</div><div class="s-label">Presentes</div></div>
+        <div class="stat-chip s-absent"><div class="s-num">${absent}</div><div class="s-label">Faltas</div></div>
+        <div class="stat-chip s-pending"><div class="s-num">${pending}</div><div class="s-label">Pendentes</div></div>
+      </div>
+    </div>
+
+    <div class="bulk-bar">
+      <div class="bulk-left">
+        <div class="search-wrap">
+          <span class="search-icon">&#128269;</span>
+          <input class="search-input" placeholder="Buscar aluno..." value="${searchQ}"
+            oninput="searchQ=this.value;renderDetail()" />
+        </div>
+        <div class="filter-tabs">
+          <button class="filter-tab ${filter==='all'?'active':''}" onclick="setFilter('all')">Todos (${total})</button>
+          <button class="filter-tab ${filter==='checkin'?'active':''}" onclick="setFilter('checkin')">Check-in (${withCI})</button>
+          <button class="filter-tab ${filter==='present'?'active':''}" onclick="setFilter('present')">&#10003; (${present})</button>
+          <button class="filter-tab ${filter==='absent'?'active':''}" onclick="setFilter('absent')">&#10005; (${absent})</button>
+          <button class="filter-tab ${filter==='pending'?'active':''}" onclick="setFilter('pending')">&mdash; (${pending})</button>
+        </div>
+      </div>
+      <div class="bulk-actions">
+        ${selected.size>0 ? `
+          <span style="font-size:12px;color:var(--text2);">${selected.size} sel.</span>
+          <button class="btn btn-present" onclick="bulkSet('present')">&#10003; Presença</button>
+          <button class="btn btn-absent" onclick="bulkSet('absent')">&#10005; Falta</button>
+          <button class="btn btn-ghost" onclick="selected.clear();renderDetail()">Limpar</button>
+        ` : `
+          <button class="btn btn-ghost" onclick="selectAll()">Selecionar todos</button>
+          <button class="btn btn-present" onclick="markCheckins()">&#10003; Confirmar check-ins</button>
+        `}
+      </div>
+    </div>
+
+    <div class="student-list">
+      ${withCheckin.length>0 && filter!=='pending' ? `
+        <div class="s-section-label">&#9989; Com check-in (${withCheckin.length})</div>
+        ${withCheckin.map(s=>rowHTML(s)).join('')}
+      ` : ''}
+      ${withoutCheckin.length>0 ? `
+        <div class="s-section-label">&#128686; Sem check-in (${withoutCheckin.length})</div>
+        ${withoutCheckin.map(s=>rowHTML(s)).join('')}
+      ` : ''}
+      ${filtered.length===0 ? `<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">Nenhum aluno encontrado</div>` : ''}
+    </div>
+  `;
+}
+
+function rowHTML(s) {
+  const init = s.name.split(' ').map(n=>n[0]).slice(0,2).join('');
+  const bc = BELT_COLORS[s.belt]||'#6b7280';
+  const isSel = selected.has(s.id);
+  const rowClass = s.status==='present'?'row-present':s.status==='absent'?'row-absent':'';
+  return `
+    <div class="student-row ${isSel?'sel':''} ${rowClass}" onclick="toggleSel(${s.id})">
+      <div class="s-check">${isSel?'&#10003;':''}</div>
+      <div class="s-avatar" style="border-color:${bc};color:${bc}">${init}</div>
+      <div class="s-info">
+        <div class="s-name">${s.name}</div>
+        <div class="s-sub">
+          <span style="display:inline-block;width:8px;height:8px;background:${bc};border-radius:50%;"></span>
+          Faixa ${s.belt}
+          ${s.checkin
+            ? `<span style="color:var(--present);font-size:10px;">&#9679; Check-in ${s.checkin}</span>`
+            : `<span style="color:var(--text3);font-size:10px;">&#9679; Sem check-in</span>`}
+        </div>
+      </div>
+      <div class="s-checkin-time" style="font-size:11px;color:var(--text2);">
+        ${s.checkin ? '&#9200; '+s.checkin : ''}
+      </div>
+      <div class="att-toggle" onclick="event.stopPropagation()">
+        <button class="att-btn p ${s.status==='present'?'on':''}" onclick="setSt(${s.id},'present')">&#10003;</button>
+        <button class="att-btn a ${s.status==='absent'?'on':''}" onclick="setSt(${s.id},'absent')">&#10005;</button>
+      </div>
+      <div class="s-status ${s.status}">
+        ${s.status==='present'?'Presente':s.status==='absent'?'Falta':'Pendente'}
+      </div>
+    </div>
+  `;
+}
+
+function setFilter(f){filter=f;renderDetail();}
+
+function toggleSel(id){
+  if(selected.has(id)) selected.delete(id); else selected.add(id);
+  renderDetail();
+}
+function selectAll(){
+  students.forEach(s=>selected.add(s.id)); renderDetail();
+}
+function setSt(id,st){
+  const s=students.find(x=>x.id===id);
+  if(s){ s.status=s.status===st?'pending':st; markChanged(); renderDetail(); }
+}
+function bulkSet(st){
+  selected.forEach(id=>{const s=students.find(x=>x.id===id);if(s)s.status=st;});
+  selected.clear(); markChanged(); renderDetail();
+}
+function markCheckins(){
+  students.filter(s=>s.checkin).forEach(s=>s.status='present');
+  markChanged(); renderDetail();
+}
+function markChanged(){
+  const n=students.filter(s=>s.status!=='pending').length;
+  document.getElementById('changed-count').textContent=n;
+  document.getElementById('save-banner').classList.add('show');
+}
+function hideBanner(){ document.getElementById('save-banner').classList.remove('show'); }
+function saveAttendance(){
+  hideBanner();
+  const t=document.getElementById('toast');
+  const present=students.filter(s=>s.status==='present').length;
+  const absent=students.filter(s=>s.status==='absent').length;
+  document.getElementById('toast-msg').textContent=`Salvo! ${present} presentes, ${absent} faltas.`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// INIT
+renderCal();
+selectDate('2025-06-28');
+</script>
+</body>
+</html>

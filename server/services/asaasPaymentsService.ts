@@ -94,6 +94,23 @@ export class AsaasPaymentsService {
     };
   }
 
+  async cancelPayment(paymentId: string): Promise<{ id: string; status: string; deleted: boolean }> {
+    if (!this.isConfigured) {
+      throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');
+    }
+    try {
+      console.log(`🗑️ Cancelling ASAAS payment ${paymentId}...`);
+      const response = await axios.delete(`${this.baseUrl}/payments/${paymentId}`, {
+        headers: this.getHeaders(),
+      });
+      console.log(`✅ ASAAS payment ${paymentId} cancelled`);
+      return response.data;
+    } catch (error: any) {
+      console.error(`❌ Error cancelling ASAAS payment ${paymentId}:`, error.response?.data || error.message);
+      throw new Error(`Erro ao cancelar cobrança: ${error.response?.data?.errors?.[0]?.description || error.message}`);
+    }
+  }
+
   async getPayments(limit: number = 100, offset: number = 0): Promise<AsaasPaymentsResponse> {
     if (!this.isConfigured) {
       throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');

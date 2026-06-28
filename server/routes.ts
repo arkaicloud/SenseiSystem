@@ -6943,6 +6943,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel a single ASAAS payment
+  app.delete("/api/financial/payments/:paymentId", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { paymentId } = req.params;
+      const config = await storage.getSchoolConfig();
+      const asaasService = config?.asaasApiKey
+        ? new AsaasPaymentsService(config.asaasApiKey)
+        : new AsaasPaymentsService();
+
+      console.log(`🗑️ Admin cancelling payment ${paymentId}`);
+      const result = await asaasService.cancelPayment(paymentId);
+
+      const user = (req as any).user;
+      if (user) {
+        await storage.createActivityLog({
+          userId: user.id,
+          activity: `${user.firstName} ${user.lastName} cancelou cobrança ASAAS: ${paymentId}`,
+          entityType: 'payment',
+          entityId: 0,
+          timestamp: new Date()
+        });
+      }
+
+      res.json({ success: true, result });
+    } catch (error: any) {
+      console.error('❌ Error cancelling ASAAS payment:', error);
+      res.status(500).json({ success: false, message: error.message || 'Erro ao cancelar cobrança' });
+    }
+  });
+
+  // Cancel all pending/overdue payments for a customer
+  app.delete("/api/financial/customers/:customerId/payments", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { customerId } = req.params;
+      const config = await storage.getSchoolConfig();
+      const asaasService = config?.asaasApiKey
+        ? new AsaasPaymentsService(config.asaasApiKey)
+        : new AsaasPaymentsService();
+
+      // Fetch all payments for this customer
+      const allPayments = await asaasService.getPaymentsWithCustomers(200);
+      const customerPayments = allPayments.filter(
+        p => p.customer === customerId && (p.status === 'PENDING' || p.status === 'OVERDUE')
+      );
+
+      console.log(`🗑️ Cancelling ${customerPayments.length} payments for customer ${customerId}`);
+
+      const results = await Promise.allSettled(
+        customerPayments.map(p => asaasService.cancelPayment(p.id))
+      );
+
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      const user = (req as any).user;
+      if (user) {
+        await storage.createActivityLog({
+          userId: user.id,
+          activity: `${user.firstName} ${user.lastName} cancelou ${succeeded} cobranças do cliente ASAAS: ${customerId}`,
+          entityType: 'payment',
+          entityId: 0,
+          timestamp: new Date()
+        });
+      }
+
+      res.json({ success: true, cancelled: succeeded, failed, total: customerPayments.length });
+    } catch (error: any) {
+      console.error('❌ Error cancelling customer payments:', error);
+      res.status(500).json({ success: false, message: error.message || 'Erro ao cancelar cobranças' });
+    }
+  });
+
   // =====ARKAIDEV Enhancement: Manual ASAAS Sync Routes=====
 
   // Sync student with ASAAS (manual resync in case of lost link)

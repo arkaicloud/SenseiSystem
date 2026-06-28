@@ -25,10 +25,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import {
   DollarSign,
   Clock,
@@ -49,8 +56,12 @@ import {
   CreditCard,
   BarChart3,
   Receipt,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  Copy,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Payment {
@@ -80,9 +91,8 @@ interface FinancialMetrics {
   totalReceived: number;
   totalPending: number;
   totalOverdue: number;
-  averageTicket: number; // Added for Ticket Médio
-  revenueVariation: number; // Added for Variação de Receita
-  // NOVO: Pagamentos em atraso (pagos após vencimento)
+  averageTicket: number;
+  revenueVariation: number;
   latePaymentsCount: number;
   latePaymentsValue: number;
 }
@@ -93,17 +103,25 @@ interface FinancialData {
   totalCount: number;
 }
 
+interface CancelDialog {
+  open: boolean;
+  payment: Payment | null;
+}
+
 export default function FinancialDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Month navigation state (default = current month)
+  const [selectedMonth, setSelectedMonth] = useState(() => startOfMonth(new Date()));
+  const [showAllMonths, setShowAllMonths] = useState(false);
+
   // Filter states
   const [paymentTypeFilter, setPaymentTypeFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("dueDate");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCashPayments, setShowCashPayments] = useState(false);
-  const [hideAdvancedPayments, setHideAdvancedPayments] = useState(false);
-  const [hideNegativePayments, setHideNegativePayments] = useState(false);
+
+  // Cancel dialog state
+  const [cancelDialog, setCancelDialog] = useState<CancelDialog>({ open: false, payment: null });
 
   // Fetch financial data
   const {
@@ -112,7 +130,7 @@ export default function FinancialDashboard() {
     error,
   } = useQuery<FinancialData>({
     queryKey: ["/api/financial/payments"],
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    refetchInterval: 5 * 60 * 1000,
   });
 
   // Refresh mutation
@@ -120,82 +138,108 @@ export default function FinancialDashboard() {
     mutationFn: async () => {
       const response = await fetch("/api/financial/refresh", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Erro ao atualizar dados financeiros");
       }
-
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] });
-      toast({
-        title: "Dados Atualizados",
-        description: "Informações financeiras atualizadas com sucesso",
-      });
+      toast({ title: "Dados Atualizados", description: "Informações financeiras atualizadas com sucesso" });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
     },
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  // Cancel single payment mutation
+  const cancelPaymentMutation = useMutation({
+    mutationFn: async (paymentId: string) => {
+      const response = await fetch(`/api/financial/payments/${paymentId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Erro ao cancelar cobrança");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Cobrança cancelada!", description: "A fatura foi cancelada com sucesso no ASAAS." });
+      setCancelDialog({ open: false, payment: null });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" });
+    },
+  });
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
-  };
+  // Cancel all customer payments mutation
+  const cancelAllPaymentsMutation = useMutation({
+    mutationFn: async (customerId: string) => {
+      const response = await fetch(`/api/financial/customers/${customerId}/payments`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Erro ao cancelar cobranças");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Cobranças canceladas!",
+        description: `${data.cancelled} fatura(s) cancelada(s) com sucesso.`,
+      });
+      setCancelDialog({ open: false, payment: null });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" });
+    },
+  });
 
-  // Filter payments based on current filters
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+  const formatDate = (dateString: string) =>
+    format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+
+  const monthLabel = format(selectedMonth, "MMMM yyyy", { locale: ptBR });
+  const monthLabelCapitalized = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+  // Filter payments
   const getFilteredPayments = () => {
     if (!financialData?.payments) return [];
 
     return financialData.payments.filter((payment) => {
+      // Month filter
+      if (!showAllMonths) {
+        try {
+          const due = parseISO(payment.dueDate);
+          if (!isSameMonth(due, selectedMonth)) return false;
+        } catch {
+          return false;
+        }
+      }
+
       // Type filter
       if (paymentTypeFilter !== "all") {
-        // In a real scenario, you'd check billing type or subscription type
-        // For now, we'll assume all are monthly subscriptions
-        if (
-          paymentTypeFilter === "subscriptions" &&
-          !payment.description?.includes("Mensalidade")
-        ) {
-          return false;
-        }
-        if (
-          paymentTypeFilter === "single" &&
-          payment.description?.includes("Mensalidade")
-        ) {
-          return false;
-        }
+        if (paymentTypeFilter === "subscriptions" && !payment.description?.includes("Mensalidade")) return false;
+        if (paymentTypeFilter === "single" && payment.description?.includes("Mensalidade")) return false;
       }
 
-      // Search term filter
+      // Search filter
       if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        if (
-          !payment.customerName?.toLowerCase().includes(searchLower) &&
-          !payment.description?.toLowerCase().includes(searchLower)
-        ) {
+        const s = searchTerm.toLowerCase();
+        if (!payment.customerName?.toLowerCase().includes(s) && !payment.description?.toLowerCase().includes(s)) {
           return false;
         }
-      }
-
-      // Status filters
-      if (hideNegativePayments && payment.status === "CANCELLED") {
-        return false;
       }
 
       return true;
@@ -204,65 +248,34 @@ export default function FinancialDashboard() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({
-      title: "Copiado!",
-      description: "Link copiado para a área de transferência",
-    });
+    toast({ title: "Copiado!", description: "Link copiado para a área de transferência" });
   };
 
   const getStatusBadge = (status: Payment["status"]) => {
-    const statusConfig = {
-      RECEIVED: {
-        label: "Recebido",
-        variant: "default" as const,
-        className: "bg-green-100 text-green-800 hover:bg-green-100",
-      },
-      CONFIRMED: {
-        label: "Confirmado",
-        variant: "default" as const,
-        className: "bg-green-100 text-green-800 hover:bg-green-100",
-      },
-      PENDING: {
-        label: "Pendente",
-        variant: "secondary" as const,
-        className: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-      },
-      OVERDUE: {
-        label: "Vencido",
-        variant: "destructive" as const,
-        className: "bg-red-100 text-red-800 hover:bg-red-100",
-      },
-      CANCELLED: {
-        label: "Cancelado",
-        variant: "outline" as const,
-        className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-      },
+    const cfg: Record<string, { label: string; className: string }> = {
+      RECEIVED: { label: "Recebido", className: "bg-green-100 text-green-800 hover:bg-green-100" },
+      CONFIRMED: { label: "Confirmado", className: "bg-green-100 text-green-800 hover:bg-green-100" },
+      PENDING: { label: "Pendente", className: "bg-orange-100 text-orange-800 hover:bg-orange-100" },
+      OVERDUE: { label: "Vencido", className: "bg-red-100 text-red-800 hover:bg-red-100" },
+      CANCELLED: { label: "Cancelado", className: "bg-gray-100 text-gray-800 hover:bg-gray-100" },
     };
-
-    const config = statusConfig[status] || statusConfig.PENDING;
-    return (
-      <Badge variant={config.variant} className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    const c = cfg[status] || cfg.PENDING;
+    return <Badge className={c.className}>{c.label}</Badge>;
   };
+
+  const canCancel = (status: Payment["status"]) =>
+    status === "PENDING" || status === "OVERDUE";
 
   if (isLoading) {
     return (
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-              Painel Financeiro
-            </h1>
-            <p className="text-muted-foreground">
-              Contas a receber e métricas financeiras
-            </p>
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">Painel Financeiro</h1>
+            <p className="text-muted-foreground">Contas a receber e métricas financeiras</p>
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
-
-        {/* Skeleton Cards */}
         <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
@@ -277,8 +290,6 @@ export default function FinancialDashboard() {
             </Card>
           ))}
         </div>
-
-        {/* Skeleton Table */}
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-40" />
@@ -302,19 +313,9 @@ export default function FinancialDashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              Erro ao carregar dados financeiros
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Não foi possível conectar com o sistema financeiro ASAAS
-            </p>
-            <Button
-              onClick={() =>
-                queryClient.invalidateQueries({
-                  queryKey: ["/api/financial/payments"],
-                })
-              }
-            >
+            <h2 className="text-xl font-semibold mb-2">Erro ao carregar dados financeiros</h2>
+            <p className="text-muted-foreground mb-4">Não foi possível conectar com o sistema financeiro ASAAS</p>
+            <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] })}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Tentar Novamente
             </Button>
@@ -332,72 +333,49 @@ export default function FinancialDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-            Painel Financeiro
-          </h1>
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight">Painel Financeiro</h1>
           <p className="text-muted-foreground">
-            Sistema integrado com ASAAS • {filteredPayments.length} de{" "}
-            {payments.length} cobrança{payments.length !== 1 ? "s" : ""}
+            Sistema integrado com ASAAS •{" "}
+            {filteredPayments.length} de {payments.length} cobrança{payments.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button
-          onClick={() => refreshMutation.mutate()}
-          disabled={refreshMutation.isPending}
-          variant="outline"
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`}
-          />
+        <Button onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending} variant="outline">
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
           Atualizar
         </Button>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 xl:grid-cols-6">
-        {/* Ticket Médio Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-            <CreditCard className="h-4 w-4 text-blue-600" /> {/* New icon */}
+            <CreditCard className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(metrics?.averageTicket || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Valor médio por aluno com pagamento confirmado
-            </p>
+            <div className="text-2xl font-bold text-blue-600">{formatCurrency(metrics?.averageTicket || 0)}</div>
+            <p className="text-xs text-muted-foreground">Valor médio por aluno com pagamento confirmado</p>
           </CardContent>
         </Card>
 
-        {/* NOVO: Cobranças Vencidas (overdue) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Cobranças Vencidas
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Cobranças Vencidas</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {metrics?.overdueCount || 0}
-            </div>
+            <div className="text-2xl font-bold text-red-600">{metrics?.overdueCount || 0}</div>
             <p className="text-xs text-muted-foreground">Cobranças vencidas</p>
           </CardContent>
         </Card>
 
-        {/* NOVO: Pagamentos em Atraso (late payments) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pagamentos em Atraso
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Pagamentos em Atraso</CardTitle>
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {metrics?.latePaymentsCount || 0}
-            </div>
+            <div className="text-2xl font-bold text-orange-600">{metrics?.latePaymentsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               Pagos após vencimento ({formatCurrency(metrics?.latePaymentsValue || 0)})
             </p>
@@ -406,102 +384,74 @@ export default function FinancialDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Taxa de Inadimplência
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Taxa de Inadimplência</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {(metrics?.defaultRate || 0).toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Percentual de atraso
-            </p>
+            <div className="text-2xl font-bold text-red-600">{(metrics?.defaultRate || 0).toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground">Percentual de atraso</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Cobranças no Mês
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Cobranças no Mês</CardTitle>
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {metrics?.totalPaymentsThisMonth || 0}
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{metrics?.totalPaymentsThisMonth || 0}</div>
             <p className="text-xs text-muted-foreground">Total de cobranças</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Próximo Vencimento
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Próximo Vencimento</CardTitle>
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {metrics?.nextDueDate
-                ? formatDate(metrics.nextDueDate.toString())
-                : "N/A"}
+              {metrics?.nextDueDate ? formatDate(metrics.nextDueDate.toString()) : "N/A"}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Próxima data de vencimento
-            </p>
+            <p className="text-xs text-muted-foreground">Próxima data de vencimento</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Enhanced Total Cards - Bottom Row */}
+      {/* Total Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">
-              Total Recebido
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-green-700">Total Recebido</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">
-              {formatCurrency(metrics?.totalReceived || 0)}
-            </div>
+            <div className="text-2xl font-bold text-green-700">{formatCurrency(metrics?.totalReceived || 0)}</div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">
-              Total Pendente
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-orange-700">Total Pendente</CardTitle>
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-700">
-              {formatCurrency(metrics?.totalPending || 0)}
-            </div>
+            <div className="text-2xl font-bold text-orange-700">{formatCurrency(metrics?.totalPending || 0)}</div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-700">
-              Total em Atraso
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-red-700">Total em Atraso</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">
-              {formatCurrency(metrics?.totalOverdue || 0)}
-            </div>
+            <div className="text-2xl font-bold text-red-700">{formatCurrency(metrics?.totalOverdue || 0)}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters Section */}
+      {/* Filters */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -527,13 +477,8 @@ export default function FinancialDashboard() {
 
             {/* Payment Type Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Filtrar por tipo de cobrança
-              </label>
-              <Select
-                value={paymentTypeFilter}
-                onValueChange={setPaymentTypeFilter}
-              >
+              <label className="text-sm font-medium">Tipo de cobrança</label>
+              <Select value={paymentTypeFilter} onValueChange={setPaymentTypeFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
@@ -546,84 +491,63 @@ export default function FinancialDashboard() {
               </Select>
             </div>
 
-            {/* Date Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Filtrar por data</label>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Data de vencimento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dueDate">Data de vencimento</SelectItem>
-                  <SelectItem value="paymentDate">
-                    Data de recebimento
-                  </SelectItem>
-                  <SelectItem value="dateCreated">
-                    Data de criação da cobrança
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Clear Filters */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium opacity-0">Actions</label>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm("");
-                  setPaymentTypeFilter("all");
-                  setDateFilter("dueDate");
-                  setShowCashPayments(false);
-                  setHideAdvancedPayments(false);
-                  setHideNegativePayments(false);
-                }}
-                className="w-full"
-              >
-                Limpar
-              </Button>
+            {/* Month Navigation */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium">Período</label>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => { setSelectedMonth(subMonths(selectedMonth, 1)); setShowAllMonths(false); }}
+                  disabled={showAllMonths}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex-1 text-center font-medium text-sm border rounded-md px-3 py-2 bg-muted/30 min-w-[160px]">
+                  {showAllMonths ? "Todos os meses" : monthLabelCapitalized}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => { setSelectedMonth(addMonths(selectedMonth, 1)); setShowAllMonths(false); }}
+                  disabled={showAllMonths}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={isSameMonth(selectedMonth, new Date()) && !showAllMonths ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setSelectedMonth(startOfMonth(new Date())); setShowAllMonths(false); }}
+                  className="shrink-0"
+                >
+                  Hoje
+                </Button>
+                <Button
+                  variant={showAllMonths ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowAllMonths(!showAllMonths)}
+                  className="shrink-0"
+                >
+                  Todos
+                </Button>
+              </div>
             </div>
           </div>
 
-          <Separator />
-
-          {/* Other Options */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Outras opções</h4>
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="showCash"
-                  checked={showCashPayments}
-                  onCheckedChange={(checked) => setShowCashPayments(checked === true)}
-                />
-                <label htmlFor="showCash" className="text-sm">
-                  Mostrar cobranças recebidas em dinheiro
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="hideAdvanced"
-                  checked={hideAdvancedPayments}
-                  onCheckedChange={(checked) => setHideAdvancedPayments(checked === true)}
-                />
-                <label htmlFor="hideAdvanced" className="text-sm">
-                  Ocultar cobranças antecipadas
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="hideNegative"
-                  checked={hideNegativePayments}
-                  onCheckedChange={(checked) => setHideNegativePayments(checked === true)}
-                />
-                <label htmlFor="hideNegative" className="text-sm">
-                  Ocultar cobranças canceladas
-                </label>
-              </div>
-            </div>
+          {/* Clear Filters */}
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchTerm("");
+                setPaymentTypeFilter("all");
+                setSelectedMonth(startOfMonth(new Date()));
+                setShowAllMonths(false);
+              }}
+            >
+              Limpar filtros
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -637,8 +561,8 @@ export default function FinancialDashboard() {
               Cobranças
             </CardTitle>
             <CardDescription>
-              {filteredPayments.length} de {payments.length} cobranças • Sistema
-              integrado com ASAAS
+              {filteredPayments.length} de {payments.length} cobranças •{" "}
+              {showAllMonths ? "Todos os meses" : monthLabelCapitalized} • Sistema integrado com ASAAS
             </CardDescription>
           </div>
           <Button
@@ -647,9 +571,7 @@ export default function FinancialDashboard() {
             onClick={() => refreshMutation.mutate()}
             disabled={refreshMutation.isPending}
           >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
             Atualizar
           </Button>
         </CardHeader>
@@ -668,37 +590,26 @@ export default function FinancialDashboard() {
             <TableBody>
               {filteredPayments.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center py-8 text-muted-foreground"
-                  >
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {searchTerm || paymentTypeFilter !== "all"
                       ? "Nenhuma cobrança encontrada com os filtros aplicados"
-                      : "Nenhuma cobrança encontrada"}
+                      : showAllMonths
+                      ? "Nenhuma cobrança encontrada"
+                      : `Nenhuma cobrança em ${monthLabelCapitalized}`}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredPayments
-                  .sort(
-                    (a, b) =>
-                      new Date(a.dueDate).getTime() -
-                      new Date(b.dueDate).getTime(),
-                  )
+                  .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
                   .map((payment) => (
                     <TableRow key={payment.id} className="hover:bg-muted/50">
                       <TableCell>
                         <div>
-                          <div className="font-medium">
-                            {payment.customerName}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {payment.customerEmail}
-                          </div>
+                          <div className="font-medium">{payment.customerName}</div>
+                          <div className="text-sm text-muted-foreground">{payment.customerEmail}</div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(payment.value)}
-                      </TableCell>
+                      <TableCell className="font-medium">{formatCurrency(payment.value)}</TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
@@ -706,34 +617,27 @@ export default function FinancialDashboard() {
                           {payment.status === "OVERDUE" && (
                             <div className="text-xs text-red-500">
                               {Math.floor(
-                                (Date.now() -
-                                  new Date(payment.dueDate).getTime()) /
-                                  (1000 * 60 * 60 * 24),
+                                (Date.now() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24)
                               )}{" "}
                               dias
                             </div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {payment.description}
-                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{payment.description}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          {payment.status === "RECEIVED" ||
-                          payment.status === "CONFIRMED" ? (
-                            <Badge variant="outline" className="text-green-600">
-                              Pago
-                            </Badge>
+                        <div className="flex gap-1 flex-wrap">
+                          {payment.status === "RECEIVED" || payment.status === "CONFIRMED" ? (
+                            <Badge variant="outline" className="text-green-600">Pago</Badge>
+                          ) : payment.status === "CANCELLED" ? (
+                            <Badge variant="outline" className="text-gray-500">Cancelado</Badge>
                           ) : (
-                            <div className="flex gap-2">
+                            <>
                               {payment.invoiceUrl && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() =>
-                                    window.open(payment.invoiceUrl, "_blank")
-                                  }
+                                  onClick={() => window.open(payment.invoiceUrl, "_blank")}
                                 >
                                   <FileText className="h-3 w-3 mr-1" />
                                   Ver Boleto
@@ -743,15 +647,24 @@ export default function FinancialDashboard() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() =>
-                                    copyToClipboard(payment.paymentLink!)
-                                  }
+                                  onClick={() => copyToClipboard(payment.paymentLink!)}
                                 >
                                   <Copy className="h-3 w-3 mr-1" />
                                   Link
                                 </Button>
                               )}
-                            </div>
+                              {canCancel(payment.status) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => setCancelDialog({ open: true, payment })}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Cancelar
+                                </Button>
+                              )}
+                            </>
                           )}
                         </div>
                       </TableCell>
@@ -762,6 +675,64 @@ export default function FinancialDashboard() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={cancelDialog.open} onOpenChange={(open) => !open && setCancelDialog({ open: false, payment: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Cancelar fatura
+            </DialogTitle>
+            <DialogDescription>
+              {cancelDialog.payment && (
+                <span>
+                  Você está cancelando a fatura de{" "}
+                  <strong>{cancelDialog.payment.customerName}</strong> —{" "}
+                  <strong>{formatCurrency(cancelDialog.payment.value)}</strong> com vencimento em{" "}
+                  <strong>{formatDate(cancelDialog.payment.dueDate)}</strong>.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">Selecione o que deseja cancelar:</p>
+
+            <button
+              className="w-full text-left px-4 py-3 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-colors"
+              onClick={() => cancelDialog.payment && cancelPaymentMutation.mutate(cancelDialog.payment.id)}
+              disabled={cancelPaymentMutation.isPending || cancelAllPaymentsMutation.isPending}
+            >
+              <div className="font-medium text-orange-800">Cancelar apenas esta fatura</div>
+              <div className="text-xs text-orange-600 mt-0.5">
+                Cancela somente esta cobrança no ASAAS.
+              </div>
+            </button>
+
+            <button
+              className="w-full text-left px-4 py-3 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+              onClick={() => cancelDialog.payment && cancelAllPaymentsMutation.mutate(cancelDialog.payment.customer)}
+              disabled={cancelPaymentMutation.isPending || cancelAllPaymentsMutation.isPending}
+            >
+              <div className="font-medium text-red-800">Cancelar todas as faturas pendentes</div>
+              <div className="text-xs text-red-600 mt-0.5">
+                Cancela todas as cobranças pendentes e vencidas deste aluno no ASAAS.
+              </div>
+            </button>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialog({ open: false, payment: null })}
+              disabled={cancelPaymentMutation.isPending || cancelAllPaymentsMutation.isPending}
+            >
+              Voltar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

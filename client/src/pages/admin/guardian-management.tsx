@@ -198,10 +198,10 @@ export default function GuardianManagementPage() {
                   <Card key={s.id} className="border-l-4" style={{ borderLeftColor: "#2B54FF" }}>
                     <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 truncate">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
                           {s.firstName} {s.lastName}
                         </p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
                           <Link2 className="w-3 h-3 text-[#2B54FF]" />
                           {s.guardianName} · {s.guardianEmail}
                         </p>
@@ -218,7 +218,7 @@ export default function GuardianManagementPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                           onClick={() => unlinkMutation.mutate(s.id)}
                           disabled={unlinkMutation.isPending}
                           data-testid={`button-unlink-${s.id}`}
@@ -241,10 +241,10 @@ export default function GuardianManagementPage() {
               </h2>
               <div className="space-y-2">
                 {withoutGuardian.map((s) => (
-                  <Card key={s.id} className="border-l-4 border-l-gray-200">
+                  <Card key={s.id} className="border-l-4 border-l-gray-200 dark:border-l-gray-600">
                     <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 truncate">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
                           {s.firstName} {s.lastName}
                         </p>
                         <Badge variant="outline" className="text-xs mt-0.5 text-gray-400">

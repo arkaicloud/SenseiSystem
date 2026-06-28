@@ -155,34 +155,34 @@ const Classes: React.FC = () => {
                 <div className="space-y-6">
                   {/* Create a section for each day of the week */}
                   {[0, 1, 2, 3, 4, 5, 6].map(day => (
-                    <div key={day} className="border rounded-lg overflow-hidden">
-                      <div className="bg-gray-100 p-3 font-medium">
+                    <div key={day} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                      <div className="bg-gray-100 dark:bg-gray-700 p-3 font-medium text-gray-800 dark:text-gray-200">
                         {getDayName(day)}
                       </div>
 
                       {!classesByDay[day] || classesByDay[day].length === 0 ? (
-                        <div className="p-4 text-center text-gray-500">
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                           Nenhuma aula agendada
                         </div>
                       ) : (
-                        <div className="divide-y divide-gray-100">
+                        <div className="divide-y divide-gray-100 dark:divide-gray-700">
                           {classesByDay[day].map((classItem: any) => {
                             const { time, period } = formatTime(classItem.startTime);
                             return (
                               <div 
                                 key={classItem.id} 
-                                className="p-4 hover:bg-gray-50 cursor-pointer"
+                                className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
                                 onClick={() => setSelectedClass(classItem)}
                               >
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                                   <div className="flex items-start">
-                                    <div className="bg-blue-100 text-blue-800 p-2 rounded-lg mr-3 flex flex-col items-center justify-center min-w-[60px] text-center">
+                                    <div className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 p-2 rounded-lg mr-3 flex flex-col items-center justify-center min-w-[60px] text-center">
                                       <span className="text-sm font-medium">{time}</span>
                                       <span className="text-xs">{period}</span>
                                     </div>
                                     <div>
-                                      <h3 className="font-medium">{classItem.name}</h3>
-                                      <p className="text-sm text-gray-600">
+                                      <h3 className="font-medium text-gray-900 dark:text-gray-100">{classItem.name}</h3>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">
                                         {classItem.instructor 
                                           ? `${classItem.instructor.firstName} Sensei` 
                                           : 'Nenhum instrutor atribuído'}
@@ -190,7 +190,7 @@ const Classes: React.FC = () => {
                                         {classItem.duration} min
                                       </p>
                                       {classItem.description && (
-                                        <p className="text-sm text-gray-500 mt-1">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                           {classItem.description}
                                         </p>
                                       )}
@@ -198,7 +198,7 @@ const Classes: React.FC = () => {
                                   </div>
                                   <div className="mt-3 md:mt-0 flex items-center">
                                     {classItem.maxCapacity && (
-                                      <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 mr-3">
+                                      <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-1 mr-3">
                                         Máx: {classItem.maxCapacity}
                                       </span>
                                     )}

@@ -77,13 +77,13 @@ const StudentsAtRisk: React.FC = () => {
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
       case 'critical':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       case 'high':
-        return 'text-orange-600 bg-orange-50 border-orange-200';
+        return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800';
       case 'medium':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -109,8 +109,8 @@ const StudentsAtRisk: React.FC = () => {
             <span className="material-icons mr-2 text-orange-500">warning</span>
             Engajamento em Baixa
           </h1>
-          <p className="text-gray-600">Identifique e aja proativamente para melhorar o engajamento</p>
-          <p className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-md mt-2">
+          <p className="text-gray-600 dark:text-gray-400">Identifique e aja proativamente para melhorar o engajamento</p>
+          <p className="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-md mt-2">
             💡 Análise aplicada apenas a alunos com mais de 30 dias de matrícula
           </p>
         </div>
@@ -142,12 +142,12 @@ const StudentsAtRisk: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-red-50 rounded-lg mr-3">
+              <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg mr-3">
                 <span className="material-icons text-red-500">trending_down</span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-red-600">{totalAtRisk}</p>
-                <p className="text-sm text-gray-600">Baixo Engajamento</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{totalAtRisk}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Baixo Engajamento</p>
               </div>
             </div>
           </CardContent>
@@ -156,12 +156,12 @@ const StudentsAtRisk: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-red-50 rounded-lg mr-3">
+              <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg mr-3">
                 <span className="material-icons text-red-600">report_problem</span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-red-600">{criticalRisk}</p>
-                <p className="text-sm text-gray-600">Engajamento Crítico</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{criticalRisk}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Engajamento Crítico</p>
               </div>
             </div>
           </CardContent>
@@ -170,12 +170,12 @@ const StudentsAtRisk: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-orange-50 rounded-lg mr-3">
+              <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg mr-3">
                 <span className="material-icons text-orange-500">priority_high</span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-orange-600">{highRisk}</p>
-                <p className="text-sm text-gray-600">Baixo Engajamento</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{highRisk}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Baixo Engajamento</p>
               </div>
             </div>
           </CardContent>
@@ -184,12 +184,12 @@ const StudentsAtRisk: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-50 rounded-lg mr-3">
+              <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg mr-3">
                 <span className="material-icons text-yellow-600">calendar_today</span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-yellow-600">{averageFrequency}%</p>
-                <p className="text-sm text-gray-600">Frequência Média</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{averageFrequency}%</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Frequência Média</p>
               </div>
             </div>
           </CardContent>
@@ -210,7 +210,7 @@ const StudentsAtRisk: React.FC = () => {
           ) : students.length === 0 ? (
             <div className="text-center py-12">
               <span className="material-icons text-6xl text-gray-300 mb-4">sentiment_very_satisfied</span>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum aluno com baixo engajamento identificado</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Nenhum aluno com baixo engajamento identificado</h3>
               <p className="text-gray-500">Todos os alunos estão com engajamento adequado!</p>
             </div>
           ) : (
@@ -231,10 +231,10 @@ const StudentsAtRisk: React.FC = () => {
 
                       {/* Student Info */}
                       <div>
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
                           {student.user.firstName} {student.user.lastName}
                         </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                           <span>📧 {student.user.email}</span>
                           <span>📱 {student.user.phone || 'Sem telefone'}</span>
                           {student.user.emergencyContact && (
@@ -252,13 +252,13 @@ const StudentsAtRisk: React.FC = () => {
 
                     {/* Statistics */}
                     <div className="text-right">
-                      <div className="text-lg font-bold text-gray-900">
+                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                         {student.attendanceRate}%
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         {student.daysSinceLastAttendance} dias sem aula
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-500">
                         {student.attendedClasses}/{student.totalClasses} aulas
                       </div>
                     </div>
@@ -286,8 +286,8 @@ const StudentsAtRisk: React.FC = () => {
                           </DialogHeader>
                           <div className="space-y-4">
                             {/* Student Contact Info */}
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                              <h4 className="font-medium text-gray-900 mb-2">Dados de Contato</h4>
+                            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Dados de Contato</h4>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                                 <div><strong>Email:</strong> {selectedStudent?.user.email}</div>
                                 <div><strong>Telefone:</strong> {selectedStudent?.user.phone || 'Não informado'}</div>
@@ -298,8 +298,8 @@ const StudentsAtRisk: React.FC = () => {
                             </div>
 
                             {/* Risk Info */}
-                            <div className="bg-orange-50 p-4 rounded-lg">
-                              <h4 className="font-medium text-gray-900 mb-2">Situação de Engajamento</h4>
+                            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Situação de Engajamento</h4>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div><strong>Frequência:</strong> {selectedStudent?.attendanceRate}%</div>
                                 <div><strong>Último comparecimento:</strong> {selectedStudent?.daysSinceLastAttendance} dias atrás</div>
@@ -325,9 +325,9 @@ const StudentsAtRisk: React.FC = () => {
 
                             {/* Previous Notes */}
                             {selectedStudent?.notes && (
-                              <div className="bg-blue-50 p-4 rounded-lg">
-                                <h4 className="font-medium text-gray-900 mb-2">Observações Anteriores</h4>
-                                <p className="text-sm text-gray-700">{selectedStudent.notes}</p>
+                              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Observações Anteriores</h4>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">{selectedStudent.notes}</p>
                               </div>
                             )}
 

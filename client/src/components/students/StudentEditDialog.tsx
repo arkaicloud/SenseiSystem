@@ -913,17 +913,43 @@ export default function StudentEditDialog({
                         )}
                         
                         {studentData.medicalCertificateStatus && (
-                          <div>
+                          <div className="md:col-span-2">
                             <span className="font-medium text-blue-700 dark:text-blue-300">Status do Atestado:</span>
-                            <p className={`${
-                              studentData.medicalCertificateStatus === 'UPLOADED' ? 'text-green-600 dark:text-green-400' :
-                              studentData.medicalCertificateStatus === 'PENDING' ? 'text-orange-600 dark:text-orange-400' :
-                              'text-gray-600 dark:text-gray-400'
-                            }`}>
-                              {studentData.medicalCertificateStatus === 'UPLOADED' ? 'Enviado' :
-                               studentData.medicalCertificateStatus === 'PENDING' ? 'Pendente' :
-                               studentData.medicalCertificateStatus === 'WAIVED' ? 'Dispensado' : studentData.medicalCertificateStatus}
-                            </p>
+                            <div className="flex items-center gap-3 mt-1 flex-wrap">
+                              <p className={`${
+                                studentData.medicalCertificateStatus === 'RECEIVED' || studentData.medicalCertificateStatus === 'UPLOADED' ? 'text-green-600 dark:text-green-400' :
+                                studentData.medicalCertificateStatus === 'PENDING' ? 'text-orange-600 dark:text-orange-400' :
+                                'text-gray-600 dark:text-gray-400'
+                              }`}>
+                                {studentData.medicalCertificateStatus === 'RECEIVED' ? '✅ Recebido na escola' :
+                                 studentData.medicalCertificateStatus === 'UPLOADED' ? '✅ Enviado' :
+                                 studentData.medicalCertificateStatus === 'PENDING' ? '⏳ Pendente — aguardando entrega na escola' :
+                                 studentData.medicalCertificateStatus === 'WAIVED' ? 'Dispensado' : studentData.medicalCertificateStatus}
+                              </p>
+                              {studentData.medicalCertificateStatus === 'PENDING' && !readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(`/api/students/${studentData.id}/medical-cert-status`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        credentials: 'include',
+                                        body: JSON.stringify({ status: 'RECEIVED' }),
+                                      });
+                                      if (res.ok) {
+                                        toast({ title: 'Atestado confirmado!', description: 'Atestado médico marcado como recebido na escola.' });
+                                        queryClient.invalidateQueries({ queryKey: ['/api/students'] });
+                                        queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
+                                      }
+                                    } catch { /* ignore */ }
+                                  }}
+                                  className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors font-medium"
+                                >
+                                  ✓ Marcar como recebido na escola
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>

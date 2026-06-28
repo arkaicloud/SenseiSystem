@@ -5267,6 +5267,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin marks medical certificate as received (student brought it to school)
+  app.put("/api/students/:id/medical-cert-status", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      const allowed = ["RECEIVED", "PENDING", "WAIVED"];
+      if (!status || !allowed.includes(status)) {
+        return res.status(400).json({ message: "Status inválido. Use RECEIVED, PENDING ou WAIVED." });
+      }
+
+      const updated = await storage.updateStudent(Number(id), {
+        medicalCertificateStatus: status,
+      });
+
+      if (!updated) {
+        return res.status(404).json({ message: "Aluno não encontrado" });
+      }
+
+      const user = (req as any).user;
+      if (user) {
+        await storage.createActivityLog({
+          userId: user.id,
+          activity: `${user.firstName} ${user.lastName} ${status === 'RECEIVED' ? 'confirmou recebimento do atestado médico' : 'atualizou status do atestado médico'} do aluno`,
+          entityType: 'student',
+          entityId: Number(id),
+          timestamp: new Date()
+        });
+      }
+
+      res.json({ student: updated });
+    } catch (error) {
+      console.error("Erro ao atualizar status do atestado:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/students/risk-actions", isAuthenticated, async (req, res) => {
     try {
       const user = (req as any).user;
@@ -6323,7 +6360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Atualizar dados do aluno com informações de saúde
           await storage.updateStudent(student.id, {
             requiresMedicalCertificate: isRisky,
-            medicalCertificateStatus: isRisky ? "UPLOADED" : "WAIVED", // Changed to UPLOADED for consistency
+            medicalCertificateStatus: isRisky ? "PENDING" : "WAIVED",
             healthQuestionnaireCompletedAt: new Date(),
             agreedToHealthTerms: studentData.agreedToHealthTerms || false,
             healthTermsAgreedAt: studentData.healthTermsAgreedAt ? new Date(studentData.healthTermsAgreedAt) : new Date(),

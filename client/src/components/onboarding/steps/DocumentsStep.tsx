@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, FileText, Upload, X, Clock, AlertTriangle } from "lucide-react";
+import { CheckCircle, FileText, Clock } from "lucide-react";
 import ElectronicSignatureStep, { type SignatureData } from "./ElectronicSignatureStep";
 
 interface DocumentsStepProps {
@@ -17,25 +17,11 @@ export default function DocumentsStep({
   requiresMedical = false,
 }: DocumentsStepProps) {
   const [signatureData, setSignatureData] = useState<SignatureData | null>(null);
-  const [medicalFile, setMedicalFile] = useState<File | null>(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
 
   const handleSignatureDone = (data: SignatureData) => {
     setSignatureData(data);
     setShowSignaturePad(false);
-  };
-
-  const handleMedicalFile = (f: File) => {
-    const allowed = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-    if (!allowed.includes(f.type)) {
-      alert("Tipo não permitido. Use PDF, JPG ou PNG.");
-      return;
-    }
-    if (f.size > 10 * 1024 * 1024) {
-      alert("Arquivo muito grande. Máximo: 10MB.");
-      return;
-    }
-    setMedicalFile(f);
   };
 
   const handleNext = () => {
@@ -45,8 +31,8 @@ export default function DocumentsStep({
       signatureTimestamp: signatureData?.signatureTimestamp ?? null,
       signatureLatitude: signatureData?.signatureLatitude ?? null,
       signatureLongitude: signatureData?.signatureLongitude ?? null,
-      medicalCertFile: medicalFile,
-      medicalCertSkipped: medicalFile === null,
+      medicalCertFile: null,
+      medicalCertSkipped: true,
     });
   };
 
@@ -182,90 +168,26 @@ export default function DocumentsStep({
         )}
       </div>
 
-      {/* 3 - Medical Certificate (optional) */}
-      <div className={`rounded-2xl p-5 border ${
-        medicalFile ? 'bg-green-500/10 border-green-500/20' : 'bg-white/5 border-white/10'
-      }`}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              medicalFile ? 'bg-green-500/20' : 'bg-white/10'
-            }`}>
-              <FileText className={`w-5 h-5 ${medicalFile ? 'text-green-400' : 'text-slate-400'}`} />
+      {/* 3 - Medical Certificate (informational only) */}
+      {requiresMedical && (
+        <div className="rounded-2xl p-5 border border-orange-500/30 bg-orange-500/10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-orange-500/20 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-orange-400" />
             </div>
             <div>
               <p className="text-white font-medium text-sm">Atestado Médico</p>
-              <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                requiresMedical
-                  ? 'text-orange-400 border-orange-400/30 bg-orange-400/10'
-                  : 'text-slate-500 border-white/10 bg-white/5'
-              }`}>
-                {requiresMedical ? "Requerido" : "Opcional"}
+              <span className="text-xs px-2 py-0.5 rounded-full border text-orange-400 border-orange-400/30 bg-orange-400/10">
+                Pendente — entregar na escola
               </span>
             </div>
           </div>
-          {medicalFile ? (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
-              <CheckCircle className="w-3.5 h-3.5" />
-              Enviado
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-white/10 text-slate-400 border border-white/10">
-              <Clock className="w-3 h-3" />
-              Pendente
-            </span>
-          )}
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Suas respostas de saúde indicam necessidade de atestado médico para atividades físicas.{" "}
+            <strong className="text-white">Leve o documento pessoalmente até a escola</strong> — a equipe irá registrar e liberar sua matrícula.
+          </p>
         </div>
-
-        {requiresMedical && !medicalFile && (
-          <div className="mb-3 bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-orange-300 leading-relaxed">
-              Suas respostas de saúde indicam necessidade de atestado. Você pode enviar agora ou após a matrícula pelo seu perfil.
-            </p>
-          </div>
-        )}
-
-        {medicalFile ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <FileText className="w-4 h-4 text-slate-400" />
-              <span className="truncate max-w-xs">{medicalFile.name}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setMedicalFile(null)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/10 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-slate-400">
-              Atestado médico para atividades físicas.{" "}
-              <span className="text-slate-300 font-medium">Pode ser enviado depois no seu perfil.</span>
-            </p>
-            <label className="block cursor-pointer">
-              <div className="border-2 border-dashed border-white/10 hover:border-[#2B54FF]/40 rounded-xl p-6 text-center transition-colors">
-                <Upload className="w-6 h-6 mx-auto text-slate-500 mb-2" />
-                <p className="text-sm font-medium text-slate-300">Clique para enviar</p>
-                <p className="text-xs text-slate-500 mt-1">PDF, JPG, PNG até 10MB</p>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleMedicalFile(f);
-                    e.target.value = "";
-                  }}
-                />
-              </div>
-            </label>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Ready banner */}
       {canFinish && (

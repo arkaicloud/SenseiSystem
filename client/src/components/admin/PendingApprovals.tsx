@@ -308,8 +308,8 @@ export default function PendingApprovals() {
                     <FileWarning className="h-4 w-4 text-orange-600" />
                     <AlertDescription className="text-orange-800">
                       <strong>Atestado médico pendente:</strong> Este aluno possui respostas de saúde
-                      que requerem atestado médico. O atestado ainda não foi enviado. Você pode aprovar
-                      a matrícula, mas o aluno precisa enviar o atestado pelo seu perfil.
+                      que requerem atestado médico para atividades físicas.{" "}
+                      O aluno deve <strong>levar o atestado pessoalmente até a escola</strong>. Após receber o documento, acesse o cadastro do aluno e marque como recebido.
                     </AlertDescription>
                   </Alert>
                 )}

@@ -3008,6 +3008,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Roster: enrolled students UNION students who self-confirmed for a date
+  app.get("/api/classes/:id/roster", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      if (isNaN(classId)) return res.status(400).json({ message: "ID de aula inválido" });
+
+      const { date } = req.query as { date?: string };
+      const dateStr = date || new Date().toISOString().split('T')[0];
+
+      // 1. Enrolled students
+      const enrolled = await db
+        .select({
+          student_id: students.id,
+          first_name: users.firstName,
+          last_name: users.lastName,
+          belt_level: students.beltLevel,
+          is_enrolled: sql<boolean>`true`,
+        })
+        .from(classEnrollments)
+        .innerJoin(students, eq(classEnrollments.studentId, students.id))
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(and(
+          eq(classEnrollments.classId, classId),
+          eq(classEnrollments.isActive, true),
+          eq(users.active, true)
+        ));
+
+      // 2. Attendance records for the date (includes self-confirmed students)
+      const startOfDay = new Date(dateStr + 'T00:00:00');
+      const endOfDay = new Date(dateStr + 'T23:59:59');
+
+      const attendanceRecords = await db
+        .select({
+          student_id: attendance.studentId,
+          status: attendance.status,
+        })
+        .from(attendance)
+        .where(and(
+          eq(attendance.classId, classId),
+          gte(attendance.date, startOfDay),
+          lte(attendance.date, endOfDay)
+        ));
+
+      // Map of studentId -> attendance status
+      const attMap: Record<number, string> = {};
+      attendanceRecords.forEach(a => { attMap[a.student_id] = a.status; });
+
+      // Enrolled student IDs
+      const enrolledIds = new Set(enrolled.map(e => e.student_id));
+
+      // Find students with attendance but NOT enrolled (self-confirmed via app)
+      const extraStudentIds = attendanceRecords
+        .filter(a => !enrolledIds.has(a.student_id))
+        .map(a => a.student_id);
+
+      let extraStudents: typeof enrolled = [];
+      if (extraStudentIds.length > 0) {
+        extraStudents = await db
+          .select({
+            student_id: students.id,
+            first_name: users.firstName,
+            last_name: users.lastName,
+            belt_level: students.beltLevel,
+            is_enrolled: sql<boolean>`false`,
+          })
+          .from(students)
+          .innerJoin(users, eq(students.userId, users.id))
+          .where(sql`${students.id} IN (${sql.raw(extraStudentIds.join(','))})`);
+      }
+
+      // Merge and attach attendance info
+      const roster = [...enrolled, ...extraStudents].map(s => ({
+        student_id: s.student_id,
+        first_name: s.first_name,
+        last_name: s.last_name,
+        belt_level: s.belt_level,
+        is_enrolled: s.is_enrolled,
+        attendance_status: attMap[s.student_id] ?? null,
+        has_self_confirmed: attMap[s.student_id] === 'confirmed',
+      })).sort((a, b) =>
+        `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
+      );
+
+      res.json({ roster });
+    } catch (error) {
+      console.error("Error fetching class roster:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Enroll student in a class
   app.post("/api/classes/:id/enroll", isAuthenticated, async (req, res) => {
     try {

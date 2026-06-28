@@ -493,13 +493,24 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
           <FormField control={form.control} name="dueDate" render={({ field }) => (
             <FormItem>
               <FormLabel className={labelCls}>Data de Vencimento Preferida *</FormLabel>
+              <p className="text-xs text-slate-500 -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
               <FormControl>
-                <select value={field.value} onChange={(e) => field.onChange(e.target.value)} className={selectCls}>
-                  <option value="">Selecione o dia do vencimento</option>
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                    <option key={day} value={day.toString()}>Todo dia {day}</option>
+                <div className="flex gap-2">
+                  {[5, 10, 15, 20, 25].map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => field.onChange(String(day))}
+                      className={`flex-1 h-12 rounded-xl border text-sm font-bold transition-all ${
+                        field.value === String(day)
+                          ? "bg-[#2B54FF] border-[#2B54FF] text-white"
+                          : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
+                      }`}
+                    >
+                      {day}
+                    </button>
                   ))}
-                </select>
+                </div>
               </FormControl>
               <FormMessage className="text-red-400 text-xs" />
             </FormItem>
@@ -555,7 +566,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   function renderStep5() {
     return (
       <div className="space-y-5">
-        <AddressForm form={form} />
+        <AddressForm form={form} dark={true} />
       </div>
     );
   }

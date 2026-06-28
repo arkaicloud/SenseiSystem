@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowRight, User } from "lucide-react";
+import { ArrowRight, User, AlertTriangle } from "lucide-react";
 import { useBeltLevels } from "@/hooks/useBeltLevels";
 
 // CPF validation (módulo 11)
@@ -129,6 +129,20 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
     ? [defaultValues.firstName, defaultValues.lastName].filter(Boolean).join(" ")
     : "";
 
+  const [cpfAlreadyExists, setCpfAlreadyExists] = useState(false);
+
+  const checkCpfExists = async (cpf: string) => {
+    const clean = cpf.replace(/\D/g, "");
+    if (clean.length !== 11) return;
+    try {
+      const res = await fetch(`/api/validate-cpf/${clean}`);
+      const json = await res.json();
+      setCpfAlreadyExists(!!json.exists);
+    } catch {
+      // silently ignore network errors
+    }
+  };
+
   const form = useForm<PersonalDataSchemaType>({
     resolver: zodResolver(personalDataSchema),
     defaultValues: {
@@ -228,7 +242,14 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                     placeholder="000.000.000-00"
                     {...field}
                     value={formatCPF(field.value || "")}
-                    onChange={(e) => field.onChange(formatCPF(e.target.value))}
+                    onChange={(e) => {
+                      field.onChange(formatCPF(e.target.value));
+                      setCpfAlreadyExists(false);
+                    }}
+                    onBlur={(e) => {
+                      field.onBlur();
+                      checkCpfExists(e.target.value);
+                    }}
                     maxLength={14}
                     inputMode="numeric"
                     className={inputCls}
@@ -238,6 +259,19 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
               </FormItem>
             )}
           />
+
+          {/* CPF already registered warning */}
+          {cpfAlreadyExists && (
+            <div className="flex items-start gap-3 px-4 py-3 rounded-xl border bg-amber-500/10 border-amber-500/30">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-amber-300 text-sm font-semibold">Aluno já matriculado</p>
+                <p className="text-amber-400/80 text-xs mt-0.5">
+                  Este CPF já está cadastrado no sistema. Entre em contato com a escola se precisar de ajuda.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* RG */}
           <FormField

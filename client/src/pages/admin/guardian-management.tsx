@@ -12,7 +12,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Users, Link2, Link2Off, Search, RefreshCw } from "lucide-react";
+import { Users, Link2, Link2Off, Search, RefreshCw, UserCheck, Plus } from "lucide-react";
 
 interface GuardianUser {
   id: number;

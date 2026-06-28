@@ -6912,6 +6912,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual receipt entry (lançamento manual de recebimento)
+  app.post("/api/financial/manual-receipt", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const { studentId, amount, paymentDate, paymentMethod, description } = req.body;
+
+      if (!studentId || !amount || !paymentDate || !paymentMethod) {
+        return res.status(400).json({ message: "studentId, amount, paymentDate e paymentMethod são obrigatórios" });
+      }
+
+      const amountCents = Math.round(Number(amount) * 100);
+      if (isNaN(amountCents) || amountCents <= 0) {
+        return res.status(400).json({ message: "Valor inválido" });
+      }
+
+      const student = await storage.getStudent(Number(studentId));
+      if (!student) {
+        return res.status(404).json({ message: "Aluno não encontrado" });
+      }
+
+      // Use student's plan or first available plan
+      let planId = student.paymentPlanId;
+      if (!planId) {
+        const plans = await storage.getPaymentPlans();
+        planId = plans[0]?.id;
+      }
+      if (!planId) {
+        return res.status(400).json({ message: "Nenhum plano de pagamento cadastrado" });
+      }
+
+      const parsedDate = new Date(paymentDate);
+      const methodLabels: Record<string, string> = {
+        pix: 'PIX', cash: 'Dinheiro', credit_card: 'Cartão de Crédito',
+        debit_card: 'Cartão de Débito', bank_transfer: 'Transferência', boleto: 'Boleto',
+      };
+      const methodLabel = methodLabels[paymentMethod] || paymentMethod;
+      const notes = `Lançamento manual - ${methodLabel}${description ? ` - ${description}` : ''}`;
+
+      const payment = await storage.createStudentPayment({
+        studentId: Number(studentId),
+        planId,
+        status: 'paid',
+        dueDate: parsedDate,
+        paidDate: parsedDate,
+        amount: amountCents,
+        notes,
+      });
+
+      const requestUser = (req as any).user;
+      const studentUser = await storage.getUser(student.userId);
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} lançou recebimento manual de R$ ${(amountCents / 100).toFixed(2)} para ${studentUser?.firstName} ${studentUser?.lastName} via ${methodLabel}`,
+        entityType: 'student-payment',
+        entityId: payment.id,
+        timestamp: new Date(),
+      });
+
+      res.status(201).json({ payment, message: "Recebimento registrado com sucesso" });
+    } catch (error: any) {
+      console.error("Erro ao criar lançamento manual:", error);
+      res.status(500).json({ message: error.message || "Internal server error" });
+    }
+  });
+
   // Refresh financial data (force reload from ASAAS)
   app.post("/api/financial/refresh", isAuthenticated, isAdmin, async (req, res) => {
     try {

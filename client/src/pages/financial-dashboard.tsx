@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ManualReceiptDialog from "@/components/financial/ManualReceiptDialog";
 import {
   Card,
   CardContent,
@@ -122,6 +123,9 @@ export default function FinancialDashboard() {
 
   // Cancel dialog state
   const [cancelDialog, setCancelDialog] = useState<CancelDialog>({ open: false, payment: null });
+
+  // Manual receipt dialog state
+  const [showManualReceipt, setShowManualReceipt] = useState(false);
 
   // Fetch financial data
   const {
@@ -331,7 +335,7 @@ export default function FinancialDashboard() {
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl md:text-3xl font-bold tracking-tight">Painel Financeiro</h1>
           <p className="text-muted-foreground">
@@ -339,10 +343,19 @@ export default function FinancialDashboard() {
             {filteredPayments.length} de {payments.length} cobrança{payments.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending} variant="outline">
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowManualReceipt(true)}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Lançar Recebimento
+          </Button>
+          <Button onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Metrics Cards */}
@@ -675,6 +688,9 @@ export default function FinancialDashboard() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Manual Receipt Dialog */}
+      <ManualReceiptDialog open={showManualReceipt} onOpenChange={setShowManualReceipt} />
 
       {/* Cancel Confirmation Dialog */}
       <Dialog open={cancelDialog.open} onOpenChange={(open) => !open && setCancelDialog({ open: false, payment: null })}>

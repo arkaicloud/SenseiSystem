@@ -286,15 +286,35 @@ export default function AttendancePage() {
     allClasses.filter(c => c.dayOfWeek === selectedWeekday), [allClasses, selectedWeekday]);
 
   // Main roster query — single endpoint combining enrollments + self-confirmed
-  const { data: rosterData, isLoading: rosterLoading } = useQuery<{ roster: RosterStudent[] }>({
+  const { data: rosterData, isLoading: rosterLoading } = useQuery<RosterStudent[]>({
     queryKey: ["/api/classes", selectedClassId, "roster", selectedDate],
-    queryFn: () =>
-      fetch(`/api/classes/${selectedClassId}/roster?date=${selectedDate}`, { credentials: "include" })
-        .then(r => r.json()),
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/classes/${selectedClassId}/roster?date=${selectedDate}`,
+        { credentials: "include", cache: "no-store" }
+      );
+      const json = await res.json();
+      // Normalize: API may return { roster: [...] } or [...] directly
+      const raw: any[] = Array.isArray(json) ? json : (json?.roster ?? []);
+      // Normalize fields: handle `name` fallback if first_name/last_name missing
+      return raw.map((s: any) => {
+        const parts = (s.name || "").split(" ");
+        return {
+          student_id: s.student_id,
+          first_name: s.first_name || parts[0] || "",
+          last_name: s.last_name || parts.slice(1).join(" ") || "",
+          belt_level: s.belt_level,
+          is_enrolled: s.is_enrolled ?? true,
+          attendance_status: s.attendance_status ?? null,
+          has_self_confirmed: s.has_self_confirmed ?? (s.attendance_status === "confirmed"),
+        } as RosterStudent;
+      });
+    },
     enabled: !!selectedClassId,
+    staleTime: 0,
   });
 
-  const students = rosterData?.roster ?? [];
+  const students = rosterData ?? [];
 
   // Reset local state when class/date changes
   useEffect(() => {

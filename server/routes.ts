@@ -3036,8 +3036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ));
 
       // 2. Attendance records for the date (includes self-confirmed students)
-      const startOfDay = new Date(dateStr + 'T00:00:00');
-      const endOfDay = new Date(dateStr + 'T23:59:59');
+      // Use explicit UTC boundaries to avoid timezone offset issues
+      const startOfDay = new Date(dateStr + 'T00:00:00.000Z');
+      const endOfDay = new Date(dateStr + 'T23:59:59.999Z');
 
       const attendanceRecords = await db
         .select({
@@ -3181,42 +3182,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Student unenrolled successfully" });
     } catch (error) {
       console.error("Error unenrolling student:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get roster for specific class and date
-  app.get("/api/classes/:id/roster", isAuthenticated, async (req, res) => {
-    try {
-      const classId = parseInt(req.params.id);
-      const date = req.query.date as string;
-
-      if (!date) {
-        return res.status(400).json({ message: "Date parameter is required" });
-      }
-
-      // Query students who confirmed attendance for this class and date
-      const roster = await db
-        .select({
-          student_id: students.id,
-          name: sql<string>`${users.firstName} || ' ' || ${users.lastName}`.as('name'),
-          belt_level: students.beltLevel,
-          confirmed: sql<boolean>`CASE WHEN ${attendance.status} IN ('confirmed', 'present') THEN true ELSE false END`.as('confirmed'),
-          status: attendance.status
-        })
-        .from(attendance)
-        .innerJoin(students, eq(attendance.studentId, students.id))
-        .innerJoin(users, eq(students.userId, users.id))
-        .where(and(
-          eq(attendance.classId, classId),
-          sql`DATE(${attendance.date}) = ${date}`,
-          eq(attendance.status, 'confirmed'),
-          eq(users.active, true)
-        ));
-
-      res.json(roster);
-    } catch (error) {
-      console.error("Error fetching class roster:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

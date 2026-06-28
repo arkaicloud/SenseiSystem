@@ -1,0 +1,1 @@
+- [Segurança — Padrões de Auditoria](SECURITY_AUDIT_PATTERNS.md) — rotas mortas/públicas, PII em logs, XSS sem sanitizar, session secret hardcoded, padrões de risco recorrentes no SenseiSystem

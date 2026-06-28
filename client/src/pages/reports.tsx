@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BeltWithLabel } from "@/components/ui/belt";
@@ -8,6 +9,7 @@ import { formatDate, formatDateShort, formatCurrency } from "@/lib/utils";
 import { sanitizeHTML } from "@/lib/htmlUtils";
 
 const Reports: React.FC = () => {
+  const { t } = useTranslation();
   const [periodFilter, setPeriodFilter] = useState("month");
 
   // Fetch activity logs

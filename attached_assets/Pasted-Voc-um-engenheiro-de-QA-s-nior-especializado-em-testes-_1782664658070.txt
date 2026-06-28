@@ -1,0 +1,173 @@
+Você é um engenheiro de QA sênior especializado em testes de regressão para aplicações SaaS.
+
+O sistema é o **SenseiSystem** — uma plataforma de gestão para academias de artes marciais (BJJ/luta).
+Stack: React (frontend) + Express (backend) + PostgreSQL (Drizzle ORM) + sessão com cookie.
+
+Acabamos de aplicar um conjunto de correções de segurança:
+- Adicionamos `isAuthenticated` em rotas que estavam públicas
+- Removemos senhas/secrets hardcoded (agora em .env obrigatório)
+- Instalamos `express-rate-limit` em login, registro, webhooks
+- Instalamos `helmet.js` (headers HTTP)
+- Corrigimos cookies de sessão (secure, sameSite)
+- Criamos middleware `isSelfOrStaff` para edição de usuários
+- Removemos PII dos logs
+- Sanitizamos XSS com DOMPurify
+- Removemos dependências não utilizadas
+- Removemos arquivos órfãos
+
+Sua missão: executar um plano de testes de regressão completo para garantir que nenhuma funcionalidade legítima foi quebrada.
+
+---
+
+## PLANO DE TESTES
+
+Para cada cenário abaixo, descreva:
+- **Pré-condição** (estado necessário antes do teste)
+- **Passos** (o que executar, passo a passo)
+- **Resultado esperado** (o que deve acontecer)
+- **O que pode ter quebrado** (qual correção de segurança pode ter causado regressão aqui)
+
+---
+
+### BLOCO 1 — Autenticação e Sessão
+
+1.1 Login com credenciais válidas (admin, instrutor, aluno)
+1.2 Login com credenciais inválidas — deve rejeitar com mensagem clara
+1.3 Rate limit no login — após N tentativas erradas, deve bloquear temporariamente
+1.4 Logout — sessão deve ser invalidada, cookie removido
+1.5 Acesso a rota protegida sem estar logado — deve redirecionar para login
+1.6 Sessão expirada — deve redirecionar para login sem crash
+1.7 Lembrar sessão entre abas e após refresh de página
+1.8 Primeiro acesso após remoção do SESSION_SECRET hardcoded — sessões antigas podem ter sido invalidadas
+
+---
+
+### BLOCO 2 — Cadastro e Onboarding de Alunos
+
+2.1 Registro de novo aluno pelo formulário público (/api/register-student)
+   ⚠️ ATENÇÃO: esta rota pode ter recebido rate-limit — testar se formulário de matrícula ainda funciona para visitantes
+2.2 Preenchimento do questionário de saúde pelo aluno/responsável
+   ⚠️ ATENÇÃO: rota agora protegida — verificar se o fluxo de onboarding ainda permite acesso
+2.3 Upload de documentos (RG, atestado) durante cadastro
+   ⚠️ ATENÇÃO: rota agora exige isAuthenticated — pode ter quebrado o fluxo de upload pré-login
+2.4 Validação de CPF no cadastro
+   ⚠️ ATENÇÃO: /api/validate-cpf pode ter recebido rate-limit ou auth — testar se ainda valida em tempo real
+2.5 Envio de e-mail de boas-vindas ao responsável após cadastro
+
+---
+
+### BLOCO 3 — Perfil e Edição de Usuários
+
+3.1 Aluno edita seu próprio perfil — deve funcionar normalmente
+3.2 Admin edita perfil de qualquer usuário — deve funcionar (é staff)
+3.3 Instrutor edita perfil de aluno — testar se tem permissão no novo middleware
+3.4 Aluno tenta editar perfil de outro aluno — deve ser bloqueado com 403
+3.5 Admin visualiza dados de qualquer usuário
+3.6 Aluno visualiza seu próprio perfil
+3.7 Aluno tenta acessar perfil de outro aluno diretamente pela URL — deve ser bloqueado
+
+---
+
+### BLOCO 4 — Documentos e Uploads
+
+4.1 Admin faz upload de documento de aluno pelo painel
+4.2 Aluno faz upload do próprio documento (se esse fluxo existir)
+4.3 Admin baixa documento de aluno
+4.4 Aluno baixa seu próprio documento
+4.5 Aluno tenta baixar documento de outro aluno — deve ser bloqueado
+4.6 Deleção de documento — verificar se agora realmente deleta (era stub que retornava true sem deletar)
+4.7 Listagem de documentos por aluno no painel admin
+
+---
+
+### BLOCO 5 — Presenças e Aulas
+
+5.1 Admin registra presença manual de aluno em aula
+5.2 Aluno confirma presença em sua própria aula
+5.3 Aluno tenta confirmar presença em aula de outra turma — deve ser bloqueado
+5.4 Instrutor visualiza lista de presença da sua turma
+5.5 Relatório de frequência mensal do aluno
+5.6 Admin visualiza histórico de presença de qualquer aluno
+
+---
+
+### BLOCO 6 — Pagamentos e Webhooks Asaas
+
+6.1 Webhook de pagamento confirmado chega do Asaas e processa corretamente
+   ⚠️ ATENÇÃO: webhook foi consolidado de 2 rotas para 1 — verificar se o Asaas está apontando para a URL correta
+6.2 Webhook de pagamento recusado/cancelado processa corretamente
+6.3 Geração de cobrança para aluno
+6.4 Listagem de cobranças no painel admin
+6.5 Aluno visualiza suas próprias faturas
+6.6 Rate limit no webhook — garantir que o Asaas não seja bloqueado por rate limiting
+
+---
+
+### BLOCO 7 — Comunicações e Notificações
+
+7.1 Admin cria aviso/notificação para alunos
+7.2 Aluno visualiza notificações no sino (StudentBell)
+   ⚠️ ATENÇÃO: conteúdo agora sanitizado com DOMPurify — verificar se rich text (negrito, links) ainda renderiza corretamente
+7.3 Aviso com formatação HTML (negrito, listas) renderiza corretamente após sanitização
+7.4 Rota GET /api/notices — verificar qual das duas declarações duplicadas sobreviveu e se retorna os dados corretos
+7.5 E-mail de reset de senha chega e link funciona
+7.6 E-mail de boas-vindas ao responsável é enviado
+
+---
+
+### BLOCO 8 — Configurações da Academia
+
+8.1 Admin acessa configurações gerais (school-config)
+8.2 Admin atualiza configurações SMTP — verificar se smtpPassword ainda é aceito e salvo
+8.3 Admin atualiza chave Asaas — verificar mascaramento (*****) ao exibir
+8.4 Admin salva configurações sem sobrescrever campos sensíveis acidentalmente
+
+---
+
+### BLOCO 9 — Headers, CORS e Comportamento HTTP
+
+9.1 Verificar se helmet não bloqueou assets estáticos (imagens, fontes, scripts)
+9.2 Verificar se CSP do helmet não quebrou scripts inline do frontend
+   ⚠️ ATENÇÃO: helmet com CSP padrão pode bloquear scripts/estilos inline do React/Vite
+9.3 Verificar se CORS ainda permite o frontend se comunicar com o backend
+9.4 Verificar se cookies chegam corretamente com flag secure (necessita HTTPS em produção)
+9.5 Testar em HTTP local — cookie com secure:true pode não funcionar em localhost sem HTTPS
+
+---
+
+### BLOCO 10 — Relatórios e Dashboards
+
+10.1 Dashboard admin carrega com métricas corretas
+10.2 Relatório de atividades (log.activity) renderiza sem XSS e sem quebrar formatação
+10.3 Relatório de frequência por turma
+10.4 Exportação de dados (se existir)
+
+---
+
+## CASOS DE BORDA PRIORITÁRIOS
+
+Além dos blocos acima, teste especificamente estes cenários de borda que têm maior chance de regressão:
+
+| Cenário | Por que pode ter quebrado |
+|---|---|
+| Formulário de matrícula online (visitante) | rate-limit + rota agora com auth |
+| Upload de doc no onboarding (pré-login) | isAuthenticated adicionado |
+| Webhook Asaas em produção | rota duplicada consolidada |
+| Rich text em notificações | DOMPurify pode sanitizar demais |
+| Login em HTTP (localhost dev) | cookie secure:true |
+| Sessões de usuários logados antes da correção | SESSION_SECRET mudou |
+| Primeiro admin após remover senha hardcoded | .env pode não ter sido configurado |
+
+---
+
+## FORMATO DO RESULTADO
+
+Para cada teste executado, reporte:
+
+**[PASSOU ✅ / FALHOU ❌ / PARCIAL ⚠️]**
+- O que foi testado
+- O que aconteceu
+- Causa provável (se falhou)
+- Correção sugerida
+
+Agrupe os resultados por bloco e gere um sumário final com contagem de passou/falhou/parcial.

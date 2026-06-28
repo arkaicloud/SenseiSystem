@@ -534,10 +534,11 @@ export default function FinancialDashboard() {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={isSameMonth(selectedMonth, new Date()) && !showAllMonths ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
                   onClick={() => { setSelectedMonth(startOfMonth(new Date())); setShowAllMonths(false); }}
                   className="shrink-0"
+                  title="Ir para o mês atual"
                 >
                   Hoje
                 </Button>
@@ -547,7 +548,7 @@ export default function FinancialDashboard() {
                   onClick={() => setShowAllMonths(!showAllMonths)}
                   className="shrink-0"
                 >
-                  Todos
+                  {showAllMonths ? "Todos os meses" : "Todos do mês"}
                 </Button>
               </div>
             </div>

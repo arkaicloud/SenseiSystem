@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Heart, Activity, FileText, AlertTriangle, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBeltLevels } from "@/hooks/useBeltLevels";
@@ -18,7 +12,7 @@ interface HealthFormStepProps {
     beltLevel?: string;
     stripes?: number;
   }) => void;
-  onPrevious: () => void;
+  onBack: () => void;
   defaultValues?: any;
 }
 
@@ -29,353 +23,256 @@ export interface HealthAnswer {
 }
 
 const HEALTH_QUESTIONS: Omit<HealthAnswer, "value">[] = [
-  {
-    key: "hasHeartProblem",
-    question: "Você tem ou já teve algum problema cardíaco?",
-  },
-  {
-    key: "hasChestPain",
-    question: "Você sente dores no peito durante atividades físicas?",
-  },
-  {
-    key: "hasBreathingProblem",
-    question: "Você tem dificuldades respiratórias ou asma?",
-  },
-  {
-    key: "hasBloodPressureProblem",
-    question: "Você tem pressão alta ou problemas de circulação?",
-  },
-  {
-    key: "hasBoneProblem",
-    question: "Você tem problemas ósseos, articulares ou musculares?",
-  },
-  {
-    key: "hasOtherHealthProblem",
-    question: "Você tem algum outro problema de saúde conhecido?",
-  },
-  {
-    key: "takeMedication",
-    question: "Você toma alguma medicação regularmente?",
-  },
-  {
-    key: "doctorRecommendation",
-    question: "Algum médico já recomendou que você evite atividades físicas intensas?",
-  },
+  { key: "hasHeartProblem", question: "Você tem ou já teve algum problema cardíaco?" },
+  { key: "hasChestPain", question: "Você sente dores no peito durante atividades físicas?" },
+  { key: "hasBreathingProblem", question: "Você tem dificuldades respiratórias ou asma?" },
+  { key: "hasBloodPressureProblem", question: "Você tem pressão alta ou problemas de circulação?" },
+  { key: "hasBoneProblem", question: "Você tem problemas ósseos, articulares ou musculares?" },
+  { key: "hasOtherHealthProblem", question: "Você tem algum outro problema de saúde conhecido?" },
+  { key: "takeMedication", question: "Você toma alguma medicação regularmente?" },
+  { key: "doctorRecommendation", question: "Algum médico já recomendou que você evite atividades físicas intensas?" },
 ];
 
-export default function HealthFormStep({ onNext, onPrevious, defaultValues }: HealthFormStepProps) {
+const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 [color-scheme:dark]";
+
+export default function HealthFormStep({ onNext, onBack, defaultValues }: HealthFormStepProps) {
   const [answers, setAnswers] = useState<HealthAnswer[]>(
-    HEALTH_QUESTIONS.map(q => ({ 
-      ...q, 
-      value: defaultValues?.healthAnswers?.find((a: HealthAnswer) => a.key === q.key)?.value || null 
+    HEALTH_QUESTIONS.map(q => ({
+      ...q,
+      value: defaultValues?.healthAnswers?.find((a: HealthAnswer) => a.key === q.key)?.value || null,
     }))
   );
   const [agreedToTerms, setAgreedToTerms] = useState(defaultValues?.agreedToHealthTerms || false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRiskWarning, setShowRiskWarning] = useState(false);
   const [allAnswered, setAllAnswered] = useState(false);
-  
-  // Belt level states
   const [selectedBeltLevel, setSelectedBeltLevel] = useState<string>(defaultValues?.beltLevel || 'white');
   const [selectedStripes, setSelectedStripes] = useState<number>(defaultValues?.stripes || 0);
-  
+
   const { toast } = useToast();
   const { beltOptions, isLoading: loadingBelts } = useBeltLevels(undefined, true);
 
-  // Verifica se todas as perguntas foram respondidas
   useEffect(() => {
-    const answered = answers.every(answer => answer.value !== null);
-    setAllAnswered(answered);
-    
-    // Verifica se há respostas de risco
-    const hasRisk = answers.some(answer => answer.value === "yes");
-    setShowRiskWarning(hasRisk);
+    setAllAnswered(answers.every(a => a.value !== null));
+    setShowRiskWarning(answers.some(a => a.value === "yes"));
   }, [answers]);
 
   const handleAnswerChange = (questionKey: string, value: "yes" | "no") => {
-    setAnswers(prev => prev.map(answer => 
-      answer.key === questionKey ? { ...answer, value } : answer
-    ));
+    setAnswers(prev => prev.map(a => a.key === questionKey ? { ...a, value } : a));
   };
 
   const handleSubmit = async () => {
     if (!allAnswered) {
-      toast({
-        title: "Perguntas não respondidas",
-        description: "Por favor, responda todas as perguntas antes de continuar.",
-        variant: "destructive",
-      });
+      toast({ title: "Perguntas não respondidas", description: "Responda todas as perguntas antes de continuar.", variant: "destructive" });
       return;
     }
-
     if (!agreedToTerms) {
-      toast({
-        title: "Concordância obrigatória",
-        description: "É necessário concordar com os termos para validação jurídica.",
-        variant: "destructive",
-      });
+      toast({ title: "Concordância obrigatória", description: "É necessário concordar com os termos para validação jurídica.", variant: "destructive" });
       return;
     }
-
     setIsSubmitting(true);
-
     try {
-      // Gerar timestamp da assinatura eletrônica
       const healthTermsAgreedAt = new Date().toISOString();
-
-      // Preparar dados do questionário para serem salvos com o registro do aluno
-      const healthData = {
-        healthAnswers: answers,
-        agreedToHealthTerms: true,
-        healthTermsAgreedAt,
-        beltLevel: selectedBeltLevel,
-        stripes: selectedStripes
-      };
-
-      // Verificar se há respostas de risco para mostrar aviso
-      const hasRisk = answers.some(answer => answer.value === "yes");
-      
+      const hasRisk = answers.some(a => a.value === "yes");
       if (hasRisk) {
-        toast({
-          title: "Atenção - Atestado Médico Necessário",
-          description: "Devido às suas respostas, será necessário apresentar um atestado médico para participar das atividades.",
-          variant: "destructive",
-        });
+        toast({ title: "Atenção - Atestado Médico Necessário", description: "Será necessário apresentar um atestado médico para participar das atividades.", variant: "destructive" });
       } else {
-        toast({
-          title: "Questionário preenchido com sucesso!",
-          description: "Suas informações de saúde foram registradas. Continue para finalizar sua matrícula.",
-        });
+        toast({ title: "Questionário preenchido!", description: "Suas informações de saúde foram registradas. Continue para finalizar." });
       }
-
-      // Passar dados para próxima etapa (serão salvos no registro final)
-      onNext(healthData);
-
-    } catch (error: any) {
-      console.error("Erro ao processar questionário:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao processar questionário de saúde.",
-        variant: "destructive",
-      });
+      onNext({ healthAnswers: answers, agreedToHealthTerms: true, healthTermsAgreedAt, beltLevel: selectedBeltLevel, stripes: selectedStripes });
+    } catch {
+      toast({ title: "Erro", description: "Erro ao processar questionário de saúde.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const answeredCount = answers.filter(a => a.value !== null).length;
+
   return (
-    <div className="space-y-6" data-testid="health-form-step">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-6 w-6 text-red-500" />
-            Questionário de Saúde (PAR-Q+)
-          </CardTitle>
-          <CardDescription>
-            Este questionário é obrigatório para identificar possíveis riscos à sua saúde durante a prática de artes marciais.
-            Todas as informações são confidenciais e protegidas pela Lei Geral de Proteção de Dados (LGPD).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Instruções */}
-          <Alert>
-            <Activity className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Importante:</strong> Responda com sinceridade. Estas informações são fundamentais 
-              para garantir sua segurança durante as atividades físicas.
-            </AlertDescription>
-          </Alert>
+    <div className="max-w-2xl mx-auto space-y-6" data-testid="health-form-step">
+      {/* Header */}
+      <div className="text-center space-y-3">
+        <div className="w-14 h-14 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center mx-auto">
+          <Heart className="w-7 h-7 text-red-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-white">Saúde e Graduação</h2>
+        <p className="text-slate-400 text-sm">Questionário de saúde PAR-Q+ e sua graduação atual</p>
+      </div>
 
-          {/* Perguntas */}
-          <div className="space-y-4">
-            {answers.map((answer, index) => (
-              <div key={answer.key} className="space-y-3">
-                <Label className="text-sm font-medium leading-relaxed">
-                  {index + 1}. {answer.question}
-                </Label>
-                <div className="flex gap-4 ml-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id={`${answer.key}-yes`}
-                      name={answer.key}
-                      value="yes"
-                      checked={answer.value === "yes"}
-                      onChange={() => handleAnswerChange(answer.key, "yes")}
-                      className="text-red-600"
-                      data-testid={`radio-${answer.key}-yes`}
-                    />
-                    <Label htmlFor={`${answer.key}-yes`} className="text-red-600 font-medium">
-                      Sim
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id={`${answer.key}-no`}
-                      name={answer.key}
-                      value="no"
-                      checked={answer.value === "no"}
-                      onChange={() => handleAnswerChange(answer.key, "no")}
-                      className="text-green-600"
-                      data-testid={`radio-${answer.key}-no`}
-                    />
-                    <Label htmlFor={`${answer.key}-no`} className="text-green-600 font-medium">
-                      Não
-                    </Label>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Info banner */}
+      <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-4 flex items-start gap-3">
+        <Activity className="w-5 h-5 text-[#7B9FFF] mt-0.5 shrink-0" />
+        <p className="text-sm text-[#7B9FFF] leading-relaxed">
+          <strong className="text-white">Importante:</strong> Responda com sinceridade. Estas informações são fundamentais para garantir sua segurança durante as atividades físicas. Dados protegidos pela LGPD.
+        </p>
+      </div>
 
-          {/* Aviso de risco */}
-          {showRiskWarning && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Atenção:</strong> Baseado em suas respostas, recomendamos que você apresente 
-                um atestado médico liberando a prática de atividades físicas antes de iniciar as aulas.
-              </AlertDescription>
-            </Alert>
-          )}
+      {/* Questions */}
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-white font-semibold">Questionário de Saúde</h3>
+          <span className="text-xs text-slate-500">{answeredCount}/{answers.length} respondidas</span>
+        </div>
 
-          <Separator />
-
-          {/* Seção de Graduação */}
-          <Card className="bg-blue-50 border-blue-200">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-blue-800">
-                <Award className="h-5 w-5" />
-                Graduação Atual
-              </CardTitle>
-              <CardDescription className="text-blue-600">
-                Informe sua graduação atual no Jiu-Jitsu (faixa e grau)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="belt-level" className="text-sm font-medium">
-                    Faixa Atual *
-                  </Label>
-                  <Select 
-                    value={selectedBeltLevel} 
-                    onValueChange={setSelectedBeltLevel}
-                    disabled={loadingBelts}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione sua faixa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingBelts ? (
-                        <SelectItem value="loading" disabled>
-                          Carregando faixas...
-                        </SelectItem>
-                      ) : (
-                        beltOptions.map((belt) => (
-                          <SelectItem key={belt.value} value={belt.value}>
-                            <span className="flex items-center gap-2">
-                              <div 
-                                className="w-4 h-4 rounded border border-gray-300" 
-                                style={{ backgroundColor: belt.color }}
-                              />
-                              {belt.label}
-                            </span>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="stripes" className="text-sm font-medium">
-                    Grau (Listras)
-                  </Label>
-                  <Select 
-                    value={selectedStripes.toString()} 
-                    onValueChange={(value) => setSelectedStripes(Number(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Número de listras" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[0, 1, 2, 3, 4].map((stripe) => (
-                        <SelectItem key={stripe} value={stripe.toString()}>
-                          {stripe} {stripe === 1 ? 'listra' : 'listras'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <Alert>
-                <Activity className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Iniciante?</strong> Se você nunca praticou Jiu-Jitsu, mantenha selecionado "Faixa Branca" com "0 listras".
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          <Separator />
-
-          {/* Termo de concordância */}
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="agree-terms"
-                checked={agreedToTerms}
-                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                data-testid="checkbox-agree-terms"
-              />
-              <div className="grid gap-2 leading-relaxed text-sm">
-                <Label htmlFor="agree-terms" className="cursor-pointer">
-                  <strong>Declaração e Concordância</strong>
-                </Label>
-                <p className="text-muted-foreground">
-                  Eu declaro que as informações fornecidas são verdadeiras e completas. 
-                  Estou ciente de que a omissão ou falsidade de informações pode comprometer 
-                  minha segurança durante a prática de atividades físicas. Concordo com o 
-                  processamento destes dados conforme a Lei Geral de Proteção de Dados (LGPD), 
-                  sendo utilizados exclusivamente para fins de segurança e saúde na prática esportiva.
-                </p>
-              </div>
+        {answers.map((answer, index) => (
+          <div key={answer.key} className="space-y-2.5 pb-4 border-b border-white/5 last:border-0 last:pb-0">
+            <p className="text-slate-200 text-sm font-medium leading-relaxed">
+              {index + 1}. {answer.question}
+            </p>
+            <div className="flex gap-3 ml-2">
+              {(["yes", "no"] as const).map((opt) => (
+                <label
+                  key={opt}
+                  className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-all text-sm font-medium ${
+                    answer.value === opt
+                      ? opt === "yes"
+                        ? "bg-red-500/20 border-red-500/50 text-red-400"
+                        : "bg-green-500/20 border-green-500/50 text-green-400"
+                      : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={answer.key}
+                    value={opt}
+                    checked={answer.value === opt}
+                    onChange={() => handleAnswerChange(answer.key, opt)}
+                    className="hidden"
+                    data-testid={`radio-${answer.key}-${opt}`}
+                  />
+                  {opt === "yes" ? "Sim" : "Não"}
+                </label>
+              ))}
             </div>
           </div>
+        ))}
 
-          {/* Progresso */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <FileText className="h-4 w-4" />
-            <span>
-              {answers.filter(a => a.value !== null).length} de {answers.length} perguntas respondidas
-            </span>
-            {allAnswered && (
-              <CheckCircle className="h-4 w-4 text-green-600 ml-2" />
-            )}
+        {/* Progress bar */}
+        <div className="pt-2">
+          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#2B54FF] rounded-full transition-all duration-300"
+              style={{ width: `${(answeredCount / answers.length) * 100}%` }}
+            />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+            <FileText className="w-3.5 h-3.5" />
+            {answeredCount} de {answers.length} perguntas respondidas
+            {allAnswered && <CheckCircle className="w-3.5 h-3.5 text-green-400 ml-1" />}
+          </div>
+        </div>
+      </div>
 
-      {/* Botões de navegação */}
+      {/* Risk warning */}
+      {showRiskWarning && (
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
+          <p className="text-sm text-orange-300 leading-relaxed">
+            <strong>Atenção:</strong> Com base em suas respostas, recomendamos que você apresente um atestado médico liberando a prática de atividades físicas antes de iniciar as aulas.
+          </p>
+        </div>
+      )}
+
+      {/* Belt section */}
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-10 h-10 rounded-xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center">
+            <Award className="w-5 h-5 text-[#2B54FF]" />
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">Graduação Atual</h3>
+            <p className="text-slate-400 text-xs">Informe sua faixa e grau no Jiu-Jitsu</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-slate-300 text-sm font-medium">Faixa Atual *</label>
+            <Select value={selectedBeltLevel} onValueChange={setSelectedBeltLevel} disabled={loadingBelts}>
+              <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white rounded-xl">
+                <SelectValue placeholder="Selecione sua faixa" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-white/10 text-white">
+                {loadingBelts ? (
+                  <SelectItem value="loading" disabled>Carregando faixas...</SelectItem>
+                ) : (
+                  beltOptions.map((belt) => (
+                    <SelectItem key={belt.value} value={belt.value} className="text-white focus:bg-white/10 focus:text-white">
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded border border-white/20" style={{ backgroundColor: belt.color }} />
+                        {belt.label}
+                      </span>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-slate-300 text-sm font-medium">Grau (Listras)</label>
+            <select
+              value={selectedStripes.toString()}
+              onChange={(e) => setSelectedStripes(Number(e.target.value))}
+              className={selectCls}
+            >
+              {[0, 1, 2, 3, 4].map((stripe) => (
+                <option key={stripe} value={stripe.toString()}>
+                  {stripe} {stripe === 1 ? 'listra' : 'listras'}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-3 flex items-start gap-2 text-xs text-[#7B9FFF]">
+          <Activity className="w-4 h-4 mt-0.5 shrink-0" />
+          <span><strong className="text-white">Iniciante?</strong> Se nunca praticou Jiu-Jitsu, mantenha "Faixa Branca" com "0 listras".</span>
+        </div>
+      </div>
+
+      {/* Terms */}
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <label className="flex items-start gap-4 cursor-pointer group">
+          <div
+            onClick={() => setAgreedToTerms(!agreedToTerms)}
+            className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
+              agreedToTerms ? 'bg-[#2B54FF] border-[#2B54FF]' : 'bg-white/5 border-white/20 group-hover:border-[#2B54FF]/50'
+            }`}
+            data-testid="checkbox-agree-terms"
+          >
+            {agreedToTerms && <CheckCircle className="w-4 h-4 text-white" />}
+          </div>
+          <div>
+            <p className="text-white font-medium text-sm">Declaração e Concordância</p>
+            <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+              Eu declaro que as informações fornecidas são verdadeiras e completas. Estou ciente de que a omissão ou falsidade de informações pode comprometer minha segurança durante a prática de atividades físicas. Concordo com o processamento destes dados conforme a LGPD, sendo utilizados exclusivamente para fins de segurança e saúde na prática esportiva.
+            </p>
+          </div>
+        </label>
+      </div>
+
+      {/* Navigation */}
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={onPrevious}
+        <button
+          type="button"
+          onClick={onBack}
           disabled={isSubmitting}
+          className="h-12 px-6 rounded-xl border border-white/20 text-white hover:bg-white/10 disabled:opacity-50 transition-colors flex items-center gap-2 font-medium"
           data-testid="button-previous"
         >
-          Voltar
-        </Button>
-        <Button
+          ← Voltar
+        </button>
+        <button
+          type="button"
           onClick={handleSubmit}
           disabled={!allAnswered || !agreedToTerms || isSubmitting}
+          className="h-12 px-8 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors"
           data-testid="button-submit-health"
         >
-          {isSubmitting ? "Salvando..." : "Salvar e Continuar"}
-        </Button>
+          {isSubmitting ? "Salvando..." : "Salvar e Continuar →"}
+        </button>
       </div>
     </div>
   );

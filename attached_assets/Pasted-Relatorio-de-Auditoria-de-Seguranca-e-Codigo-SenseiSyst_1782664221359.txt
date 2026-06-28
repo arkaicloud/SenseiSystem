@@ -1,0 +1,147 @@
+Relatorio de Auditoria de Seguranca e Codigo - SenseiSystem
+1. CODIGO MORTO E LIXO (Dead Code Audit)
+1.1 Arquivos Orfaos (sem import referenciando)
+Arquivo	Refs	Confianca	Acao
+client/src/pages/__tests__/Dashboard.data.spec.tsx	0	Alto	Remover -- teste de dados nao utilizado
+client/src/pages/dashboard-backup.tsx	0	Alto	Remover -- backup antigo do dashboard
+client/src/pages/dashboard/admin-new.tsx	0	Alto	Remover -- dashboard admin alternativo nao usado
+client/src/pages/login-page.tsx	0	Medio	Verificar -- pode ter sido substituido por LoginPage.tsx
+client/src/pages/students-new.tsx	0	Medio	Verificar -- pode ser referenciado por rota dinamica
+client/src/pages/new-attendance.tsx	1	Medio	Verificar -- pagina de presenca legada?
+1.2 Dependencias Nao Utilizadas (package.json)
+Pacote	Onde e importado?	Confianca	Acao
+@docuseal/react	Nao encontrado	Alto	Remover -- Docuseal foi removido do onboarding
+@google-cloud/storage	Nao encontrado	Alto	Remover -- nao usado no upload atual (armazena localmente)
+@jridgewell/trace-mapping	Nao encontrado	Alto	Remover -- dependencia transitoria orfa
+@uppy/* (5 pacotes)	Nao encontrado	Alto	Remover -- upload feito com multer nativo
+google-auth-library	Nao encontrado	Alto	Remover -- nao integrado
+memoizee	Nao encontrado	Alto	Remover -- nao usado
+next-themes	Nao encontrado	Alto	Remover -- tema gerenciado manualmente
+openid-client	Nao encontrado	Alto	Remover -- OAuth nao implementado
+embla-carousel-react	1 ref (carousel.tsx)	Medio	Verificar -- carousel.tsx e usado?
+input-otp	1 ref (input-otp.tsx)	Medio	Verificar -- componente OTP usado?
+pdfkit	1 ref (healthQuestionnairePdf.ts)	Baixo	Manter -- usado para gerar PDFs de saude
+framer-motion	Verificar	Medio	Verificar -- usado em animacoes?
+vaul	Verificar	Medio	Verificar -- drawer component?
+workbox-window	Verificar	Medio	Verificar -- PWA?
+vite-plugin-pwa	Verificar	Medio	Verificar -- PWA?
+ws	Verificar	Medio	Verificar -- WebSocket?
+1.3 Funcoes/Implementacoes Stub (sem logica real)
+Arquivo	Funcao	Problema
+server/services/uploadService.ts	getStudentDocuments()	Retorna [] -- nao implementado
+server/services/uploadService.ts	getDocumentById()	Retorna null -- nao implementado
+server/services/uploadService.ts	deleteDocument()	Retorna true -- nao implementado
+1.4 Rotas Duplicadas
+Rota	Ocorrencias	Problema
+GET /api/notices	Linhas 7273 e 7691	Rota declarada DUAS vezes -- a segunda sobrescreve a primeira
+1.5 Comentarios/Codigo Antigo
+Local	Trecho	Confianca
+server/auth.ts:71	`secret: process.env.SESSION_SECRET	
+server/storage.ts:320-321	Senhas padrao hardcoded para admin/instrutor	Alto
+2. PROBLEMAS DE SEGURANCA
+2.1 Autenticacao e Autorizacao
+CRITICO -- Rotas Publicas Sem Protecao
+Rota	Metodo	Linha	Risco	Correcao
+POST /api/register-student	POST	6128	Criacao de aluno sem autenticacao -- qualquer um pode registrar	Adicionar rate-limit + validacao de captcha
+POST /api/students/:id/health-questionnaire	POST	7071	Questionario de saude sem auth -- dados medicos expostos	Adicionar isAuthenticated
+POST /api/students/:id/documents/:kind	POST	7115	Upload de documentos sem auth -- permite upload arbitrario	Adicionar isAuthenticated
+GET /api/students/:id/documents	GET	7157	Listagem de documentos sem auth	Adicionar isAuthenticated
+GET /api/documents/:docId/download	GET	7172	Download de documentos sem auth -- qualquer pessoa pode baixar RG/atestados	Adicionar isAuthenticated + verificar propriedade
+GET /api/validate-cpf/:cpf	GET	7013	Verificacao de CPF sem auth -- permite enumeracao de CPFs	Adicionar isAuthenticated
+POST /webhooks/asaas	POST	5305	Webhook ASAAS sem auth -- mas sem assinatura de webhook	Adicionar validacao de IP ou assinatura
+POST /api/webhook/asaas	POST	6041	Webhook ASAAS duplicado sem auth	Consolidar rotas e adicionar validacao
+ALTO -- Escalabilidade de Privilegios
+Rota	Protecao Atual	Risco
+PUT /api/users/:id	isAuthenticated (qualquer usuario logado)	Qualquer usuario pode editar QUALQUER usuario -- precisa de isSelfOrStaff
+GET /api/users/:id	isAuthenticated	Qualquer usuario pode ver dados de QUALQUER outro usuario
+GET /api/student/profile/:userId	isAuthenticated	Qualquer usuario pode ver perfil de qualquer estudante
+GET /api/student/attendance-current-month/:userId	isAuthenticated	Qualquer usuario pode ver frequencia de qualquer estudante
+GET /api/attendance/user/:userId	isAuthenticated	Qualquer usuario pode ver historico de presenca de outros
+POST /api/classes/:classId/confirm-attendance	isAuthenticated	Qualquer aluno pode confirmar presenca em qualquer aula
+2.2 Exposicao de Dados
+ALTO -- Logs Expondo PII
+Local	Dado Exposto
+server/auth.ts:245	console.log('Login attempt for:', req.body.email)
+server/auth.ts:258	console.log('User authenticated:', user.email)
+server/auth.ts:293	console.log('Login successful for:', user.email)
+server/routes.ts:2794	console.log('Usuario:', userData.firstName, sexo, crianca)
+server/routes.ts:6308	console.log('Student registration:', firstName, lastName)
+server/routes.ts:6989	console.log('Verificando CPF:', cpf, email)
+server/routes.ts:4664	console.log('Reset email sent to:', email)
+server/routes.ts:147	console.log('Guardian welcome email sent to:', responsibleEmail)
+server/routes.ts:1497	console.log('Processando aprovacao:', user.firstName, user.lastName)
+MEDIO -- Dados no Frontend
+school-config retorna smtpPassword e asaasApiKey MAS estao mascarados com ******** (OK)
+PATCH school-config aceita smtpPassword diretamente -- admin pode sobrescrever
+2.3 Injecao e Validacao
+ALTO -- SQL Raw Queries
+Local	Query	Risco
+server/routes.ts:6179	sqlUPDATE users SET birth_date = ...`	birthDate do cliente -- new Date() sanitiza mas nao e ideal
+server/routes.ts:7025	sqlSELECT ... WHERE u.cpf = ${cpf}`	CPF de params -- Drizzle escapa, mas ainda assim
+server/storage.ts:1486	getStudent(id)	Erro: invalid input syntax for type integer: "NaN" -- ID nao validado
+server/routes.ts:2186	parseInt(req.params.id)	parseInt("abc") = NaN -> crash no banco
+MEDIO -- XSS via dangerouslySetInnerHTML
+Local	Conteudo	Sanitizado?
+client/src/components/dashboard/StudentNotifications.tsx:61	notification.message	NAO -- direto no HTML
+client/src/components/student/StudentBell.tsx:204	selectedNotification?.content	NAO -- direto no HTML
+client/src/pages/reports.tsx:130	log.activity	NAO -- direto no HTML
+client/src/pages/communications.tsx:614	notice.content	Possivel -- vem de rich text editor
+client/src/components/ui/rich-content.tsx:135	sanitizedContent	SIM -- via sanitizeHTML()
+2.4 Configuracao e Infraestrutura
+CRITICO
+Problema	Local	Impacto
+Sem rate limiting	Todo server/routes.ts	Brute force em login, reset de senha, webhooks
+Sem helmet/security headers	server/index.ts	Sem CSP, HSTS, X-Frame-Options
+Sem CORS configurado	Nao encontrado	Padrao do Express permite todas as origens
+Session secret hardcoded	server/auth.ts:71	`process.env.SESSION_SECRET
+Senha admin hardcoded	server/auth.ts:390-414	Admin padrao 12345678 / Huios2026@BJJ / HuiosAdmin2026!
+ALTO
+Problema	Local	Impacto
+Erro handler revela stack	server/index.ts:59	throw err apos enviar resposta
+Upload sem autenticacao	server/routes.ts:7115	Qualquer um pode fazer upload
+2.5 Gestao de Sessao
+Problema	Local	Severidade
+Cookie sem flag secure	server/auth.ts:74-76	Medio -- cookie pode ser enviado via HTTP
+Sessao 30 dias sem invalidacao automatica	server/auth.ts:75	Medio -- sessao longa demais
+Cookie sem sameSite	server/auth.ts:74	Medio -- vulneravel a CSRF
+2.6 Dependencias com Vulnerabilidades
+Scanner	Resultado
+Dependency Audit	1 CRITICA, 50 ALTAS, 38 MODERADAS, 7 BAIXAS
+SAST Scan	32 findings
+HoundDog	37 findings (PII em logs)
+3. SUMARIO EXECUTIVO
+Contagem por Categoria
+Categoria	Quantidade
+Codigo morto -- arquivos orfaos	6
+Codigo morto -- dependencias nao usadas	14+
+Codigo morto -- funcoes stub	3
+Seguranca -- Rotas sem autenticacao	10
+Seguranca -- Escalabilidade de privilegios	6
+Seguranca -- Logs com PII	9
+Seguranca -- SQL injection potencial	3
+Seguranca -- XSS	4
+Seguranca -- Configuracao critica	5
+Seguranca -- Gestao de sessao	3
+Seguranca -- Vulnerabilidades em dependencias	96
+Top 3 Problemas Criticos
+Rotas publicas sensiveis (/api/register-student, /api/students/:id/documents/:kind, /api/documents/:docId/download, /api/students/:id/health-questionnaire) -- qualquer pessoa pode criar alunos, fazer upload de documentos e baixar RG/atestados medicos. Esforco: 2-4 horas.
+
+Session secret e senhas admin hardcoded -- senseisystem-secret-key como fallback e senhas de admin em codigo-fonte. Esforco: 1-2 horas.
+
+Rate limiting ausente -- endpoints de login, registro e webhooks sem protecao contra brute force. Esforco: 2-3 horas (instalar express-rate-limit).
+
+Estimativa de Esforco Total
+Fase	Itens	Esforco
+Codigo morto (remocao)	20+ itens	4-6 horas
+Seguranca -- rotas protegidas	10 rotas	4-6 horas
+Seguranca -- PII em logs	9 logs	2-3 horas
+Seguranca -- XSS sanitizacao	4 locais	2-3 horas
+Seguranca -- configuracao (helmet, rate limit, session)	5 itens	4-6 horas
+Seguranca -- dependencias vulneraveis	96 CVEs	4-8 horas
+TOTAL		20-32 horas
+Ordem de Prioridade Sugerida
+Semana 1 -- Criticos de seguranca: Proteger rotas publicas, adicionar rate limiting, corrigir session secret
+Semana 1 -- Segunda rodada: Sanitizar logs (remover PII), corrigir XSS
+Semana 2 -- Configuracao: Helmet, CORS, cookies seguros
+Semana 2 -- Limpeza: Remover codigo morto e dependencias nao usadas
+Semana 3 -- Dependencias: Atualizar pacotes com vulnerabilidades

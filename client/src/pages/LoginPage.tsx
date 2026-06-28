@@ -59,8 +59,16 @@ export default function LoginPage() {
         credentials: 'include',
         body: JSON.stringify({ email: credentials.username, password: credentials.password }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Email ou senha incorretos");
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: verifique suas credenciais`);
+        }
+        throw new Error("Erro inesperado. Tente novamente.");
+      }
+      if (!response.ok) throw new Error(data?.message || "Email ou senha incorretos");
       return data;
     },
     onSuccess: () => {

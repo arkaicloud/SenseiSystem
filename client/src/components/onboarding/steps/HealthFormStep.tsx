@@ -189,14 +189,16 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-slate-300 text-sm font-medium">Faixa Atual *</label>
-            <Select value={selectedBeltLevel} onValueChange={setSelectedBeltLevel} disabled={loadingBelts}>
+            <Select
+              value={loadingBelts ? undefined : selectedBeltLevel}
+              onValueChange={setSelectedBeltLevel}
+              disabled={loadingBelts}
+            >
               <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white rounded-xl">
-                <SelectValue placeholder="Selecione sua faixa" />
+                <SelectValue placeholder={loadingBelts ? "Carregando faixas..." : "Selecione sua faixa"} />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-white/10 text-white">
-                {loadingBelts ? (
-                  <SelectItem value="loading" disabled>Carregando faixas...</SelectItem>
-                ) : (
+                {loadingBelts ? null : beltOptions.length > 0 ? (
                   beltOptions.map((belt) => (
                     <SelectItem key={belt.value} value={belt.value} className="text-white focus:bg-white/10 focus:text-white">
                       <span className="flex items-center gap-2">
@@ -205,6 +207,14 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
                       </span>
                     </SelectItem>
                   ))
+                ) : (
+                  <>
+                    <SelectItem value="white" className="text-white focus:bg-white/10 focus:text-white">Faixa Branca</SelectItem>
+                    <SelectItem value="blue" className="text-white focus:bg-white/10 focus:text-white">Faixa Azul</SelectItem>
+                    <SelectItem value="purple" className="text-white focus:bg-white/10 focus:text-white">Faixa Roxa</SelectItem>
+                    <SelectItem value="brown" className="text-white focus:bg-white/10 focus:text-white">Faixa Marrom</SelectItem>
+                    <SelectItem value="black" className="text-white focus:bg-white/10 focus:text-white">Faixa Preta</SelectItem>
+                  </>
                 )}
               </SelectContent>
             </Select>

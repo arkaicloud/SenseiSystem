@@ -11,6 +11,10 @@ import { initializeDefaultAdmin } from "./auth";
 
 const app = express();
 
+// Trust the Replit proxy (and any reverse proxy in front of Express)
+// Required for express-rate-limit to correctly read X-Forwarded-For
+app.set('trust proxy', 1);
+
 // CORS — only allow same origin (the app is self-hosted, no cross-origin API use)
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())

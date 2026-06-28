@@ -13,8 +13,14 @@ export const dashboardMetricsSchema = z.object({
   attendanceRate: z.number(), // 0.0 to 1.0
   monthlyRevenue: z.number(), // in cents
   atRiskStudents: z.number(),
+  lowEngagement: z.number().optional(),
   delinquency: z.number(), // count of overdue payments
-  pendingApprovals: z.number()
+  pendingApprovals: z.number(),
+  monthlyAttendanceCount: z.number().optional(),
+  monthlyTrend: z.array(z.object({
+    mes: z.string(),
+    presencas: z.number()
+  })).optional()
 });
 
 export const todayDataSchema = z.object({

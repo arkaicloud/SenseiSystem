@@ -108,7 +108,8 @@ export default function AdminDashboard() {
   const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   // Real attendance trend from API (last 6 months, actual counts)
-  const trendData: { mes: string; presencas: number }[] = m.monthlyTrend ?? [];
+  const trendData: { mes: string; presencas: number }[] = (m as any).monthlyTrend ?? [];
+  const atRisk = (m as any).atRiskStudents ?? (m as any).lowEngagement ?? 0;
 
   const allBelts: Record<string, number> = {};
   Object.entries(data.belts?.adult || {}).forEach(([k, v]) => { allBelts[k] = (allBelts[k] || 0) + (v as number); });
@@ -261,17 +262,17 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {(m.lowEngagement > 0 || overdueCount > 0) && (
+          {(atRisk > 0 || overdueCount > 0) && (
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
               <h2 className="text-sm font-semibold text-slate-800 mb-3">Alertas</h2>
               <div className="space-y-2">
-                {m.lowEngagement > 0 && (
+                {atRisk > 0 && (
                   <a href="/students-at-risk" className="flex items-center justify-between p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-500" />
                       <span className="text-xs font-medium text-amber-700">Baixo engajamento</span>
                     </div>
-                    <span className="text-sm font-bold text-amber-700">{m.lowEngagement}</span>
+                    <span className="text-sm font-bold text-amber-700">{atRisk}</span>
                   </a>
                 )}
                 {overdueCount > 0 && (

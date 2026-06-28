@@ -1,21 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import type { DashboardDTO } from "@shared/schema";
 
 export function useDashboard() {
   return useQuery({
     queryKey: ["dashboard-metrics"],
-    queryFn: async (): Promise<DashboardDTO> => {
+    queryFn: async () => {
       const response = await fetch('/api/dashboard/metrics', {
-        credentials: 'include'
+        credentials: 'include',
+        cache: 'no-store',
       });
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard metrics');
       }
       return response.json();
     },
-    staleTime: 30_000,
-    refetchOnMount: false,
+    staleTime: 0,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 }

@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BeltWithLabel } from "@/components/ui/belt";
+import { BeltWithLabel, BELT_HEX } from "@/components/ui/belt";
 import { usePaginated } from "@/hooks/usePaginated";
 import { Pagination } from "@/components/ui/Pagination";
 import { PageSizeSelect } from "@/components/ui/PageSizeSelect";
@@ -339,11 +339,18 @@ const Students: React.FC = () => {
                     <td className="text-gray-900 dark:text-gray-100 font-medium">{student.id}</td>
                     <td>
                       <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                              {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
-                            </span>
+                        <div className="flex-shrink-0 h-8 w-8 relative">
+                          <div
+                            className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
+                            style={(() => {
+                              const hex = BELT_HEX[student.beltLevel];
+                              if (!hex || student.beltLevel === 'white') {
+                                return { background: '#E2E8F0', color: '#475569' };
+                              }
+                              return { background: hex, color: '#fff' };
+                            })()}
+                          >
+                            {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
                           </div>
                         </div>
                         <div>
@@ -351,7 +358,20 @@ const Students: React.FC = () => {
                             {student.user.firstName} {student.user.lastName}
                           </div>
                           {isMobile && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{student.user.email}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <div
+                                className="w-3 h-3 rounded-sm flex-shrink-0"
+                                style={(() => {
+                                  const hex = BELT_HEX[student.beltLevel];
+                                  return hex && student.beltLevel !== 'white'
+                                    ? { backgroundColor: hex }
+                                    : { backgroundColor: '#E2E8F0', border: '1px solid #CBD5E1' };
+                                })()}
+                              />
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {student.user.email}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>

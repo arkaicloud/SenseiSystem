@@ -13,12 +13,18 @@ export const DashboardSchema = z.object({
   }),
   metrics: z.object({
     activeStudents: z.number().int().nonnegative(),
-    classesHeld: z.number().int().nonnegative(),          // Aulas realizadas (mês)
-    attendanceRate: z.number().min(0).max(1),             // 0..1
-    monthlyRevenue: z.number().int().nonnegative(),       // centavos
-    lowEngagement: z.number().int().nonnegative(),        // Engajamento em baixa
-    delinquency: z.number().int().nonnegative(),          // Inadimplência (títulos vencidos)
-    pendingApprovals: z.number().int().nonnegative(),     // se já existir
+    classesHeld: z.number().int().nonnegative(),
+    attendanceRate: z.number().min(0).max(1),
+    monthlyRevenue: z.number().int().nonnegative(),
+    lowEngagement: z.number().int().nonnegative().optional(),
+    atRiskStudents: z.number().int().nonnegative().optional(),
+    delinquency: z.number().int().nonnegative(),
+    pendingApprovals: z.number().int().nonnegative(),
+    monthlyAttendanceCount: z.number().int().nonnegative().optional(),
+    monthlyTrend: z.array(z.object({
+      mes: z.string(),
+      presencas: z.number(),
+    })).optional(),
   }),
   today: z.object({
     classes: z.array(z.object({

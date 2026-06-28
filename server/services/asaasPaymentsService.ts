@@ -15,7 +15,9 @@ interface AsaasPayment {
   clientPaymentDate?: string;
   installmentNumber?: number;
   installmentCount?: number;
+  installment?: string; // installment plan ID (present when payment is part of a parcelamento)
   externalReference?: string;
+  billingType?: string;
 }
 
 interface AsaasCustomer {
@@ -94,6 +96,10 @@ export class AsaasPaymentsService {
     };
   }
 
+  /**
+   * Cancels a single standalone payment (not part of an installment plan).
+   * Use cancelInstallmentPayments() for parcelamento payments.
+   */
   async cancelPayment(paymentId: string): Promise<{ id: string; status: string; deleted: boolean }> {
     if (!this.isConfigured) {
       throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');
@@ -102,6 +108,7 @@ export class AsaasPaymentsService {
       console.log(`🗑️ Cancelling ASAAS payment ${paymentId}...`);
       const response = await axios.delete(`${this.baseUrl}/payments/${paymentId}`, {
         headers: this.getHeaders(),
+        timeout: 60000,
       });
       console.log(`✅ ASAAS payment ${paymentId} cancelled`);
       return response.data;
@@ -109,6 +116,41 @@ export class AsaasPaymentsService {
       console.error(`❌ Error cancelling ASAAS payment ${paymentId}:`, error.response?.data || error.message);
       throw new Error(`Erro ao cancelar cobrança: ${error.response?.data?.errors?.[0]?.description || error.message}`);
     }
+  }
+
+  /**
+   * Cancels all pending/overdue payments of an installment plan.
+   * Required when the payment has an `installment` field (parcelamento).
+   * ASAAS endpoint: DELETE /installments/{id}/payments
+   */
+  async cancelInstallmentPayments(installmentId: string): Promise<void> {
+    if (!this.isConfigured) {
+      throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');
+    }
+    try {
+      console.log(`🗑️ Cancelling all pending payments of installment ${installmentId}...`);
+      await axios.delete(`${this.baseUrl}/installments/${installmentId}/payments`, {
+        headers: this.getHeaders(),
+        timeout: 60000,
+      });
+      console.log(`✅ Installment ${installmentId} payments cancelled`);
+    } catch (error: any) {
+      console.error(`❌ Error cancelling installment ${installmentId}:`, error.response?.data || error.message);
+      throw new Error(`Erro ao cancelar parcelamento: ${error.response?.data?.errors?.[0]?.description || error.message}`);
+    }
+  }
+
+  /**
+   * Smart cancel: detects if the payment is part of an installment and
+   * calls the correct endpoint automatically.
+   */
+  async smartCancelPayment(paymentId: string, installmentId?: string): Promise<{ method: string }> {
+    if (installmentId) {
+      await this.cancelInstallmentPayments(installmentId);
+      return { method: 'installment' };
+    }
+    await this.cancelPayment(paymentId);
+    return { method: 'single' };
   }
 
   async getPayments(limit: number = 100, offset: number = 0): Promise<AsaasPaymentsResponse> {

@@ -80,6 +80,10 @@ interface Payment {
   paymentDate?: string;
   clientPaymentDate?: string;
   externalReference?: string;
+  installment?: string | null;
+  installmentNumber?: number | null;
+  installmentCount?: number | null;
+  billingType?: string | null;
 }
 
 interface FinancialMetrics {
@@ -161,10 +165,12 @@ export default function FinancialDashboard() {
 
   // Cancel single payment mutation
   const cancelPaymentMutation = useMutation({
-    mutationFn: async (paymentId: string) => {
+    mutationFn: async ({ paymentId, installmentId }: { paymentId: string; installmentId?: string | null }) => {
       const response = await fetch(`/api/financial/payments/${paymentId}`, {
         method: "DELETE",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ installmentId: installmentId || undefined }),
       });
       if (!response.ok) {
         const err = await response.json();
@@ -717,12 +723,24 @@ export default function FinancialDashboard() {
 
             <button
               className="w-full text-left px-4 py-3 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-colors"
-              onClick={() => cancelDialog.payment && cancelPaymentMutation.mutate(cancelDialog.payment.id)}
+              onClick={() =>
+                cancelDialog.payment &&
+                cancelPaymentMutation.mutate({
+                  paymentId: cancelDialog.payment.id,
+                  installmentId: cancelDialog.payment.installment,
+                })
+              }
               disabled={cancelPaymentMutation.isPending || cancelAllPaymentsMutation.isPending}
             >
-              <div className="font-medium text-orange-800">Cancelar apenas esta fatura</div>
+              <div className="font-medium text-orange-800">
+                {cancelDialog.payment?.installment
+                  ? "Cancelar faturas pendentes deste parcelamento"
+                  : "Cancelar apenas esta fatura"}
+              </div>
               <div className="text-xs text-orange-600 mt-0.5">
-                Cancela somente esta cobrança no ASAAS.
+                {cancelDialog.payment?.installment
+                  ? `Cancela todas as parcelas pendentes/vencidas do parcelamento ${cancelDialog.payment.installment} no ASAAS.`
+                  : "Cancela somente esta cobrança no ASAAS."}
               </div>
             </button>
 

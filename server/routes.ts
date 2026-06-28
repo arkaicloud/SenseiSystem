@@ -6890,6 +6890,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentDate: p.paymentDate,
         clientPaymentDate: p.clientPaymentDate,
         externalReference: p.externalReference,
+        installment: (p as any).installment || null, // installment plan ID if part of a parcelamento
+        installmentNumber: p.installmentNumber || null,
+        installmentCount: p.installmentCount || null,
+        billingType: (p as any).billingType || null,
       }));
 
       const metrics = asaasService.calculateMetrics(paymentsWithCustomers);
@@ -7007,23 +7011,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cancel a single ASAAS payment
+  // Cancel a single ASAAS payment (or its installment plan if applicable)
   app.delete("/api/financial/payments/:paymentId", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { paymentId } = req.params;
+      // installmentId is passed from frontend when the payment is part of a parcelamento
+      const { installmentId } = req.body || {};
+
       const config = await storage.getSchoolConfig();
       const asaasService = config?.asaasApiKey
         ? new AsaasPaymentsService(config.asaasApiKey)
         : new AsaasPaymentsService();
 
-      console.log(`🗑️ Admin cancelling payment ${paymentId}`);
-      const result = await asaasService.cancelPayment(paymentId);
+      console.log(`🗑️ Admin cancelling payment ${paymentId}${installmentId ? ` (installment: ${installmentId})` : ''}`);
+      const result = await asaasService.smartCancelPayment(paymentId, installmentId || undefined);
 
       const user = (req as any).user;
       if (user) {
         await storage.createActivityLog({
           userId: user.id,
-          activity: `${user.firstName} ${user.lastName} cancelou cobrança ASAAS: ${paymentId}`,
+          activity: `${user.firstName} ${user.lastName} cancelou cobrança ASAAS: ${paymentId}${installmentId ? ` (parcelamento ${installmentId})` : ''}`,
           entityType: 'payment',
           entityId: 0,
           timestamp: new Date()
@@ -7037,7 +7044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cancel all pending/overdue payments for a customer
+  // Cancel all pending/overdue payments for a customer (handles both standalone and installments)
   app.delete("/api/financial/customers/:customerId/payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { customerId } = req.params;
@@ -7054,10 +7061,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🗑️ Cancelling ${customerPayments.length} payments for customer ${customerId}`);
 
-      const results = await Promise.allSettled(
-        customerPayments.map(p => asaasService.cancelPayment(p.id))
-      );
+      // Group by installment to avoid duplicate calls, handle standalone separately
+      const cancelledInstallments = new Set<string>();
+      const cancelTasks: Promise<any>[] = [];
 
+      for (const p of customerPayments) {
+        const installmentId = (p as any).installment;
+        if (installmentId) {
+          if (!cancelledInstallments.has(installmentId)) {
+            cancelledInstallments.add(installmentId);
+            cancelTasks.push(asaasService.cancelInstallmentPayments(installmentId));
+          }
+        } else {
+          cancelTasks.push(asaasService.cancelPayment(p.id));
+        }
+      }
+
+      const results = await Promise.allSettled(cancelTasks);
       const succeeded = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
 
@@ -7065,14 +7085,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user) {
         await storage.createActivityLog({
           userId: user.id,
-          activity: `${user.firstName} ${user.lastName} cancelou ${succeeded} cobranças do cliente ASAAS: ${customerId}`,
+          activity: `${user.firstName} ${user.lastName} cancelou cobranças do cliente ASAAS: ${customerId} (${succeeded} operações bem-sucedidas)`,
           entityType: 'payment',
           entityId: 0,
           timestamp: new Date()
         });
       }
 
-      res.json({ success: true, cancelled: succeeded, failed, total: customerPayments.length });
+      res.json({ success: true, cancelled: succeeded, failed, total: cancelTasks.length });
     } catch (error: any) {
       console.error('❌ Error cancelling customer payments:', error);
       res.status(500).json({ success: false, message: error.message || 'Erro ao cancelar cobranças' });

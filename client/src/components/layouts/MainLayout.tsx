@@ -25,7 +25,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     typeof window !== 'undefined' && window.innerWidth < 768
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem('sidebar-collapsed') === 'true'; } catch { return false; }
+  });
   const [isPWA, setIsPWA] = useState(false);
+
+  const toggleCollapse = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('sidebar-collapsed', String(next)); } catch {}
+      return next;
+    });
+  };
   const { user, isLoading, logout } = useAuth();
   const [location] = useLocation();
   const { t } = useTranslation();
@@ -129,12 +140,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Sidebar navigation - hidden on mobile for students */}
       {user && (
         <div className={user?.role === 'student' ? 'hidden md:block' : ''}>
-          <Sidebar isOpen={sidebarOpen} isMobile={isMobile} onClose={() => setSidebarOpen(false)} />
+          <Sidebar
+            isOpen={sidebarOpen}
+            isMobile={isMobile}
+            onClose={() => setSidebarOpen(false)}
+            isCollapsed={!isMobile && sidebarCollapsed}
+            onToggleCollapse={toggleCollapse}
+          />
         </div>
       )}
 
       {/* Main content */}
-      <main className={`flex-1 ${!isMobile && user && user?.role !== 'student' ? "ml-64" : ""} ${user?.role === 'student' ? "md:ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
+      <main className={`flex-1 ${
+        !isMobile && user && user?.role !== 'student'
+          ? sidebarCollapsed ? "ml-16" : "ml-64"
+          : ""
+      } ${user?.role === 'student' ? "md:ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
         {/* Desktop header */}
         {!isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 hidden md:flex items-center justify-between px-6 py-3 sticky top-0 z-40">

@@ -4,10 +4,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { 
-  LogOut, Users, Calendar, CreditCard, Settings, 
-  Home, CheckSquare, MessageSquare, AlertTriangle, GraduationCap, 
-  UserCheck, DollarSign, Building2, BarChart3, ChevronDown,
-  FileText, Award, X, Bell, Ticket, HeartHandshake
+  LogOut, Users, Calendar, CreditCard, Settings,
+  CheckSquare, MessageSquare, AlertTriangle, GraduationCap,
+  UserCheck, DollarSign, BarChart3, ChevronDown,
+  FileText, Award, X, Bell, Ticket, HeartHandshake,
+  ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +27,14 @@ interface SidebarProps {
   isOpen: boolean;
   isMobile: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
-  const { user, logout, isLoading } = useAuth();
+const Sidebar: React.FC<SidebarProps> = ({
+  isOpen, isMobile, onClose, isCollapsed = false, onToggleCollapse
+}) => {
+  const { user, logout } = useAuth();
   const [location] = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
@@ -75,10 +80,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
     { id: "avisos-aluno", label: "Avisos", icon: Bell, path: "/student/notices", roles: ["student"] },
   ];
 
-  const hasPermission = (item: MenuItem) => {
-    if (!item.roles) return true;
-    return item.roles.includes(user?.role || "");
-  };
+  const hasPermission = (item: MenuItem) =>
+    !item.roles || item.roles.includes(user?.role || "");
 
   const getFilteredMenuItems = (items: MenuItem[]): MenuItem[] =>
     items
@@ -107,6 +110,80 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
 
   if (!user) return null;
 
+  /* ─────────── COLLAPSED (icon-only) ─────────── */
+  if (isCollapsed) {
+    return (
+      <aside
+        id="sidebar"
+        className="bg-white border-r border-slate-200/80 w-16 min-w-16 h-screen flex flex-col fixed top-0 left-0 z-40"
+      >
+        {/* Logo icon */}
+        <div className="flex items-center justify-center py-5 flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+            <span className="text-white text-sm font-bold">{schoolLetter}</span>
+          </div>
+        </div>
+
+        {/* Nav icons */}
+        <nav className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
+          {filteredMenuItems.map(item => {
+            const topPath = item.path || item.children?.[0]?.path || '/';
+            const isItemActive = item.path ? isActive(item.path) : hasActiveChild(item.children);
+            return (
+              <Link
+                key={item.id}
+                href={topPath}
+                onClick={isMobile ? onClose : undefined}
+                title={item.label}
+              >
+                <div className={cn(
+                  "w-10 h-10 mx-auto rounded-xl flex items-center justify-center transition-all duration-150 relative cursor-pointer",
+                  isItemActive
+                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                )}>
+                  <item.icon style={{ width: 18, height: 18 }} />
+                  {item.id === "aprovacoes-pendentes" && pendingCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
+                      {pendingCount}
+                    </span>
+                  )}
+                  {item.children && item.children.some(c => c.id === "aprovacoes-pendentes") && pendingCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
+                      {pendingCount}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Expand button */}
+        <div className="border-t border-slate-100 py-3 flex items-center justify-center flex-shrink-0">
+          <button
+            onClick={onToggleCollapse}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-150"
+            title="Expandir menu"
+          >
+            <PanelLeftOpen style={{ width: 18, height: 18 }} />
+          </button>
+        </div>
+
+        {/* User avatar */}
+        <div className="border-t border-slate-100 py-3 flex items-center justify-center flex-shrink-0">
+          <div
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center cursor-pointer"
+            title={`${user.firstName} ${user.lastName} · ${formatRole(user.role)}`}
+          >
+            <span className="text-white text-xs font-bold">{userInitials}</span>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  /* ─────────── EXPANDED ─────────── */
   const renderMenuItem = (item: MenuItem, level = 0) => {
     const hasChildren = item.children && item.children.length > 0;
     const isMenuOpen = openMenus.includes(item.id);
@@ -126,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             )}
           >
             <div className="flex items-center gap-3">
-              <item.icon className="w-4.5 h-4.5 flex-shrink-0" style={{ width: 18, height: 18 }} />
+              <item.icon className="flex-shrink-0" style={{ width: 18, height: 18 }} />
               <span>{item.label}</span>
             </div>
             <ChevronDown className={cn("w-4 h-4 transition-transform duration-200 text-slate-400", isMenuOpen && "rotate-180")} />
@@ -154,7 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       )}>
         <item.icon className="flex-shrink-0" style={{ width: level === 0 ? 18 : 16, height: level === 0 ? 18 : 16 }} />
         <span className="flex-1">{item.label}</span>
-        {(item.id === "aprovacoes-pendentes") && pendingCount > 0 && (
+        {item.id === "aprovacoes-pendentes" && pendingCount > 0 && (
           <Badge variant="destructive" className="ml-1 h-5 min-w-5 flex items-center justify-center text-xs p-0 px-1">
             {pendingCount}
           </Badge>
@@ -185,18 +262,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
       )}
     >
       {/* Logo / School name */}
-      <div className="px-5 py-5 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+      <div className="px-4 py-5 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200 flex-shrink-0">
             <span className="text-white text-sm font-bold">{schoolLetter}</span>
           </div>
-          <span className="font-semibold text-slate-800 text-base leading-tight">{schoolName}</span>
+          <span className="font-semibold text-slate-800 text-base truncate">{schoolName}</span>
         </div>
-        {isMobile && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100">
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {/* Collapse button */}
+          {!isMobile && onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-150"
+              title="Recolher menu"
+            >
+              <PanelLeftClose style={{ width: 15, height: 15 }} />
+            </button>
+          )}
+          {/* Mobile close */}
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={onClose}
+              className="h-7 w-7 text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Nav */}
@@ -205,7 +296,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
           {filteredMenuItems.map(item => renderMenuItem(item))}
         </div>
 
-        {/* Social */}
         {hasSocial && (
           <div className="mt-4 pt-4 border-t border-slate-100">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2.5 px-3">Redes Sociais</p>
@@ -252,15 +342,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
             <span className="text-white text-xs font-bold">{userInitials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">
-              {user.firstName} {user.lastName}
-            </p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{user.firstName} {user.lastName}</p>
             <p className="text-xs text-slate-400 truncate">{formatRole(user.role)}</p>
           </div>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex-shrink-0"
+            variant="ghost" size="icon"
+            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 flex-shrink-0 transition-colors"
             onClick={async () => { try { await logout(); } catch (e) { console.error(e); } }}
             title="Sair"
           >

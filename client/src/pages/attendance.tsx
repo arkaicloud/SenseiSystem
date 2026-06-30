@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -330,6 +330,8 @@ export default function AttendancePage() {
   });
 
   const students = rosterData ?? [];
+  const studentsRef = useRef(students);
+  useEffect(() => { studentsRef.current = students; }, [students]);
 
   // Reset local state when class/date changes
   useEffect(() => {
@@ -392,8 +394,16 @@ export default function AttendancePage() {
   const setStatus = useCallback((id: number, status: AttStatus) => {
     setLocalMap(prev => {
       if (prev[id] === status) {
+        // Toggle-off: check if student has a 'present'/'late' record in DB
+        // If yes → must send 'absent' to actually remove from count
+        // If no existing record → just remove from localMap (nothing to undo)
+        const dbStatus = studentsRef.current.find(s => s.student_id === id)?.attendance_status;
         const next = { ...prev };
-        delete next[id];
+        if (dbStatus === 'present' || dbStatus === 'late') {
+          next[id] = 'absent';
+        } else {
+          delete next[id];
+        }
         return next;
       }
       return { ...prev, [id]: status };

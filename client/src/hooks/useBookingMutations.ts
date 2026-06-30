@@ -145,6 +145,7 @@ export function useBookingMutations(providedStudentId?: number) {
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
       queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
 
       toast({
         title: "Presença confirmada!",
@@ -262,6 +263,7 @@ export function useBookingMutations(providedStudentId?: number) {
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
       queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
 
       toast({
         title: "Presença cancelada",

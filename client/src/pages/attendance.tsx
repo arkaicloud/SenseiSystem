@@ -462,6 +462,7 @@ export default function AttendancePage() {
       setHasChanges(false);
       toast({ title: "Presenças salvas!", description: `${presentCount} presentes, ${absentCount} faltas.` });
       queryClient.invalidateQueries({ queryKey: ["/api/classes", selectedClassId, "roster", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
     onError: () => {
       toast({ title: "Erro ao salvar", variant: "destructive" });

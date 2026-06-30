@@ -39,7 +39,7 @@ export async function getDashboardMetrics(now = new Date()) {
     SELECT CASE WHEN COUNT(*)=0 THEN 0
       ELSE SUM(CASE WHEN status IN ('present','late') THEN 1 ELSE 0 END)::float / COUNT(*)::float
     END AS rate,
-    COUNT(*)::int AS total
+    SUM(CASE WHEN status IN ('present','late') THEN 1 ELSE 0 END)::int AS total
     FROM m;
   `);
   const rate = (attendanceRateResult.rows[0] as any)?.rate || 0;

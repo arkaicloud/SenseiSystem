@@ -8,7 +8,8 @@ import {
   CheckSquare, MessageSquare, AlertTriangle, GraduationCap,
   UserCheck, DollarSign, BarChart3, ChevronDown,
   FileText, Award, X, Bell, Ticket, HeartHandshake,
-  ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen
+  ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen,
+  ShieldCheck
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     { id: "comunicados", label: "Comunicados", icon: MessageSquare, path: "/communications", roles: ["admin", "instructor"] },
+    { id: "user-management", label: "Gestão de Usuários", icon: ShieldCheck, path: "/admin/user-management", roles: ["admin"] },
     { id: "school-config", label: "Configuração da Escola", icon: Settings, path: "/school-config", roles: ["admin"] },
     { id: "asaas-integration", label: "Integração ASAAS", icon: CreditCard, path: "/asaas-payments", roles: ["admin"] },
     { id: "agenda-semana", label: "Agenda da Semana", icon: Calendar, path: "/agenda", roles: ["student"] },

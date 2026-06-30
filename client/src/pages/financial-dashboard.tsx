@@ -131,13 +131,27 @@ export default function FinancialDashboard() {
   // Manual receipt dialog state
   const [showManualReceipt, setShowManualReceipt] = useState(false);
 
-  // Fetch financial data
+  // Fetch financial data — scoped to selected month (or all if showAllMonths)
   const {
     data: financialData,
     isLoading,
     error,
   } = useQuery<FinancialData>({
-    queryKey: ["/api/financial/payments"],
+    queryKey: ["/api/financial/payments", format(selectedMonth, 'yyyy-MM'), showAllMonths],
+    queryFn: async () => {
+      let url = `/api/financial/payments?limit=500`;
+      if (!showAllMonths) {
+        const startDate = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
+        const endDate = format(endOfMonth(selectedMonth), 'yyyy-MM-dd');
+        url += `&startDate=${startDate}&endDate=${endDate}`;
+      }
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Erro ao carregar dados financeiros');
+      }
+      return res.json();
+    },
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -223,21 +237,11 @@ export default function FinancialDashboard() {
   const monthLabel = format(selectedMonth, "MMMM yyyy", { locale: ptBR });
   const monthLabelCapitalized = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
-  // Filter payments
+  // Filter payments — month is already handled server-side; only type + search here
   const getFilteredPayments = () => {
     if (!financialData?.payments) return [];
 
     return financialData.payments.filter((payment) => {
-      // Month filter
-      if (!showAllMonths) {
-        try {
-          const due = parseISO(payment.dueDate);
-          if (!isSameMonth(due, selectedMonth)) return false;
-        } catch {
-          return false;
-        }
-      }
-
       // Type filter
       if (paymentTypeFilter !== "all") {
         if (paymentTypeFilter === "subscriptions" && !payment.description?.includes("Mensalidade")) return false;

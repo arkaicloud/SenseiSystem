@@ -120,6 +120,7 @@ export const users = pgTable("users", {
   lastLoginDate: timestamp("last_login_date"),
   totalLogins: integer("total_logins").default(0),
   mustChangePassword: boolean("must_change_password").default(false),
+  permissions: text("permissions").default('{}'), // JSON: { canSeeFinancials, canManageStudents, canManageClasses }
 });
 
 // Students table

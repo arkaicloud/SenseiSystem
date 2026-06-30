@@ -153,7 +153,7 @@ export class AsaasPaymentsService {
     return { method: 'single' };
   }
 
-  async getPayments(limit: number = 100, offset: number = 0): Promise<AsaasPaymentsResponse> {
+  async getPayments(limit: number = 100, offset: number = 0, dueDateGe?: string, dueDateLe?: string): Promise<AsaasPaymentsResponse> {
     if (!this.isConfigured) {
       throw new Error('ASAAS não configurado. Configure a chave de API nas configurações da escola.');
     }
@@ -161,13 +161,13 @@ export class AsaasPaymentsService {
     try {
       console.log('🔄 Fetching ASAAS payments...');
 
+      const params: Record<string, any> = { limit, offset, order: 'desc' };
+      if (dueDateGe) params.dueDateGe = dueDateGe;
+      if (dueDateLe) params.dueDateLe = dueDateLe;
+
       const response = await axios.get(`${this.baseUrl}/payments`, {
         headers: this.getHeaders(),
-        params: {
-          limit,
-          offset,
-          order: 'desc',
-        },
+        params,
       });
 
       console.log(`✅ ASAAS payments fetched: ${response.data.data?.length || 0} payments`);
@@ -287,9 +287,9 @@ export class AsaasPaymentsService {
     };
   }
 
-  async getPaymentsWithCustomers(limit: number = 100): Promise<Array<AsaasPayment & { customerData?: AsaasCustomer }>> {
+  async getPaymentsWithCustomers(limit: number = 100, dueDateGe?: string, dueDateLe?: string): Promise<Array<AsaasPayment & { customerData?: AsaasCustomer }>> {
     try {
-      const paymentsResponse = await this.getPayments(limit);
+      const paymentsResponse = await this.getPayments(limit, 0, dueDateGe, dueDateLe);
       const payments = paymentsResponse.data || [];
 
       // Cache for customers to avoid duplicate requests

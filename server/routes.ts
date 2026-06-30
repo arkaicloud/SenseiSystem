@@ -1450,6 +1450,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Staff User Management (admin only) ──────────────────────────────────
+
+  // List all staff users (admin + instructor)
+  app.get("/api/admin/staff", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getUsers();
+      const staff = allUsers
+        .filter(u => u.role === 'admin' || u.role === 'instructor')
+        .map(({ password, ...u }) => u);
+      res.json({ staff });
+    } catch (error) {
+      console.error("Error fetching staff:", error);
+      res.status(500).json({ message: "Erro ao buscar equipe" });
+    }
+  });
+
+  // Create new staff user (instructor or admin)
+  app.post("/api/admin/staff", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { firstName, lastName, email, phone, role, password, permissions } = req.body;
+
+      if (!firstName || !lastName || !email || !password || !role) {
+        return res.status(400).json({ message: "Nome, email, senha e função são obrigatórios" });
+      }
+      if (!['admin', 'instructor'].includes(role)) {
+        return res.status(400).json({ message: "Função deve ser 'admin' ou 'instructor'" });
+      }
+
+      const existing = await storage.getUserByEmail(email);
+      if (existing) {
+        return res.status(409).json({ message: "Email já cadastrado no sistema" });
+      }
+
+      const hashed = await hashPassword(password);
+      const username = email.split('@')[0] + '_' + Date.now();
+
+      const newUser = await storage.createUser({
+        firstName,
+        lastName,
+        username,
+        email,
+        phone: phone || null,
+        password: hashed,
+        role,
+        status: 'active',
+        active: true,
+        permissions: permissions ? JSON.stringify(permissions) : '{}',
+      } as any);
+
+      const { password: _, ...safeUser } = newUser;
+      res.status(201).json({ user: safeUser });
+    } catch (error: any) {
+      console.error("Error creating staff user:", error);
+      res.status(500).json({ message: error.message || "Erro ao criar usuário" });
+    }
+  });
+
+  // Update staff user (permissions, role, name, etc.)
+  app.put("/api/admin/staff/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { firstName, lastName, email, phone, role, permissions, active } = req.body;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+
+      const updates: Record<string, any> = {};
+      if (firstName !== undefined) updates.firstName = firstName;
+      if (lastName !== undefined) updates.lastName = lastName;
+      if (email !== undefined) updates.email = email;
+      if (phone !== undefined) updates.phone = phone;
+      if (role !== undefined) updates.role = role;
+      if (active !== undefined) updates.active = active;
+      if (permissions !== undefined) updates.permissions = JSON.stringify(permissions);
+
+      const updated = await storage.updateUser(userId, updates);
+      if (!updated) return res.status(404).json({ message: "Usuário não encontrado" });
+
+      const { password: _, ...safeUser } = updated;
+      res.json({ user: safeUser });
+    } catch (error: any) {
+      console.error("Error updating staff user:", error);
+      res.status(500).json({ message: error.message || "Erro ao atualizar usuário" });
+    }
+  });
+
+  // Reset staff user password
+  app.post("/api/admin/staff/:id/reset-password", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Senha deve ter pelo menos 6 caracteres" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+
+      const hashed = await hashPassword(newPassword);
+      await storage.updateUser(userId, { password: hashed, mustChangePassword: true });
+      res.json({ message: "Senha redefinida com sucesso" });
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: error.message || "Erro ao redefinir senha" });
+    }
+  });
+
+  // Delete staff user
+  app.delete("/api/admin/staff/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+      if (user.id === (req as any).user?.id) {
+        return res.status(400).json({ message: "Não é possível excluir seu próprio usuário" });
+      }
+      await storage.deleteUser(userId);
+      res.json({ message: "Usuário removido com sucesso" });
+    } catch (error: any) {
+      console.error("Error deleting staff user:", error);
+      res.status(500).json({ message: error.message || "Erro ao remover usuário" });
+    }
+  });
+
   // Approve user mutation
   // Update payment plan for pending user
   app.patch("/api/users/:id/payment-plan", isAuthenticated, isAdmin, async (req, res) => {
@@ -6967,12 +7092,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const asaasService = config?.asaasApiKey 
         ? new AsaasPaymentsService(config.asaasApiKey)
         : new AsaasPaymentsService();
-      const limit = parseInt(req.query.limit as string) || 100;
+      const limit = parseInt(req.query.limit as string) || 500;
+      const startDateParam = req.query.startDate as string;
+      const endDateParam = req.query.endDate as string;
 
-      console.log('🔄 Fetching ASAAS payments for financial panel...');
+      // Default to current month if no date params provided
+      const now = new Date();
+      const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const dueDateGe = startDateParam || defaultStart.toISOString().split('T')[0];
+      const dueDateLe = endDateParam || defaultEnd.toISOString().split('T')[0];
 
-      // Get payments with customer data
-      const paymentsWithCustomers = await asaasService.getPaymentsWithCustomers(limit);
+      console.log(`🔄 Fetching ASAAS payments for financial panel (${dueDateGe} → ${dueDateLe})...`);
+
+      // Get payments with customer data filtered by date range
+      const paymentsWithCustomers = await asaasService.getPaymentsWithCustomers(limit, dueDateGe, dueDateLe);
 
       // Calculate metrics
       const payments = paymentsWithCustomers.map(p => ({

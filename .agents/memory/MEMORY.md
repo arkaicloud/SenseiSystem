@@ -1,1 +1,4 @@
 - [Segurança — Padrões de Auditoria](SECURITY_AUDIT_PATTERNS.md) — rotas mortas/públicas, PII em logs, XSS sem sanitizar, session secret hardcoded, padrões de risco recorrentes no SenseiSystem
+- [Dashboard Endpoints](dashboard-endpoints.md) — only `/api/dashboard/metrics` matters; delegates to `server/services/dashboardMetricsNew.ts`
+- [ASAAS Filter Pattern](asaas-filter.md) — financial payments route must pass dueDateGe/dueDateLe to ASAAS API; frontend sends selectedMonth as query param to avoid client-side month filtering
+- [Staff Permissions](staff-permissions.md) — permissions stored as JSON text in users.permissions column; instructor dashboard checks canSeeFinancials before showing financial widgets

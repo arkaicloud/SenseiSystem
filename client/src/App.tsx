@@ -43,6 +43,7 @@ import AsaasPaymentsPage from "./pages/asaas-payments";
 import CommunicationsPage from "./pages/admin/communications";
 import GuardianSelectPage from "@/pages/guardian-select";
 import GuardianManagementPage from "@/pages/admin/guardian-management";
+import UserManagementPage from "@/pages/admin/user-management";
 import { GuardianProvider } from "@/contexts/guardian-context";
 
 function Router() {
@@ -163,6 +164,11 @@ function Router() {
       <ProtectedRoute
         path="/admin/family-plans"
         component={() => <GuardianManagementPage />}
+        allowedRoles={["admin"]}
+      />
+      <ProtectedRoute
+        path="/admin/user-management"
+        component={() => <UserManagementPage />}
         allowedRoles={["admin"]}
       />
 

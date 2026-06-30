@@ -1453,11 +1453,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ─── Staff User Management (admin only) ──────────────────────────────────
 
   // List all staff users (admin + instructor)
+  // Super admin emails that are hidden from regular admins
+  const SUPER_ADMIN_EMAILS = ['adm@senseisystem.com.br', 'huiosbjj@senseisystem.com.br'];
+
   app.get("/api/admin/staff", isAuthenticated, isAdmin, async (req, res) => {
     try {
+      const currentUser = req.user as any;
+      const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(currentUser?.email);
       const allUsers = await storage.getUsers();
       const staff = allUsers
         .filter(u => u.role === 'admin' || u.role === 'instructor')
+        .filter(u => isSuperAdmin || !SUPER_ADMIN_EMAILS.includes(u.email))
         .map(({ password, ...u }) => u);
       res.json({ staff });
     } catch (error) {

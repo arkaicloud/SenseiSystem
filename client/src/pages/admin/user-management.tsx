@@ -34,8 +34,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Users, Plus, Edit, Trash2, KeyRound, ShieldCheck, Eye, EyeOff,
-  GraduationCap, BookOpen, BarChart3, CheckCircle2, XCircle
+  Users, Plus, Edit, KeyRound, ShieldCheck, Eye, EyeOff,
+  GraduationCap, BookOpen, BarChart3, CheckCircle2, XCircle,
+  PowerOff, Power
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 
@@ -85,7 +86,7 @@ export default function UserManagement() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<StaffUser | null>(null);
-  const [deleteUser, setDeleteUser] = useState<StaffUser | null>(null);
+  const [toggleUser, setToggleUser] = useState<StaffUser | null>(null);
   const [resetUser, setResetUser] = useState<StaffUser | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -136,21 +137,24 @@ export default function UserManagement() {
     onError: (e: any) => toast({ title: 'Erro', description: e.message || 'Erro ao atualizar', variant: 'destructive' }),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest('DELETE', `/api/admin/staff/${id}`);
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
+      const res = await apiRequest('PUT', `/api/admin/staff/${id}`, { active });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || `Erro ${res.status}`);
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/staff'] });
-      toast({ title: 'Removido!', description: 'Usuário removido da equipe.' });
-      setDeleteUser(null);
+      toast({
+        title: vars.active ? 'Usuário ativado!' : 'Usuário inativado!',
+        description: vars.active ? 'Acesso liberado com sucesso.' : 'Acesso bloqueado. O usuário não conseguirá mais entrar.',
+      });
+      setToggleUser(null);
     },
-    onError: (e: any) => toast({ title: 'Erro', description: e.message || 'Erro ao remover', variant: 'destructive' }),
+    onError: (e: any) => toast({ title: 'Erro', description: e.message || 'Erro ao alterar status', variant: 'destructive' }),
   });
 
   const resetPasswordMutation = useMutation({
@@ -260,17 +264,17 @@ export default function UserManagement() {
                 const initials = getInitials(u.firstName, u.lastName);
                 const isSelf = u.id === currentUser?.id;
                 return (
-                  <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors" data-testid={`row-staff-${u.id}`}>
+                  <div key={u.id} className={`flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors ${!u.active ? 'opacity-60' : ''}`} data-testid={`row-staff-${u.id}`}>
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-semibold text-sm ${u.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                         {initials}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium">{u.firstName} {u.lastName}</span>
                           {isSelf && <Badge variant="outline" className="text-xs">você</Badge>}
                           <Badge className={`text-xs ${ROLE_COLOR[u.role] || ''}`}>{ROLE_LABEL[u.role] || u.role}</Badge>
-                          {!u.active && <Badge variant="destructive" className="text-xs">Inativo</Badge>}
+                          {!u.active && <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">Inativo</Badge>}
                         </div>
                         <span className="text-sm text-muted-foreground">{u.email}</span>
                       </div>
@@ -297,15 +301,22 @@ export default function UserManagement() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => openEdit(u)} data-testid={`button-edit-${u.id}`}>
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(u)} data-testid={`button-edit-${u.id}`} title="Editar">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => { setResetUser(u); setNewPassword(''); }} data-testid={`button-reset-${u.id}`}>
+                        <Button size="sm" variant="ghost" onClick={() => { setResetUser(u); setNewPassword(''); }} data-testid={`button-reset-${u.id}`} title="Redefinir senha">
                           <KeyRound className="h-4 w-4" />
                         </Button>
                         {!isSelf && (
-                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteUser(u)} data-testid={`button-delete-${u.id}`}>
-                            <Trash2 className="h-4 w-4" />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className={u.active ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}
+                            onClick={() => setToggleUser(u)}
+                            data-testid={`button-toggle-${u.id}`}
+                            title={u.active ? 'Inativar usuário' : 'Ativar usuário'}
+                          >
+                            {u.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                           </Button>
                         )}
                       </div>
@@ -389,23 +400,34 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Alert */}
-      <AlertDialog open={!!deleteUser} onOpenChange={v => { if (!v) setDeleteUser(null); }}>
+      {/* Toggle Active Alert */}
+      <AlertDialog open={!!toggleUser} onOpenChange={v => { if (!v) setToggleUser(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover Usuário</AlertDialogTitle>
+            <AlertDialogTitle>
+              {toggleUser?.active ? 'Inativar Usuário' : 'Ativar Usuário'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover <strong>{deleteUser?.firstName} {deleteUser?.lastName}</strong> da equipe? Esta ação não pode ser desfeita.
+              {toggleUser?.active
+                ? <>Tem certeza que deseja inativar <strong>{toggleUser?.firstName} {toggleUser?.lastName}</strong>? O usuário não conseguirá mais acessar o sistema, mas seu histórico e vínculos com aulas serão mantidos.</>
+                : <>Deseja reativar <strong>{toggleUser?.firstName} {toggleUser?.lastName}</strong>? O usuário voltará a ter acesso ao sistema.</>
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteUser && deleteMutation.mutate(deleteUser.id)}
-              data-testid="button-confirm-delete"
+              className={toggleUser?.active
+                ? 'bg-orange-500 text-white hover:bg-orange-600'
+                : 'bg-green-600 text-white hover:bg-green-700'
+              }
+              onClick={() => toggleUser && toggleActiveMutation.mutate({ id: toggleUser.id, active: !toggleUser.active })}
+              data-testid="button-confirm-toggle"
             >
-              {deleteMutation.isPending ? 'Removendo...' : 'Remover'}
+              {toggleActiveMutation.isPending
+                ? (toggleUser?.active ? 'Inativando...' : 'Ativando...')
+                : (toggleUser?.active ? 'Inativar' : 'Ativar')
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

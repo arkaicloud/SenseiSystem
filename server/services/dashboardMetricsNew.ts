@@ -1,13 +1,12 @@
 import { db } from "../db";
 import { sql } from "drizzle-orm";
-import { students, users, attendance, studentPayments, classes } from "../../shared/schema";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export async function getDashboardMetrics(now = new Date()) {
   const from = startOfMonth(now);
   const to = endOfMonth(now);
 
-  // 1) Alunos ativos (considera todos com active=true, independente de aprovação)
+  // 1) Alunos ativos
   const activeStudentsResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM students s
@@ -17,7 +16,7 @@ export async function getDashboardMetrics(now = new Date()) {
   `);
   const activeStudents = (activeStudentsResult.rows[0] as any)?.count || 0;
 
-  // 2) Aulas realizadas (mês): sessões com presença (present/late) — proxy de realização
+  // 2) Aulas realizadas (mês)
   const classesHeldResult = await db.execute(sql`
     SELECT COUNT(DISTINCT (a.class_id, DATE(a.date)))::int AS count
     FROM attendance a
@@ -28,7 +27,7 @@ export async function getDashboardMetrics(now = new Date()) {
   `);
   const classesHeld = (classesHeldResult.rows[0] as any)?.count || 0;
 
-  // 3) Taxa de presença (mês) = presenças / (presenças + faltas)
+  // 3) Taxa de presença (mês)
   const attendanceRateResult = await db.execute(sql`
     WITH m AS (
       SELECT a.status
@@ -39,12 +38,14 @@ export async function getDashboardMetrics(now = new Date()) {
     )
     SELECT CASE WHEN COUNT(*)=0 THEN 0
       ELSE SUM(CASE WHEN status IN ('present','late') THEN 1 ELSE 0 END)::float / COUNT(*)::float
-    END AS rate
+    END AS rate,
+    COUNT(*)::int AS total
     FROM m;
   `);
   const rate = (attendanceRateResult.rows[0] as any)?.rate || 0;
+  const monthlyAttendanceCount = (attendanceRateResult.rows[0] as any)?.total || 0;
 
-  // 4) Receita mensal (centavos) — pagos no mês
+  // 4) Receita mensal
   const monthlyRevenueResult = await db.execute(sql`
     SELECT COALESCE(SUM(sp.amount),0)::int AS cents
     FROM student_payments sp
@@ -55,9 +56,9 @@ export async function getDashboardMetrics(now = new Date()) {
   `);
   const monthlyRevenue = (monthlyRevenueResult.rows[0] as any)?.cents || 0;
 
-  // 5) Engajamento em baixa (alunos com attendance_rate < threshold)
-  const frequencyThreshold = 60; // Padrão de 60%, igual à tela de engajamento
-  const lowEngagementResult = await db.execute(sql`
+  // 5) Alunos em risco (attendance_rate < 60%)
+  const frequencyThreshold = 60;
+  const atRiskResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM students s
     JOIN users u ON u.id = s.user_id
@@ -65,9 +66,9 @@ export async function getDashboardMetrics(now = new Date()) {
       AND u.role = 'student'
       AND s.attendance_rate < ${frequencyThreshold};
   `);
-  const lowEngagement = (lowEngagementResult.rows[0] as any)?.count || 0;
+  const atRiskStudents = (atRiskResult.rows[0] as any)?.count || 0;
 
-  // 6) Inadimplência — títulos vencidos
+  // 6) Inadimplência
   const delinquencyResult = await db.execute(sql`
     SELECT COUNT(*)::int AS count
     FROM student_payments sp
@@ -88,10 +89,39 @@ export async function getDashboardMetrics(now = new Date()) {
   `);
   const pendingApprovals = (pendingApprovalsResult.rows[0] as any)?.count || 0;
 
-  // 8) Aulas de hoje (lista com botão Acessar)
+  // 8) Tendência mensal — últimos 6 meses (presentes + confirmados)
+  const trendResult = await db.execute(sql`
+    SELECT
+      TO_CHAR(DATE_TRUNC('month', date), 'Mon') AS mes,
+      DATE_TRUNC('month', date) AS month_date,
+      COUNT(*)::int AS presencas
+    FROM attendance
+    WHERE status IN ('present', 'confirmed', 'late')
+      AND date >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+    GROUP BY DATE_TRUNC('month', date)
+    ORDER BY month_date ASC;
+  `);
+  const trendRows = (trendResult.rows as any[]) || [];
+  const trendMap: Record<string, number> = {};
+  trendRows.forEach((r: any) => {
+    trendMap[String(r.mes)] = Number(r.presencas);
+  });
+  const MONTHS_PT: Record<string, string> = {
+    Jan: 'Jan', Feb: 'Fev', Mar: 'Mar', Apr: 'Abr',
+    May: 'Mai', Jun: 'Jun', Jul: 'Jul', Aug: 'Ago',
+    Sep: 'Set', Oct: 'Out', Nov: 'Nov', Dec: 'Dez',
+  };
+  const monthlyTrend: { mes: string; presencas: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const enMes = d.toLocaleString('en-US', { month: 'short' });
+    const ptMes = MONTHS_PT[enMes] || enMes;
+    monthlyTrend.push({ mes: ptMes, presencas: trendMap[enMes] || 0 });
+  }
+
+  // 9) Aulas de hoje
   const dowResult = await db.execute(sql`SELECT EXTRACT(DOW FROM NOW())::int AS dow;`);
   const dow = (dowResult.rows[0] as any)?.dow || 0;
-  
   const todayClasses = await db.execute(sql`
     SELECT c.id, c.name, c.start_time, c.duration
     FROM classes c
@@ -99,7 +129,7 @@ export async function getDashboardMetrics(now = new Date()) {
     ORDER BY c.start_time ASC;
   `);
 
-  // 9) Aniversariantes — SOMENTE hoje
+  // 10) Aniversariantes de hoje
   const birthdays = await db.execute(sql`
     SELECT u.id AS user_id, (u.first_name || ' ' || u.last_name) AS name, u.birth_date
     FROM users u
@@ -108,7 +138,7 @@ export async function getDashboardMetrics(now = new Date()) {
       AND to_char(u.birth_date, 'MM-DD') = to_char(NOW(), 'MM-DD');
   `);
 
-  // 10) Faixas (adulto 18+, infantil <18)
+  // 11) Faixas (adulto / infantil)
   const beltsAdult = await db.execute(sql`
     SELECT bl.name AS belt_name, COUNT(*)::int AS count
     FROM students s
@@ -139,10 +169,13 @@ export async function getDashboardMetrics(now = new Date()) {
       activeStudents: Number(activeStudents ?? 0),
       classesHeld: Number(classesHeld ?? 0),
       attendanceRate: Number(rate ?? 0),
+      monthlyAttendanceCount: Number(monthlyAttendanceCount ?? 0),
       monthlyRevenue: Number(monthlyRevenue ?? 0),
-      lowEngagement: Number(lowEngagement ?? 0),
+      lowEngagement: Number(atRiskStudents ?? 0),
+      atRiskStudents: Number(atRiskStudents ?? 0),
       delinquency: Number(delinquency ?? 0),
-      pendingApprovals: Number(pendingApprovals ?? 0)
+      pendingApprovals: Number(pendingApprovals ?? 0),
+      monthlyTrend,
     },
     today: {
       classes: (todayClasses.rows as any[]) || [],

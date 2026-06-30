@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber, notices, studentNotifications, userNotificationPreferences } from "@shared/schema";
 import { eq, and, or, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
 import { z } from "zod";
@@ -214,7 +214,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         birthdaysResult,
         beltStatsAdultResult,
         beltStatsKidsResult,
-        monthlyTrendResult
       ] = await Promise.all([
         // Active Students
         db.select({ count: count() })
@@ -367,18 +366,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ))
           .groupBy(students.beltLevel),
 
-        // Monthly attendance trend — last 6 months (present + confirmed counts)
-        db.execute(sql`
-          SELECT
-            TO_CHAR(DATE_TRUNC('month', date AT TIME ZONE 'UTC'), 'Mon') AS mes,
-            DATE_TRUNC('month', date AT TIME ZONE 'UTC') AS month_date,
-            COUNT(*) AS presencas
-          FROM attendance
-          WHERE status IN ('present', 'confirmed')
-            AND date >= DATE_TRUNC('month', NOW() AT TIME ZONE 'UTC') - INTERVAL '5 months'
-          GROUP BY DATE_TRUNC('month', date AT TIME ZONE 'UTC')
-          ORDER BY month_date ASC
-        `)
       ]);
 
       // Process results
@@ -394,25 +381,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Monthly attendance count (current month)
       const monthlyAttendanceCount = Number(attendanceData?.totalAttendances || 0);
 
-      // Build 6-month trend with real data, filling missing months with 0
-      const trendRows = (monthlyTrendResult as any).rows ?? monthlyTrendResult ?? [];
-      const trendMap: Record<string, number> = {};
-      trendRows.forEach((r: any) => {
-        const key = String(r.mes || r.MES || '');
-        trendMap[key] = Number(r.presencas || r.PRESENCAS || 0);
-      });
+      // Build 6-month trend using pool.query() directly (guaranteed pg format)
       const MONTHS_PT: Record<string, string> = {
         Jan: 'Jan', Feb: 'Fev', Mar: 'Mar', Apr: 'Abr',
         May: 'Mai', Jun: 'Jun', Jul: 'Jul', Aug: 'Ago',
         Sep: 'Set', Oct: 'Out', Nov: 'Nov', Dec: 'Dez',
       };
       const monthlyTrend: { mes: string; presencas: number }[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const enMes = d.toLocaleString('en-US', { month: 'short' }); // Jan, Feb…
-        const ptMes = MONTHS_PT[enMes] || enMes;
-        const count = trendMap[enMes] || trendMap[ptMes] || 0;
-        monthlyTrend.push({ mes: ptMes, presencas: count });
+      try {
+        const trendResult = pool ? await pool.query(`
+          SELECT
+            TO_CHAR(DATE_TRUNC('month', date), 'Mon') AS mes,
+            COUNT(*)::int AS presencas
+          FROM attendance
+          WHERE status IN ('present', 'confirmed')
+            AND date >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+          GROUP BY DATE_TRUNC('month', date)
+          ORDER BY DATE_TRUNC('month', date) ASC
+        `) : { rows: [] };
+        const trendMap: Record<string, number> = {};
+        (trendResult.rows as any[]).forEach((r: any) => {
+          trendMap[String(r.mes)] = Number(r.presencas);
+        });
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+          const enMes = d.toLocaleString('en-US', { month: 'short' });
+          const ptMes = MONTHS_PT[enMes] || enMes;
+          monthlyTrend.push({ mes: ptMes, presencas: trendMap[enMes] || 0 });
+        }
+      } catch (trendErr) {
+        console.error('[TREND] Error fetching trend:', trendErr);
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+          const enMes = d.toLocaleString('en-US', { month: 'short' });
+          monthlyTrend.push({ mes: MONTHS_PT[enMes] || enMes, presencas: 0 });
+        }
       }
 
       const [studentPaymentsRevenue, asaasRevenue] = await monthlyRevenueResult;

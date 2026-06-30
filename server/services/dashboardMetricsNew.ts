@@ -96,7 +96,7 @@ export async function getDashboardMetrics(now = new Date()) {
       DATE_TRUNC('month', date) AS month_date,
       COUNT(*)::int AS presencas
     FROM attendance
-    WHERE status IN ('present', 'confirmed', 'late')
+    WHERE status IN ('present', 'late')
       AND date >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
     GROUP BY DATE_TRUNC('month', date)
     ORDER BY month_date ASC;

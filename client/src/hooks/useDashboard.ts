@@ -4,7 +4,6 @@ import { useEffect } from "react";
 export function useDashboard() {
   const queryClient = useQueryClient();
 
-  // Force clear any cached dashboard data on mount
   useEffect(() => {
     queryClient.removeQueries({ queryKey: ["dashboard-metrics"] });
   }, []);
@@ -25,6 +24,7 @@ export function useDashboard() {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
   });
 }

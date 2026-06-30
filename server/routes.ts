@@ -1471,7 +1471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firstName, lastName, email, phone, role, password, permissions } = req.body;
 
-      if (!firstName || !lastName || !email || !password || !role) {
+      if (!firstName || !email || !password || !role) {
         return res.status(400).json({ message: "Nome, email, senha e função são obrigatórios" });
       }
       if (!['admin', 'instructor'].includes(role)) {

@@ -102,18 +102,32 @@ export default function UserManagement() {
   const staff = data?.staff ?? [];
 
   const createMutation = useMutation({
-    mutationFn: (body: any) => apiRequest('POST', '/api/admin/staff', body),
+    mutationFn: async (body: any) => {
+      const res = await apiRequest('POST', '/api/admin/staff', body);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Erro ${res.status}`);
+      }
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/staff'] });
       toast({ title: 'Usuário criado!', description: `${form.firstName} adicionado à equipe com sucesso.` });
       setCreateOpen(false);
       resetForm();
     },
-    onError: (e: any) => toast({ title: 'Erro', description: e.message || 'Erro ao criar usuário', variant: 'destructive' }),
+    onError: (e: any) => toast({ title: 'Erro ao criar', description: e.message || 'Erro ao criar usuário', variant: 'destructive' }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...body }: any) => apiRequest('PUT', `/api/admin/staff/${id}`, body),
+    mutationFn: async ({ id, ...body }: any) => {
+      const res = await apiRequest('PUT', `/api/admin/staff/${id}`, body);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Erro ${res.status}`);
+      }
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/staff'] });
       toast({ title: 'Atualizado!', description: 'Dados do usuário atualizados.' });
@@ -123,7 +137,14 @@ export default function UserManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('DELETE', `/api/admin/staff/${id}`),
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/admin/staff/${id}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Erro ${res.status}`);
+      }
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/staff'] });
       toast({ title: 'Removido!', description: 'Usuário removido da equipe.' });
@@ -133,8 +154,14 @@ export default function UserManagement() {
   });
 
   const resetPasswordMutation = useMutation({
-    mutationFn: ({ id, newPassword }: { id: number; newPassword: string }) =>
-      apiRequest('POST', `/api/admin/staff/${id}/reset-password`, { newPassword }),
+    mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
+      const res = await apiRequest('POST', `/api/admin/staff/${id}/reset-password`, { newPassword });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Erro ${res.status}`);
+      }
+      return res.json();
+    },
     onSuccess: () => {
       toast({ title: 'Senha redefinida!', description: 'O usuário precisará usar a nova senha no próximo login.' });
       setResetUser(null);

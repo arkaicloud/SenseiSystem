@@ -137,9 +137,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         />
       )}
 
-      {/* Sidebar navigation - hidden on mobile for students */}
+      {/* Sidebar navigation - hidden on mobile for students and guardians */}
       {user && (
-        <div className={user?.role === 'student' ? 'hidden md:block' : ''}>
+        <div className={(user?.role === 'student' || user?.role === 'guardian') ? 'hidden md:block' : ''}>
           <Sidebar
             isOpen={sidebarOpen}
             isMobile={isMobile}
@@ -152,10 +152,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Main content */}
       <main className={`flex-1 ${
-        !isMobile && user && user?.role !== 'student'
+        !isMobile && user && user?.role !== 'student' && user?.role !== 'guardian'
           ? sidebarCollapsed ? "ml-16" : "ml-64"
           : ""
-      } ${user?.role === 'student' ? "md:ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
+      } ${(user?.role === 'student' || user?.role === 'guardian') ? "md:ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
         {/* Desktop header */}
         {!isMobile && user && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 hidden md:flex items-center justify-between px-6 py-3 sticky top-0 z-40">
@@ -255,11 +255,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         )}
         
-        {/* Mobile header - VYTA style for students, standard for admins */}
-        {isMobile && user && user?.role === 'student' && (
+        {/* Mobile header - VYTA style for students/guardians, standard for admins */}
+        {isMobile && user && (user?.role === 'student' || user?.role === 'guardian') && (
           <div className="md:hidden" />
         )}
-        {isMobile && user && user?.role !== 'student' && (
+        {isMobile && user && user?.role !== 'student' && user?.role !== 'guardian' && (
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 md:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
             {!isPWA && (
               <button
@@ -368,8 +368,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {/* Page content */}
         <div 
-          className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user && user?.role !== 'student' ? "pt-16" : ""} ${isMobile && user?.role === 'student' ? "pt-0" : ""} ${!isMobile && user ? "pt-0" : ""} ${user?.role === 'student' ? "md:pb-6" : ""}`}
-          style={user?.role === 'student' ? {
+          className={`px-3 py-3 md:px-6 md:py-6 min-h-screen overflow-x-auto ${isMobile && user && user?.role !== 'student' && user?.role !== 'guardian' ? "pt-16" : ""} ${isMobile && (user?.role === 'student' || user?.role === 'guardian') ? "pt-0" : ""} ${!isMobile && user ? "pt-0" : ""} ${(user?.role === 'student' || user?.role === 'guardian') ? "md:pb-6" : ""}`}
+          style={(user?.role === 'student' || user?.role === 'guardian') ? {
             paddingBottom: isMobile 
               ? 'calc(80px + env(safe-area-inset-bottom, 0px))' 
               : '1.5rem',
@@ -382,8 +382,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
       </main>
 
-      {/* Bottom Navigation - only for students on mobile */}
-      {user?.role === 'student' && <BottomNav />}
+      {/* Bottom Navigation - for students and guardians on mobile */}
+      {(user?.role === 'student' || user?.role === 'guardian') && <BottomNav />}
     </div>
   );
 };

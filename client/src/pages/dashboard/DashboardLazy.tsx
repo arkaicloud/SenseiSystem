@@ -18,6 +18,7 @@ export default function DashboardLazy({ userRole }: DashboardLazyProps) {
       case 'instructor':
         return <InstructorDashboard />;
       case 'student':
+      case 'guardian':
         return <StudentDashboard />;
       default:
         return <StudentDashboard />;

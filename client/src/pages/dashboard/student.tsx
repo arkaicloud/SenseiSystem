@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "@/hooks/use-translations";
 import { useAuth } from "@/hooks/use-auth";
+import { useGuardian } from "@/contexts/guardian-context";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CreditCard, ChevronRight } from "lucide-react";
@@ -14,14 +14,35 @@ import beltImg from "@assets/Gemini_Generated_Image_5i9ge55i9ge55i9g_17732609288
 export default function StudentDashboard() {
   const { t } = useTranslations();
   const { user } = useAuth();
+  const { isGuardianMode, activeStudent } = useGuardian();
 
-  const { data: studentData, isLoading: isStudentLoading } = useQuery({
-    queryKey: ["/api/student/profile", user?.id],
-    enabled: !!user?.id,
+  // Guardian sees their active dependent's profile; student sees their own
+  const profileQueryKey = isGuardianMode && activeStudent
+    ? [`/api/student/profile/${activeStudent.userId}`]
+    : ["/api/student/profile"];
+
+  const { data: profileRaw, isLoading: isStudentLoading } = useQuery({
+    queryKey: profileQueryKey,
+    enabled: isGuardianMode ? !!activeStudent?.userId : !!user?.id,
   });
 
+  // Normalize data: guardian gets { student: {...} }, student gets { id, beltLevel, stripes, ... }
+  const studentData = isGuardianMode
+    ? (profileRaw as any)?.student
+    : profileRaw;
+
+  // Display name: guardian shows active student's name, student shows their own
+  const displayFirstName = isGuardianMode && activeStudent
+    ? activeStudent.firstName
+    : user?.firstName;
+
+  const classesTodayKey = isGuardianMode && activeStudent
+    ? [`/api/classes/today?studentUserId=${activeStudent.userId}`]
+    : ["/api/classes/today"];
+
   const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
-    queryKey: ["/api/classes/today"],
+    queryKey: classesTodayKey,
+    enabled: isGuardianMode ? !!activeStudent?.userId : !!user?.id,
   });
 
   const { data: schoolInfo } = useQuery<{ schoolName: string }>({
@@ -77,7 +98,7 @@ export default function StudentDashboard() {
           </div>
           <div className="space-y-2">
             <h1 className="text-[28px] font-bold text-white leading-[34px] font-inter">
-              Fala, {user?.firstName}!
+              Fala, {displayFirstName}!
             </h1>
             <p className="text-[15px] text-white/80 font-inter">
               Bora treinar hoje?

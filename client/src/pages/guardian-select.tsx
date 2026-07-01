@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { useEffect } from "react";
 import { Users, ChevronRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BottomNav from "@/components/student/BottomNav";
 
 const BELT_COLORS: Record<string, string> = {
   white: "#FFFFFF", blue: "#2563EB", purple: "#7C3AED",
@@ -78,7 +79,7 @@ export default function GuardianSelectPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F8F9FF" }}>
+    <div className="min-h-screen flex flex-col font-inter" style={{ backgroundColor: "#F8F9FF" }}>
       {/* Header */}
       <div
         className="px-6 pt-12 pb-8 text-white"
@@ -108,7 +109,7 @@ export default function GuardianSelectPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-5 py-6">
+      <div className="flex-1 px-5 py-6 pb-28">
         <h2 className="text-base font-semibold text-gray-700 mb-4">
           Escolha qual aluno deseja gerenciar:
         </h2>
@@ -135,6 +136,9 @@ export default function GuardianSelectPage() {
           </div>
         )}
       </div>
+
+      {/* Bottom navigation - same as student app */}
+      <BottomNav />
     </div>
   );
 }

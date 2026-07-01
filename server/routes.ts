@@ -747,9 +747,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid user ID' });
       }
 
-      // Students can only view their own profile; admins and instructors can view any
+      // Students can only view their own profile; admins/instructors can view any; guardians can view dependents
       if (requestUser.id !== userIdNumber && requestUser.role !== 'admin' && requestUser.role !== 'instructor') {
-        return res.status(403).json({ error: 'Acesso negado' });
+        if (requestUser.role === 'guardian') {
+          const depCheck = await db.execute(sql`
+            SELECT 1 FROM students WHERE user_id = ${userIdNumber} AND guardian_id = ${requestUser.id}
+          `);
+          if (depCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Acesso negado' });
+          }
+        } else {
+          return res.status(403).json({ error: 'Acesso negado' });
+        }
       }
 
       const student = await storage.getStudentByUserId(userIdNumber);
@@ -2852,13 +2861,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const requestUser = (req as any).user;
-      const student = await storage.getStudentByUserId(requestUser.id);
+
+      // Guardians pass ?studentUserId=xxx to fetch classes for a specific dependent
+      let targetUserId = requestUser.id;
+      if (requestUser.role === 'guardian' && req.query.studentUserId) {
+        const qUserId = parseInt(req.query.studentUserId as string);
+        if (!isNaN(qUserId)) {
+          // Verify it's actually a dependent
+          const depCheck = await db.execute(sql`
+            SELECT 1 FROM students WHERE user_id = ${qUserId} AND guardian_id = ${requestUser.id}
+          `);
+          if (depCheck.rows.length === 0) {
+            return res.status(403).json({ message: "Acesso negado" });
+          }
+          targetUserId = qUserId;
+        }
+      }
+
+      const student = await storage.getStudentByUserId(targetUserId);
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
       }
 
       // Buscar dados completos do usuário para filtros de categoria
-      const userData = await storage.getUser(requestUser.id);
+      const userData = await storage.getUser(targetUserId);
       if (!userData) {
         return res.status(404).json({ message: "Dados do usuário não encontrados" });
       }

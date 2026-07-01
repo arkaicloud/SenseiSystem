@@ -12,6 +12,7 @@ import {
   schoolPayments,
   beltLevels,
   contasReceber,
+  asaasPaymentCache,
   dailyLoginRecords,
   streakAchievements,
   passwordResetTokens,
@@ -75,6 +76,7 @@ import {
   type InsertDailyLoginRecord,
   type InsertBeltLevel,
   type InsertContaReceber,
+  type AsaasPaymentCache,
   attendanceChanges,
 } from "@shared/schema";
 import { hashPassword } from "./auth";
@@ -222,6 +224,12 @@ export interface IStorage {
   createContaReceber(conta: any): Promise<any>;
   updateContaReceber(id: number, conta: Partial<any>): Promise<any>;
   deleteContaReceber(id: number): Promise<boolean>;
+
+  // ASAAS Payment Cache
+  getAsaasPaymentCache(startDate?: string, endDate?: string): Promise<any[]>;
+  upsertAsaasPayments(payments: any[]): Promise<number>;
+  clearAsaasPaymentCache(): Promise<void>;
+  getAsaasPaymentCacheSyncInfo(): Promise<{ total: number; lastSync: Date | null }>;
 
   // Password reset token functions
   createPasswordResetToken(data: {
@@ -1344,6 +1352,11 @@ export class MemStorage implements IStorage {
     console.log(`MemStorage: createContaReceber called`, conta);
     return { id: Math.floor(Math.random() * 1000), ...conta };
   }
+
+  async getAsaasPaymentCache(_startDate?: string, _endDate?: string): Promise<any[]> { return []; }
+  async upsertAsaasPayments(_payments: any[]): Promise<number> { return 0; }
+  async clearAsaasPaymentCache(): Promise<void> {}
+  async getAsaasPaymentCacheSyncInfo(): Promise<{ total: number; lastSync: Date | null }> { return { total: 0, lastSync: null }; }
 
   async updateContaReceber(id: number, conta: Partial<any>): Promise<any> {
     console.log(`MemStorage: updateContaReceber called for id ${id}`);
@@ -2487,6 +2500,83 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(contasReceber)
       .where(eq(contasReceber.id, id));
     return result.rowCount > 0;
+  }
+
+  // ── ASAAS Payment Cache ──────────────────────────────────────────────────────
+
+  async getAsaasPaymentCache(startDate?: string, endDate?: string): Promise<AsaasPaymentCache[]> {
+    const conditions = [];
+    if (startDate) conditions.push(gte(asaasPaymentCache.dueDate, startDate));
+    if (endDate)   conditions.push(lte(asaasPaymentCache.dueDate, endDate));
+    const rows = conditions.length > 0
+      ? await db.select().from(asaasPaymentCache).where(and(...conditions)).orderBy(desc(asaasPaymentCache.dueDate))
+      : await db.select().from(asaasPaymentCache).orderBy(desc(asaasPaymentCache.dueDate));
+    return rows;
+  }
+
+  async upsertAsaasPayments(payments: any[]): Promise<number> {
+    if (payments.length === 0) return 0;
+    const now = new Date();
+    const rows = payments.map((p) => ({
+      id:               p.id,
+      dateCreated:      p.dateCreated   ?? null,
+      customer:         p.customer      ?? null,
+      subscription:     p.subscription  ?? null,
+      installment:      p.installment   ?? null,
+      value:            String(p.value  ?? 0),
+      netValue:         p.netValue != null ? String(p.netValue) : null,
+      status:           p.status        ?? 'PENDING',
+      dueDate:          p.dueDate       ?? '',
+      originalDueDate:  p.originalDueDate ?? null,
+      paymentDate:      p.paymentDate   ?? null,
+      clientPaymentDate: p.clientPaymentDate ?? null,
+      billingType:      p.billingType   ?? null,
+      description:      p.description  ?? null,
+      invoiceUrl:       p.invoiceUrl    ?? null,
+      invoiceNumber:    p.invoiceNumber ?? null,
+      externalReference: p.externalReference ?? null,
+      installmentNumber: p.installmentNumber ?? null,
+      installmentCount:  p.installmentCount  ?? null,
+      deleted:           p.deleted      ?? false,
+      customerName:      p.customerName ?? null,
+      customerEmail:     p.customerEmail ?? null,
+      studentId:         p.studentId    ?? null,
+      syncedAt:          now,
+    }));
+
+    // Batch upsert in chunks of 200
+    const CHUNK = 200;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await db.insert(asaasPaymentCache)
+        .values(rows.slice(i, i + CHUNK))
+        .onConflictDoUpdate({
+          target: asaasPaymentCache.id,
+          set: {
+            status:           sql`excluded.status`,
+            paymentDate:      sql`excluded.payment_date`,
+            clientPaymentDate: sql`excluded.client_payment_date`,
+            value:            sql`excluded.value`,
+            netValue:         sql`excluded.net_value`,
+            dueDate:          sql`excluded.due_date`,
+            description:      sql`excluded.description`,
+            invoiceUrl:       sql`excluded.invoice_url`,
+            deleted:          sql`excluded.deleted`,
+            syncedAt:         sql`excluded.synced_at`,
+          },
+        });
+    }
+    return rows.length;
+  }
+
+  async clearAsaasPaymentCache(): Promise<void> {
+    await db.delete(asaasPaymentCache);
+  }
+
+  async getAsaasPaymentCacheSyncInfo(): Promise<{ total: number; lastSync: Date | null }> {
+    const result = await db
+      .select({ total: sql<number>`count(*)::int`, lastSync: sql<Date>`max(synced_at)` })
+      .from(asaasPaymentCache);
+    return { total: result[0]?.total ?? 0, lastSync: result[0]?.lastSync ?? null };
   }
 
   // Password reset token functions

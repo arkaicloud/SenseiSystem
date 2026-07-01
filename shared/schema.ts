@@ -772,6 +772,42 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({ id: true, u
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
 
+// ── ASAAS Payment Cache ───────────────────────────────────────────────────────
+// Local mirror of ASAAS payments. Populated by /api/financial/sync.
+// Reading from this table is fast (DB query vs. ASAAS API call).
+export const asaasPaymentCache = pgTable("asaas_payment_cache", {
+  // ASAAS fields (from /v3/subscriptions/{id}/payments and /v3/payments)
+  id:                 text("id").primaryKey(),         // pay_xxx
+  dateCreated:        text("date_created"),            // YYYY-MM-DD
+  customer:           text("customer"),                // cus_xxx
+  subscription:       text("subscription"),            // sub_xxx (null for one-off)
+  installment:        text("installment"),             // installment plan ID
+  value:              text("value").notNull(),         // stored as text to avoid precision issues
+  netValue:           text("net_value"),
+  status:             text("status").notNull(),        // PENDING | RECEIVED | OVERDUE | CONFIRMED | CANCELLED
+  dueDate:            text("due_date").notNull(),      // YYYY-MM-DD
+  originalDueDate:    text("original_due_date"),
+  paymentDate:        text("payment_date"),
+  clientPaymentDate:  text("client_payment_date"),
+  billingType:        text("billing_type"),            // BOLETO | PIX | CREDIT_CARD | UNDEFINED
+  description:        text("description"),
+  invoiceUrl:         text("invoice_url"),
+  invoiceNumber:      text("invoice_number"),
+  externalReference:  text("external_reference"),
+  installmentNumber:  integer("installment_number"),
+  installmentCount:   integer("installment_count"),
+  deleted:            boolean("deleted").default(false),
+  // Denormalized customer info (saved at sync time — avoids extra lookups on read)
+  customerName:       text("customer_name"),
+  customerEmail:      text("customer_email"),
+  // Internal link
+  studentId:          integer("student_id"),
+  // Sync metadata
+  syncedAt:           timestamp("synced_at").defaultNow(),
+});
+
+export type AsaasPaymentCache = typeof asaasPaymentCache.$inferSelect;
+
 // Class Cancellations — cancels a specific session of a recurring class on a given date
 export const classCancellations = pgTable("class_cancellations", {
   id: serial("id").primaryKey(),

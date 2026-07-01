@@ -168,19 +168,10 @@ export default function FinancialDashboard() {
   });
 
   // ── Mutations ─────────────────────────────────────────────────────────────
-  const refreshMutation = useMutation({
+  const syncMutation = useMutation({
     mutationFn: async () => {
-      // Pass the currently selected month so the server refreshes the right period
-      const body = showAllMonths
-        ? {}
-        : {
-            startDate: format(startOfMonth(selectedMonth), "yyyy-MM-dd"),
-            endDate:   format(endOfMonth(selectedMonth),   "yyyy-MM-dd"),
-          };
-      const response = await fetch("/api/financial/refresh", {
+      const response = await fetch("/api/financial/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
         credentials: "include",
       });
       if (!response.ok) throw new Error((await response.json()).message || "Erro");
@@ -189,12 +180,15 @@ export default function FinancialDashboard() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] });
       toast({
-        title: "Dados Atualizados",
-        description: `${data.paymentsCount ?? 0} cobrança(s) carregada(s) para o período selecionado`,
+        title: "Sincronização Concluída",
+        description: `${data.total ?? 0} cobranças sincronizadas do ASAAS`,
       });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro na Sincronização", description: e.message, variant: "destructive" }),
   });
+
+  // Keep legacy alias so existing JSX references still compile
+  const refreshMutation = syncMutation;
 
   const cancelPaymentMutation = useMutation({
     mutationFn: async ({ paymentId, installmentId }: { paymentId: string; installmentId?: string | null }) => {
@@ -424,9 +418,9 @@ export default function FinancialDashboard() {
           <Button onClick={() => setShowManualReceipt(true)} className="bg-green-600 hover:bg-green-700 text-white">
             <Plus className="h-4 w-4 mr-2" />Lançar Recebimento
           </Button>
-          <Button onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
-            Atualizar
+          <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending} variant="outline" data-testid="button-sync-asaas">
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            {syncMutation.isPending ? "Sincronizando…" : "Sincronizar com ASAAS"}
           </Button>
         </div>
       </div>

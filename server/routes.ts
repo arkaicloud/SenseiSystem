@@ -28,6 +28,7 @@ import bcrypt from "bcryptjs";
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
+import { syncAsaasPayments } from "./services/asaasSyncService";
 import { toDayUTC, toDateString, getBrasiliaDate, getBrasiliaDayOfWeek } from "./utils/date.js";
 import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
@@ -7285,75 +7286,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =====Financial Panel Routes=====
   // Get ASAAS payments and metrics
+  // ── GET /api/financial/payments ─────────────────────────────────────────────
+  // Reads from local cache (fast). Runs sync automatically if cache is empty.
   app.get("/api/financial/payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const config = await storage.getSchoolConfig();
-      const asaasService = config?.asaasApiKey
-        ? new AsaasPaymentsService(config.asaasApiKey)
-        : new AsaasPaymentsService();
-
-      // Date filter params sent by the client (YYYY-MM-DD strings)
       const startDateParam = req.query.startDate as string | undefined;
       const endDateParam   = req.query.endDate   as string | undefined;
 
-      // NOTE: The ASAAS API's dueDateGe/dueDateLe filter has proven unreliable
-      // (it returns the same dataset regardless of date). We therefore fetch ALL
-      // payments and apply date filtering ourselves on the returned data.
-      console.log(`🔄 Fetching ALL ASAAS payments (server-side date filter: ${startDateParam ?? 'none'} → ${endDateParam ?? 'none'})...`);
+      // If cache is empty, run an initial sync automatically
+      const { total } = await storage.getAsaasPaymentCacheSyncInfo();
+      if (total === 0) {
+        console.log('📦 Cache empty — running initial ASAAS sync...');
+        await syncAsaasPayments();
+      }
 
-      const allPaymentsWithCustomers = await asaasService.getPaymentsWithCustomers(2000);
+      const cached = await storage.getAsaasPaymentCache(startDateParam, endDateParam);
 
-      // Server-side date filter (pure string comparison — timezone-safe)
-      const filtered = startDateParam || endDateParam
-        ? allPaymentsWithCustomers.filter((p) => {
-            const d = p.dueDate?.slice(0, 10) ?? '';
-            if (startDateParam && d < startDateParam) return false;
-            if (endDateParam   && d > endDateParam)   return false;
-            return true;
-          })
-        : allPaymentsWithCustomers;
+      // Map cache rows to the shape the frontend expects
+      const payments = cached
+        .filter((p) => !p.deleted)
+        .map((p) => ({
+          id:               p.id,
+          customer:         p.customer,
+          customerName:     p.customerName  || 'Cliente não encontrado',
+          customerEmail:    p.customerEmail || '',
+          value:            parseFloat(p.value ?? '0'),
+          status:           p.status,
+          dueDate:          p.dueDate,
+          description:      p.description,
+          invoiceUrl:       p.invoiceUrl,
+          paymentLink:      null,
+          dateCreated:      p.dateCreated,
+          paymentDate:      p.paymentDate,
+          clientPaymentDate: p.clientPaymentDate,
+          externalReference: p.externalReference,
+          installment:      p.installment      || null,
+          installmentNumber: p.installmentNumber || null,
+          installmentCount:  p.installmentCount  || null,
+          billingType:      p.billingType       || null,
+          studentId:        p.studentId,
+          subscription:     p.subscription      || null,
+        }));
 
-      const payments = filtered.map(p => ({
-        id:               p.id,
-        customer:         p.customer,
-        customerName:     p.customerData?.name  || 'Cliente não encontrado',
-        customerEmail:    p.customerData?.email || '',
-        value:            p.value,
-        status:           p.status,
-        dueDate:          p.dueDate,
-        description:      p.description,
-        invoiceUrl:       p.invoiceUrl,
-        paymentLink:      p.paymentLink,
-        dateCreated:      p.dateCreated,
-        paymentDate:      p.paymentDate,
-        clientPaymentDate: p.clientPaymentDate,
-        externalReference: p.externalReference,
-        installment:      (p as any).installment      || null,
-        installmentNumber: p.installmentNumber        || null,
-        installmentCount:  p.installmentCount         || null,
-        billingType:      (p as any).billingType      || null,
-      }));
+      // Calculate metrics inline (same logic as before)
+      const received  = payments.filter((p) => ['RECEIVED', 'CONFIRMED'].includes(p.status));
+      const pending   = payments.filter((p) => p.status === 'PENDING');
+      const overdue   = payments.filter((p) => p.status === 'OVERDUE');
+      const today     = new Date().toISOString().slice(0, 10);
+      const overdueC  = payments.filter((p) => p.status === 'PENDING' && p.dueDate < today);
 
-      const metrics = asaasService.calculateMetrics(filtered);
+      const sum = (arr: typeof payments) => arr.reduce((acc, p) => acc + p.value, 0);
+      const metrics = {
+        totalReceived:  sum(received),
+        totalPending:   sum(pending),
+        totalOverdue:   sum(overdue),
+        totalOverdueCount: overdueC.length,
+        totalPayments:  payments.length,
+        receivedCount:  received.length,
+        pendingCount:   pending.length,
+        overdueCount:   overdue.length,
+      };
 
-      // Diagnostic: show date distribution of what ASAAS actually returned
-      const dateDist: Record<string, number> = {};
-      allPaymentsWithCustomers.forEach((p) => {
-        const ym = p.dueDate?.slice(0, 7) ?? 'unknown';
-        dateDist[ym] = (dateDist[ym] || 0) + 1;
-      });
-      console.log(`📅 ASAAS dueDate distribution:`, dateDist);
-      console.log(`✅ Financial data: ${allPaymentsWithCustomers.length} total in ASAAS → ${payments.length} after date filter (${startDateParam ?? 'no'} → ${endDateParam ?? 'filter'})`);
+      const syncInfo = await storage.getAsaasPaymentCacheSyncInfo();
 
-      res.json({ payments, metrics, totalCount: payments.length });
+      console.log(`✅ Financial (cache): ${payments.length} payments (${startDateParam ?? 'all'} → ${endDateParam ?? 'dates'})`);
+
+      res.json({ payments, metrics, totalCount: payments.length, lastSync: syncInfo.lastSync, cacheTotal: syncInfo.total });
 
     } catch (error: any) {
-      console.error('❌ Error fetching financial data:', error);
+      console.error('❌ Error fetching financial data from cache:', error);
       res.status(500).json({
-        error: "Erro ao buscar dados financeiros do ASAAS",
-        message: error.message || "Verifique a configuração da chave ASAAS",
+        error: "Erro ao buscar dados financeiros",
+        message: error.message,
       });
     }
+  });
+
+  // ── POST /api/financial/sync ─────────────────────────────────────────────────
+  // Triggers a full sync from ASAAS into the local cache.
+  app.post("/api/financial/sync", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      console.log('🔄 ASAAS full sync triggered by admin...');
+      const result = await syncAsaasPayments();
+      res.json({
+        success: true,
+        message: `Sincronização concluída: ${result.total} cobranças salvas`,
+        ...result,
+      });
+    } catch (error: any) {
+      console.error('❌ ASAAS sync error:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // ── GET /api/financial/sync-status ──────────────────────────────────────────
+  app.get("/api/financial/sync-status", isAuthenticated, isAdmin, async (req, res) => {
+    const info = await storage.getAsaasPaymentCacheSyncInfo();
+    res.json(info);
   });
 
   // Manual receipt entry (lançamento manual de recebimento)

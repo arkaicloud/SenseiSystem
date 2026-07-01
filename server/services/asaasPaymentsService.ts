@@ -287,29 +287,48 @@ export class AsaasPaymentsService {
     };
   }
 
-  async getPaymentsWithCustomers(limit: number = 100, dueDateGe?: string, dueDateLe?: string): Promise<Array<AsaasPayment & { customerData?: AsaasCustomer }>> {
-    try {
-      const paymentsResponse = await this.getPayments(limit, 0, dueDateGe, dueDateLe);
-      const payments = paymentsResponse.data || [];
+  /**
+   * Fetches ALL payments (paginating through ASAAS 100-item pages) within the
+   * given date range, then enriches each payment with its customer data.
+   * Returns up to MAX_PAYMENTS payments to prevent runaway API calls.
+   */
+  async getPaymentsWithCustomers(
+    _legacyLimit: number = 100,
+    dueDateGe?: string,
+    dueDateLe?: string
+  ): Promise<Array<AsaasPayment & { customerData?: AsaasCustomer }>> {
+    const MAX_PAYMENTS = 2000;
+    const PAGE_SIZE = 100;
 
-      // Cache for customers to avoid duplicate requests
+    try {
+      // ── 1. Paginate through all ASAAS payment pages ──────────────────────
+      const allPayments: AsaasPayment[] = [];
+      let offset = 0;
+
+      while (allPayments.length < MAX_PAYMENTS) {
+        const page = await this.getPayments(PAGE_SIZE, offset, dueDateGe, dueDateLe);
+        const batch = page.data || [];
+        allPayments.push(...batch);
+        console.log(`📄 ASAAS page offset=${offset}: ${batch.length} payments (total so far: ${allPayments.length}, hasMore: ${page.hasMore})`);
+        if (!page.hasMore || batch.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
+
+      console.log(`✅ Total ASAAS payments fetched: ${allPayments.length}`);
+
+      // ── 2. Enrich with customer data (cached) ────────────────────────────
       const customerCache = new Map<string, AsaasCustomer>();
 
       const paymentsWithCustomers = await Promise.all(
-        payments.map(async (payment) => {
+        allPayments.map(async (payment) => {
           try {
             let customerData = customerCache.get(payment.customer);
-
             if (!customerData) {
               customerData = await this.getCustomer(payment.customer);
               customerCache.set(payment.customer, customerData);
             }
-
-            return {
-              ...payment,
-              customerData,
-            };
-          } catch (error) {
+            return { ...payment, customerData };
+          } catch {
             console.warn(`⚠️ Could not fetch customer data for ${payment.customer}`);
             return payment;
           }

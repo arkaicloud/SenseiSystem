@@ -251,15 +251,31 @@ export default function FinancialDashboard() {
   // ── Filtering ─────────────────────────────────────────────────────────────
   const { payments = [], metrics } = financialData || {};
 
+  // Month boundaries used for client-side enforcement
+  const monthStart = startOfMonth(selectedMonth);
+  const monthEnd   = endOfMonth(selectedMonth);
+
   const filteredPayments = payments
     .filter((p) => {
+      // ① Enforce month filter client-side (ASAAS sometimes leaks records outside the range)
+      if (!showAllMonths) {
+        const due = new Date(p.dueDate);
+        if (due < monthStart || due > monthEnd) return false;
+      }
+
+      // ② Status checkboxes
       if (statusFilters.size > 0 && !statusFilters.has(p.status as StatusKey)) return false;
+
+      // ③ Payment type
       if (paymentTypeFilter === "subscriptions" && !p.description?.includes("Mensalidade")) return false;
       if (paymentTypeFilter === "single"        &&  p.description?.includes("Mensalidade")) return false;
+
+      // ④ Text search
       if (searchTerm) {
         const s = searchTerm.toLowerCase();
         if (!p.customerName?.toLowerCase().includes(s) && !p.description?.toLowerCase().includes(s)) return false;
       }
+
       return true;
     })
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());

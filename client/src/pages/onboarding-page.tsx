@@ -51,7 +51,12 @@ export default function OnboardingPage() {
 
   const { mutate: registerStudent, isPending: isSubmitting } = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest('POST', '/api/register-student', data);
+      const res = await apiRequest('POST', '/api/register-student', data);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Erro ao processar cadastro' }));
+        throw new Error(errorData.message || `Erro ${res.status}`);
+      }
+      return res;
     },
     onSuccess: () => {
       clearCache();
@@ -64,6 +69,7 @@ export default function OnboardingPage() {
     onError: (error: any) => {
       const errorMessage = error.message || error.toString();
       setRegistrationError(errorMessage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       if (errorMessage.includes("já foi utilizado") || errorMessage.includes("Email already in use")) {
         toast({
           title: "E-mail já cadastrado",
@@ -148,6 +154,9 @@ export default function OnboardingPage() {
       financialResponsibleRelationship: completeData.financialResponsibleRelationship || "self",
       paymentPlanId: completeData.paymentPlanId || null,
       dueDate: completeData.dueDate || null,
+      couponCode: (completeData as any).couponCode || null,
+      isScholarship: (completeData as any).isScholarship || false,
+      sex: (completeData as any).sex || null,
       healthAnswers: (completeData as any).healthAnswers || [],
       agreedToHealthTerms: (completeData as any).agreedToHealthTerms || false,
       healthTermsAgreedAt: (completeData as any).healthTermsAgreedAt || null,

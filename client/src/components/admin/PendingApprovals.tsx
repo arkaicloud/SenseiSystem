@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle, FileWarning, GraduationCap } from 'lucide-react';
+import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle, FileWarning, GraduationCap, Trash2 } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -41,6 +41,7 @@ interface PaymentPlan {
 
 export default function PendingApprovals() {
   const { toast } = useToast();
+  const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
 
   const { data: pendingUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ['/api/users/pending'],
@@ -98,6 +99,23 @@ export default function PendingApprovals() {
         description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
+    },
+  });
+
+  // Mutation para rejeitar TODOS os pendentes de uma vez
+  const rejectAllMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/admin/reject-all-pending', { method: 'POST' });
+    },
+    onSuccess: async (res: any) => {
+      const data = await res.json().catch(() => ({}));
+      setShowRejectAllConfirm(false);
+      toast({ title: `${data.deleted || 0} cadastro(s) removido(s)`, description: "Lista de pendentes limpa com sucesso." });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+    },
+    onError: () => {
+      toast({ title: "Erro ao remover pendentes", variant: "destructive" });
     },
   });
 
@@ -189,11 +207,54 @@ export default function PendingApprovals() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Aprovações Pendentes</h2>
-        <p className="text-muted-foreground">
-          {pendingUsers.users.length} aluno{pendingUsers.users.length !== 1 ? 's' : ''} aguardando aprovação
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Aprovações Pendentes</h2>
+          <p className="text-muted-foreground">
+            {pendingUsers.users.length} aluno{pendingUsers.users.length !== 1 ? 's' : ''} aguardando aprovação
+          </p>
+        </div>
+
+        {!showRejectAllConfirm ? (
+          <Button
+            variant="outline"
+            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2"
+            onClick={() => setShowRejectAllConfirm(true)}
+            data-testid="button-reject-all-pending"
+          >
+            <Trash2 className="w-4 h-4" />
+            Remover Todos os Pendentes
+          </Button>
+        ) : (
+          <div className="flex flex-col gap-2 border border-red-200 rounded-xl p-4 bg-red-50 max-w-sm">
+            <p className="text-sm font-semibold text-red-800">
+              ⚠️ Remover todos os {pendingUsers.users.length} cadastros pendentes?
+            </p>
+            <p className="text-xs text-red-600">
+              Esta ação é irreversível. Os dados de todos os alunos pendentes serão apagados permanentemente.
+            </p>
+            <div className="flex gap-2 mt-1">
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => rejectAllMutation.mutate()}
+                disabled={rejectAllMutation.isPending}
+                className="gap-1.5"
+              >
+                {rejectAllMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Confirmar remoção
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowRejectAllConfirm(false)}
+                disabled={rejectAllMutation.isPending}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6">

@@ -1868,6 +1868,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reject user
+  // Bulk reject — remove ALL pending (inactive, status='pending') users at once
+  app.post("/api/admin/reject-all-pending", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      const pendingUsers = allUsers.filter(u => !u.active && u.status === 'pending');
+
+      let deleted = 0;
+      for (const user of pendingUsers) {
+        const student = await storage.getStudentByUserId(user.id);
+        if (student) await storage.deleteStudent(student.id);
+        await storage.deleteUser(user.id);
+        deleted++;
+      }
+
+      const requestUser = (req as any).user;
+      if (deleted > 0) {
+        await storage.createActivityLog({
+          activity: `Bulk reject: ${deleted} pending user(s) removed by admin`,
+          userId: requestUser.id,
+          entityType: "user",
+          entityId: requestUser.id,
+          timestamp: new Date()
+        });
+      }
+
+      console.log(`🗑️  Bulk reject: ${deleted} pending users removed by user ${requestUser.id}`);
+      res.json({ deleted, message: `${deleted} cadastro(s) pendente(s) removido(s).` });
+    } catch (error) {
+      console.error("Error bulk rejecting pending users:", error);
+      res.status(500).json({ message: "Erro ao remover cadastros pendentes" });
+    }
+  });
+
   app.post("/api/users/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;

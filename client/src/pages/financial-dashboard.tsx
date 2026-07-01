@@ -249,28 +249,63 @@ export default function FinancialDashboard() {
   const canCancel = (s: Payment["status"]) => s === "PENDING" || s === "OVERDUE";
 
   // ── Filtering ─────────────────────────────────────────────────────────────
-  const { payments = [], metrics } = financialData || {};
+  const { payments = [] } = financialData || {};
 
   // Month boundaries used for client-side enforcement
   const monthStart = startOfMonth(selectedMonth);
   const monthEnd   = endOfMonth(selectedMonth);
 
-  const filteredPayments = payments
-    .filter((p) => {
-      // ① Enforce month filter client-side (ASAAS sometimes leaks records outside the range)
-      if (!showAllMonths) {
-        const due = new Date(p.dueDate);
-        if (due < monthStart || due > monthEnd) return false;
-      }
+  // Payments restricted to the selected month only (used for metrics + table)
+  const monthPayments = payments.filter((p) => {
+    if (showAllMonths) return true;
+    const due = new Date(p.dueDate);
+    return due >= monthStart && due <= monthEnd;
+  });
 
-      // ② Status checkboxes
+  // ── Derived metrics (calculated client-side from month-filtered payments) ─
+  const now = new Date();
+  const derivedMetrics = (() => {
+    const received  = monthPayments.filter((p) => p.status === "RECEIVED" || p.status === "CONFIRMED");
+    const pending   = monthPayments.filter((p) => p.status === "PENDING"  && new Date(p.dueDate) >= now);
+    const overdue   = monthPayments.filter((p) => (p.status === "PENDING" || p.status === "OVERDUE") && new Date(p.dueDate) < now);
+    const late      = monthPayments.filter((p) => (p.status === "RECEIVED" || p.status === "CONFIRMED") && p.paymentDate && new Date(p.paymentDate) > new Date(p.dueDate));
+
+    const totalReceived  = received.reduce((s, p) => s + p.value, 0);
+    const totalPending   = pending.reduce((s, p) => s + p.value, 0);
+    const totalOverdue   = overdue.reduce((s, p) => s + p.value, 0);
+    const uniquePayers   = new Set(received.map((p) => p.customer)).size;
+    const avgTicket      = uniquePayers > 0 ? totalReceived / uniquePayers : 0;
+    const defaultRate    = (totalReceived + totalOverdue) > 0 ? (totalOverdue / (totalReceived + totalOverdue)) * 100 : 0;
+
+    const upcoming = monthPayments
+      .filter((p) => p.status === "PENDING" && new Date(p.dueDate) >= now)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+    return {
+      totalReceived,
+      totalPending,
+      totalOverdue,
+      overdueCount:      overdue.length,
+      latePaymentsCount: late.length,
+      latePaymentsValue: late.reduce((s, p) => s + p.value, 0),
+      averageTicket:     avgTicket,
+      defaultRate,
+      totalPaymentsThisMonth: monthPayments.length,
+      nextDueDate: upcoming[0]?.dueDate ?? null,
+      payingStudentsCount: uniquePayers,
+    };
+  })();
+
+  const filteredPayments = monthPayments
+    .filter((p) => {
+      // ① Status checkboxes
       if (statusFilters.size > 0 && !statusFilters.has(p.status as StatusKey)) return false;
 
-      // ③ Payment type
+      // ② Payment type
       if (paymentTypeFilter === "subscriptions" && !p.description?.includes("Mensalidade")) return false;
       if (paymentTypeFilter === "single"        &&  p.description?.includes("Mensalidade")) return false;
 
-      // ④ Text search
+      // ③ Text search
       if (searchTerm) {
         const s = searchTerm.toLowerCase();
         if (!p.customerName?.toLowerCase().includes(s) && !p.description?.toLowerCase().includes(s)) return false;
@@ -384,7 +419,7 @@ export default function FinancialDashboard() {
             <CreditCard className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(metrics?.averageTicket || 0)}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatCurrency(derivedMetrics.averageTicket)}</div>
             <p className="text-xs text-muted-foreground">Valor médio por aluno</p>
           </CardContent>
         </Card>
@@ -394,7 +429,7 @@ export default function FinancialDashboard() {
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{metrics?.overdueCount || 0}</div>
+            <div className="text-2xl font-bold text-red-600">{derivedMetrics.overdueCount}</div>
             <p className="text-xs text-muted-foreground">Cobranças vencidas</p>
           </CardContent>
         </Card>
@@ -404,9 +439,9 @@ export default function FinancialDashboard() {
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{metrics?.latePaymentsCount || 0}</div>
+            <div className="text-2xl font-bold text-orange-600">{derivedMetrics.latePaymentsCount}</div>
             <p className="text-xs text-muted-foreground">
-              Pagos após vencimento ({formatCurrency(metrics?.latePaymentsValue || 0)})
+              Pagos após vencimento ({formatCurrency(derivedMetrics.latePaymentsValue)})
             </p>
           </CardContent>
         </Card>
@@ -416,7 +451,7 @@ export default function FinancialDashboard() {
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{(metrics?.defaultRate || 0).toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-red-600">{derivedMetrics.defaultRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">Percentual de atraso</p>
           </CardContent>
         </Card>
@@ -426,7 +461,7 @@ export default function FinancialDashboard() {
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{metrics?.totalPaymentsThisMonth || 0}</div>
+            <div className="text-2xl font-bold text-blue-600">{derivedMetrics.totalPaymentsThisMonth}</div>
             <p className="text-xs text-muted-foreground">Total de cobranças</p>
           </CardContent>
         </Card>
@@ -437,7 +472,7 @@ export default function FinancialDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {metrics?.nextDueDate ? formatDate(metrics.nextDueDate.toString()) : "N/A"}
+              {derivedMetrics.nextDueDate ? formatDate(derivedMetrics.nextDueDate) : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground">Próxima data de vencimento</p>
           </CardContent>
@@ -452,7 +487,7 @@ export default function FinancialDashboard() {
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatCurrency(metrics?.totalReceived || 0)}</div>
+            <div className="text-2xl font-bold text-green-700">{formatCurrency(derivedMetrics.totalReceived)}</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
@@ -461,7 +496,7 @@ export default function FinancialDashboard() {
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-700">{formatCurrency(metrics?.totalPending || 0)}</div>
+            <div className="text-2xl font-bold text-orange-700">{formatCurrency(derivedMetrics.totalPending)}</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
@@ -470,7 +505,7 @@ export default function FinancialDashboard() {
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatCurrency(metrics?.totalOverdue || 0)}</div>
+            <div className="text-2xl font-bold text-red-700">{formatCurrency(derivedMetrics.totalOverdue)}</div>
           </CardContent>
         </Card>
       </div>

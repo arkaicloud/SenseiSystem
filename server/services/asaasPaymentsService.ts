@@ -316,24 +316,30 @@ export class AsaasPaymentsService {
 
       console.log(`✅ Total ASAAS payments fetched: ${allPayments.length}`);
 
-      // ── 2. Enrich with customer data (cached) ────────────────────────────
+      // ── 2. Enrich with customer data (batched to avoid ASAAS rate limit) ─
       const customerCache = new Map<string, AsaasCustomer>();
+      const CUSTOMER_BATCH = 10; // stay well below ASAAS concurrent limit of 50
 
-      const paymentsWithCustomers = await Promise.all(
-        allPayments.map(async (payment) => {
-          try {
-            let customerData = customerCache.get(payment.customer);
-            if (!customerData) {
-              customerData = await this.getCustomer(payment.customer);
-              customerCache.set(payment.customer, customerData);
+      // Collect unique customer IDs and prefetch them in batches
+      const uniqueCustomerIds = [...new Set(allPayments.map((p) => p.customer))];
+      for (let i = 0; i < uniqueCustomerIds.length; i += CUSTOMER_BATCH) {
+        const batch = uniqueCustomerIds.slice(i, i + CUSTOMER_BATCH);
+        await Promise.all(
+          batch.map(async (customerId) => {
+            try {
+              const customerData = await this.getCustomer(customerId);
+              customerCache.set(customerId, customerData);
+            } catch {
+              console.warn(`⚠️ Could not fetch customer data for ${customerId}`);
             }
-            return { ...payment, customerData };
-          } catch {
-            console.warn(`⚠️ Could not fetch customer data for ${payment.customer}`);
-            return payment;
-          }
-        })
-      );
+          })
+        );
+      }
+
+      const paymentsWithCustomers = allPayments.map((payment) => ({
+        ...payment,
+        customerData: customerCache.get(payment.customer),
+      }));
 
       return paymentsWithCustomers;
     } catch (error) {

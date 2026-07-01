@@ -9,7 +9,8 @@ import {
 import { ptBR } from "date-fns/locale";
 import {
   ChevronLeft, ChevronRight, Search, Users, CheckCircle2, XCircle,
-  Clock, Calendar, Save, Loader2, UserCheck, LayoutList, Check, X
+  Clock, Calendar, Save, Loader2, UserCheck, LayoutList, Check, X,
+  BanIcon, RotateCcw, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -278,6 +279,8 @@ export default function AttendancePage() {
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [hasChanges, setHasChanges] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(true);
+  const [cancelReason, setCancelReason] = useState("");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // ─── Queries ──────────────────────────────────────────────────────────────
 
@@ -299,6 +302,45 @@ export default function AttendancePage() {
 
   const classesForDay = useMemo(() =>
     allClasses.filter(c => c.dayOfWeek === selectedWeekday), [allClasses, selectedWeekday]);
+
+  // Cancellation status query
+  const { data: cancellationData, refetch: refetchCancellation } = useQuery<{ cancelled: boolean; cancellation: any }>({
+    queryKey: ["/api/classes", selectedClassId, "cancel-session", selectedDate],
+    queryFn: async () => {
+      if (!selectedClassId) return { cancelled: false, cancellation: null };
+      const res = await fetch(`/api/classes/${selectedClassId}/cancel-session?date=${selectedDate}`, { credentials: "include" });
+      return res.json();
+    },
+    enabled: !!selectedClassId && !!selectedDate,
+    staleTime: 0,
+  });
+
+  const isSessionCancelled = cancellationData?.cancelled ?? false;
+
+  const cancelSessionMutation = useMutation({
+    mutationFn: async ({ cancel, reason }: { cancel: boolean; reason?: string }) => {
+      if (cancel) {
+        const res = await apiRequest("POST", `/api/classes/${selectedClassId}/cancel-session`, { date: selectedDate, reason });
+        return res.json();
+      } else {
+        const res = await apiRequest("DELETE", `/api/classes/${selectedClassId}/cancel-session`, { date: selectedDate });
+        return res.json();
+      }
+    },
+    onSuccess: (_, vars) => {
+      setShowCancelConfirm(false);
+      setCancelReason("");
+      refetchCancellation();
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", selectedClassId, "roster", selectedDate] });
+      toast({
+        title: vars.cancel ? "Aula cancelada" : "Aula restaurada",
+        description: vars.cancel
+          ? "A aula foi cancelada. Os alunos verão o aviso na agenda."
+          : "A aula foi restaurada e está disponível novamente.",
+      });
+    },
+    onError: () => toast({ title: "Erro ao atualizar status da aula", variant: "destructive" }),
+  });
 
   // Main roster query — single endpoint combining enrollments + self-confirmed
   const { data: rosterData, isLoading: rosterLoading } = useQuery<RosterStudent[]>({
@@ -588,29 +630,100 @@ export default function AttendancePage() {
             </div>
           ) : (
             <>
+              {/* Cancelled session banner */}
+              {isSessionCancelled && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <BanIcon className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-red-700">Aula Cancelada</p>
+                    <p className="text-xs text-red-500 mt-0.5">
+                      Esta sessão foi cancelada e está indisponível para os alunos.
+                      {cancellationData?.cancellation?.reason && ` Motivo: ${cancellationData.cancellation.reason}`}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => cancelSessionMutation.mutate({ cancel: false })}
+                    disabled={cancelSessionMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 transition flex-shrink-0"
+                  >
+                    {cancelSessionMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                    Restaurar Aula
+                  </button>
+                </div>
+              )}
+
+              {/* Cancel confirmation dialog */}
+              {showCancelConfirm && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <p className="text-sm font-bold text-amber-800">Cancelar esta sessão?</p>
+                  </div>
+                  <p className="text-xs text-amber-700">
+                    A aula ficará indisponível para confirmação. Alunos que já fizeram check-in verão o aviso de cancelamento.
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Motivo (opcional)"
+                    value={cancelReason}
+                    onChange={e => setCancelReason(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-amber-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => cancelSessionMutation.mutate({ cancel: true, reason: cancelReason })}
+                      disabled={cancelSessionMutation.isPending}
+                      className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-red-600 text-white hover:bg-red-700 transition"
+                    >
+                      {cancelSessionMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BanIcon className="w-3.5 h-3.5" />}
+                      Confirmar Cancelamento
+                    </button>
+                    <button
+                      onClick={() => { setShowCancelConfirm(false); setCancelReason(""); }}
+                      className="px-4 py-2 text-xs font-semibold rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-100 transition"
+                    >
+                      Voltar
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Class header + stats */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4
                 flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">{selectedClass?.name}</h2>
+                  <h2 className={`text-lg font-bold ${isSessionCancelled ? "text-slate-400 line-through" : "text-slate-800"}`}>{selectedClass?.name}</h2>
                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
                     <span className="flex items-center gap-1 capitalize"><Calendar className="w-3 h-3" />{selectedDateLabel}</span>
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{selectedClass?.startTime} · {selectedClass?.duration}min</span>
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { label: "Total", value: students.length, color: "text-slate-700", bg: "bg-slate-50" },
-                    { label: "Presentes", value: presentCount, color: "text-emerald-600", bg: "bg-emerald-50" },
-                    { label: "Faltas", value: absentCount, color: "text-red-500", bg: "bg-red-50" },
-                    { label: "App ✓", value: confirmedCount, color: "text-indigo-600", bg: "bg-indigo-50" },
-                    { label: "Pendentes", value: pendingCount, color: "text-slate-400", bg: "bg-slate-50" },
-                  ].map(({ label, value, color, bg }) => (
-                    <div key={label} className={`${bg} rounded-xl px-3 py-2 text-center min-w-[56px]`}>
-                      <p className={`text-xl font-extrabold ${color}`}>{value}</p>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-wide">{label}</p>
-                    </div>
-                  ))}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {!isSessionCancelled && !showCancelConfirm && (
+                    <button
+                      onClick={() => setShowCancelConfirm(true)}
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition"
+                      data-testid="button-cancel-session"
+                    >
+                      <BanIcon className="w-3.5 h-3.5" /> Cancelar Aula
+                    </button>
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { label: "Total", value: students.length, color: "text-slate-700", bg: "bg-slate-50" },
+                      { label: "Presentes", value: presentCount, color: "text-emerald-600", bg: "bg-emerald-50" },
+                      { label: "Faltas", value: absentCount, color: "text-red-500", bg: "bg-red-50" },
+                      { label: "App ✓", value: confirmedCount, color: "text-indigo-600", bg: "bg-indigo-50" },
+                      { label: "Pendentes", value: pendingCount, color: "text-slate-400", bg: "bg-slate-50" },
+                    ].map(({ label, value, color, bg }) => (
+                      <div key={label} className={`${bg} rounded-xl px-3 py-2 text-center min-w-[56px]`}>
+                        <p className={`text-xl font-extrabold ${color}`}>{value}</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wide">{label}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 

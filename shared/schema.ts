@@ -772,6 +772,18 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({ id: true, u
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
 
+// Class Cancellations — cancels a specific session of a recurring class on a given date
+export const classCancellations = pgTable("class_cancellations", {
+  id: serial("id").primaryKey(),
+  classId: integer("class_id").references(() => classes.id, { onDelete: "cascade" }).notNull(),
+  date: text("date").notNull(), // "YYYY-MM-DD"
+  cancelledBy: integer("cancelled_by").references(() => users.id),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ClassCancellation = typeof classCancellations.$inferSelect;
+
 // Update users relations to include new tables (replace the original)
 export const usersRelationsWithStreak = relations(users, ({ many }) => ({
   students: many(students),

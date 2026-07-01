@@ -182,6 +182,11 @@ export interface IStorage {
   getRiskSettings(): Promise<RiskSettings | undefined>;
   updateRiskSettings(settings: InsertRiskSettings): Promise<RiskSettings>;
 
+  // Class Cancellations
+  getClassCancellation(classId: number, date: string): Promise<any | null>;
+  createClassCancellation(classId: number, date: string, cancelledBy: number, reason?: string): Promise<any>;
+  deleteClassCancellation(classId: number, date: string): Promise<void>;
+
   // Login Streak Tracking
   updateLoginStreak(userId: number): Promise<void>;
   updateUserLoginStreak(userId: number): Promise<User | undefined>;
@@ -2572,6 +2577,32 @@ export class DatabaseStorage implements IStorage {
 
   async incrementCouponUsage(id: number): Promise<void> {
     await db.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1` }).where(eq(coupons.id, id));
+  }
+
+  // Class Cancellations
+  async getClassCancellation(classId: number, date: string): Promise<any | null> {
+    const [row] = await db.execute(sql`
+      SELECT * FROM class_cancellations
+      WHERE class_id = ${classId} AND date = ${date}
+      LIMIT 1
+    `);
+    return (row as any) ?? null;
+  }
+
+  async createClassCancellation(classId: number, date: string, cancelledBy: number, reason?: string): Promise<any> {
+    const [row] = await db.execute(sql`
+      INSERT INTO class_cancellations (class_id, date, cancelled_by, reason)
+      VALUES (${classId}, ${date}, ${cancelledBy}, ${reason ?? null})
+      ON CONFLICT DO NOTHING
+      RETURNING *
+    `);
+    return row;
+  }
+
+  async deleteClassCancellation(classId: number, date: string): Promise<void> {
+    await db.execute(sql`
+      DELETE FROM class_cancellations WHERE class_id = ${classId} AND date = ${date}
+    `);
   }
 }
 

@@ -3095,6 +3095,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 endTime = `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
               }
 
+              // Check if this session is cancelled
+              const cancellation = await storage.getClassCancellation(classItem.id, dateStr);
+              const isCancelled = !!cancellation;
+
               const classData = {
                 id: classItem.id,
                 name: classItem.name,
@@ -3107,8 +3111,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 attendanceConfirmed,
                 bookingStatus,
                 dateISO: dateStr,
-                canConfirm: !attendanceConfirmed && bookingStatus !== 'CONFIRMED',
-                canCancel: attendanceConfirmed || bookingStatus === 'CONFIRMED',
+                isCancelled,
+                canConfirm: !isCancelled && !attendanceConfirmed && bookingStatus !== 'CONFIRMED',
+                canCancel: !isCancelled && (attendanceConfirmed || bookingStatus === 'CONFIRMED'),
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                   : 'Instrutor'
@@ -3194,6 +3199,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching class enrollments:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ─── Class Session Cancellation ───────────────────────────────────────────
+
+  // GET /api/classes/:id/cancel-session?date=YYYY-MM-DD — check if a session is cancelled
+  app.get("/api/classes/:id/cancel-session", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { date } = req.query as { date?: string };
+      if (isNaN(classId) || !date) return res.status(400).json({ message: "classId e date são obrigatórios" });
+      const cancellation = await storage.getClassCancellation(classId, date);
+      res.json({ cancelled: !!cancellation, cancellation: cancellation ?? null });
+    } catch (error) {
+      console.error("Error checking class cancellation:", error);
+      res.status(500).json({ message: "Erro ao verificar cancelamento" });
+    }
+  });
+
+  // POST /api/classes/:id/cancel-session — cancel a specific session
+  app.post("/api/classes/:id/cancel-session", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { date, reason } = req.body as { date: string; reason?: string };
+      const requestUser = (req as any).user;
+      if (isNaN(classId) || !date) return res.status(400).json({ message: "classId e date são obrigatórios" });
+      const existing = await storage.getClassCancellation(classId, date);
+      if (existing) return res.json({ cancelled: true, cancellation: existing });
+      const cancellation = await storage.createClassCancellation(classId, date, requestUser.id, reason);
+      console.log(`🚫 Aula ${classId} cancelada em ${date} por user ${requestUser.id}`);
+      res.json({ cancelled: true, cancellation });
+    } catch (error) {
+      console.error("Error cancelling class session:", error);
+      res.status(500).json({ message: "Erro ao cancelar aula" });
+    }
+  });
+
+  // DELETE /api/classes/:id/cancel-session — restore a cancelled session
+  app.delete("/api/classes/:id/cancel-session", isAuthenticated, isInstructor, async (req, res) => {
+    try {
+      const classId = parseInt(req.params.id);
+      const { date } = req.body as { date: string };
+      if (isNaN(classId) || !date) return res.status(400).json({ message: "classId e date são obrigatórios" });
+      await storage.deleteClassCancellation(classId, date);
+      console.log(`✅ Aula ${classId} restaurada em ${date}`);
+      res.json({ cancelled: false });
+    } catch (error) {
+      console.error("Error restoring class session:", error);
+      res.status(500).json({ message: "Erro ao restaurar aula" });
     }
   });
 

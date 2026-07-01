@@ -1722,51 +1722,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 };
 
-                // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
-                console.log('🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...');
+                // 🎯 Anti-duplicata: cria/encontra cliente e cria assinatura recorrente mensal
+                console.log('🔍 Verificando/criando cliente e assinatura recorrente ASAAS...');
 
                 // First get or create the customer
                 const { customer, created } = await asaasService.getOrCreateAsaasCustomer(alunoData);
                 console.log(`🏢 Cliente ASAAS: ${customer.id} (${created ? 'criado' : 'existente'})`);
 
-                // Then create or sync the payment
-                const payment = await asaasService.createOrSyncCobranca(customer.id, alunoData, plan);
-                console.log(`✅ Processo concluído - Payment ID: ${payment.id}, Customer: ${payment.customer}`);
+                // Then create or sync the monthly subscription
+                const externalRef = `student_${student.id}`;
+                const description = `Mensalidade ${plan.name} - ${alunoData.first_name} ${alunoData.last_name}`;
+                const { subscription, created: subCreated } = await asaasService.getOrCreateSubscription(
+                  customer.id,
+                  plan.amount / 100, // cents → reais
+                  alunoData.preferredDueDate || 5,
+                  description,
+                  externalRef
+                );
+                console.log(`✅ Assinatura: ${subscription.id} (${subCreated ? 'criada' : 'existente'}) nextDueDate=${subscription.nextDueDate}`);
 
-                // Update student with ASAAS customer ID if not already set
-                if (!student.asaasCustomerId && payment.customer) {
-                  await storage.updateStudent(student.id, { asaasCustomerId: payment.customer });
+                // Update student with ASAAS customer ID and subscription ID
+                const studentUpdate: Record<string, any> = {};
+                if (!student.asaasCustomerId) studentUpdate.asaasCustomerId = customer.id;
+                if (student.asaasSubscriptionId !== subscription.id) studentUpdate.asaasSubscriptionId = subscription.id;
+                if (Object.keys(studentUpdate).length > 0) {
+                  await storage.updateStudent(student.id, studentUpdate);
                 }
 
-                console.log('✅ ASAAS payment created:', payment.id);
-
-                // Check if payment already exists in database before saving
-                const existingPayment = await storage.getContaReceberByAsaasId(payment.id);
+                // Save a placeholder conta-receber referencing the subscription
+                const existingPayment = await storage.getContaReceberByAsaasId(subscription.id);
                 if (!existingPayment) {
-                  // Save payment to database only if it doesn't exist
                   await storage.createContaReceber({
                     studentId: student.id,
-                    asaasPaymentId: payment.id,
-                    asaasCustomerId: payment.customer,
-                  status: payment.status,
-                  billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
-                  value: Math.round(payment.value * 100), // Convert back to cents
-                  netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
-                  dueDate: new Date(payment.dueDate),
-                  description: payment.description || '',
-                  externalReference: payment.externalReference || null,
-                  invoiceUrl: payment.invoiceUrl || null,
-                  bankSlipUrl: payment.bankSlipUrl || null,
-                  pixQrCode: payment.pixQrCode || null,
-                  pixCopyAndPaste: payment.pixCopyAndPaste || null
+                    asaasPaymentId: subscription.id,
+                    asaasCustomerId: customer.id,
+                    status: 'pending',
+                    billingType: 'BOLETO',
+                    value: plan.amount,
+                    netValue: null,
+                    dueDate: new Date(subscription.nextDueDate),
+                    description,
+                    externalReference: externalRef,
+                    invoiceUrl: null,
+                    bankSlipUrl: null,
+                    pixQrCode: null,
+                    pixCopyAndPaste: null
                   });
-                  console.log(`💾 Novo pagamento salvo no banco: ${payment.id}`);
-                } else {
-                  console.log(`⏭️ Pagamento já existe no banco, pulando: ${payment.id}`);
+                  console.log(`💾 Conta receber (assinatura) salva: ${subscription.id}`);
                 }
               } catch (error) {
                 console.error('❌ Error creating ASAAS customer/subscription:', error);
-                // Continue with approval even if ASAAS fails - log the error but don't fail the approval
+                // Continue with approval even if ASAAS fails
               }
             }
           } else {
@@ -2053,6 +2059,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se está bloqueando um usuário (active = false), marcar como "blocked" para diferenciá-lo de "pending"
       if (updateData.active === false && user.status !== "pending") {
         updateData.status = "blocked";
+
+        // Cancel ASAAS subscription if student has one
+        if (user.role === 'student') {
+          try {
+            const studentRecord = await storage.getStudentByUserId(userId);
+            if (studentRecord?.asaasSubscriptionId) {
+              const config = await storage.getSchoolConfig();
+              const asaasService = new AsaasService(config?.asaasApiKey);
+              await asaasService.cancelSubscription(studentRecord.asaasSubscriptionId);
+              await storage.updateStudent(studentRecord.id, { asaasSubscriptionId: null });
+              console.log(`🛑 Assinatura ASAAS cancelada ao bloquear aluno ${userId}: ${studentRecord.asaasSubscriptionId}`);
+            }
+          } catch (asaasErr) {
+            // Log but don't block the user-block operation
+            console.error(`⚠️ Falha ao cancelar assinatura ASAAS ao bloquear aluno ${userId}:`, asaasErr);
+          }
+        }
       }
       // Se está reativando um usuário (active = true), voltar para "approved"
       else if (updateData.active === true && user.status === "blocked") {
@@ -6377,47 +6400,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No payment plan found' });
       }
 
-      // Calculate due date
-      const dueDate = new Date();
-      dueDate.setDate(student.preferredDueDate || 5); // Preferred day or day 5
-      if (dueDate < new Date()) {
-        dueDate.setMonth(dueDate.getMonth() + 1); // Next month if already passed
-      }
+      // Create monthly subscription in ASAAS (recorrência)
+      const subExternalRef = `student_${student.id}`;
+      const subDescription = `Mensalidade ${paymentPlan.name} - ${user.firstName} ${user.lastName}`;
+      const { subscription: asaasSubscription, created: subCreated } = await asaasService.getOrCreateSubscription(
+        asaasCustomer.id,
+        paymentPlan.amount / 100, // cents → reais
+        student.preferredDueDate || 5,
+        subDescription,
+        subExternalRef
+      );
+      console.log(`✅ Assinatura: ${asaasSubscription.id} (${subCreated ? 'criada' : 'existente'}) nextDueDate=${asaasSubscription.nextDueDate}`);
 
-      // Create payment in ASAAS
-      const paymentData = {
-        customer: asaasCustomer.id,
-        billingType: 'BOLETO' as const,
-        value: paymentPlan.amount / 100, // Convert cents to reais
-        dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD
-        description: `Mensalidade ${config?.schoolName || 'Academia'} - ${paymentPlan.name}`,
-        externalReference: `student_${student.id}_${new Date().getTime()}`
-      };
+      // Update student with subscription ID
+      await storage.updateStudent(student.id, { asaasSubscriptionId: asaasSubscription.id });
 
-      const asaasPayment = await asaasService.createPaymentForStudent(asaasCustomer.id, {
-        user_id: student.id,
-        first_name: user.firstName,
-        last_name: user.lastName,
-        preferredDueDate: student.preferredDueDate || 5,
-        school_name: config?.schoolName || 'Academia'
-      }, paymentPlan);
-
-      // Create accounts receivable in the system
-      const contaReceber = await storage.createContaReceber({
+      // Create accounts receivable referencing the subscription
+      const existingContaReceber = await storage.getContaReceberByAsaasId(asaasSubscription.id);
+      const contaReceber = existingContaReceber || await storage.createContaReceber({
         studentId: student.id,
-        asaasPaymentId: asaasPayment.id,
+        asaasPaymentId: asaasSubscription.id,
         asaasCustomerId: asaasCustomer.id,
-        status: asaasPayment.status,
-        billingType: paymentData.billingType,
-        value: paymentPlan.amount, // In cents
-        netValue: asaasPayment.netValue ? Math.round(asaasPayment.netValue * 100) : null,
-        dueDate: dueDate,
-        description: paymentData.description,
-        externalReference: paymentData.externalReference,
-        invoiceUrl: asaasPayment.invoiceUrl,
-        bankSlipUrl: asaasPayment.bankSlipUrl,
-        pixQrCode: asaasPayment.pixQrCode,
-        pixCopyAndPaste: asaasPayment.pixCopyAndPaste
+        status: 'pending',
+        billingType: 'BOLETO',
+        value: paymentPlan.amount,
+        netValue: null,
+        dueDate: new Date(asaasSubscription.nextDueDate),
+        description: subDescription,
+        externalReference: subExternalRef,
+        invoiceUrl: null,
+        bankSlipUrl: null,
+        pixQrCode: null,
+        pixCopyAndPaste: null
       });
 
       // Approve student
@@ -6931,41 +6945,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 };
 
-                // 🎯 Use new ARKAIDEV function: Create or Sync cobrança (anti-duplicate)
-                console.log(`🔍 Verificando/criando cliente e cobrança ASAAS (anti-duplicata)...`);
-                const payment = await asaasService.createOrSyncCobranca(alunoData, plan);
-                console.log(`✅ Processo concluído - Payment ID: ${payment.id}, Customer: ${payment.customer}`);
+                // 🎯 Anti-duplicata: cria cliente e assinatura recorrente mensal
+                console.log(`🔍 Verificando/criando cliente e assinatura recorrente ASAAS...`);
 
-                // Update student with ASAAS customer ID if not already set
-                if (!student.asaasCustomerId && payment.customer) {
-                  await storage.updateStudent(student.id, { asaasCustomerId: payment.customer });
+                const { customer: asaasCust, created: custCreated } = await asaasService.getOrCreateAsaasCustomer(alunoData);
+                console.log(`🏢 Cliente ASAAS: ${asaasCust.id} (${custCreated ? 'criado' : 'existente'})`);
+
+                const batchExternalRef = `student_${student.id}`;
+                const batchDescription = `Mensalidade ${plan.name} - ${alunoData.first_name} ${alunoData.last_name}`;
+                const { subscription: batchSub, created: batchSubCreated } = await asaasService.getOrCreateSubscription(
+                  asaasCust.id,
+                  plan.amount / 100, // cents → reais
+                  alunoData.preferredDueDate || 5,
+                  batchDescription,
+                  batchExternalRef
+                );
+                console.log(`✅ Assinatura: ${batchSub.id} (${batchSubCreated ? 'criada' : 'existente'}) nextDueDate=${batchSub.nextDueDate}`);
+
+                // Update student with ASAAS IDs
+                const batchStudentUpdate: Record<string, any> = {};
+                if (!student.asaasCustomerId) batchStudentUpdate.asaasCustomerId = asaasCust.id;
+                if (student.asaasSubscriptionId !== batchSub.id) batchStudentUpdate.asaasSubscriptionId = batchSub.id;
+                if (Object.keys(batchStudentUpdate).length > 0) {
+                  await storage.updateStudent(student.id, batchStudentUpdate);
                 }
 
-                console.log(`✅ ASAAS payment created: ${payment.id}`);
-
-                // Check if payment already exists in database before saving
-                const existingPayment = await storage.getContaReceberByAsaasId(payment.id);
+                // Save conta-receber referencing the subscription (anti-duplicate)
+                const existingPayment = await storage.getContaReceberByAsaasId(batchSub.id);
                 if (!existingPayment) {
-                  // Save payment to database only if it doesn't exist
                   await storage.createContaReceber({
                     studentId: student.id,
-                    asaasPaymentId: payment.id,
-                    asaasCustomerId: payment.customer,
-                  status: payment.status,
-                  billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
-                  value: Math.round(payment.value * 100), // Convert back to cents
-                  netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
-                  dueDate: new Date(payment.dueDate),
-                  description: payment.description || '',
-                  externalReference: payment.externalReference || null,
-                  invoiceUrl: payment.invoiceUrl || null,
-                  bankSlipUrl: payment.bankSlipUrl || null,
-                  pixQrCode: payment.pixQrCode || null,
-                  pixCopyAndPaste: payment.pixCopyAndPaste || null
+                    asaasPaymentId: batchSub.id,
+                    asaasCustomerId: asaasCust.id,
+                    status: 'pending',
+                    billingType: 'BOLETO',
+                    value: plan.amount,
+                    netValue: null,
+                    dueDate: new Date(batchSub.nextDueDate),
+                    description: batchDescription,
+                    externalReference: batchExternalRef,
+                    invoiceUrl: null,
+                    bankSlipUrl: null,
+                    pixQrCode: null,
+                    pixCopyAndPaste: null
                   });
-                  console.log(`💾 Novo pagamento salvo no banco: ${payment.id}`);
+                  console.log(`💾 Conta receber (assinatura) salva: ${batchSub.id}`);
                 } else {
-                  console.log(`⏭️ Pagamento já existe no banco, pulando: ${payment.id}`);
+                  console.log(`⏭️ Assinatura já existe no banco: ${batchSub.id}`);
                 }
                 asaasSuccess = true;
               } catch (error) {

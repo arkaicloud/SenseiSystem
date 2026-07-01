@@ -60,6 +60,30 @@ export interface CreatePaymentRequest {
   notificationEnabled?: boolean;
 }
 
+export interface CreateSubscriptionRequest {
+  customer: string;
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'DEBIT_CARD' | 'TRANSFER';
+  value: number;
+  nextDueDate: string; // YYYY-MM-DD – first due date
+  cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
+  description?: string;
+  externalReference?: string;
+  maxPayments?: number; // omit for indefinite
+}
+
+export interface AsaasSubscription {
+  id: string;
+  customer: string;
+  billingType: string;
+  value: number;
+  nextDueDate: string;
+  cycle: string;
+  status: string;
+  description?: string;
+  externalReference?: string;
+  dateCreated?: string;
+}
+
 export interface AsaasPayment {
   id: string;
   customer: string;
@@ -344,6 +368,96 @@ export class AsaasService {
       console.error('Error getting customer payments:', error);
       return [];
     }
+  }
+
+  // ── Subscription (recorrência mensal) ─────────────────────────────────────
+
+  /** Calculate next due date from preferred day-of-month */
+  private calculateNextDueDate(preferredDay: number): string {
+    const today = new Date();
+    const day = today.getDate();
+    let dueDate: Date;
+    if (day < preferredDay) {
+      // Preferred day is still ahead this month
+      dueDate = new Date(today.getFullYear(), today.getMonth(), preferredDay);
+    } else {
+      // Preferred day has already passed — use next month
+      dueDate = new Date(today.getFullYear(), today.getMonth() + 1, preferredDay);
+    }
+    return dueDate.toISOString().split('T')[0];
+  }
+
+  /** Create a new recurring subscription (POST /subscriptions) */
+  async createSubscription(data: CreateSubscriptionRequest): Promise<AsaasSubscription> {
+    if (!this.isConfigured) throw new Error('ASAAS não configurado');
+    console.log(`📅 Criando assinatura ASAAS: customer=${data.customer}, value=${data.value}, nextDueDate=${data.nextDueDate}`);
+    const response = await this.client.post('/subscriptions', data);
+    return response.data;
+  }
+
+  /** Cancel an active subscription (DELETE /subscriptions/:id) */
+  async cancelSubscription(subscriptionId: string): Promise<void> {
+    if (!this.isConfigured) throw new Error('ASAAS não configurado');
+    try {
+      await this.client.delete(`/subscriptions/${subscriptionId}`);
+      console.log(`✅ Assinatura ASAAS ${subscriptionId} cancelada`);
+    } catch (error: any) {
+      console.error(`❌ Erro ao cancelar assinatura ${subscriptionId}:`, error.response?.data || error.message);
+      throw new Error(`Erro ao cancelar assinatura: ${error.response?.data?.errors?.[0]?.description || error.message}`);
+    }
+  }
+
+  /** Look for an existing active subscription for a customer */
+  async findExistingSubscription(customerId: string, externalReference?: string): Promise<AsaasSubscription | null> {
+    try {
+      const params: Record<string, any> = { customer: customerId };
+      const response = await this.client.get('/subscriptions', { params });
+      const subs: AsaasSubscription[] = response.data?.data || [];
+      if (externalReference) {
+        const match = subs.find(s => s.externalReference === externalReference && s.status === 'ACTIVE');
+        return match || null;
+      }
+      return subs.find(s => s.status === 'ACTIVE') || null;
+    } catch (error) {
+      console.error('Erro ao buscar assinaturas existentes:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Anti-duplicate: find or create a monthly subscription for a student.
+   * Returns the subscription and whether it was just created.
+   */
+  async getOrCreateSubscription(
+    customerId: string,
+    valueReais: number,
+    preferredDay: number,
+    description: string,
+    externalReference: string,
+    billingType: 'BOLETO' | 'PIX' = 'BOLETO'
+  ): Promise<{ subscription: AsaasSubscription; created: boolean }> {
+    // Check for existing active subscription with this external reference
+    const existing = await this.findExistingSubscription(customerId, externalReference);
+    if (existing) {
+      console.log(`♻️ Assinatura já existe para ${externalReference}: ${existing.id}`);
+      return { subscription: existing, created: false };
+    }
+
+    const nextDueDate = this.calculateNextDueDate(preferredDay);
+    console.log(`📅 Próxima data de vencimento calculada: ${nextDueDate} (dia preferido: ${preferredDay})`);
+
+    const subscription = await this.createSubscription({
+      customer: customerId,
+      billingType,
+      value: valueReais,
+      nextDueDate,
+      cycle: 'MONTHLY',
+      description,
+      externalReference,
+    });
+
+    console.log(`✅ Assinatura recorrente criada: ${subscription.id} (${nextDueDate})`);
+    return { subscription, created: true };
   }
 
   async getCustomerInvoices(customerId: string): Promise<any[]> {

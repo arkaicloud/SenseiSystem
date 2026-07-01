@@ -7287,65 +7287,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get ASAAS payments and metrics
   app.get("/api/financial/payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      // Try to get API Key from school config first
       const config = await storage.getSchoolConfig();
-      const asaasService = config?.asaasApiKey 
+      const asaasService = config?.asaasApiKey
         ? new AsaasPaymentsService(config.asaasApiKey)
         : new AsaasPaymentsService();
-      const limit = parseInt(req.query.limit as string) || 500;
-      const startDateParam = req.query.startDate as string;
-      const endDateParam = req.query.endDate as string;
 
-      // Default to current month if no date params provided
-      const now = new Date();
-      const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const dueDateGe = startDateParam || defaultStart.toISOString().split('T')[0];
-      const dueDateLe = endDateParam || defaultEnd.toISOString().split('T')[0];
+      // Date filter params sent by the client (YYYY-MM-DD strings)
+      const startDateParam = req.query.startDate as string | undefined;
+      const endDateParam   = req.query.endDate   as string | undefined;
 
-      console.log(`🔄 Fetching ASAAS payments for financial panel (${dueDateGe} → ${dueDateLe})...`);
+      // NOTE: The ASAAS API's dueDateGe/dueDateLe filter has proven unreliable
+      // (it returns the same dataset regardless of date). We therefore fetch ALL
+      // payments and apply date filtering ourselves on the returned data.
+      console.log(`🔄 Fetching ALL ASAAS payments (server-side date filter: ${startDateParam ?? 'none'} → ${endDateParam ?? 'none'})...`);
 
-      // Get payments with customer data filtered by date range
-      const paymentsWithCustomers = await asaasService.getPaymentsWithCustomers(limit, dueDateGe, dueDateLe);
+      const allPaymentsWithCustomers = await asaasService.getPaymentsWithCustomers(2000);
 
-      // Calculate metrics
-      const payments = paymentsWithCustomers.map(p => ({
-        id: p.id,
-        customer: p.customer,
-        customerName: p.customerData?.name || 'Cliente não encontrado',
-        customerEmail: p.customerData?.email || '',
-        value: p.value,
-        status: p.status,
-        dueDate: p.dueDate,
-        description: p.description,
-        invoiceUrl: p.invoiceUrl,
-        paymentLink: p.paymentLink,
-        dateCreated: p.dateCreated,
-        paymentDate: p.paymentDate,
+      // Server-side date filter (pure string comparison — timezone-safe)
+      const filtered = startDateParam || endDateParam
+        ? allPaymentsWithCustomers.filter((p) => {
+            const d = p.dueDate?.slice(0, 10) ?? '';
+            if (startDateParam && d < startDateParam) return false;
+            if (endDateParam   && d > endDateParam)   return false;
+            return true;
+          })
+        : allPaymentsWithCustomers;
+
+      const payments = filtered.map(p => ({
+        id:               p.id,
+        customer:         p.customer,
+        customerName:     p.customerData?.name  || 'Cliente não encontrado',
+        customerEmail:    p.customerData?.email || '',
+        value:            p.value,
+        status:           p.status,
+        dueDate:          p.dueDate,
+        description:      p.description,
+        invoiceUrl:       p.invoiceUrl,
+        paymentLink:      p.paymentLink,
+        dateCreated:      p.dateCreated,
+        paymentDate:      p.paymentDate,
         clientPaymentDate: p.clientPaymentDate,
         externalReference: p.externalReference,
-        installment: (p as any).installment || null, // installment plan ID if part of a parcelamento
-        installmentNumber: p.installmentNumber || null,
-        installmentCount: p.installmentCount || null,
-        billingType: (p as any).billingType || null,
+        installment:      (p as any).installment      || null,
+        installmentNumber: p.installmentNumber        || null,
+        installmentCount:  p.installmentCount         || null,
+        billingType:      (p as any).billingType      || null,
       }));
 
-      const metrics = asaasService.calculateMetrics(paymentsWithCustomers);
+      const metrics = asaasService.calculateMetrics(filtered);
 
-      console.log(`✅ Financial data fetched: ${payments.length} payments, metrics calculated`);
-
-      res.json({
-        payments,
-        metrics,
-        totalCount: payments.length
+      // Diagnostic: show date distribution of what ASAAS actually returned
+      const dateDist: Record<string, number> = {};
+      allPaymentsWithCustomers.forEach((p) => {
+        const ym = p.dueDate?.slice(0, 7) ?? 'unknown';
+        dateDist[ym] = (dateDist[ym] || 0) + 1;
       });
+      console.log(`📅 ASAAS dueDate distribution:`, dateDist);
+      console.log(`✅ Financial data: ${allPaymentsWithCustomers.length} total in ASAAS → ${payments.length} after date filter (${startDateParam ?? 'no'} → ${endDateParam ?? 'filter'})`);
+
+      res.json({ payments, metrics, totalCount: payments.length });
 
     } catch (error: any) {
       console.error('❌ Error fetching financial data:', error);
-
-      res.status(500).json({ 
-        error: "Erro ao buscar dados financeiros do ASAAS", 
-        message: error.message || "Verifique a configuração da chave ASAAS"
+      res.status(500).json({
+        error: "Erro ao buscar dados financeiros do ASAAS",
+        message: error.message || "Verifique a configuração da chave ASAAS",
       });
     }
   });
@@ -7417,21 +7423,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Refresh financial data (force reload from ASAAS)
   app.post("/api/financial/refresh", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      // Use school config API key consistently
       const config = await storage.getSchoolConfig();
-      const asaasService = config?.asaasApiKey 
+      const asaasService = config?.asaasApiKey
         ? new AsaasPaymentsService(config.asaasApiKey)
         : new AsaasPaymentsService();
 
-      console.log('🔄 Force refreshing ASAAS financial data...');
+      // Accept optional date range from client (so refresh respects the selected month)
+      const startDateParam = req.body?.startDate as string | undefined;
+      const endDateParam   = req.body?.endDate   as string | undefined;
 
-      const paymentsWithCustomers = await asaasService.getPaymentsWithCustomers(100);
-      const metrics = asaasService.calculateMetrics(paymentsWithCustomers);
+      // Default to current month if not provided
+      const now = new Date();
+      const dueDateGe = startDateParam || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const dueDateLe = endDateParam   || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      console.log(`🔄 Force refreshing ASAAS financial data (server-side date filter: ${dueDateGe} → ${dueDateLe})...`);
+
+      // Fetch ALL payments (ASAAS date filter is unreliable), then filter server-side
+      const allPayments = await asaasService.getPaymentsWithCustomers(2000);
+      const filtered = allPayments.filter((p) => {
+        const d = p.dueDate?.slice(0, 10) ?? '';
+        if (d < dueDateGe) return false;
+        if (d > dueDateLe) return false;
+        return true;
+      });
+      const metrics = asaasService.calculateMetrics(filtered);
+
+      console.log(`✅ Refresh: ${allPayments.length} total in ASAAS → ${filtered.length} for ${dueDateGe}→${dueDateLe}`);
 
       res.json({
         success: true,
         message: 'Dados financeiros atualizados com sucesso',
-        paymentsCount: paymentsWithCustomers.length,
+        paymentsCount: filtered.length,
         metrics
       });
 

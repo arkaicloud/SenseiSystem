@@ -148,7 +148,7 @@ export default function FinancialDashboard() {
   const [showManualReceipt, setShowManualReceipt] = useState(false);
 
   // ── Data fetch ────────────────────────────────────────────────────────────
-  const { data: financialData, isLoading, error } = useQuery<FinancialData>({
+  const { data: financialData, isLoading, isFetching, error } = useQuery<FinancialData>({
     queryKey: ["/api/financial/payments", format(selectedMonth, "yyyy-MM"), showAllMonths],
     queryFn: async () => {
       let url = `/api/financial/payments?limit=2000`;
@@ -170,16 +170,28 @@ export default function FinancialDashboard() {
   // ── Mutations ─────────────────────────────────────────────────────────────
   const refreshMutation = useMutation({
     mutationFn: async () => {
+      // Pass the currently selected month so the server refreshes the right period
+      const body = showAllMonths
+        ? {}
+        : {
+            startDate: format(startOfMonth(selectedMonth), "yyyy-MM-dd"),
+            endDate:   format(endOfMonth(selectedMonth),   "yyyy-MM-dd"),
+          };
       const response = await fetch("/api/financial/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        credentials: "include",
       });
       if (!response.ok) throw new Error((await response.json()).message || "Erro");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] });
-      toast({ title: "Dados Atualizados", description: "Informações financeiras atualizadas com sucesso" });
+      toast({
+        title: "Dados Atualizados",
+        description: `${data.paymentsCount ?? 0} cobrança(s) carregada(s) para o período selecionado`,
+      });
     },
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -256,10 +268,13 @@ export default function FinancialDashboard() {
   const monthEnd   = endOfMonth(selectedMonth);
 
   // Payments restricted to the selected month only (used for metrics + table)
+  // Use string comparison to avoid timezone issues (dueDate is "YYYY-MM-DD")
+  const startStr = format(monthStart, "yyyy-MM-dd");
+  const endStr   = format(monthEnd,   "yyyy-MM-dd");
   const monthPayments = payments.filter((p) => {
     if (showAllMonths) return true;
-    const due = new Date(p.dueDate);
-    return due >= monthStart && due <= monthEnd;
+    const d = p.dueDate?.slice(0, 10) ?? "";
+    return d >= startStr && d <= endStr;
   });
 
   // ── Derived metrics (calculated client-side from month-filtered payments) ─
@@ -336,7 +351,9 @@ export default function FinancialDashboard() {
   };
 
   // ── Loading / error states ────────────────────────────────────────────────
-  if (isLoading) {
+  // Only show full skeleton on the VERY first load (no data yet).
+  // When switching months, keep existing content visible and show a subtle banner.
+  if (isLoading && !financialData) {
     return (
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
@@ -397,7 +414,10 @@ export default function FinancialDashboard() {
           <h1 className="text-xl md:text-3xl font-bold tracking-tight">Painel Financeiro</h1>
           <p className="text-muted-foreground">
             Sistema integrado com ASAAS •{" "}
-            {payments.length} cobrança{payments.length !== 1 ? "s" : ""} carregadas
+            {isFetching
+              ? <span className="inline-flex items-center gap-1"><RefreshCw className="h-3 w-3 animate-spin inline" /> carregando…</span>
+              : <>{payments.length} cobrança{payments.length !== 1 ? "s" : ""} carregadas</>
+            }
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -659,14 +679,45 @@ export default function FinancialDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginated.length === 0 ? (
+                {isFetching && paginated.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                      {statusFilters.size > 0 || searchTerm || paymentTypeFilter !== "all"
-                        ? "Nenhuma cobrança encontrada com os filtros aplicados"
-                        : showAllMonths
-                        ? "Nenhuma cobrança encontrada"
-                        : `Nenhuma cobrança em ${monthLabelCap}`}
+                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                      Buscando cobranças no ASAAS…
+                    </TableCell>
+                  </TableRow>
+                ) : paginated.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                      {statusFilters.size > 0 || searchTerm || paymentTypeFilter !== "all" ? (
+                        <div>
+                          <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                          <p className="font-medium">Nenhuma cobrança encontrada com os filtros aplicados</p>
+                          <p className="text-xs mt-1">Tente remover ou alterar os filtros</p>
+                        </div>
+                      ) : showAllMonths ? (
+                        <div>
+                          <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                          <p className="font-medium">Nenhuma cobrança encontrada no ASAAS</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                          <p className="font-medium">Nenhuma cobrança em {monthLabelCap}</p>
+                          <p className="text-xs mt-1 max-w-xs mx-auto">
+                            Pode ser que não haja cobranças geradas neste período no ASAAS,
+                            ou as assinaturas foram criadas em um mês posterior.
+                          </p>
+                          <Button
+                            variant="outline" size="sm" className="mt-3"
+                            onClick={() => refreshMutation.mutate()}
+                            disabled={refreshMutation.isPending}
+                          >
+                            <RefreshCw className={`h-3 w-3 mr-1 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
+                            Buscar novamente
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (

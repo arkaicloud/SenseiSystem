@@ -44,7 +44,7 @@ const personalInfoSchema = z.object({
   ),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
   sex: z.enum(["M", "F"], { errorMap: () => ({ message: "Selecione o gênero" }) }),
-  email: z.string().email("E-mail inválido"),
+  email: z.string().email("E-mail inválido").optional().or(z.literal("")),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
   cpf: z.string().min(1, "CPF é obrigatório").refine(validateCPF, "CPF inválido - verifique os dígitos"),
   rg: z.string().min(1, "RG é obrigatório"),
@@ -311,9 +311,12 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   function renderStep2() {
     return (
       <div className="space-y-5">
+        <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-3 text-xs text-[#7B9FFF] leading-relaxed">
+          <span className="font-semibold">Para menores de idade:</span> o e-mail pode ser deixado em branco. O acesso ao portal será feito pelo e-mail do responsável financeiro.
+        </div>
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem>
-            <FormLabel className={labelCls}>E-mail *</FormLabel>
+            <FormLabel className={labelCls}>E-mail <span className="text-slate-500 font-normal">(opcional para menores)</span></FormLabel>
             <FormControl>
               <Input placeholder="seu@email.com" type="email" {...field} className={inputCls} />
             </FormControl>

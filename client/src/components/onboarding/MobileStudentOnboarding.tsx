@@ -125,10 +125,12 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
 
     try {
       const data = formData as CompleteFormData & Record<string, any>;
-      const email = data.email || "";
-      if (!email) throw new Error("Email não encontrado. Por favor, volte e preencha novamente.");
+      const email = (data.email || "").trim();
 
-      const username = email.split('@')[0].toLowerCase();
+      // If no email (minor/child), backend will auto-generate a placeholder
+      const username = email
+        ? email.split('@')[0].toLowerCase()
+        : `${data.firstName || "aluno"}.${data.lastName || ""}`.toLowerCase().replace(/[^a-z0-9.]/g, "");
 
       const cleanData = {
         firstName: data.firstName || "",

@@ -2217,25 +2217,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📥 Received student data:', JSON.stringify(studentData, null, 2));
 
       // Validate required fields
-      if (!studentData.firstName || !studentData.lastName || !studentData.email) {
-        return res.status(400).json({ message: "Nome, sobrenome e email são obrigatórios" });
+      if (!studentData.firstName || !studentData.lastName) {
+        return res.status(400).json({ message: "Nome e sobrenome são obrigatórios" });
       }
 
-      // Check if email already exists
-      const existingUser = await storage.getUserByEmail(studentData.email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use" });
+      // Determine email: if student has a guardian (not self), auto-generate an internal placeholder
+      let studentEmail = (studentData.email || "").trim();
+
+      if (!studentEmail) {
+        // Auto-generate internal placeholder email for children/dependents
+        const safeName = `${studentData.firstName}.${studentData.lastName}`
+          .toLowerCase()
+          .replace(/[^a-z0-9.]/g, "")
+          .slice(0, 30);
+        studentEmail = `child.${safeName}.${Date.now()}@interno.senseisystem`;
+      } else {
+        // Only check uniqueness for real emails provided by the user
+        const existingUser = await storage.getUserByEmail(studentEmail);
+        if (existingUser) {
+          return res.status(400).json({ message: "Este e-mail já foi utilizado, por favor informe outro" });
+        }
       }
 
-      // Generate username from email if not provided
-      const username = studentData.username || studentData.email.split('@')[0].toLowerCase();
+      // Generate username
+      const username = studentData.username ||
+        (studentEmail.includes("@interno.senseisystem")
+          ? `${studentData.firstName}.${studentData.lastName}`.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 30) + `.${Date.now()}`
+          : studentEmail.split('@')[0].toLowerCase());
 
       // Create user without birthDate first to avoid timestamp issues
       const userData = {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
         username: username,
-        email: studentData.email,
+        email: studentEmail,
         password: await hashPassword(generateTempPassword()),
         role: "student" as const,
         active: true, // Active by default during registration
@@ -6432,25 +6447,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📥 Received student data:', JSON.stringify(studentData, null, 2));
 
       // Validate required fields
-      if (!studentData.firstName || !studentData.lastName || !studentData.email) {
-        return res.status(400).json({ message: "Nome, sobrenome e email são obrigatórios" });
+      if (!studentData.firstName || !studentData.lastName) {
+        return res.status(400).json({ message: "Nome e sobrenome são obrigatórios" });
       }
 
-      // Check if email already exists
-      const existingUser = await storage.getUserByEmail(studentData.email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use" });
+      // Determine email: if student has a guardian (not self), auto-generate an internal placeholder
+      let studentEmail = (studentData.email || "").trim();
+
+      if (!studentEmail) {
+        // Auto-generate internal placeholder email for children/dependents
+        const safeName = `${studentData.firstName}.${studentData.lastName}`
+          .toLowerCase()
+          .replace(/[^a-z0-9.]/g, "")
+          .slice(0, 30);
+        studentEmail = `child.${safeName}.${Date.now()}@interno.senseisystem`;
+      } else {
+        // Only check uniqueness for real emails provided by the user
+        const existingUser = await storage.getUserByEmail(studentEmail);
+        if (existingUser) {
+          return res.status(400).json({ message: "Este e-mail já foi utilizado, por favor informe outro" });
+        }
       }
 
-      // Generate username from email if not provided
-      const username = studentData.username || studentData.email.split('@')[0].toLowerCase();
+      // Generate username
+      const username = studentData.username ||
+        (studentEmail.includes("@interno.senseisystem")
+          ? `${studentData.firstName}.${studentData.lastName}`.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 30) + `.${Date.now()}`
+          : studentEmail.split('@')[0].toLowerCase());
 
       // Create user without birthDate first to avoid timestamp issues
       const userData = {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
         username: username,
-        email: studentData.email,
+        email: studentEmail,
         password: await hashPassword(generateTempPassword()),
         role: "student" as const,
         active: false, // Pending approval

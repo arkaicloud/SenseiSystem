@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ArrowLeft, ArrowRight, Phone } from "lucide-react";
 
 const contactInfoSchema = z.object({
-  email: z.string().email("E-mail inválido"),
+  email: z.string().email("E-mail inválido").optional().or(z.literal("")),
   phone: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
 });
 
@@ -47,12 +47,15 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
         </div>
 
         <div className="px-6 space-y-5">
+          <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-3 text-xs text-[#7B9FFF] leading-relaxed">
+            <span className="font-semibold">Para menores de idade:</span> o e-mail pode ser deixado em branco. O acesso será feito pelo e-mail do responsável financeiro.
+          </div>
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className={labelCls}>E-mail *</FormLabel>
+                <FormLabel className={labelCls}>E-mail <span className="text-slate-500 font-normal">(opcional para menores)</span></FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="seu@email.com" {...field} className={inputCls} />
                 </FormControl>

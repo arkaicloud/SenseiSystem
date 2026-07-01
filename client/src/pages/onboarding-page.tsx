@@ -64,10 +64,10 @@ export default function OnboardingPage() {
     onError: (error: any) => {
       const errorMessage = error.message || error.toString();
       setRegistrationError(errorMessage);
-      if (errorMessage.includes("Email already in use")) {
+      if (errorMessage.includes("já foi utilizado") || errorMessage.includes("Email already in use")) {
         toast({
-          title: "Email já cadastrado",
-          description: "Este email já está em uso. Tente com outro email ou faça login.",
+          title: "E-mail já cadastrado",
+          description: "Este e-mail já foi utilizado. Por favor, informe outro ou faça login.",
           variant: "destructive",
         });
       } else {
@@ -298,13 +298,13 @@ export default function OnboardingPage() {
             <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
               <p className="font-medium mb-1">Erro no cadastro</p>
               <p>{registrationError}</p>
-              {registrationError.includes("Email already in use") && (
+              {(registrationError.includes("já foi utilizado") || registrationError.includes("Email already in use")) && (
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={resetEmailField}
                     className="px-3 py-1.5 rounded-lg border border-red-400/40 text-red-400 hover:bg-red-400/10 text-xs transition-colors"
                   >
-                    Alterar Email
+                    Alterar E-mail
                   </button>
                   <button
                     onClick={() => window.location.href = '/'}

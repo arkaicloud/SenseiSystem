@@ -2,9 +2,7 @@ import { useGuardian, ManagedStudent } from "@/contexts/guardian-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
-import { Users, ChevronRight, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import BottomNav from "@/components/student/BottomNav";
+import { Users, ChevronRight, LogOut, ShieldCheck } from "lucide-react";
 
 const BELT_COLORS: Record<string, string> = {
   white: "#FFFFFF", blue: "#2563EB", purple: "#7C3AED",
@@ -28,19 +26,22 @@ const BELT_NAMES: Record<string, string> = {
 function StudentCard({ student, onSelect }: { student: ManagedStudent; onSelect: () => void }) {
   const beltColor = BELT_COLORS[student.beltLevel] ?? "#FFFFFF";
   const beltName = BELT_NAMES[student.beltLevel] ?? student.beltLevel;
-  const initials = `${student.firstName[0]}${student.lastName[0]}`.toUpperCase();
-  const isLight = ["white", "grey_white", "yellow_white", "orange_white", "green_white", "yellow"].includes(student.beltLevel);
+  const initials = `${student.firstName?.[0] ?? ""}${student.lastName?.[0] ?? ""}`.toUpperCase();
 
   return (
     <button
       onClick={onSelect}
       data-testid={`card-student-${student.studentId}`}
-      className="w-full text-left rounded-2xl p-5 flex items-center gap-4 transition-all active:scale-[0.98]"
+      className="w-full text-left rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all duration-150 active:scale-[0.98] hover:shadow-md hover:border-[#2B54FF]"
       style={{ backgroundColor: "#F5F7FF", border: "1.5px solid #E0E5FF" }}
     >
       <div
-        className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 shadow"
-        style={{ backgroundColor: student.avatarColor || "#2B54FF", color: "#fff" }}
+        className="w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 shadow"
+        style={{
+          width: 52, height: 52,
+          backgroundColor: student.avatarColor || "#2B54FF",
+          color: "#fff",
+        }}
       >
         {initials}
       </div>
@@ -79,66 +80,108 @@ export default function GuardianSelectPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-inter" style={{ backgroundColor: "#F8F9FF" }}>
-      {/* Header */}
+    <div
+      className="min-h-screen flex items-start sm:items-center justify-center font-inter"
+      style={{ background: "linear-gradient(160deg, #1A2F99 0%, #2B54FF 40%, #1A3FCC 100%)" }}
+    >
+      {/* Card container — full screen on mobile, floating card on desktop */}
       <div
-        className="px-6 pt-12 pb-8 text-white"
-        style={{ background: "linear-gradient(135deg, #2B54FF 0%, #1A3FCC 100%)" }}
+        className="w-full sm:max-w-md sm:rounded-3xl sm:shadow-2xl overflow-hidden flex flex-col"
+        style={{
+          minHeight: "100svh",
+          // On sm+ browsers override minHeight to auto via CSS
+        }}
       >
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-white/70 text-sm font-medium mb-1">Bem-vindo,</p>
-            <h1 className="text-2xl font-bold">{user?.firstName} {user?.lastName}</h1>
+        {/* Header */}
+        <div
+          className="px-6 pt-14 sm:pt-10 pb-8 text-white flex-shrink-0"
+          style={{ background: "linear-gradient(135deg, #2B54FF 0%, #1A3FCC 100%)" }}
+        >
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+              >
+                <ShieldCheck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white/70 text-xs font-medium">Portal Responsável</p>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              data-testid="button-logout-guardian"
+              className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm mt-1 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Sair</span>
+            </button>
           </div>
-          <button
-            onClick={logout}
-            data-testid="button-logout-guardian"
-            className="flex items-center gap-1 text-white/70 hover:text-white text-sm mt-1"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+
+          <h1 className="text-2xl font-bold leading-tight">
+            Olá, {user?.firstName}!
+          </h1>
+          <p className="text-white/70 text-sm mt-1">
+            Selecione qual aluno deseja acompanhar
+          </p>
+
+          <div className="flex items-center gap-2 mt-4">
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+            >
+              <Users className="w-3.5 h-3.5" />
+              {managedStudents.length === 1
+                ? "1 aluno vinculado"
+                : `${managedStudents.length} alunos vinculados`}
+            </div>
+          </div>
         </div>
-        <div className="mt-4 flex items-center gap-2">
-          <Users className="w-4 h-4 text-white/80" />
-          <p className="text-white/80 text-sm">
-            {managedStudents.length === 1
-              ? "1 aluno vinculado"
-              : `${managedStudents.length} alunos vinculados`}
+
+        {/* Content */}
+        <div
+          className="flex-1 px-5 py-6"
+          style={{ backgroundColor: "#F8F9FF" }}
+        >
+          {isLoadingDependents ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : managedStudents.length === 0 ? (
+            <div className="text-center py-16">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: "#EEF1FF" }}
+              >
+                <Users className="w-8 h-8 text-[#2B54FF]" />
+              </div>
+              <p className="text-gray-700 font-semibold text-base">Nenhum aluno vinculado</p>
+              <p className="text-gray-400 text-sm mt-1 leading-relaxed">
+                Peça ao administrador para vincular<br />alunos à sua conta.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {managedStudents.map((s) => (
+                <StudentCard key={s.studentId} student={s} onSelect={() => handleSelect(s)} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div
+          className="px-5 pb-8 pt-3 text-center flex-shrink-0"
+          style={{ backgroundColor: "#F8F9FF" }}
+        >
+          <p className="text-xs text-gray-400">
+            Você pode trocar de aluno a qualquer momento durante a sessão
           </p>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="flex-1 px-5 py-6 pb-28">
-        <h2 className="text-base font-semibold text-gray-700 mb-4">
-          Escolha qual aluno deseja gerenciar:
-        </h2>
-
-        {isLoadingDependents ? (
-          <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
-            ))}
-          </div>
-        ) : managedStudents.length === 0 ? (
-          <div className="text-center py-16">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">Nenhum aluno vinculado</p>
-            <p className="text-gray-400 text-sm mt-1">
-              Peça ao administrador para vincular alunos à sua conta.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {managedStudents.map((s) => (
-              <StudentCard key={s.studentId} student={s} onSelect={() => handleSelect(s)} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom navigation - same as student app */}
-      <BottomNav />
     </div>
   );
 }

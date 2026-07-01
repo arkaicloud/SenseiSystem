@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -31,6 +31,7 @@ const GuardianContext = createContext<GuardianContextType>({
 export function GuardianProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [activeStudent, setActiveStudentState] = useState<ManagedStudent | null>(null);
+  const prevUserIdRef = useRef<number | undefined>(undefined);
 
   const isEligible = !!user && (user.role === "guardian" || user.role === "student");
 
@@ -44,15 +45,22 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
   const isGuardianMode =
     !!user && (user.role === "guardian" || (user.role === "student" && managedStudents.length > 0));
 
-  const setActiveStudent = useCallback((s: ManagedStudent | null) => {
-    setActiveStudentState(s);
-    if (s) {
-      sessionStorage.setItem("activeStudentId", String(s.studentId));
-    } else {
-      sessionStorage.removeItem("activeStudentId");
+  // On every new login (user ID change), clear saved student selection so the
+  // guardian always sees the selection screen after logging in.
+  useEffect(() => {
+    if (!user?.id) {
+      prevUserIdRef.current = undefined;
+      return;
     }
-  }, []);
+    if (user.id !== prevUserIdRef.current) {
+      // New login detected — clear cached selection
+      sessionStorage.removeItem("activeStudentId");
+      setActiveStudentState(null);
+      prevUserIdRef.current = user.id;
+    }
+  }, [user?.id]);
 
+  // Restore active student within the same login session (e.g. page navigation)
   useEffect(() => {
     if (!isEligible) return;
     if (managedStudents.length === 0) return;
@@ -62,13 +70,18 @@ export function GuardianProvider({ children }: { children: React.ReactNode }) {
       const found = managedStudents.find((s) => s.studentId === Number(saved));
       if (found) {
         setActiveStudentState(found);
-        return;
       }
     }
-    if (user?.role === "guardian") {
-      setActiveStudentState(managedStudents[0] ?? null);
+  }, [managedStudents.length, isEligible]);
+
+  const setActiveStudent = useCallback((s: ManagedStudent | null) => {
+    setActiveStudentState(s);
+    if (s) {
+      sessionStorage.setItem("activeStudentId", String(s.studentId));
+    } else {
+      sessionStorage.removeItem("activeStudentId");
     }
-  }, [managedStudents.length, user?.role, isEligible]);
+  }, []);
 
   return (
     <GuardianContext.Provider

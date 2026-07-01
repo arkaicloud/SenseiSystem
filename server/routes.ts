@@ -8053,11 +8053,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📢 Fetching recent notices for student ${studentId}`);
 
-      // Verificar autorização (apenas o próprio aluno ou admin)
+      // Verificar autorização: admin vê tudo; aluno vê o próprio; guardian vê dependentes
       if (requestUser.role !== 'admin') {
-        const student = await storage.getStudentByUserId(requestUser.id);
-        if (!student || student.id !== studentId) {
-          return res.status(403).json({ message: "Acesso negado" });
+        if (requestUser.role === 'guardian') {
+          const depCheck = await db.execute(sql`
+            SELECT 1 FROM students WHERE id = ${studentId} AND guardian_id = ${requestUser.id}
+          `);
+          if (depCheck.rows.length === 0) {
+            return res.status(403).json({ message: "Acesso negado" });
+          }
+        } else {
+          const student = await storage.getStudentByUserId(requestUser.id);
+          if (!student || student.id !== studentId) {
+            return res.status(403).json({ message: "Acesso negado" });
+          }
         }
       }
 

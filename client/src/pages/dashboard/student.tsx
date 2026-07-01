@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CreditCard, ChevronRight } from "lucide-react";
 import { TodayClasses } from "@/components/student/TodayClasses";
 import { NoticesBlock } from "@/components/student/NoticesBlock";
+import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
 import { Link } from "wouter";
 import heroImg from "@assets/Gemini_Generated_Image_p01ttdp01ttdp01t_1773260928824.png";
 import beltImg from "@assets/Gemini_Generated_Image_5i9ge55i9ge55i9g_1773260928823.png";
@@ -91,10 +92,14 @@ export default function StudentDashboard() {
         />
         <div className="vyta-hero-gradient" />
         <div className="vyta-hero-content flex flex-col justify-between h-full p-5 pt-6">
-          <div>
+          <div className="flex items-center justify-between">
             <span className="text-[22px] font-bold text-white tracking-[2px] font-inter">
               {schoolInfo?.schoolName?.split(' ')[0]?.toUpperCase() ?? "HUIOS"}
             </span>
+            {/* Guardian profile switcher — only visible for guardians on mobile */}
+            <div className="md:hidden">
+              <GuardianMobileSwitcher />
+            </div>
           </div>
           <div className="space-y-2">
             <h1 className="text-[28px] font-bold text-white leading-[34px] font-inter">

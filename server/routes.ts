@@ -4079,7 +4079,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify student access
-      const student = await storage.getStudentByUserId(requestUser.id);
+      let student;
+      if (requestUser.role === 'guardian') {
+        // Guardian: sid must belong to one of their dependents
+        const depCheck = await db.execute(sql`
+          SELECT 1 FROM students WHERE id = ${sid} AND guardian_id = ${requestUser.id}
+        `);
+        if (depCheck.rows.length === 0) {
+          return res.status(403).json({ success: false, message: "Acesso negado" });
+        }
+        student = await storage.getStudent(sid);
+      } else {
+        student = await storage.getStudentByUserId(requestUser.id);
+      }
+
       console.log("👤 Student lookup result:", { 
         studentFound: !!student, 
         studentId: student?.id, 
@@ -4183,8 +4196,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Idempotent cancellation attempt:", { sid, classId, date: toDateString(date) });
 
-      // Verify student access
-      const student = await storage.getStudentByUserId(requestUser.id);
+      // Verify student access — guardian can cancel for their dependents
+      let student;
+      if (requestUser.role === 'guardian') {
+        const depCheck = await db.execute(sql`
+          SELECT 1 FROM students WHERE id = ${sid} AND guardian_id = ${requestUser.id}
+        `);
+        if (depCheck.rows.length === 0) {
+          return res.status(403).json({ success: false, message: "Acesso negado" });
+        }
+        student = await storage.getStudent(sid);
+      } else {
+        student = await storage.getStudentByUserId(requestUser.id);
+      }
       if (!student || student.id !== sid) {
         return res.status(403).json({ success: false, message: "Access denied" });
       }

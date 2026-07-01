@@ -96,7 +96,7 @@ interface PersonalInfoStepProps {
 // VYTA dark design tokens
 const inputCls = "h-12 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
 const labelCls = "text-slate-300 text-sm font-medium";
-const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
+const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-slate-900 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark] appearance-none";
 
 function DarkSelectField({ label, value, onChange, children, error }: {
   label: string; value: string; onChange: (v: string) => void;

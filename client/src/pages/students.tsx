@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BeltWithLabel, BELT_HEX } from "@/components/ui/belt";
+import { BELT_HEX } from "@/components/ui/belt";
 import { usePaginated } from "@/hooks/usePaginated";
 import { Pagination } from "@/components/ui/Pagination";
 import { PageSizeSelect } from "@/components/ui/PageSizeSelect";
-import { TabsFilter } from "@/components/ui/TabsFilter";
 import { ResultsInfo } from "@/components/ui/ResultsInfo";
 import StudentEditDialog from "@/components/students/StudentEditDialog";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -19,7 +17,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit2, Ban, CheckCircle, Undo, Search } from "lucide-react";
+import {
+  MoreVertical, Eye, Edit2, Ban, CheckCircle, Undo, Search,
+  Download, Plus, Users
+} from "lucide-react";
 
 interface Student {
   id: number;
@@ -42,43 +43,92 @@ interface Student {
   };
 }
 
+const STATUS_TABS = [
+  { value: "all",      label: "Todos" },
+  { value: "active",   label: "Ativos" },
+  { value: "inactive", label: "Bloqueados" },
+  { value: "pending",  label: "Pendentes" },
+];
+
+function AvatarInitials({ name, beltLevel }: { name: string; beltLevel: string }) {
+  const parts = name.trim().split(" ");
+  const initials = (parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "");
+  const hex = BELT_HEX[beltLevel];
+  const useBelt = hex && beltLevel !== "white";
+  return (
+    <div
+      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+      style={useBelt ? { background: hex, color: "#fff" } : { background: "#E2E8F0", color: "#475569" }}
+    >
+      {initials.toUpperCase()}
+    </div>
+  );
+}
+
+function StatusBadge({ active, status }: { active: boolean; status: string }) {
+  if (status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+        Pendente
+      </span>
+    );
+  }
+  if (active) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        Ativo
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+      Bloqueado
+    </span>
+  );
+}
+
+function BeltDisplay({ beltLevel, stripes }: { beltLevel: string; stripes: number }) {
+  const hex = BELT_HEX[beltLevel];
+  const names: Record<string, string> = {
+    white: "Branca", blue: "Azul", purple: "Roxa", brown: "Marrom",
+    black: "Preta", coral: "Coral",
+    grey: "Cinza", yellow: "Amarela", orange: "Laranja", green: "Verde",
+  };
+  const label = names[beltLevel] ?? beltLevel;
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="w-4 h-4 rounded-sm border border-gray-200 flex-shrink-0"
+        style={{ backgroundColor: hex || "#e2e8f0" }}
+      />
+      <span className="text-sm text-gray-700">
+        {label}{stripes > 0 ? ` · ${stripes}G` : ""}
+      </span>
+    </div>
+  );
+}
+
 const Students: React.FC = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
   const [searchInput, setSearchInput] = useState("");
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Use the paginated hook
   const { data, isFetching, page, pageSize, setParam, status, q } =
-    usePaginated<Student>({
-      key: "students",
-      endpoint: "/api/students",
-    });
+    usePaginated<Student>({ key: "students", endpoint: "/api/students" });
 
-  // Check mobile screen
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  useEffect(() => { setSearchInput(q); }, [q]);
 
-  // Sync search input with query parameter
-  useEffect(() => {
-    setSearchInput(q);
-  }, [q]);
-
-  // Toggle student status mutation (block/unblock)
   const { mutate: toggleStudentStatus, isPending: isTogglingStatus } = useMutation({
-    mutationFn: async ({ userId, newStatus }: { studentId: number, userId: number, newStatus: boolean }) => {
-      const res = await apiRequest('PUT', `/api/users/${userId}`, { active: newStatus });
+    mutationFn: async ({ userId, newStatus }: { studentId: number; userId: number; newStatus: boolean }) => {
+      const res = await apiRequest("PUT", `/api/users/${userId}`, { active: newStatus });
       return res.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       toast({
         title: "Sucesso",
         description: variables.newStatus ? "Aluno liberado com sucesso" : "Aluno bloqueado com sucesso",
@@ -86,359 +136,275 @@ const Students: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
     },
     onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Falha ao alterar status do aluno: ${error}`,
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: `Falha ao alterar status: ${error}`, variant: "destructive" });
     },
   });
 
-  // Revert approval mutation
   const { mutate: revertApprovalMutation } = useMutation({
     mutationFn: async (userId: number) => {
-      const res = await apiRequest('PUT', `/api/users/${userId}`, { 
-        status: 'pending',
-        active: false 
-      });
+      const res = await apiRequest("PUT", `/api/users/${userId}`, { status: "pending", active: false });
       return res.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Sucesso",
-        description: "Aluno revertido para pendente com sucesso",
-      });
+      toast({ title: "Sucesso", description: "Aluno revertido para pendente" });
       queryClient.invalidateQueries({ queryKey: ["students"] });
     },
   });
 
-  // Handle search
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setParam("q", searchInput);
-    }
+    if (e.key === "Enter") setParam("q", searchInput);
   };
 
-  // Student Actions Component
-  const StudentActions = ({ student, isMobile = false }: { student: Student, isMobile?: boolean }) => {
-    if (isMobile) {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0"
-            >
-              <MoreHorizontal className="h-4 w-4 text-gray-400" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuItem
-              onClick={() => {
-                setStudentToEdit(student);
-                setIsEditStudentOpen(true);
-              }}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              Ver perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setStudentToEdit(student);
-                setIsEditStudentOpen(true);
-              }}
-            >
-              <Edit2 className="mr-2 h-4 w-4" />
-              Editar dados
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => toggleStudentStatus({
-                studentId: student.id,
-                userId: student.user.id,
-                newStatus: !student.user.active
-              })}
-              disabled={isTogglingStatus}
-            >
-              {student.user.active ? (
-                <>
-                  <Ban className="mr-2 h-4 w-4" />
-                  Bloquear aluno
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Liberar aluno
-                </>
-              )}
-            </DropdownMenuItem>
-            {student.user.active && (
-              <DropdownMenuItem
-                onClick={() => revertApprovalMutation(student.user.id)}
-              >
-                <Undo className="mr-2 h-4 w-4" />
-                Reverter para pendente
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    }
-
-    // Desktop version
-    return (
-      <div className="flex items-center space-x-1">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 w-8 p-0"
-          title="Ver perfil completo"
-          onClick={() => {
-            setStudentToEdit(student);
-            setIsEditStudentOpen(true);
-          }}
-        >
-          <Eye className="h-4 w-4 text-blue-500" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 w-8 p-0"
-          title="Editar dados do aluno"
-          onClick={() => {
-            setStudentToEdit(student);
-            setIsEditStudentOpen(true);
-          }}
-        >
-          <Edit2 className="h-4 w-4 text-gray-500" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className={`h-8 w-8 p-0 ${isTogglingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
-          title={student.user.active ? "Bloquear aluno" : "Liberar aluno"}
-          disabled={isTogglingStatus}
-          onClick={() => toggleStudentStatus({
-            studentId: student.id,
-            userId: student.user.id,
-            newStatus: !student.user.active
-          })}
-        >
-          {student.user.active ? (
-            <Ban className="h-4 w-4 text-red-500" />
-          ) : (
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          )}
-        </Button>
-        {student.user.active && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            title="Reverter para pendente"
-            onClick={() => revertApprovalMutation(student.user.id)}
-          >
-            <Undo className="h-4 w-4 text-gray-500" />
-          </Button>
-        )}
-      </div>
-    );
+  const openEdit = (student: Student) => {
+    setStudentToEdit(student);
+    setIsEditStudentOpen(true);
   };
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="font-montserrat font-bold text-2xl text-primary">Alunos</h1>
-            <p className="text-gray-600">Gerencie os alunos da escola</p>
+      <div className="space-y-5">
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Alunos</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-gray-600 border-gray-300 hover:bg-gray-50"
+            >
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setLocation("/onboarding")}
+              data-testid="button-new-student"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Aluno
+            </Button>
           </div>
-          <Button 
-            className="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            onClick={() => setLocation('/onboarding')}
-          >
-            + Novo Aluno
-          </Button>
         </div>
 
-        {/* Filtros superiores */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <TabsFilter
-            value={status}
-            onChange={(v) => setParam("status", v)}
-            items={[
-              { value: "all", label: "Todas" },
-              { value: "active", label: "Ativos" },
-              { value: "pending", label: "Pendentes" },
-              { value: "inactive", label: "Inativos" },
-            ]}
-          />
-          <div className="flex items-center gap-3">
+        {/* ── Tab filters ────────────────────────────────────────── */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex gap-0">
+            {STATUS_TABS.map((tab) => {
+              const active = status === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setParam("status", tab.value)}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    active
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {tab.label}
+                  {active && data?.total != null && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">
+                      {data.total}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* ── Table card ─────────────────────────────────────────── */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                className="pl-10 w-56"
-                placeholder="Buscar por nome/email"
+                className="pl-9 w-64 h-9 text-sm border-gray-200 bg-gray-50 dark:bg-gray-900 dark:border-gray-700 focus-visible:ring-blue-500"
+                placeholder="Buscar aluno..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleSearch}
+                data-testid="input-search-student"
               />
             </div>
-            <PageSizeSelect 
-              value={pageSize} 
-              onChange={(n) => setParam("pageSize", n)} 
-            />
+            <PageSizeSelect value={pageSize} onChange={(n) => setParam("pageSize", n)} />
           </div>
-        </div>
 
-        {/* Tabela */}
-        <div className="overflow-x-auto rounded-xl border bg-white dark:bg-gray-800 dark:border-gray-700">
+          {/* Table */}
           {isFetching && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Carregando alunos...
-            </div>
+            <div className="text-center py-12 text-gray-400 text-sm">Carregando alunos...</div>
           )}
-          
+
           {!isFetching && (!data?.items || data.items.length === 0) && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Nenhum aluno encontrado
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Users className="h-10 w-10 text-gray-300 mb-3" />
+              <p className="text-sm font-medium text-gray-500">Nenhum aluno encontrado</p>
+              <p className="text-xs text-gray-400 mt-1">Tente ajustar os filtros ou busca</p>
             </div>
           )}
 
           {!isFetching && data?.items && data.items.length > 0 && (
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-gray-700">
-                <tr className="[&>th]:px-3 [&>th]:py-3 text-left">
-                  {isMobile && <th className="w-12"></th>}
-                  <th>ID</th>
-                  <th>Aluno</th>
-                  {!isMobile && (
-                    <>
-                      <th>Faixa</th>
-                      <th>Email</th>
-                      <th>Telefone</th>
-                    </>
-                  )}
-                  <th>Status</th>
-                  {!isMobile && <th className="text-right">Ações</th>}
-                </tr>
-              </thead>
-              <tbody className="[&>tr>td]:px-3 [&>tr>td]:py-3">
-                {data.items.map((student) => (
-                  <tr 
-                    key={student.id} 
-                    className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    onClick={isMobile ? () => { setStudentToEdit(student); setIsEditStudentOpen(true); } : undefined}
-                  >
-                    {isMobile && (
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <StudentActions student={student} isMobile={true} />
-                      </td>
-                    )}
-                    <td className="text-gray-900 dark:text-gray-100 font-medium">{student.id}</td>
-                    <td>
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 h-8 w-8 relative">
-                          <div
-                            className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
-                            style={(() => {
-                              const hex = BELT_HEX[student.beltLevel];
-                              if (!hex || student.beltLevel === 'white') {
-                                return { background: '#E2E8F0', color: '#475569' };
-                              }
-                              return { background: hex, color: '#fff' };
-                            })()}
-                          >
-                            {student.user.firstName?.charAt(0)}{student.user.lastName?.charAt(0)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
-                            {student.user.firstName} {student.user.lastName}
-                          </div>
-                          {isMobile && (
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <div
-                                className="w-3 h-3 rounded-sm flex-shrink-0"
-                                style={(() => {
-                                  const hex = BELT_HEX[student.beltLevel];
-                                  return hex && student.beltLevel !== 'white'
-                                    ? { backgroundColor: hex }
-                                    : { backgroundColor: '#E2E8F0', border: '1px solid #CBD5E1' };
-                                })()}
-                              />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {student.user.email}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    {!isMobile && (
-                      <>
-                        <td>
-                          <BeltWithLabel level={student.beltLevel as any} stripes={student.stripes} />
-                        </td>
-                        <td className="text-gray-500 dark:text-gray-400">{student.user.email}</td>
-                        <td className="text-gray-500 dark:text-gray-400">{student.user.phone || 'Não informado'}</td>
-                      </>
-                    )}
-                    <td>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        student.user.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
-                        student.user.active === true ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 
-                        'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
-                      }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                          student.user.status === 'pending' ? 'bg-yellow-400' :
-                          student.user.active === true ? 'bg-green-400' : 
-                          'bg-red-400'
-                        }`}></div>
-                        {student.user.status === 'pending' ? 'Pendente' :
-                         student.user.active === true ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    {!isMobile && (
-                      <td className="text-right">
-                        <StudentActions student={student} isMobile={false} />
-                      </td>
-                    )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <th className="w-10 px-4 py-3">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Nome do Aluno
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                      Faixa
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                      Telefone
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                      Matrícula
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 w-10" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                  {data.items.map((student) => {
+                    const fullName = `${student.user.firstName} ${student.user.lastName}`;
+                    const dateStr = student.user.joinDate || student.user.createdAt;
+                    const displayDate = dateStr
+                      ? new Date(dateStr).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
+                      : "—";
+
+                    return (
+                      <tr
+                        key={student.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                        data-testid={`row-student-${student.id}`}
+                      >
+                        {/* Checkbox */}
+                        <td className="px-4 py-3">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                        </td>
+
+                        {/* Nome */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <AvatarInitials name={fullName} beltLevel={student.beltLevel} />
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-gray-100 leading-tight">
+                                {fullName}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5">{student.user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Faixa */}
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <BeltDisplay beltLevel={student.beltLevel} stripes={student.stripes} />
+                        </td>
+
+                        {/* Telefone */}
+                        <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">
+                          {student.user.phone || "—"}
+                        </td>
+
+                        {/* Data */}
+                        <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">
+                          {displayDate}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-4 py-3">
+                          <StatusBadge active={student.user.active} status={student.user.status} />
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-3">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                data-testid={`button-actions-${student.id}`}
+                              >
+                                <MoreVertical className="h-4 w-4 text-gray-400" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => openEdit(student)}>
+                                <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                Ver perfil
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEdit(student)}>
+                                <Edit2 className="mr-2 h-4 w-4 text-gray-500" />
+                                Editar dados
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={isTogglingStatus}
+                                onClick={() =>
+                                  toggleStudentStatus({
+                                    studentId: student.id,
+                                    userId: student.user.id,
+                                    newStatus: !student.user.active,
+                                  })
+                                }
+                              >
+                                {student.user.active ? (
+                                  <>
+                                    <Ban className="mr-2 h-4 w-4 text-red-500" />
+                                    Bloquear aluno
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                    Liberar aluno
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              {student.user.active && (
+                                <DropdownMenuItem onClick={() => revertApprovalMutation(student.user.id)}>
+                                  <Undo className="mr-2 h-4 w-4 text-gray-500" />
+                                  Reverter para pendente
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination inside card */}
+          {data && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <ResultsInfo page={data.page} pageSize={data.pageSize} total={data.total} />
+              <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                onPage={(p: number) => setParam("page", p)}
+              />
+            </div>
           )}
         </div>
-
-        {/* Footer da paginação */}
-        {data && (
-          <div className="flex items-center justify-between">
-            <ResultsInfo 
-              page={data.page} 
-              pageSize={data.pageSize} 
-              total={data.total} 
-            />
-            <Pagination
-              page={data.page}
-              totalPages={data.totalPages}
-              onPage={(p: number) => setParam("page", p)}
-            />
-          </div>
-        )}
       </div>
 
-      {/* Edit Student Dialog */}
       {studentToEdit && (
         <StudentEditDialog
           studentId={studentToEdit.id}
           open={isEditStudentOpen}
           onOpenChange={(open) => {
             setIsEditStudentOpen(open);
-            if (!open) {
-              setStudentToEdit(null);
-            }
+            if (!open) setStudentToEdit(null);
           }}
         />
       )}

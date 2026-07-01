@@ -6340,7 +6340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         billingType: 'BOLETO' as const,
         value: paymentPlan.amount / 100, // Convert cents to reais
         dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD
-        description: `Mensalidade - ${user.firstName} ${user.lastName}`,
+        description: `Mensalidade ${config?.schoolName || 'Academia'} - ${paymentPlan.name}`,
         externalReference: `student_${student.id}_${new Date().getTime()}`
       };
 
@@ -6348,7 +6348,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user_id: student.id,
         first_name: user.firstName,
         last_name: user.lastName,
-        preferredDueDate: student.preferredDueDate || 5
+        preferredDueDate: student.preferredDueDate || 5,
+        school_name: config?.schoolName || 'Academia'
       }, paymentPlan);
 
       // Create accounts receivable in the system

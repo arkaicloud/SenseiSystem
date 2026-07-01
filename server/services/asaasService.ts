@@ -237,7 +237,7 @@ export class AsaasService {
       billingType: 'BOLETO',
       value: planData.amount / 100, // Convert cents to reais
       dueDate: dueDate.toISOString().split('T')[0], // YYYY-MM-DD
-      description: `Mensalidade ${studentData.first_name} ${studentData.last_name} - ${planData.name}`,
+      description: `Mensalidade ${studentData.school_name || 'Academia'} - ${planData.name}`,
       externalReference: `student_${studentData.user_id}_plan_${planData.id}`
     };
 

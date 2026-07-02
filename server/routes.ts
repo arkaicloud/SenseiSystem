@@ -7303,15 +7303,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cached = await storage.getAsaasPaymentCache(startDateParam, endDateParam);
 
       // Map cache rows to the shape the frontend expects
+      const todayStr = new Date().toISOString().slice(0, 10);
       const payments = cached
         .filter((p) => !p.deleted)
-        .map((p) => ({
+        .map((p) => {
+          // If ASAAS still shows PENDING but due date already passed → mark as OVERDUE
+          const effectiveStatus =
+            p.status === 'PENDING' && p.dueDate < todayStr ? 'OVERDUE' : p.status;
+          return {
           id:               p.id,
           customer:         p.customer,
           customerName:     p.customerName  || 'Cliente não encontrado',
           customerEmail:    p.customerEmail || '',
           value:            parseFloat(p.value ?? '0'),
-          status:           p.status,
+          status:           effectiveStatus,
           dueDate:          p.dueDate,
           description:      p.description,
           invoiceUrl:       p.invoiceUrl,
@@ -7326,21 +7331,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           billingType:      p.billingType       || null,
           studentId:        p.studentId,
           subscription:     p.subscription      || null,
-        }));
+          };
+        });
 
       // Calculate metrics inline (same logic as before)
-      const received  = payments.filter((p) => ['RECEIVED', 'CONFIRMED'].includes(p.status));
+      const received  = payments.filter((p) => ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(p.status));
       const pending   = payments.filter((p) => p.status === 'PENDING');
       const overdue   = payments.filter((p) => p.status === 'OVERDUE');
-      const today     = new Date().toISOString().slice(0, 10);
-      const overdueC  = payments.filter((p) => p.status === 'PENDING' && p.dueDate < today);
 
       const sum = (arr: typeof payments) => arr.reduce((acc, p) => acc + p.value, 0);
       const metrics = {
         totalReceived:  sum(received),
         totalPending:   sum(pending),
         totalOverdue:   sum(overdue),
-        totalOverdueCount: overdueC.length,
+        totalOverdueCount: overdue.length,
         totalPayments:  payments.length,
         receivedCount:  received.length,
         pendingCount:   pending.length,

@@ -148,7 +148,7 @@ export default function FinancialDashboard() {
   const [showManualReceipt, setShowManualReceipt] = useState(false);
 
   // ── Data fetch ────────────────────────────────────────────────────────────
-  const { data: financialData, isLoading, isFetching, error } = useQuery<FinancialData>({
+  const { data: financialData, isLoading, isFetching, error, refetch } = useQuery<FinancialData>({
     queryKey: ["/api/financial/payments", format(selectedMonth, "yyyy-MM"), showAllMonths],
     queryFn: async () => {
       let url = `/api/financial/payments?limit=2000`;
@@ -157,13 +157,20 @@ export default function FinancialDashboard() {
         const endDate   = format(endOfMonth(selectedMonth),   "yyyy-MM-dd");
         url += `&startDate=${startDate}&endDate=${endDate}`;
       }
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(url, {
+        credentials: "include",
+        cache: "no-store",                       // bypass browser HTTP cache
+        headers: { "Cache-Control": "no-cache" },
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || "Erro ao carregar dados financeiros");
       }
       return res.json();
     },
+    staleTime: 0,              // never serve stale data from React Query memory cache
+    gcTime: 2 * 60 * 1000,    // discard old entries after 2 min
+    retry: 2,
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -389,10 +396,17 @@ export default function FinancialDashboard() {
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Erro ao carregar dados financeiros</h2>
-          <p className="text-muted-foreground mb-4">Não foi possível conectar com o sistema financeiro ASAAS</p>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/financial/payments"] })}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Tentar Novamente
-          </Button>
+          <p className="text-muted-foreground mb-4">
+            {(error as Error).message || "Não foi possível conectar com o sistema financeiro ASAAS"}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" /> Tentar Novamente
+            </Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Recarregar Página
+            </Button>
+          </div>
         </div>
       </div>
     );

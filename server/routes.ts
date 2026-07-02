@@ -7368,6 +7368,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── GET /api/financial/payments ─────────────────────────────────────────────
   // Reads from local cache (fast). Runs sync automatically if cache is empty.
   app.get("/api/financial/payments", isAuthenticated, isAdmin, async (req, res) => {
+    // Prevent browser and proxy caching — data is always live
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Surrogate-Control': 'no-store',
+    });
+
     try {
       const startDateParam = req.query.startDate as string | undefined;
       const endDateParam   = req.query.endDate   as string | undefined;

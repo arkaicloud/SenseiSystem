@@ -37,7 +37,7 @@ export async function syncAsaasPayments(): Promise<SyncResult> {
   // ── 1. Get all students with subscriptionId ─────────────────────────────────
   const studentsWithUsers = await storage.getStudentsWithUsers();
   const studentsWithSub = studentsWithUsers.filter(
-    (sw) => sw.student.asaasSubscriptionId && sw.student.asaasSubscriptionId.trim() !== ''
+    (sw) => sw.student?.asaasSubscriptionId && sw.student.asaasSubscriptionId.trim() !== ''
   );
 
   console.log(`🔄 ASAAS Sync: ${studentsWithSub.length} students with subscriptions`);
@@ -45,7 +45,7 @@ export async function syncAsaasPayments(): Promise<SyncResult> {
   // Build lookup: asaasCustomerId → student info
   const customerToStudent = new Map<string, { studentId: number; name: string; email: string }>();
   for (const sw of studentsWithUsers) {
-    if (sw.student.asaasCustomerId) {
+    if (sw.student?.asaasCustomerId) {
       customerToStudent.set(sw.student.asaasCustomerId, {
         studentId: sw.student.id,
         name: sw.user.name ?? sw.user.username,

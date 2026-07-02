@@ -7300,7 +7300,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await syncAsaasPayments();
       }
 
-      const cached = await storage.getAsaasPaymentCache(startDateParam, endDateParam);
+      let cached = await storage.getAsaasPaymentCache(startDateParam, endDateParam);
+
+      // ── Lazy customer name resolution ──────────────────────────────────────
+      // For payments in this period that still have no customerName,
+      // fetch the customer from ASAAS and update the cache so subsequent loads are instant.
+      const missingNameRows = cached.filter((p) => !p.customerName && p.customer);
+      if (missingNameRows.length > 0) {
+        const uniqueCustomerIds = [...new Set(missingNameRows.map((p) => p.customer as string))];
+        console.log(`🔍 Resolving ${uniqueCustomerIds.length} missing customer name(s) from ASAAS...`);
+        const config = await storage.getSchoolConfig();
+        const nameSvc = new AsaasPaymentsService(config?.asaasApiKey || undefined);
+        const nameMap = new Map<string, { name: string; email: string }>();
+        const BATCH = 10;
+        for (let i = 0; i < uniqueCustomerIds.length; i += BATCH) {
+          await Promise.all(
+            uniqueCustomerIds.slice(i, i + BATCH).map(async (cid) => {
+              try {
+                const c = await nameSvc.getCustomer(cid);
+                nameMap.set(cid, { name: c.name ?? '', email: c.email ?? '' });
+              } catch { /* ignore deleted customers */ }
+            })
+          );
+        }
+        if (nameMap.size > 0) {
+          // Collect all payment IDs that match each resolved customer
+          const cacheUpdates: { id: string; customerName: string; customerEmail: string }[] = [];
+          for (const p of cached) {
+            if (!p.customerName && p.customer) {
+              const resolved = nameMap.get(p.customer);
+              if (resolved) {
+                cacheUpdates.push({ id: p.id, customerName: resolved.name, customerEmail: resolved.email });
+                // Patch in-memory too so the response is correct immediately
+                p.customerName  = resolved.name;
+                p.customerEmail = resolved.email;
+              }
+            }
+          }
+          // Persist in background — don't block the response
+          storage.updateAsaasCustomerNames(cacheUpdates).catch((e) =>
+            console.warn('⚠️ Failed to persist customer names to cache:', e.message)
+          );
+          console.log(`  ✅ Resolved ${nameMap.size} customer name(s)`);
+        }
+      }
 
       // Map cache rows to the shape the frontend expects
       const todayStr = new Date().toISOString().slice(0, 10);

@@ -228,6 +228,7 @@ export interface IStorage {
   // ASAAS Payment Cache
   getAsaasPaymentCache(startDate?: string, endDate?: string): Promise<any[]>;
   upsertAsaasPayments(payments: any[]): Promise<number>;
+  updateAsaasCustomerNames(updates: { id: string; customerName: string; customerEmail: string }[]): Promise<void>;
   clearAsaasPaymentCache(): Promise<void>;
   getAsaasPaymentCacheSyncInfo(): Promise<{ total: number; lastSync: Date | null }>;
 
@@ -1355,6 +1356,7 @@ export class MemStorage implements IStorage {
 
   async getAsaasPaymentCache(_startDate?: string, _endDate?: string): Promise<any[]> { return []; }
   async upsertAsaasPayments(_payments: any[]): Promise<number> { return 0; }
+  async updateAsaasCustomerNames(_updates: { id: string; customerName: string; customerEmail: string }[]): Promise<void> {}
   async clearAsaasPaymentCache(): Promise<void> {}
   async getAsaasPaymentCacheSyncInfo(): Promise<{ total: number; lastSync: Date | null }> { return { total: 0, lastSync: null }; }
 
@@ -2552,20 +2554,34 @@ export class DatabaseStorage implements IStorage {
         .onConflictDoUpdate({
           target: asaasPaymentCache.id,
           set: {
-            status:           sql`excluded.status`,
-            paymentDate:      sql`excluded.payment_date`,
+            status:            sql`excluded.status`,
+            paymentDate:       sql`excluded.payment_date`,
             clientPaymentDate: sql`excluded.client_payment_date`,
-            value:            sql`excluded.value`,
-            netValue:         sql`excluded.net_value`,
-            dueDate:          sql`excluded.due_date`,
-            description:      sql`excluded.description`,
-            invoiceUrl:       sql`excluded.invoice_url`,
-            deleted:          sql`excluded.deleted`,
-            syncedAt:         sql`excluded.synced_at`,
+            value:             sql`excluded.value`,
+            netValue:          sql`excluded.net_value`,
+            dueDate:           sql`excluded.due_date`,
+            description:       sql`excluded.description`,
+            invoiceUrl:        sql`excluded.invoice_url`,
+            deleted:           sql`excluded.deleted`,
+            syncedAt:          sql`excluded.synced_at`,
+            // Always update names so re-syncs propagate correct customer data
+            customerName:      sql`COALESCE(excluded.customer_name, ${asaasPaymentCache.customerName})`,
+            customerEmail:     sql`COALESCE(excluded.customer_email, ${asaasPaymentCache.customerEmail})`,
+            studentId:         sql`COALESCE(excluded.student_id, ${asaasPaymentCache.studentId})`,
           },
         });
     }
     return rows.length;
+  }
+
+  async updateAsaasCustomerNames(updates: { id: string; customerName: string; customerEmail: string }[]): Promise<void> {
+    if (updates.length === 0) return;
+    // Update in batches of 100 using individual updates (no bulk upsert needed — just names)
+    for (const u of updates) {
+      await db.update(asaasPaymentCache)
+        .set({ customerName: u.customerName, customerEmail: u.customerEmail })
+        .where(eq(asaasPaymentCache.id, u.id));
+    }
   }
 
   async clearAsaasPaymentCache(): Promise<void> {

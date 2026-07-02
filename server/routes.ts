@@ -2998,12 +2998,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }
 
+            // Check if this session was cancelled
+            const sessionCancellation = await storage.getClassCancellation(classItem.id, todayStr);
+            const isCancelled = !!sessionCancellation;
+
             return {
               ...classItem,
               attendanceCount: todayAttendanceCount,
               attendanceConfirmed: attendanceConfirmed,
               bookingStatus: bookingStatus,
               dateISO: todayStr,
+              isCancelled,
+              canConfirm: !isCancelled && !attendanceConfirmed && bookingStatus !== 'CONFIRMED',
+              canCancel: !isCancelled && (attendanceConfirmed || bookingStatus === 'CONFIRMED'),
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                 : 'Sem instrutor'
@@ -3015,6 +3022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               attendanceCount: 0,
               attendanceConfirmed: false,
               bookingStatus: null,
+              isCancelled: false,
               dateISO: today.toISOString().split('T')[0],
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
@@ -3310,8 +3318,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(classId) || !date) return res.status(400).json({ message: "classId e date são obrigatórios" });
       const existing = await storage.getClassCancellation(classId, date);
       if (existing) return res.json({ cancelled: true, cancellation: existing });
+
+      // Create the cancellation record
       const cancellation = await storage.createClassCancellation(classId, date, requestUser.id, reason);
       console.log(`🚫 Aula ${classId} cancelada em ${date} por user ${requestUser.id}`);
+
+      // ── Notify confirmed students ────────────────────────────────────────────
+      try {
+        const classInfo = await storage.getClass(classId);
+        const className = classInfo?.name ?? `Aula #${classId}`;
+
+        // Find all students who confirmed attendance for this class on this date
+        const confirmedAttendances = await storage.getAttendanceByClass(classId, new Date(date + 'T12:00:00Z'));
+        const dateStr = date; // 'YYYY-MM-DD'
+        const confirmedStudentIds = confirmedAttendances
+          .filter((a) => {
+            const aDate = new Date(a.date).toISOString().split('T')[0];
+            return aDate === dateStr && (a.status === 'confirmed' || a.status === 'present');
+          })
+          .map((a) => a.studentId);
+
+        if (confirmedStudentIds.length > 0) {
+          // Format date for display (DD/MM/YYYY)
+          const [y, m, d] = date.split('-');
+          const displayDate = `${d}/${m}/${y}`;
+          const noticeTitle = `⚠️ Aula cancelada: ${className}`;
+          const noticeContent = reason
+            ? `A aula "${className}" do dia ${displayDate} foi cancelada. Motivo: ${reason}`
+            : `A aula "${className}" do dia ${displayDate} foi cancelada pela academia.`;
+
+          // Create a notice
+          const [notice] = await db
+            .insert(notices)
+            .values({
+              title: noticeTitle,
+              content: noticeContent,
+              level: 'HIGH',
+              audience: 'STUDENTS',
+              publishAt: new Date(),
+              createdBy: requestUser.id,
+            })
+            .returning();
+
+          // Create student notification entries for each confirmed student
+          await db
+            .insert(studentNotifications)
+            .values(confirmedStudentIds.map((sid) => ({ studentId: sid, noticeId: notice.id })));
+
+          console.log(`📢 Notificação de cancelamento enviada para ${confirmedStudentIds.length} aluno(s) confirmado(s)`);
+
+          // Also send email notifications
+          const allStudentsWithUsers = await storage.getStudentsWithUsers();
+          const confirmedSet = new Set(confirmedStudentIds);
+          const confirmedStudentsInfo = allStudentsWithUsers.filter((sw) => sw.student && confirmedSet.has(sw.student.id));
+          for (const sw of confirmedStudentsInfo) {
+            if (sw.user?.email) {
+              try {
+                await emailService.sendSchoolNoticeEmail(
+                  sw.user.email,
+                  `${sw.user.firstName} ${sw.user.lastName}`,
+                  noticeTitle,
+                  noticeContent
+                );
+              } catch (emailErr) {
+                console.warn(`⚠️ Email de cancelamento não enviado para student ${sw.student?.id}:`, emailErr);
+              }
+            }
+          }
+        }
+      } catch (notifyErr) {
+        // Don't fail the cancellation if notification fails
+        console.error('⚠️ Erro ao notificar alunos do cancelamento:', notifyErr);
+      }
+
       res.json({ cancelled: true, cancellation });
     } catch (error) {
       console.error("Error cancelling class session:", error);

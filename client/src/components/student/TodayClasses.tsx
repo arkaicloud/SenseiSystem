@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, CheckCircle, XCircle, Loader2, Calendar } from "lucide-react";
+import { Clock, User, CheckCircle, XCircle, Loader2, Calendar, BanIcon } from "lucide-react";
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,6 +22,7 @@ interface ClassSession {
   canCancel?: boolean;
   maxCapacity?: number;
   attendanceCount?: number;
+  isCancelled?: boolean;
 }
 
 interface TodayClassesProps {
@@ -132,19 +133,33 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
         {classes.map((classSession) => (
           <div
             key={classSession.id}
-            className="border rounded-lg p-4 hover:shadow-sm transition-shadow"
+            className={`border rounded-lg p-4 transition-shadow ${
+              classSession.isCancelled
+                ? 'border-red-200 bg-red-50/50 opacity-80'
+                : 'hover:shadow-sm'
+            }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-medium">{classSession.name}</h4>
-                  <Badge variant="outline" className="text-xs">
-                    {classSession.location || 'Tatame Principal'}
-                  </Badge>
-                  {classSession.maxCapacity && (
-                    <Badge variant="secondary" className="text-xs">
-                      {classSession.attendanceCount || 0}/{classSession.maxCapacity}
+                  <h4 className={`font-medium ${classSession.isCancelled ? 'line-through text-slate-400' : ''}`}>
+                    {classSession.name}
+                  </h4>
+                  {classSession.isCancelled ? (
+                    <Badge className="text-xs bg-red-100 text-red-600 border-red-200 gap-1">
+                      <BanIcon className="w-3 h-3" /> Cancelada
                     </Badge>
+                  ) : (
+                    <>
+                      <Badge variant="outline" className="text-xs">
+                        {classSession.location || 'Tatame Principal'}
+                      </Badge>
+                      {classSession.maxCapacity && (
+                        <Badge variant="secondary" className="text-xs">
+                          {classSession.attendanceCount || 0}/{classSession.maxCapacity}
+                        </Badge>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -158,10 +173,21 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     <span>{classSession.instructorName || 'Instrutor'}</span>
                   </div>
                 </div>
+
+                {classSession.isCancelled && (
+                  <p className="text-xs text-red-500 font-medium mt-1">
+                    Esta aula foi cancelada pela academia.
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 sm:flex-shrink-0">
-                {isConfirmed(classSession) ? (
+                {classSession.isCancelled ? (
+                  <div className="flex items-center justify-center gap-2 text-red-500 py-2 px-3 bg-red-100 rounded-md text-sm font-medium">
+                    <BanIcon className="w-4 h-4" />
+                    <span>Aula cancelada</span>
+                  </div>
+                ) : isConfirmed(classSession) ? (
                   <>
                     <div className="flex items-center justify-center gap-2 text-green-600 py-2 px-3 bg-green-50 rounded-md sm:bg-transparent sm:p-0">
                       <CheckCircle className="w-5 h-5" />

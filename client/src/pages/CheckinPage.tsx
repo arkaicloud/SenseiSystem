@@ -162,7 +162,11 @@ function ClassCard({ cls, onCheckin, isPending }: {
   );
 }
 
-function SuccessScreen({ className, onDone }: { className: string; onDone: () => void }) {
+function SuccessScreen({ className, checkInTime, onDone }: { className: string; checkInTime: Date | null; onDone: () => void }) {
+  const timeLabel = checkInTime
+    ? new Date(checkInTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center gap-4">
       <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
@@ -173,6 +177,12 @@ function SuccessScreen({ className, onDone }: { className: string; onDone: () =>
         <p className="text-slate-500 mt-1">
           Sua presença em <span className="font-semibold text-slate-700">{className}</span> foi registrada.
         </p>
+        {timeLabel && (
+          <p className="text-slate-400 text-sm mt-1 flex items-center justify-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            Registrado às {timeLabel}
+          </p>
+        )}
       </div>
       <button
         onClick={onDone}
@@ -188,7 +198,7 @@ function SuccessScreen({ className, onDone }: { className: string; onDone: () =>
 export default function CheckinPage() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [successClass, setSuccessClass] = useState<string | null>(null);
+  const [successState, setSuccessState] = useState<{ className: string; checkInTime: Date | null } | null>(null);
   const [pendingClassId, setPendingClassId] = useState<number | null>(null);
 
   const {
@@ -215,7 +225,7 @@ export default function CheckinPage() {
       return json;
     },
     onSuccess: (data) => {
-      setSuccessClass(data.className);
+      setSuccessState({ className: data.className, checkInTime: data.checkInTime ?? null });
       queryClient.invalidateQueries({ queryKey: ["/api/checkin/classes"] });
     },
   });
@@ -281,12 +291,16 @@ export default function CheckinPage() {
         )}
 
         {/* Student — success state */}
-        {user && user.role === "student" && successClass && (
-          <SuccessScreen className={successClass} onDone={() => { setSuccessClass(null); refetch(); }} />
+        {user && user.role === "student" && successState && (
+          <SuccessScreen
+            className={successState.className}
+            checkInTime={successState.checkInTime}
+            onDone={() => { setSuccessState(null); refetch(); }}
+          />
         )}
 
         {/* Student — class list */}
-        {user && user.role === "student" && !successClass && (
+        {user && user.role === "student" && !successState && (
           <div className="space-y-4">
             {/* Current time */}
             {data?.currentTime && (

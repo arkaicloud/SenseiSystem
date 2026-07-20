@@ -37,7 +37,9 @@ export default function LoginPage() {
   const [showLoadingScreen, setShowLoadingScreen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
-  const redirectParam = new URLSearchParams(window.location.search).get("redirect");
+  // Sanitize: only allow internal relative paths (must start with /)
+  const rawRedirect = new URLSearchParams(window.location.search).get("redirect");
+  const redirectParam = rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : null;
 
   const { data: schoolConfig } = useQuery<SchoolConfig>({
     queryKey: ['/api/school-config'],

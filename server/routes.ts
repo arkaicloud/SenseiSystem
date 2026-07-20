@@ -8534,6 +8534,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === QR Check-in Routes ===
 
   // GET /api/checkin/classes — Returns classes available for check-in right now
+  // Shared helper — mirrors the exact same attendance creation used by
+  // POST /api/classes/:classId/confirm-attendance so both flows stay in sync.
+  async function createQrAttendanceRecord(studentId: number, classId: number, checkedInById: number): Promise<Date> {
+    const date = new Date();
+    await storage.createAttendance({
+      studentId,
+      classId,
+      date,
+      status: 'present' as const,
+      checkedInBy: checkedInById,
+    });
+    return date;
+  }
+
   app.get("/api/checkin/classes", isAuthenticated, async (req, res) => {
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -8553,13 +8567,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Perfil de aluno não encontrado' });
       }
 
+      // Same category-filter logic as /api/classes/today
+      const userData = await storage.getUser(requestUser.id);
+      if (!userData) {
+        return res.status(404).json({ error: 'Dados do usuário não encontrados' });
+      }
+      const isChild = userData.birthDate
+        ? (new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16
+        : false;
+      const userSex = userData.sex?.toLowerCase() || 'misto';
+
       const now = getBrasiliaDate();
       const currentDayOfWeek = getBrasiliaDayOfWeek();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       const todayStr = now.toISOString().split('T')[0];
 
       const allClasses = await storage.getClassesWithInstructors();
-      const todaysClasses = allClasses.filter(c => c.isActive !== false && c.dayOfWeek === currentDayOfWeek);
+
+      // Filter by category (same rules as /api/classes/today)
+      const allowedClasses = allClasses.filter(classItem => {
+        if (!classItem.type) return true;
+        const classType = classItem.type.toLowerCase();
+        if (classType === 'infantil') return isChild;
+        if (classType === 'misto') return true;
+        if (classType === 'masculino') return !isChild && userSex === 'masculino';
+        if (classType === 'feminino') return !isChild && userSex === 'feminino';
+        return true;
+      });
+
+      const todaysClasses = allowedClasses.filter(c => c.isActive !== false && c.dayOfWeek === currentDayOfWeek);
 
       const availableClasses = [];
       for (const classItem of todaysClasses) {
@@ -8574,7 +8610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (cancellation) continue;
 
         const attendances = await storage.getAttendanceByClass(classItem.id);
-        const alreadyCheckedIn = attendances.some(a => {
+        const checkedInRecord = attendances.find(a => {
           const aDate = new Date(a.date).toISOString().split('T')[0];
           return a.studentId === student.id && aDate === todayStr &&
             (a.status === 'confirmed' || a.status === 'present');
@@ -8593,7 +8629,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
             : 'Sem instrutor',
           location: (classItem as any).location || null,
-          alreadyCheckedIn,
+          alreadyCheckedIn: !!checkedInRecord,
+          checkInTime: checkedInRecord ? checkedInRecord.date : null,
         });
       }
 
@@ -8675,14 +8712,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Esta aula atingiu a capacidade máxima.' });
       }
 
-      const checkInTime = new Date();
-      await storage.createAttendance({
-        studentId: student.id,
-        classId: classIdNum,
-        date: checkInTime,
-        status: 'present',
-        checkedInBy: requestUser.id,
-      });
+      // Use shared helper so QR check-in and confirm-attendance stay in sync
+      const checkInTime = await createQrAttendanceRecord(student.id, classIdNum, requestUser.id);
 
       res.json({ success: true, alreadyCheckedIn: false, className: classSession.name, checkInTime });
     } catch (error) {

@@ -888,34 +888,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Class not found' });
       }
 
-      // Check if attendance already exists for today
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      // Delegate to shared service — keeps confirm-attendance and QR check-in in sync
+      const { alreadyExists } = await confirmStudentAttendance(student.id, classIdNumber, requestUser.id);
 
-      const existingAttendances = await storage.getAttendanceByStudent(student.id);
-      const todayAttendance = existingAttendances.find(att => {
-        const attDate = new Date(att.date);
-        return att.classId === classIdNumber && 
-               attDate >= startOfDay && 
-               attDate < endOfDay;
-      });
-
-      if (todayAttendance) {
+      if (alreadyExists) {
         return res.json({ success: true, message: 'Attendance already confirmed for this class today' });
       }
-
-      // Create attendance record
-      const attendanceData = {
-        studentId: student.id,
-        classId: classIdNumber,
-        date: new Date(),
-        status: 'present' as const,
-        checkedInBy: requestUser.id
-      };
-
-      console.log('Creating attendance record:', attendanceData);
-      await storage.createAttendance(attendanceData);
 
       res.json({ success: true, message: 'Attendance confirmed successfully' });
     } catch (error) {
@@ -8533,11 +8511,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // === QR Check-in Routes ===
 
-  // GET /api/checkin/classes — Returns classes available for check-in right now
-  // Shared helper — mirrors the exact same attendance creation used by
-  // POST /api/classes/:classId/confirm-attendance so both flows stay in sync.
-  async function createQrAttendanceRecord(studentId: number, classId: number, checkedInById: number): Promise<Date> {
+  /**
+   * Shared attendance-confirm service.
+   * Used by BOTH POST /api/classes/:classId/confirm-attendance
+   * AND      POST /api/checkin/:classId
+   * so the two flows can never diverge in how they create attendance records.
+   *
+   * Returns { alreadyExists, date } so each caller can shape its own response.
+   */
+  async function confirmStudentAttendance(
+    studentId: number,
+    classId: number,
+    checkedInById: number,
+  ): Promise<{ alreadyExists: boolean; date: Date }> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay   = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    const existing = await storage.getAttendanceByStudent(studentId);
+    const todayRecord = existing.find(att => {
+      const d = new Date(att.date);
+      return att.classId === classId && d >= startOfDay && d < endOfDay;
+    });
+
+    if (todayRecord) {
+      return { alreadyExists: true, date: new Date(todayRecord.date) };
+    }
+
     const date = new Date();
+    console.log('Creating attendance record:', { studentId, classId, checkedInById, date });
     await storage.createAttendance({
       studentId,
       classId,
@@ -8545,7 +8547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       status: 'present' as const,
       checkedInBy: checkedInById,
     });
-    return date;
+
+    return { alreadyExists: false, date };
   }
 
   app.get("/api/checkin/classes", isAuthenticated, async (req, res) => {
@@ -8667,6 +8670,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Aula não encontrada' });
       }
 
+      // Re-validate isActive — same guard used in GET /api/checkin/classes
+      if (classSession.isActive === false) {
+        return res.status(400).json({ error: 'Esta aula não está ativa.' });
+      }
+
+      // Re-validate student category eligibility — prevents direct-POST bypass of listing filter
+      const userData = await storage.getUser(requestUser.id);
+      if (!userData) {
+        return res.status(404).json({ error: 'Dados do usuário não encontrados' });
+      }
+      const isChild = userData.birthDate
+        ? (new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16
+        : false;
+      const userSex = userData.sex?.toLowerCase() || 'misto';
+
+      if (classSession.type) {
+        const ct = classSession.type.toLowerCase();
+        if (ct === 'infantil' && !isChild) {
+          return res.status(403).json({ error: 'Esta aula é exclusiva para alunos infantis.' });
+        }
+        if (ct === 'masculino' && (isChild || userSex !== 'masculino')) {
+          return res.status(403).json({ error: 'Esta aula é exclusiva para alunos masculinos adultos.' });
+        }
+        if (ct === 'feminino' && (isChild || userSex !== 'feminino')) {
+          return res.status(403).json({ error: 'Esta aula é exclusiva para alunos femininos adultos.' });
+        }
+        // 'misto' and any unrecognised type: allow all
+      }
+
       const now = getBrasiliaDate();
       const currentDayOfWeek = getBrasiliaDayOfWeek();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -8692,30 +8724,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Esta sessão foi cancelada.' });
       }
 
-      const existingAttendances = await storage.getAttendanceByClass(classIdNum);
-      const alreadyIn = existingAttendances.find(a => {
-        const aDate = new Date(a.date).toISOString().split('T')[0];
-        return a.studentId === student.id && aDate === todayStr &&
-          (a.status === 'confirmed' || a.status === 'present');
-      });
-
-      if (alreadyIn) {
-        return res.json({ success: true, alreadyCheckedIn: true, className: classSession.name, checkInTime: alreadyIn.date });
+      // Check capacity before delegating to shared service
+      if (classSession.maxStudents) {
+        const existingAttendances = await storage.getAttendanceByClass(classIdNum);
+        const todayCount = existingAttendances.filter(a => {
+          const aDate = new Date(a.date).toISOString().split('T')[0];
+          return aDate === todayStr && (a.status === 'confirmed' || a.status === 'present');
+        }).length;
+        if (todayCount >= classSession.maxStudents) {
+          return res.status(400).json({ error: 'Esta aula atingiu a capacidade máxima.' });
+        }
       }
 
-      const todayCount = existingAttendances.filter(a => {
-        const aDate = new Date(a.date).toISOString().split('T')[0];
-        return aDate === todayStr && (a.status === 'confirmed' || a.status === 'present');
-      }).length;
+      // Shared service handles idempotency (duplicate check) + attendance creation
+      const { alreadyExists, date: checkInTime } = await confirmStudentAttendance(
+        student.id,
+        classIdNum,
+        requestUser.id,
+      );
 
-      if (classSession.maxStudents && todayCount >= classSession.maxStudents) {
-        return res.status(400).json({ error: 'Esta aula atingiu a capacidade máxima.' });
-      }
-
-      // Use shared helper so QR check-in and confirm-attendance stay in sync
-      const checkInTime = await createQrAttendanceRecord(student.id, classIdNum, requestUser.id);
-
-      res.json({ success: true, alreadyCheckedIn: false, className: classSession.name, checkInTime });
+      res.json({ success: true, alreadyCheckedIn: alreadyExists, className: classSession.name, checkInTime });
     } catch (error) {
       console.error('Error performing check-in:', error);
       res.status(500).json({ error: 'Erro ao realizar check-in' });

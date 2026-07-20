@@ -8724,10 +8724,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Esta sessão foi cancelada.' });
       }
 
-      // Check capacity before delegating to shared service
+      // 1. Idempotency check FIRST — must succeed even when class is full
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const priorAttendances = await storage.getAttendanceByStudent(student.id);
+      const existingRecord = priorAttendances.find(att => {
+        const d = new Date(att.date);
+        return att.classId === classIdNum && d >= dayStart && d < dayEnd;
+      });
+
+      if (existingRecord) {
+        return res.json({
+          success: true,
+          alreadyCheckedIn: true,
+          className: classSession.name,
+          checkInTime: existingRecord.date,
+        });
+      }
+
+      // 2. Capacity check — only relevant for a brand-new check-in
       if (classSession.maxStudents) {
-        const existingAttendances = await storage.getAttendanceByClass(classIdNum);
-        const todayCount = existingAttendances.filter(a => {
+        const classAttendances = await storage.getAttendanceByClass(classIdNum);
+        const todayCount = classAttendances.filter(a => {
           const aDate = new Date(a.date).toISOString().split('T')[0];
           return aDate === todayStr && (a.status === 'confirmed' || a.status === 'present');
         }).length;
@@ -8736,14 +8754,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Shared service handles idempotency (duplicate check) + attendance creation
-      const { alreadyExists, date: checkInTime } = await confirmStudentAttendance(
+      // 3. Create attendance via shared service (handles its own race-condition idempotency)
+      const { date: checkInTime } = await confirmStudentAttendance(
         student.id,
         classIdNum,
         requestUser.id,
       );
 
-      res.json({ success: true, alreadyCheckedIn: alreadyExists, className: classSession.name, checkInTime });
+      res.json({ success: true, alreadyCheckedIn: false, className: classSession.name, checkInTime });
     } catch (error) {
       console.error('Error performing check-in:', error);
       res.status(500).json({ error: 'Erro ao realizar check-in' });

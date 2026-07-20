@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useQuery } from '@tanstack/react-query';
+import { startOfMonth, endOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
   Users, Calendar, DollarSign, AlertTriangle,
@@ -95,9 +96,21 @@ const DashboardSkeleton = () => (
 
 export default function AdminDashboard() {
   const { data, isLoading } = useDashboard();
+  const now = new Date();
+  const monthStart = startOfMonth(now).toISOString().slice(0, 10);
+  const monthEnd   = endOfMonth(now).toISOString().slice(0, 10);
   const { data: financialData } = useQuery<any>({
-    queryKey: ['/api/financial/payments'],
+    queryKey: ['/api/financial/payments', monthStart, monthEnd],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/financial/payments?startDate=${monthStart}&endDate=${monthEnd}`,
+        { credentials: 'include', cache: 'no-store' }
+      );
+      if (!res.ok) return null;
+      return res.json();
+    },
     refetchInterval: false,
+    staleTime: 5 * 60 * 1000,
   });
 
   if (isLoading || !data) return <DashboardSkeleton />;

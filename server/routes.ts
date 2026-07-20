@@ -8606,8 +8606,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const startMinutes = startH * 60 + startM;
         const endMinutes = startMinutes + (classItem.duration || 60);
 
-        // Window: 30 min before start → end of class
-        if (currentMinutes < startMinutes - 30 || currentMinutes > endMinutes) continue;
+        // Window: 30 min before start → 30 min after end of class
+        if (currentMinutes < startMinutes - 30 || currentMinutes > endMinutes + 30) continue;
 
         const cancellation = await storage.getClassCancellation(classItem.id, todayStr);
         if (cancellation) continue;
@@ -8715,8 +8715,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (currentMinutes < startMinutes - 30) {
         return res.status(400).json({ error: 'Esta aula ainda não está disponível para check-in. Aguarde mais um pouco.' });
       }
-      if (currentMinutes > endMinutes) {
-        return res.status(400).json({ error: 'O horário desta aula já encerrou.' });
+      if (currentMinutes > endMinutes + 30) {
+        return res.status(400).json({ error: 'O prazo para check-in nesta aula já encerrou.' });
       }
 
       const cancellation = await storage.getClassCancellation(classIdNum, todayStr);

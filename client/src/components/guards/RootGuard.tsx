@@ -21,7 +21,8 @@ export function RootGuard({ children }: RootGuardProps) {
     '/onboarding', 
     '/awaiting-approval',
     '/auth/forgot-password',
-    '/auth/reset-password'
+    '/auth/reset-password',
+    '/checkin',
   ];
   
   const isPublicRoute = publicRoutes.some(route => 

@@ -37,6 +37,8 @@ export default function LoginPage() {
   const [showLoadingScreen, setShowLoadingScreen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
+  const redirectParam = new URLSearchParams(window.location.search).get("redirect");
+
   const { data: schoolConfig } = useQuery<SchoolConfig>({
     queryKey: ['/api/school-config'],
     retry: false,
@@ -74,13 +76,18 @@ export default function LoginPage() {
     onSuccess: () => {
       localStorage.setItem('token', 'authenticated');
       localStorage.setItem('fromLogin', 'true');
+      const destination = redirectParam || "/dashboard";
+      if (redirectParam) {
+        window.location.href = destination;
+        return;
+      }
       setShowLoadingScreen(true);
       setLoadingProgress(10);
       setTimeout(() => setLoadingProgress(30), 50);
       setTimeout(() => setLoadingProgress(60), 150);
       setTimeout(() => setLoadingProgress(85), 250);
       setTimeout(() => setLoadingProgress(100), 350);
-      setTimeout(() => { window.location.href = "/dashboard"; }, 450);
+      setTimeout(() => { window.location.href = destination; }, 450);
     },
     onError: (err: any) => {
       setShowLoadingScreen(false);

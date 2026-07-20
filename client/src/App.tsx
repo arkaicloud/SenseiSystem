@@ -45,6 +45,8 @@ import GuardianSelectPage from "@/pages/guardian-select";
 import GuardianManagementPage from "@/pages/admin/guardian-management";
 import UserManagementPage from "@/pages/admin/user-management";
 import { GuardianProvider } from "@/contexts/guardian-context";
+import CheckinPage from "@/pages/CheckinPage";
+import QrCodePage from "@/pages/admin/QrCodePage";
 
 function Router() {
   return (
@@ -170,6 +172,16 @@ function Router() {
         path="/admin/user-management"
         component={() => <UserManagementPage />}
         allowedRoles={["admin"]}
+      />
+
+      {/* QR Check-in (public — handles auth inline) */}
+      <Route path="/checkin" component={CheckinPage} />
+
+      {/* QR Code admin panel */}
+      <ProtectedRoute
+        path="/admin/qr-code"
+        component={() => <QrCodePage />}
+        allowedRoles={["admin", "instructor"]}
       />
 
       {/* Public routes */}

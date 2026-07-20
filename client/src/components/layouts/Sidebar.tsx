@@ -9,7 +9,7 @@ import {
   UserCheck, DollarSign, BarChart3, ChevronDown,
   FileText, Award, X, Bell, Ticket, HeartHandshake,
   ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen,
-  ShieldCheck
+  ShieldCheck, QrCode
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     { id: "aulas", label: "Aulas", icon: Calendar, path: "/classes", roles: ["admin", "instructor"] },
     { id: "presencas", label: "Controle de Aulas", icon: CheckSquare, path: "/attendance", roles: ["admin", "instructor"] },
+    { id: "qr-checkin", label: "QR Check-in", icon: QrCode, path: "/admin/qr-code", roles: ["admin", "instructor"] },
     {
       id: "financeiro", label: "Financeiro", icon: DollarSign,
       roles: ["admin", "instructor"],

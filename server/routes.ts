@@ -8531,6 +8531,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === QR Check-in Routes ===
+
+  // GET /api/checkin/classes — Returns classes available for check-in right now
+  app.get("/api/checkin/classes", isAuthenticated, async (req, res) => {
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    });
+
+    try {
+      const requestUser = (req as any).user;
+
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Apenas alunos podem usar o check-in por QR code' });
+      }
+
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ error: 'Perfil de aluno não encontrado' });
+      }
+
+      const now = getBrasiliaDate();
+      const currentDayOfWeek = getBrasiliaDayOfWeek();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayStr = now.toISOString().split('T')[0];
+
+      const allClasses = await storage.getClassesWithInstructors();
+      const todaysClasses = allClasses.filter(c => c.isActive !== false && c.dayOfWeek === currentDayOfWeek);
+
+      const availableClasses = [];
+      for (const classItem of todaysClasses) {
+        const [startH, startM] = (classItem.startTime || '00:00').split(':').map(Number);
+        const startMinutes = startH * 60 + startM;
+        const endMinutes = startMinutes + (classItem.duration || 60);
+
+        // Window: 30 min before start → end of class
+        if (currentMinutes < startMinutes - 30 || currentMinutes > endMinutes) continue;
+
+        const cancellation = await storage.getClassCancellation(classItem.id, todayStr);
+        if (cancellation) continue;
+
+        const attendances = await storage.getAttendanceByClass(classItem.id);
+        const alreadyCheckedIn = attendances.some(a => {
+          const aDate = new Date(a.date).toISOString().split('T')[0];
+          return a.studentId === student.id && aDate === todayStr &&
+            (a.status === 'confirmed' || a.status === 'present');
+        });
+
+        const endH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
+        const endM = String(endMinutes % 60).padStart(2, '0');
+
+        availableClasses.push({
+          id: classItem.id,
+          name: classItem.name,
+          startTime: classItem.startTime,
+          endTime: `${endH}:${endM}`,
+          duration: classItem.duration,
+          instructorName: classItem.instructor
+            ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
+            : 'Sem instrutor',
+          location: (classItem as any).location || null,
+          alreadyCheckedIn,
+        });
+      }
+
+      const brasiliaNow = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      res.json({ classes: availableClasses, currentTime: brasiliaNow });
+    } catch (error) {
+      console.error('Error fetching check-in classes:', error);
+      res.status(500).json({ error: 'Erro ao buscar aulas disponíveis' });
+    }
+  });
+
+  // POST /api/checkin/:classId — Perform QR check-in
+  app.post("/api/checkin/:classId", isAuthenticated, async (req, res) => {
+    try {
+      const { classId } = req.params;
+      const requestUser = (req as any).user;
+
+      if (requestUser.role !== 'student') {
+        return res.status(403).json({ error: 'Apenas alunos podem usar o check-in por QR code' });
+      }
+
+      const classIdNum = parseInt(classId);
+      if (isNaN(classIdNum)) {
+        return res.status(400).json({ error: 'ID de aula inválido' });
+      }
+
+      const student = await storage.getStudentByUserId(requestUser.id);
+      if (!student) {
+        return res.status(404).json({ error: 'Perfil de aluno não encontrado' });
+      }
+
+      const classSession = await storage.getClass(classIdNum);
+      if (!classSession) {
+        return res.status(404).json({ error: 'Aula não encontrada' });
+      }
+
+      const now = getBrasiliaDate();
+      const currentDayOfWeek = getBrasiliaDayOfWeek();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayStr = now.toISOString().split('T')[0];
+
+      if (classSession.dayOfWeek !== currentDayOfWeek) {
+        return res.status(400).json({ error: 'Esta aula não ocorre hoje.' });
+      }
+
+      const [startH, startM] = (classSession.startTime || '00:00').split(':').map(Number);
+      const startMinutes = startH * 60 + startM;
+      const endMinutes = startMinutes + (classSession.duration || 60);
+
+      if (currentMinutes < startMinutes - 30) {
+        return res.status(400).json({ error: 'Esta aula ainda não está disponível para check-in. Aguarde mais um pouco.' });
+      }
+      if (currentMinutes > endMinutes) {
+        return res.status(400).json({ error: 'O horário desta aula já encerrou.' });
+      }
+
+      const cancellation = await storage.getClassCancellation(classIdNum, todayStr);
+      if (cancellation) {
+        return res.status(400).json({ error: 'Esta sessão foi cancelada.' });
+      }
+
+      const existingAttendances = await storage.getAttendanceByClass(classIdNum);
+      const alreadyIn = existingAttendances.find(a => {
+        const aDate = new Date(a.date).toISOString().split('T')[0];
+        return a.studentId === student.id && aDate === todayStr &&
+          (a.status === 'confirmed' || a.status === 'present');
+      });
+
+      if (alreadyIn) {
+        return res.json({ success: true, alreadyCheckedIn: true, className: classSession.name, checkInTime: alreadyIn.date });
+      }
+
+      const todayCount = existingAttendances.filter(a => {
+        const aDate = new Date(a.date).toISOString().split('T')[0];
+        return aDate === todayStr && (a.status === 'confirmed' || a.status === 'present');
+      }).length;
+
+      if (classSession.maxStudents && todayCount >= classSession.maxStudents) {
+        return res.status(400).json({ error: 'Esta aula atingiu a capacidade máxima.' });
+      }
+
+      const checkInTime = new Date();
+      await storage.createAttendance({
+        studentId: student.id,
+        classId: classIdNum,
+        date: checkInTime,
+        status: 'present',
+        checkedInBy: requestUser.id,
+      });
+
+      res.json({ success: true, alreadyCheckedIn: false, className: classSession.name, checkInTime });
+    } catch (error) {
+      console.error('Error performing check-in:', error);
+      res.status(500).json({ error: 'Erro ao realizar check-in' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

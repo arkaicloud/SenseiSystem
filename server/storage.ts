@@ -2687,28 +2687,38 @@ export class DatabaseStorage implements IStorage {
 
   // Class Cancellations
   async getClassCancellation(classId: number, date: string): Promise<any | null> {
-    const [row] = await db.execute(sql`
-      SELECT * FROM class_cancellations
-      WHERE class_id = ${classId} AND date = ${date}
-      LIMIT 1
-    `);
-    return (row as any) ?? null;
+    const rows = await db
+      .select()
+      .from(schema.classCancellations)
+      .where(
+        and(
+          eq(schema.classCancellations.classId, classId),
+          eq(schema.classCancellations.date, date),
+        ),
+      )
+      .limit(1);
+    return rows[0] ?? null;
   }
 
   async createClassCancellation(classId: number, date: string, cancelledBy: number, reason?: string): Promise<any> {
-    const [row] = await db.execute(sql`
-      INSERT INTO class_cancellations (class_id, date, cancelled_by, reason)
-      VALUES (${classId}, ${date}, ${cancelledBy}, ${reason ?? null})
-      ON CONFLICT DO NOTHING
-      RETURNING *
-    `);
+    const existing = await this.getClassCancellation(classId, date);
+    if (existing) return existing;
+    const [row] = await db
+      .insert(schema.classCancellations)
+      .values({ classId, date, cancelledBy, reason: reason ?? null })
+      .returning();
     return row;
   }
 
   async deleteClassCancellation(classId: number, date: string): Promise<void> {
-    await db.execute(sql`
-      DELETE FROM class_cancellations WHERE class_id = ${classId} AND date = ${date}
-    `);
+    await db
+      .delete(schema.classCancellations)
+      .where(
+        and(
+          eq(schema.classCancellations.classId, classId),
+          eq(schema.classCancellations.date, date),
+        ),
+      );
   }
 }
 

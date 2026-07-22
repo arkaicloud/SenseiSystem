@@ -1,7 +1,7 @@
 import QRCode from "react-qr-code";
 import { QrCode, Printer, Download, Info, Smartphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import MainLayout from "@/components/layouts/MainLayout";
+
 
 export default function QrCodePage() {
   const qrContainerId = "qr-code-container";
@@ -87,8 +87,7 @@ export default function QrCodePage() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Page header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
@@ -197,7 +196,6 @@ export default function QrCodePage() {
             <strong>Janela de check-in:</strong> O aluno pode confirmar presença a partir de <strong>30 minutos antes</strong> do início da aula até o <strong>fim do horário</strong> da aula.
           </p>
         </div>
-      </div>
-    </MainLayout>
+    </div>
   );
 }

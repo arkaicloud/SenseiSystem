@@ -19,10 +19,10 @@
   --input: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
 
   /* Cores Primárias do SenseiSystem */
-  --primary: 18 66% 40%; /* Terracota Sensei - cor característica */
+  --primary: 228 100% 58%; /* #2B54FF - Azul Elétrico VYTA */
   --primary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
-  --primary-light: 18 66% 50%; /* Terracota mais claro */
-  --primary-dark: 18 66% 30%; /* Terracota mais escuro */
+  --primary-light: 228 100% 70%; /* Azul mais claro */
+  --primary-dark: 228 85% 46%; /* #1E3FCC - Azul mais escuro */
 
   --secondary: 210 40% 96%; /* Cinza claro consistente */
   --secondary-foreground: 222 47% 11%; /* Texto escuro sobre fundo claro */
@@ -43,12 +43,12 @@
   /* Sidebar Colors */
   --sidebar-background: 0 0% 100%; /* #FFFFFF - Branco */
   --sidebar-foreground: 215 28% 17%; /* #1E293B - Cinza Escuro */
-  --sidebar-primary: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-primary: 228 100% 58%; /* #2B54FF - Azul Elétrico */
   --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF - Branco */
-  --sidebar-accent: 213 100% 97%; /* #EFF6FF - Azul Claro hover */
-  --sidebar-accent-foreground: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-accent: 228 100% 96%; /* Azul Elétrico bem claro hover */
+  --sidebar-accent-foreground: 228 85% 46%; /* #1E3FCC - Azul escuro texto */
   --sidebar-border: 214 32% 91%; /* #E2E8F0 - Cinza Suave */
-  --sidebar-ring: 217 91% 60%; /* #2563EB - Azul Royal */
+  --sidebar-ring: 228 100% 58%; /* #2B54FF - Azul Elétrico */
 
   --destructive: 0 72% 42%; /* Vermelho mais escuro para contraste AA (≥4.5:1) */
   --destructive-foreground: 0 0% 100%; /* Branco para melhor contraste */
@@ -74,10 +74,10 @@
   --input: 220 14% 22%; /* Inputs consistentes com border */
 
   /* Cores Primárias do SenseiSystem - Dark Mode */
-  --primary: 18 66% 48%; /* Terracota mais claro para melhor contraste no escuro */
+  --primary: 228 100% 65%; /* Azul Elétrico mais claro no escuro */
   --primary-foreground: 0 0% 100%; /* Branco puro sobre primary */
-  --primary-light: 18 66% 58%; /* Terracota mais claro */
-  --primary-dark: 18 66% 38%; /* Terracota mais escuro */
+  --primary-light: 228 100% 75%; /* Azul mais claro */
+  --primary-dark: 228 100% 58%; /* #2B54FF - Azul base */
 
   --secondary: 222 14% 18%; /* Fundo secundário consistente com muted */
   --secondary-foreground: 0 0% 98%; /* Texto claro sobre fundo escuro */
@@ -98,12 +98,12 @@
   /* Sidebar Colors - Dark Mode */
   --sidebar-background: 222 84% 5%; /* #0F172A - Azul Grafite */
   --sidebar-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
-  --sidebar-primary: 217 91% 60%; /* #2563EB - Azul Royal */
-  --sidebar-primary-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
-  --sidebar-accent: 220 91% 54%; /* #1D4ED8 - Azul Acetinado hover */
-  --sidebar-accent-foreground: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-primary: 228 100% 65%; /* Azul Elétrico mais claro no escuro */
+  --sidebar-primary-foreground: 0 0% 100%; /* Branco */
+  --sidebar-accent: 228 50% 18%; /* Azul escuro para hover no dark mode */
+  --sidebar-accent-foreground: 210 40% 98%; /* Branco Suave */
   --sidebar-border: 215 25% 27%; /* #334155 - Cinza Profundo */
-  --sidebar-ring: 210 40% 98%; /* #F1F5F9 - Branco Suave */
+  --sidebar-ring: 228 100% 65%; /* Azul Elétrico */
 
   --destructive: 0 72% 46%; /* Vermelho ajustado para contraste AA no dark mode */
   --destructive-foreground: 0 0% 100%; /* Branco puro sobre destructive */

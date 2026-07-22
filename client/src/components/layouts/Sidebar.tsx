@@ -122,7 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Logo icon */}
         <div className="flex items-center justify-center py-5 flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+          <div className="w-9 h-9 rounded-xl bg-[#2B54FF] flex items-center justify-center shadow-sm shadow-[#2B54FF]/20">
             <span className="text-white text-sm font-bold">{schoolLetter}</span>
           </div>
         </div>
@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className={cn(
                   "w-10 h-10 mx-auto rounded-xl flex items-center justify-center transition-all duration-150 relative cursor-pointer",
                   isItemActive
-                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                    ? "bg-[#2B54FF] text-white shadow-sm shadow-[#2B54FF]/20"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                 )}>
                   <item.icon style={{ width: 18, height: 18 }} />
@@ -166,7 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="border-t border-slate-100 py-3 flex items-center justify-center flex-shrink-0">
           <button
             onClick={onToggleCollapse}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-150"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-[#2B54FF] hover:bg-[#EEF2FF] transition-all duration-150"
             title="Expandir menu"
           >
             <PanelLeftOpen style={{ width: 18, height: 18 }} />
@@ -176,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* User avatar */}
         <div className="border-t border-slate-100 py-3 flex items-center justify-center flex-shrink-0">
           <div
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center cursor-pointer"
+            className="w-9 h-9 rounded-full bg-[#2B54FF] flex items-center justify-center cursor-pointer"
             title={`${user.firstName} ${user.lastName} · ${formatRole(user.role)}`}
           >
             <span className="text-white text-xs font-bold">{userInitials}</span>
@@ -201,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={cn(
               "w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-xl transition-all duration-150",
               (isMenuOpen || hasActiveChildItem)
-                ? "bg-indigo-50 text-indigo-700 font-semibold"
+                ? "bg-[#EEF2FF] text-[#2B54FF] font-semibold"
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-medium"
             )}
           >
@@ -226,10 +226,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         "flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-150",
         level === 0
           ? isItemActive
-            ? "bg-indigo-600 text-white font-semibold shadow-sm shadow-indigo-200"
+            ? "bg-[#2B54FF] text-white font-semibold shadow-sm shadow-[#2B54FF]/20"
             : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-medium"
           : isItemActive
-            ? "bg-indigo-50 text-indigo-700 font-semibold"
+            ? "bg-[#EEF2FF] text-[#2B54FF] font-semibold"
             : "text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium"
       )}>
         <item.icon className="flex-shrink-0" style={{ width: level === 0 ? 18 : 16, height: level === 0 ? 18 : 16 }} />
@@ -267,7 +267,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Logo / School name */}
       <div className="px-4 py-5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200 flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#2B54FF] flex items-center justify-center shadow-sm shadow-[#2B54FF]/20 flex-shrink-0">
             <span className="text-white text-sm font-bold">{schoolLetter}</span>
           </div>
           <span className="font-semibold text-slate-800 text-base truncate">{schoolName}</span>
@@ -277,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {!isMobile && onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-150"
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#2B54FF] hover:bg-[#EEF2FF] transition-all duration-150"
               title="Recolher menu"
             >
               <PanelLeftClose style={{ width: 15, height: 15 }} />
@@ -341,7 +341,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* User footer */}
       <div className="border-t border-slate-100 px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-[#2B54FF] flex items-center justify-center flex-shrink-0">
             <span className="text-white text-xs font-bold">{userInitials}</span>
           </div>
           <div className="flex-1 min-w-0">

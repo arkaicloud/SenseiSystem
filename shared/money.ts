@@ -71,20 +71,26 @@ export function formatBRL(amount: number): string {
 }
 
 /**
- * Formats BRL input for better UX (optional)
- * @param value - current input value
- * @returns formatted input value
+ * Formats BRL input for better UX — calculator/ATM style (right to left)
+ * User types only digits; value is formatted from right as centavos.
+ * "1" → "0,01", "110" → "1,10", "11000" → "110,00", "1100000" → "11.000,00"
+ * @param value - current raw input (may contain formatting chars)
+ * @returns formatted BRL string without the "R$" prefix
  */
 export function formatBRLInput(value: string): string {
-  // Remove non-numeric characters except comma
-  const cleaned = value.replace(/[^\d,]/g, '');
-  
-  // Add comma before last 2 digits if not present
-  if (cleaned.length > 2 && !cleaned.includes(',')) {
-    return cleaned.slice(0, -2) + ',' + cleaned.slice(-2);
-  }
-  
-  return cleaned;
+  // Strip everything except digits
+  const digits = value.replace(/\D/g, '');
+  if (!digits || digits === '00' || digits === '000') return '';
+
+  // Treat all digits as centavos (last 2 = cents, rest = reais)
+  const padded = digits.padStart(3, '0');
+  const intPart = padded.slice(0, -2);
+  const decPart = padded.slice(-2);
+
+  // Format integer part with pt-BR thousands separator
+  const intFormatted = parseInt(intPart, 10).toLocaleString('pt-BR');
+
+  return `${intFormatted},${decPart}`;
 }
 
 /**

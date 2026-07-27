@@ -424,9 +424,65 @@ export class AsaasService {
     }
   }
 
+  /** Update subscription nextDueDate and value (PUT /subscriptions/:id) */
+  async updateSubscription(subscriptionId: string, data: Partial<{ nextDueDate: string; value: number; externalReference: string; description: string }>): Promise<AsaasSubscription> {
+    const response = await this.client.put(`/subscriptions/${subscriptionId}`, data);
+    return response.data;
+  }
+
+  /** Get all payments (cobranças) linked to a subscription */
+  async getSubscriptionPayments(subscriptionId: string, status?: string): Promise<AsaasPayment[]> {
+    try {
+      const params: Record<string, any> = { subscription: subscriptionId };
+      if (status) params.status = status;
+      const response = await this.client.get('/payments', { params });
+      return response.data?.data || [];
+    } catch (error) {
+      console.error(`Erro ao buscar cobranças da assinatura ${subscriptionId}:`, error);
+      return [];
+    }
+  }
+
+  /** Update a single payment's due date (PUT /payments/:id) */
+  async updatePaymentDueDate(paymentId: string, newDueDate: string): Promise<void> {
+    try {
+      await this.client.put(`/payments/${paymentId}`, { dueDate: newDueDate });
+      console.log(`📅 Fatura ${paymentId} atualizada para vencimento ${newDueDate}`);
+    } catch (error: any) {
+      console.warn(`⚠️ Não foi possível atualizar vencimento da fatura ${paymentId}:`, error.response?.data || error.message);
+    }
+  }
+
+  /**
+   * Patch all PENDING/OVERDUE payments of a subscription to match a new preferred due day.
+   * Keeps each payment in its own month, only adjusts the day.
+   */
+  async patchSubscriptionDueDates(subscriptionId: string, preferredDay: number): Promise<number> {
+    const payments = await this.getSubscriptionPayments(subscriptionId);
+    const toUpdate = payments.filter(p => p.status === 'PENDING' || p.status === 'OVERDUE');
+    let updated = 0;
+    for (const payment of toUpdate) {
+      const current = new Date(payment.dueDate + 'T12:00:00Z');
+      const newDate = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), preferredDay));
+      // Clamp: if day overflows month (e.g. Feb 30), JS auto-rolls — use last day of month
+      const maxDay = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 0)).getUTCDate();
+      const clampedDay = Math.min(preferredDay, maxDay);
+      const finalDate = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), clampedDay));
+      const newDueDateStr = finalDate.toISOString().split('T')[0];
+      if (newDueDateStr !== payment.dueDate) {
+        await this.updatePaymentDueDate(payment.id, newDueDateStr);
+        updated++;
+      }
+    }
+    console.log(`✅ ${updated} fatura(s) tiveram o vencimento atualizado para dia ${preferredDay}`);
+    return updated;
+  }
+
   /**
    * Anti-duplicate: find or create a monthly subscription for a student.
-   * Returns the subscription and whether it was just created.
+   * If a subscription already exists for this customer (even without the system's externalReference,
+   * e.g. a carnê created manually in ASAAS), adopts it and patches open invoice due dates instead
+   * of creating a duplicate. Returns the subscription and whether it was just created.
    */
   async getOrCreateSubscription(
     customerId: string,
@@ -436,13 +492,31 @@ export class AsaasService {
     externalReference: string,
     billingType: 'BOLETO' | 'PIX' = 'BOLETO'
   ): Promise<{ subscription: AsaasSubscription; created: boolean }> {
-    // Check for existing active subscription with this external reference
-    const existing = await this.findExistingSubscription(customerId, externalReference);
-    if (existing) {
-      console.log(`♻️ Assinatura já existe para ${externalReference}: ${existing.id}`);
-      return { subscription: existing, created: false };
+    // 1. Exact match by our externalReference
+    const exactMatch = await this.findExistingSubscription(customerId, externalReference);
+    if (exactMatch) {
+      console.log(`♻️ Assinatura já existe para ${externalReference}: ${exactMatch.id}`);
+      // Still patch due dates in case preferredDay changed
+      await this.patchSubscriptionDueDates(exactMatch.id, preferredDay);
+      return { subscription: exactMatch, created: false };
     }
 
+    // 2. Any active subscription for this customer (e.g. carnê criado manualmente no ASAAS)
+    const anyExisting = await this.findExistingSubscription(customerId);
+    if (anyExisting) {
+      console.log(`🔗 Assinatura manual encontrada para cliente ${customerId}: ${anyExisting.id} — adotando e atualizando vencimentos`);
+      // Tag it with our reference so future lookups hit the exact match
+      try {
+        await this.updateSubscription(anyExisting.id, { externalReference, description });
+      } catch (err: any) {
+        console.warn(`⚠️ Não foi possível atualizar externalReference da assinatura ${anyExisting.id}:`, err.message);
+      }
+      // Patch all pending/overdue invoices to the student's preferred due day
+      await this.patchSubscriptionDueDates(anyExisting.id, preferredDay);
+      return { subscription: { ...anyExisting, externalReference }, created: false };
+    }
+
+    // 3. Nothing found — create new subscription
     const nextDueDate = this.calculateNextDueDate(preferredDay);
     console.log(`📅 Próxima data de vencimento calculada: ${nextDueDate} (dia preferido: ${preferredDay})`);
 

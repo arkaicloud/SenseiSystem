@@ -763,7 +763,7 @@ export default function StudentEditDialog({
                               <SelectContent>
                                 {paymentPlans.map((plan: any) => (
                                   <SelectItem key={plan.id} value={String(plan.id)}>
-                                    {plan.name} — R$ {Number(plan.monthlyFee || 0).toFixed(2)}
+                                    {plan.name} — R$ {Number((plan.amount || 0) / 100).toFixed(2)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

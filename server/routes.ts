@@ -2493,7 +2493,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         billing: {
           planId: student.paymentPlanId,
-          preferredDueDay: student.preferredDueDate || 5
+          preferredDueDay: student.preferredDueDate || 5,
+          isScholarship: student.isScholarship || false,
+          couponCode: student.couponCode || null,
         },
         // Dados do responsável financeiro
         financialResponsibleName: student.financialResponsibleName || null,

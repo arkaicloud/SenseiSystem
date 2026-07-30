@@ -746,6 +746,22 @@ export default function StudentEditDialog({
                       )}
 
                       <SectionTitle>Plano de Pagamento</SectionTitle>
+
+                      {/* Badge Bolsista */}
+                      {studentData?.billing?.isScholarship && (
+                        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40 px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900 px-3 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                            🎓 Bolsista
+                          </span>
+                          {studentData?.billing?.couponCode && (
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                              Cupom: <span className="font-mono font-semibold">{studentData.billing.couponCode}</span>
+                            </span>
+                          )}
+                          <span className="ml-auto text-xs text-emerald-600 dark:text-emerald-400">Isento de mensalidade</span>
+                        </div>
+                      )}
+
                       <FieldRow>
                         <FormField control={form.control} name="paymentPlanId" render={({ field }) => (
                           <FormItem>

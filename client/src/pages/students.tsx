@@ -27,6 +27,8 @@ interface Student {
   userId: number;
   beltLevel: string;
   stripes: number;
+  isScholarship?: boolean;
+  couponCode?: string;
   medicalObservations?: string;
   notes?: string;
   attendanceRate?: number;
@@ -295,9 +297,16 @@ const Students: React.FC = () => {
                           <div className="flex items-center gap-3">
                             <AvatarInitials name={fullName} beltLevel={student.beltLevel} />
                             <div>
-                              <p className="font-medium text-gray-900 dark:text-gray-100 leading-tight">
-                                {fullName}
-                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-medium text-gray-900 dark:text-gray-100 leading-tight">
+                                  {fullName}
+                                </p>
+                                {student.isScholarship && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                    🎓 Bolsista
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-gray-400 mt-0.5">{student.user.email}</p>
                             </div>
                           </div>

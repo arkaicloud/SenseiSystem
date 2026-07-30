@@ -2609,8 +2609,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (payload.billing) {
-        if (payload.billing.planId !== undefined) {
-          studentUpdateData.paymentPlanId = payload.billing.planId;
+        if (payload.billing.isScholarship === true) {
+          studentUpdateData.isScholarship = true;
+          studentUpdateData.paymentPlanId = null;
+        } else if (payload.billing.isScholarship === false) {
+          studentUpdateData.isScholarship = false;
+          if (payload.billing.planId !== undefined) {
+            studentUpdateData.paymentPlanId = payload.billing.planId;
+          }
+        } else {
+          if (payload.billing.planId !== undefined) {
+            studentUpdateData.paymentPlanId = payload.billing.planId;
+          }
         }
         if (payload.billing.preferredDueDay !== undefined) {
           studentUpdateData.preferredDueDate = payload.billing.preferredDueDay;

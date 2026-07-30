@@ -115,6 +115,7 @@ export default function StudentEditDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>("personal");
+  const [isScholarship, setIsScholarship] = useState(false);
 
   const { allBeltOptions, isLoading: isLoadingBelts } = useBeltLevels();
 
@@ -172,7 +173,7 @@ export default function StudentEditDialog({
           email: data.isStudentResponsible ? data.email : data.financialResponsibleEmail,
           phone: data.isStudentResponsible ? data.phone : data.financialResponsiblePhone,
         },
-        billing: { planId: data.paymentPlanId, preferredDueDay: data.preferredDueDate },
+        billing: { planId: isScholarship ? null : data.paymentPlanId, preferredDueDay: data.preferredDueDate, isScholarship },
         address: {
           zip: data.zipCode, street: data.street, number: data.number,
           complement: data.complement, district: data.neighborhood,
@@ -210,6 +211,7 @@ export default function StudentEditDialog({
 
   useEffect(() => {
     if (studentData && open) {
+      setIsScholarship(!!studentData.billing?.isScholarship);
       form.reset({
         firstName: studentData.firstName || "",
         lastName: studentData.lastName || "",
@@ -745,10 +747,32 @@ export default function StudentEditDialog({
                         </div>
                       )}
 
-                      <SectionTitle>Plano de Pagamento</SectionTitle>
+                      {/* Cabeçalho com toggle bolsista */}
+                      <div className="flex items-center justify-between mb-3 mt-1">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plano de Pagamento</h3>
+                        {!readOnly && (
+                          isScholarship ? (
+                            <button
+                              type="button"
+                              onClick={() => { setIsScholarship(false); }}
+                              className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                            >
+                              Remover bolsa →
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => { setIsScholarship(true); form.setValue("paymentPlanId", null); }}
+                              className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+                            >
+                              🎓 Aplicar bolsa →
+                            </button>
+                          )
+                        )}
+                      </div>
 
-                      {/* Badge Bolsista */}
-                      {studentData?.billing?.isScholarship && (
+                      {/* Modo bolsista */}
+                      {isScholarship && (
                         <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40 px-4 py-3">
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900 px-3 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                             🎓 Bolsista
@@ -762,54 +786,57 @@ export default function StudentEditDialog({
                         </div>
                       )}
 
-                      <FieldRow>
-                        <FormField control={form.control} name="paymentPlanId" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Plano</FormLabel>
-                            <Select
-                              disabled={readOnly}
-                              value={field.value ? String(field.value) : ""}
-                              onValueChange={(v) => field.onChange(v ? parseInt(v) : null)}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
-                                  <SelectValue placeholder="Selecionar plano" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {paymentPlans.map((plan: any) => (
-                                  <SelectItem key={plan.id} value={String(plan.id)}>
-                                    {plan.name} — R$ {Number((plan.amount || 0) / 100).toFixed(2)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <FormField control={form.control} name="preferredDueDate" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vencimento (dia)</FormLabel>
-                            <Select
-                              disabled={readOnly}
-                              value={field.value ? String(field.value) : "5"}
-                              onValueChange={(v) => field.onChange(parseInt(v))}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {[5, 10, 15, 20, 25].map((d) => (
-                                  <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                      </FieldRow>
+                      {/* Modo plano pago */}
+                      {!isScholarship && (
+                        <FieldRow>
+                          <FormField control={form.control} name="paymentPlanId" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Plano</FormLabel>
+                              <Select
+                                disabled={readOnly}
+                                value={field.value ? String(field.value) : ""}
+                                onValueChange={(v) => field.onChange(v ? parseInt(v) : null)}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                    <SelectValue placeholder="Selecionar plano" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {paymentPlans.map((plan: any) => (
+                                    <SelectItem key={plan.id} value={String(plan.id)}>
+                                      {plan.name} — R$ {Number((plan.amount || 0) / 100).toFixed(2)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name="preferredDueDate" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vencimento (dia)</FormLabel>
+                              <Select
+                                disabled={readOnly}
+                                value={field.value ? String(field.value) : "5"}
+                                onValueChange={(v) => field.onChange(parseInt(v))}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {[5, 10, 15, 20, 25].map((d) => (
+                                    <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        </FieldRow>
+                      )}
 
                       <FormField control={form.control} name="planObservations" render={({ field }) => (
                         <FormItem>

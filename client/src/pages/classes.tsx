@@ -423,18 +423,10 @@ const Classes: React.FC = () => {
                 maxCapacity: selectedClass.maxCapacity,
               }}
               onSubmit={handleUpdateClass}
+               onDelete={handleDeleteClass}
               isLoading={isUpdatingClass}
+               isDeleting={isDeletingClass}
             />
-              <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleDeleteClass}
-                  disabled={isDeletingClass || isUpdatingClass}
-                >
-                  {isDeletingClass ? "Removendo..." : "Remover esta aula"}
-                </Button>
-              </div>
           </DialogContent>
         </Dialog>
       )}

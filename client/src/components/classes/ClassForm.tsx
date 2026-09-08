@@ -47,14 +47,18 @@ interface ClassFormProps {
   defaultValues?: Partial<ClassFormValues>;
   instructors: Instructor[];
   onSubmit: (data: ClassFormValues) => void;
+  onDelete?: () => void;
   isLoading?: boolean;
+  isDeleting?: boolean;
 }
 
 const ClassForm: React.FC<ClassFormProps> = ({
   defaultValues,
   instructors,
   onSubmit,
+  onDelete,
   isLoading = false,
+  isDeleting = false,
 }) => {
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),
@@ -278,11 +282,22 @@ const ClassForm: React.FC<ClassFormProps> = ({
           />
         </div>
 
-        <div className="flex justify-end">
+        <div className={`flex items-center gap-3 ${onDelete ? "justify-between" : "justify-end"}`}>
+          {onDelete && (
+            <Button
+              type="button"
+              variant="destructive"
+              className="shrink-0"
+              onClick={onDelete}
+              disabled={isDeleting || isLoading}
+            >
+              {isDeleting ? "Removendo..." : "Remover aula"}
+            </Button>
+          )}
           <Button
             type="submit"
-            className="bg-secondary hover:bg-secondary-dark"
-            disabled={isLoading}
+            className="min-w-0 flex-1 bg-[#2B54FF] text-white hover:bg-[#1F3DCC]"
+            disabled={isLoading || isDeleting}
           >
             {isLoading ? "Salvando..." : "Salvar Aula"}
           </Button>

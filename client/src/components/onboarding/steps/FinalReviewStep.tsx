@@ -5,8 +5,10 @@ import type { PersonalDataType } from "./PersonalDataStep";
 import type { ContactInfoType } from "./ContactInfoStep";
 import type { EmergencyContactType } from "./EmergencyContactStep";
 import type { AddressType } from "./AddressStep";
+import type { PaymentAndResponsibleType } from "./PaymentAndResponsibleStep";
+import type { PhysicalAssessmentType } from "./PhysicalAssessmentStep";
 
-export type CompleteFormData = PersonalDataType & ContactInfoType & EmergencyContactType & AddressType;
+export type CompleteFormData = PersonalDataType & ContactInfoType & EmergencyContactType & AddressType & PaymentAndResponsibleType & PhysicalAssessmentType;
 
 interface FinalReviewStepProps {
   onNext?: (data: CompleteFormData) => void;

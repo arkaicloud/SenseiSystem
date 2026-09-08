@@ -32,7 +32,7 @@ type FamilyPrefillData = {
 
 export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStudentOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<Partial<CompleteFormData & Record<string, any>>>({});
+  const [formData, setFormData] = useState<Partial<CompleteFormData>>({});
   const [healthData, setHealthData] = useState<PhysicalAssessmentType | null>(null);
   const [signatureData, setSignatureData] = useState<SignatureData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,7 +124,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
     const usedSignature = sigData || signatureData;
 
     try {
-      const data = formData as CompleteFormData & Record<string, any>;
+      const data = formData as CompleteFormData;
       const email = (data.email || "").trim();
 
       // If no email (minor/child), backend will auto-generate a placeholder

@@ -2864,6 +2864,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/classes-archived", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const archivedClasses = await db
+        .select({
+          class: classes,
+          instructor: users,
+        })
+        .from(classes)
+        .leftJoin(users, eq(classes.instructorId, users.id))
+        .where(eq(classes.isActive, false));
+
+      res.json({
+        classes: archivedClasses.map((item) => ({
+          ...item.class,
+          instructor: item.instructor,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching archived classes:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/classes/today", isAuthenticated, async (req, res) => {
     // Desabilitar cache para dados dinâmicos de presença
     res.set({
@@ -3849,19 +3872,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Class not found" });
       }
 
-      await storage.deleteClass(id);
+      const movementResult = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT 1 FROM class_enrollments WHERE class_id = ${id}
+          UNION ALL
+          SELECT 1 FROM attendance WHERE class_id = ${id}
+          UNION ALL
+          SELECT 1 FROM attendance_changes WHERE class_id = ${id}
+          UNION ALL
+          SELECT 1 FROM class_cancellations WHERE class_id = ${id}
+        ) AS has_movement
+      `);
+      const hasMovement = movementResult.rows[0]?.has_movement === true;
+
+      if (hasMovement) {
+        await storage.updateClass(id, { isActive: false });
+      } else {
+        await storage.deleteClass(id);
+      }
 
       const requestUser = (req as any).user;
       await storage.createActivityLog({
         userId: requestUser.id,
-        activity: `${requestUser.firstName} ${requestUser.lastName} deleted class: ${classItem.name}`,
+        activity: hasMovement
+          ? `${requestUser.firstName} ${requestUser.lastName} archived class: ${classItem.name}`
+          : `${requestUser.firstName} ${requestUser.lastName} deleted class: ${classItem.name}`,
         entityType: "class",
         entityId: id,
       });
 
-      res.json({ ok: true, message: "Class deleted successfully" });
+      res.json({
+        ok: true,
+        action: hasMovement ? "archived" : "deleted",
+        message: hasMovement ? "Class archived successfully" : "Class deleted successfully",
+      });
     } catch (error) {
       console.error("Error deleting class:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/classes/:id/restore", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const classItem = await storage.getClass(id);
+
+      if (!classItem) {
+        return res.status(404).json({ message: "Class not found" });
+      }
+
+      const restoredClass = await storage.updateClass(id, { isActive: true });
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} restored class: ${classItem.name}`,
+        entityType: "class",
+        entityId: id,
+      });
+
+      res.json({ ok: true, class: restoredClass });
+    } catch (error) {
+      console.error("Error restoring class:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

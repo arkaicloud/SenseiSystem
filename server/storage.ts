@@ -620,7 +620,9 @@ export class MemStorage implements IStorage {
   }
 
   async getClasses(): Promise<Class[]> {
-    return Array.from(this.classes.values());
+    return Array.from(this.classes.values()).filter(
+      (classItem) => classItem.isActive !== false,
+    );
   }
 
   async getClassesWithInstructors(): Promise<ClassWithInstructor[]> {
@@ -636,7 +638,7 @@ export class MemStorage implements IStorage {
 
   async getClassesByInstructor(instructorId: number): Promise<Class[]> {
     return Array.from(this.classes.values()).filter(
-      (classItem) => classItem.instructorId === instructorId,
+      (classItem) => classItem.instructorId === instructorId && classItem.isActive !== false,
     );
   }
 
@@ -644,7 +646,7 @@ export class MemStorage implements IStorage {
     const today = new Date();
     const dayOfWeek = today.getDay();
     const classes = Array.from(this.classes.values()).filter(
-      (classItem) => classItem.dayOfWeek === dayOfWeek,
+      (classItem) => classItem.dayOfWeek === dayOfWeek && classItem.isActive !== false,
     );
 
     return Promise.all(
@@ -1599,7 +1601,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getClasses(): Promise<Class[]> {
-    return await db.select().from(classes);
+    return await db.select().from(classes).where(eq(classes.isActive, true));
   }
 
   async getClassesWithInstructors(): Promise<ClassWithInstructor[]> {
@@ -1608,7 +1610,8 @@ export class DatabaseStorage implements IStorage {
       instructor: users
     })
     .from(classes)
-    .leftJoin(users, eq(classes.instructorId, users.id));
+    .leftJoin(users, eq(classes.instructorId, users.id))
+    .where(eq(classes.isActive, true));
 
     return result.map(item => ({
       ...item.class,
@@ -1617,7 +1620,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getClassesByInstructor(instructorId: number): Promise<Class[]> {
-    return await db.select().from(classes).where(eq(classes.instructorId, instructorId));
+    return await db.select().from(classes).where(and(
+      eq(classes.instructorId, instructorId),
+      eq(classes.isActive, true),
+    ));
   }
 
   async getTodaysClasses(): Promise<ClassWithInstructor[]> {
@@ -1629,7 +1635,10 @@ export class DatabaseStorage implements IStorage {
     })
     .from(classes)
     .leftJoin(users, eq(classes.instructorId, users.id))
-    .where(eq(classes.dayOfWeek, dayOfWeek));
+    .where(and(
+      eq(classes.dayOfWeek, dayOfWeek),
+      eq(classes.isActive, true),
+    ));
 
     return classesResult.map(item => ({
       ...item.class,

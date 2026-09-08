@@ -21,6 +21,11 @@ const Classes: React.FC = () => {
     refetchInterval: false,
   });
 
+  const { data: archivedClassesData, isLoading: archivedClassesLoading } = useQuery({
+    queryKey: ['/api/classes-archived'],
+    refetchInterval: false,
+  });
+
   // Fetch instructors for the form
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['/api/users'],
@@ -78,13 +83,17 @@ const Classes: React.FC = () => {
       const res = await apiRequest('DELETE', `/api/classes/${id}`);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const wasArchived = data.action === "archived";
       toast({
-        title: "Aula excluída",
-        description: "A aula foi removida da programação.",
+        title: wasArchived ? "Aula arquivada" : "Aula excluída",
+        description: wasArchived
+          ? "Como havia movimentações, o histórico foi preservado e a aula saiu da programação."
+          : "Como não havia movimentações, a aula foi excluída definitivamente.",
       });
       setSelectedClass(null);
       queryClient.invalidateQueries({ queryKey: ['/api/classes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/classes-archived'] });
     },
     onError: (error) => {
       toast({
@@ -95,7 +104,30 @@ const Classes: React.FC = () => {
     },
   });
 
+  const { mutate: restoreClass, isPending: isRestoringClass } = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('POST', `/api/classes/${id}/restore`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Aula restaurada",
+        description: "A aula voltou para a programação semanal.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/classes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/classes-archived'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao restaurar aula: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const classes = classesData?.classes || [];
+  const archivedClasses = archivedClassesData?.classes || [];
   const instructors = usersData?.users
     ? usersData.users
         .filter((user: any) => user.role === 'instructor' || user.role === 'admin')
@@ -134,7 +166,7 @@ const Classes: React.FC = () => {
     if (!selectedClass || isDeletingClass) return;
 
     const confirmed = window.confirm(
-      `Excluir a aula "${selectedClass.name}"? Esta ação também removerá inscrições e registros de presença vinculados a ela.`
+      `Remover a aula "${selectedClass.name}" da programação?\n\nSe houver inscrições ou presenças, ela será arquivada para preservar o histórico. Se não houver movimentações, será excluída definitivamente.`
     );
     if (confirmed) {
       deleteClass(selectedClass.id);
@@ -177,6 +209,7 @@ const Classes: React.FC = () => {
             <TabsList className="mb-4">
               <TabsTrigger value="schedule">Programação Semanal</TabsTrigger>
               <TabsTrigger value="list">Visualização em Lista</TabsTrigger>
+              <TabsTrigger value="archived">Arquivadas ({archivedClasses.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="schedule">
@@ -334,6 +367,41 @@ const Classes: React.FC = () => {
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="archived">
+              {archivedClassesLoading ? (
+                <div className="text-center py-8">Carregando aulas arquivadas...</div>
+              ) : archivedClasses.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">Nenhuma aula arquivada</div>
+              ) : (
+                <div className="space-y-3">
+                  {archivedClasses.map((classItem: any) => {
+                    const { time, period } = formatTime(classItem.startTime);
+                    return (
+                      <div
+                        key={classItem.id}
+                        className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{classItem.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {getDayName(classItem.dayOfWeek)} • {time} {period}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => restoreClass(classItem.id)}
+                          disabled={isRestoringClass}
+                        >
+                          {isRestoringClass ? "Restaurando..." : "Restaurar"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
@@ -364,7 +432,7 @@ const Classes: React.FC = () => {
                   onClick={handleDeleteClass}
                   disabled={isDeletingClass || isUpdatingClass}
                 >
-                  {isDeletingClass ? "Excluindo..." : "Excluir esta aula"}
+                  {isDeletingClass ? "Removendo..." : "Remover esta aula"}
                 </Button>
               </div>
           </DialogContent>

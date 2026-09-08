@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, User, Heart, FileText, ArrowLeft, Plus, Home } from "lucide-react";
@@ -59,6 +60,10 @@ export default function OnboardingPage() {
       return res;
     },
     onSuccess: () => {
+      trackEvent("student_registration_submitted", {
+        has_plan: Boolean(onboardingData.paymentPlanId),
+        has_coupon: Boolean((onboardingData as any).couponCode),
+      });
       clearCache();
       setSuccess(true);
       toast({

@@ -7,6 +7,7 @@ import { Clock, Users, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { trackEvent } from "@/lib/analytics";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -67,6 +68,7 @@ const AttendanceConfirmation: React.FC = () => {
       return response.json();
     },
     onSuccess: (data, classId) => {
+      trackEvent("attendance_self_confirmed", { class_id: classId });
       const className = classes.find(c => c.id === classId)?.name;
       toast({
         title: "Presença confirmada!",
@@ -99,6 +101,7 @@ const AttendanceConfirmation: React.FC = () => {
       return response.json();
     },
     onSuccess: (data, classId) => {
+      trackEvent("attendance_self_cancelled", { class_id: classId });
       const className = classes.find(c => c.id === classId)?.name;
       toast({
         title: "Presença cancelada!",

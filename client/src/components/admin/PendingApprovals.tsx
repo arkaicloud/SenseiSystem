@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, User, Mail, Phone, CreditCard, CheckCircle, XCircle, AlertTriangle, FileWarning, GraduationCap, Trash2 } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent } from '@/lib/analytics';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -66,6 +67,7 @@ export default function PendingApprovals() {
       });
     },
     onSuccess: () => {
+      trackEvent('student_approved', { scholarship: false });
       toast({ title: "Aluno aprovado com sucesso!" });
       invalidateAll();
     },
@@ -87,6 +89,7 @@ export default function PendingApprovals() {
       });
     },
     onSuccess: () => {
+      trackEvent('student_approved', { scholarship: true });
       toast({
         title: "Bolsista aprovado com sucesso!",
         description: "O aluno foi marcado como bolsista e ativado.",

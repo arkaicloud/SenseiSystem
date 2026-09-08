@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import {
   format, getDaysInMonth, startOfMonth, getDay,
   addMonths, subMonths, parseISO
@@ -511,6 +512,11 @@ export default function AttendancePage() {
       return res.json();
     },
     onSuccess: () => {
+      trackEvent("attendance_roster_saved", {
+        present_count: presentCount,
+        absent_count: absentCount,
+        class_id: selectedClassId || 0,
+      });
       setHasChanges(false);
       toast({ title: "Presenças salvas!", description: `${presentCount} presentes, ${absentCount} faltas.` });
       queryClient.invalidateQueries({ queryKey: ["/api/classes", selectedClassId, "roster", selectedDate] });

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import { useBeltLevels } from "@/hooks/useBeltLevels";
 import {
   Dialog,
@@ -197,7 +198,11 @@ export default function StudentEditDialog({
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_result, data) => {
+      trackEvent("student_billing_updated", {
+        scholarship: isScholarship,
+        has_plan: Boolean(data.paymentPlanId),
+      });
       toast({ title: "Sucesso", description: "Dados atualizados com sucesso" });
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });

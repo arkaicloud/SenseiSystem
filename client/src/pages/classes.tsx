@@ -73,6 +73,28 @@ const Classes: React.FC = () => {
     },
   });
 
+  const { mutate: deleteClass, isPending: isDeletingClass } = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/classes/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Aula excluída",
+        description: "A aula foi removida da programação.",
+      });
+      setSelectedClass(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/classes'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao excluir aula: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const classes = classesData?.classes || [];
   const instructors = usersData?.users
     ? usersData.users
@@ -105,6 +127,17 @@ const Classes: React.FC = () => {
   const handleUpdateClass = (data: any) => {
     if (selectedClass) {
       updateClass({ id: selectedClass.id, data });
+    }
+  };
+
+  const handleDeleteClass = () => {
+    if (!selectedClass || isDeletingClass) return;
+
+    const confirmed = window.confirm(
+      `Excluir a aula "${selectedClass.name}"? Esta ação também removerá inscrições e registros de presença vinculados a ela.`
+    );
+    if (confirmed) {
+      deleteClass(selectedClass.id);
     }
   };
 
@@ -324,6 +357,16 @@ const Classes: React.FC = () => {
               onSubmit={handleUpdateClass}
               isLoading={isUpdatingClass}
             />
+              <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDeleteClass}
+                  disabled={isDeletingClass || isUpdatingClass}
+                >
+                  {isDeletingClass ? "Excluindo..." : "Excluir esta aula"}
+                </Button>
+              </div>
           </DialogContent>
         </Dialog>
       )}

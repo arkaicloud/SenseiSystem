@@ -3840,6 +3840,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/classes/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const classItem = await storage.getClass(id);
+
+      if (!classItem) {
+        return res.status(404).json({ message: "Class not found" });
+      }
+
+      await storage.deleteClass(id);
+
+      const requestUser = (req as any).user;
+      await storage.createActivityLog({
+        userId: requestUser.id,
+        activity: `${requestUser.firstName} ${requestUser.lastName} deleted class: ${classItem.name}`,
+        entityType: "class",
+        entityId: id,
+      });
+
+      res.json({ ok: true, message: "Class deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting class:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ===== Attendance Routes =====
   app.get("/api/attendance", isAuthenticated, isInstructor, async (req, res) => {
     try {

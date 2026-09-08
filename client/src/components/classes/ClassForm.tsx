@@ -94,7 +94,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-1 pb-4 sm:space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -281,13 +282,14 @@ const ClassForm: React.FC<ClassFormProps> = ({
             )}
           />
         </div>
+        </div>
 
-        <div className={`flex items-center gap-3 ${onDelete ? "justify-between" : "justify-end"}`}>
+        <div className={`shrink-0 border-t border-gray-200 bg-background pt-4 pb-[max(0px,env(safe-area-inset-bottom))] dark:border-gray-700 flex items-center gap-3 ${onDelete ? "justify-between" : "justify-end"}`}>
           {onDelete && (
             <Button
               type="button"
               variant="destructive"
-              className="shrink-0"
+              className="min-h-11 shrink-0 px-3 sm:px-4"
               onClick={onDelete}
               disabled={isDeleting || isLoading}
             >
@@ -296,7 +298,9 @@ const ClassForm: React.FC<ClassFormProps> = ({
           )}
           <Button
             type="submit"
-            className="min-w-0 flex-1 bg-[#2B54FF] text-white hover:bg-[#1F3DCC]"
+            className={`min-h-11 bg-[#2B54FF] text-white hover:bg-[#1F3DCC] ${
+              onDelete ? "min-w-0 flex-1" : "w-full sm:w-auto sm:min-w-40"
+            }`}
             disabled={isLoading || isDeleting}
           >
             {isLoading ? "Salvando..." : "Salvar Aula"}

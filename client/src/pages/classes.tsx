@@ -188,8 +188,8 @@ const Classes: React.FC = () => {
                 Nova Aula
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogTitle>Adicionar Nova Aula</DialogTitle>
+            <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden p-4 sm:max-h-[90dvh] sm:p-6 md:max-w-[720px]">
+              <DialogTitle className="shrink-0 pr-8">Adicionar Nova Aula</DialogTitle>
               <ClassForm 
                 instructors={instructors} 
                 onSubmit={handleAddClass} 
@@ -409,8 +409,8 @@ const Classes: React.FC = () => {
       {/* Edit Class Dialog */}
       {selectedClass && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedClass(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogTitle>Editar Aula</DialogTitle>
+          <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] flex-col overflow-hidden p-4 sm:max-h-[90dvh] sm:p-6 md:max-w-[720px]">
+            <DialogTitle className="shrink-0 pr-8">Editar Aula</DialogTitle>
             <ClassForm 
               instructors={instructors}
               defaultValues={{

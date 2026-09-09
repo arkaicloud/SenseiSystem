@@ -25,9 +25,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Check, ChevronsUpDown, Ticket, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -63,6 +73,7 @@ const studentEditSchema = z.object({
   isStudentResponsible: z.boolean().default(true),
   paymentPlanId: z.number().nullable(),
   preferredDueDate: z.number().nullable(),
+  couponCode: z.string().nullable(),
   medicalObservations: z.string().nullable(),
   planObservations: z.string().nullable(),
   healthQuestionnaireCompletedAt: z.string().nullable(),
@@ -72,6 +83,17 @@ const studentEditSchema = z.object({
 });
 
 type StudentEditFormData = z.infer<typeof studentEditSchema>;
+
+type StudentCoupon = {
+  id: number;
+  code: string;
+  description: string | null;
+  discountPercent: number;
+  maxUses: number | null;
+  usedCount: number;
+  active: boolean;
+  expiresAt: string | null;
+};
 
 interface StudentEditDialogProps {
   studentId: number;
@@ -136,6 +158,17 @@ export default function StudentEditDialog({
 
   const paymentPlans = paymentPlansData?.plans || [];
 
+  const { data: couponsData } = useQuery<{ coupons: StudentCoupon[] }>({
+    queryKey: ["/api/coupons"],
+    queryFn: () => fetch("/api/coupons").then((r) => {
+      if (!r.ok) throw new Error("Não foi possível carregar os cupons");
+      return r.json();
+    }),
+    enabled: open && !readOnly,
+  });
+
+  const coupons = couponsData?.coupons || [];
+
   const form = useForm<StudentEditFormData>({
     resolver: zodResolver(studentEditSchema),
     defaultValues: {
@@ -149,6 +182,7 @@ export default function StudentEditDialog({
       financialResponsibleEmail: null, financialResponsiblePhone: null,
       financialResponsibleRelation: null, isStudentResponsible: true,
       paymentPlanId: null, preferredDueDate: 5,
+      couponCode: null,
       medicalObservations: null, planObservations: null,
       healthQuestionnaireCompletedAt: null, agreedToHealthTerms: null,
       healthTermsAgreedAt: null, requiresMedicalCertificate: null,
@@ -174,7 +208,12 @@ export default function StudentEditDialog({
           email: data.isStudentResponsible ? data.email : data.financialResponsibleEmail,
           phone: data.isStudentResponsible ? data.phone : data.financialResponsiblePhone,
         },
-        billing: { planId: isScholarship ? null : data.paymentPlanId, preferredDueDay: data.preferredDueDate, isScholarship },
+        billing: {
+          planId: isScholarship ? null : data.paymentPlanId,
+          preferredDueDay: data.preferredDueDate,
+          isScholarship,
+          couponCode: data.couponCode || null,
+        },
         address: {
           zip: data.zipCode, street: data.street, number: data.number,
           complement: data.complement, district: data.neighborhood,
@@ -253,6 +292,7 @@ export default function StudentEditDialog({
         financialResponsibleRelation: studentData.financialResponsible?.relation || null,
         paymentPlanId: studentData.billing?.planId || null,
         preferredDueDate: studentData.billing?.preferredDueDay || 5,
+        couponCode: studentData.billing?.couponCode || null,
         medicalObservations: studentData.health?.notes || null,
         planObservations: null,
         healthQuestionnaireCompletedAt: studentData.healthQuestionnaireCompletedAt || null,
@@ -782,9 +822,9 @@ export default function StudentEditDialog({
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900 px-3 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                             🎓 Bolsista
                           </span>
-                          {studentData?.billing?.couponCode && (
+                          {form.watch("couponCode") && (
                             <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                              Cupom: <span className="font-mono font-semibold">{studentData.billing.couponCode}</span>
+                              Cupom: <span className="font-mono font-semibold">{form.watch("couponCode")}</span>
                             </span>
                           )}
                           <span className="ml-auto text-xs text-emerald-600 dark:text-emerald-400">Isento de mensalidade</span>
@@ -840,6 +880,111 @@ export default function StudentEditDialog({
                               <FormMessage />
                             </FormItem>
                           )} />
+                          <FormField control={form.control} name="couponCode" render={({ field }) => {
+                            const selectedCoupon = coupons.find((coupon) => coupon.code === field.value);
+                            const isCouponUsable = (coupon: StudentCoupon) =>
+                              coupon.active &&
+                              (!coupon.expiresAt || new Date(coupon.expiresAt) >= new Date()) &&
+                              (coupon.maxUses === null || coupon.usedCount < coupon.maxUses);
+
+                            return (
+                              <FormItem className="sm:col-span-2">
+                                <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                  Cupom de desconto (opcional)
+                                </FormLabel>
+                                <div className="flex gap-2">
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={readOnly}
+                                        className="min-w-0 flex-1 justify-between border-gray-200 bg-white font-normal dark:border-gray-700 dark:bg-gray-800"
+                                      >
+                                        <span className={`flex min-w-0 items-center gap-2 ${selectedCoupon ? "text-gray-900 dark:text-gray-100" : "text-muted-foreground"}`}>
+                                          <Ticket className="h-4 w-4 shrink-0" />
+                                          <span className="truncate">
+                                            {selectedCoupon
+                                              ? `${selectedCoupon.code} — ${selectedCoupon.discountPercent}%`
+                                              : "Selecionar cupom"}
+                                          </span>
+                                        </span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent align="start" className="w-[min(420px,calc(100vw-3rem))] p-0">
+                                      <Command>
+                                        <CommandInput placeholder="Pesquisar código ou descrição..." />
+                                        <CommandList>
+                                          <CommandEmpty>Nenhum cupom encontrado.</CommandEmpty>
+                                          <CommandGroup heading="Todos os cupons">
+                                            {coupons.map((coupon) => {
+                                              const usable = isCouponUsable(coupon);
+                                              const status = !coupon.active
+                                                ? "Inativo"
+                                                : coupon.expiresAt && new Date(coupon.expiresAt) < new Date()
+                                                  ? "Expirado"
+                                                  : coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses
+                                                    ? "Esgotado"
+                                                    : null;
+
+                                              return (
+                                                <CommandItem
+                                                  key={coupon.id}
+                                                  value={`${coupon.code} ${coupon.description || ""}`}
+                                                  disabled={!usable}
+                                                  onSelect={() => {
+                                                    if (!usable) return;
+                                                    field.onChange(coupon.code);
+                                                    if (coupon.discountPercent === 100) {
+                                                      setIsScholarship(true);
+                                                      form.setValue("paymentPlanId", null);
+                                                    }
+                                                  }}
+                                                >
+                                                  <Check className={`mr-2 h-4 w-4 ${field.value === coupon.code ? "opacity-100" : "opacity-0"}`} />
+                                                  <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                      <span className="font-mono font-semibold">{coupon.code}</span>
+                                                      <span className="text-xs font-semibold text-emerald-600">{coupon.discountPercent}%</span>
+                                                    </div>
+                                                    {coupon.description && (
+                                                      <p className="truncate text-xs text-muted-foreground">{coupon.description}</p>
+                                                    )}
+                                                  </div>
+                                                  {status && <span className="ml-2 shrink-0 text-[10px] text-muted-foreground">{status}</span>}
+                                                </CommandItem>
+                                              );
+                                            })}
+                                          </CommandGroup>
+                                        </CommandList>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
+                                  {field.value && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      disabled={readOnly}
+                                      aria-label="Remover cupom"
+                                      onClick={() => field.onChange(null)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                                {selectedCoupon && (
+                                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                    {selectedCoupon.discountPercent === 100
+                                      ? "Este cupom aplica bolsa integral."
+                                      : `${selectedCoupon.discountPercent}% de desconto no plano selecionado.`}
+                                  </p>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }} />
                         </FieldRow>
                       )}
 

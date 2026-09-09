@@ -2608,6 +2608,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      let couponUsageToIncrement: number | null = null;
+
       if (payload.billing) {
         if (payload.billing.isScholarship === true) {
           studentUpdateData.isScholarship = true;
@@ -2625,6 +2627,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (payload.billing.preferredDueDay !== undefined) {
           studentUpdateData.preferredDueDate = payload.billing.preferredDueDay;
         }
+
+        if (payload.billing.couponCode !== undefined) {
+          const previousCouponCode = student.couponCode
+            ? student.couponCode.trim().toUpperCase()
+            : null;
+          const nextCouponCode = payload.billing.couponCode
+            ? String(payload.billing.couponCode).trim().toUpperCase()
+            : null;
+
+          if (nextCouponCode) {
+            const coupon = await storage.getCouponByCode(nextCouponCode);
+            const isExpired = Boolean(
+              coupon?.expiresAt && new Date(coupon.expiresAt) < new Date()
+            );
+            const isExhausted = Boolean(
+              coupon &&
+              coupon.maxUses !== null &&
+              coupon.usedCount >= coupon.maxUses
+            );
+
+            if (
+              !coupon ||
+              (nextCouponCode !== previousCouponCode &&
+                (!coupon.active || isExpired || isExhausted))
+            ) {
+              return res.status(400).json({
+                message: "O cupom selecionado está inválido, expirado ou esgotado",
+              });
+            }
+
+            if (nextCouponCode !== previousCouponCode) {
+              couponUsageToIncrement = coupon.id;
+            }
+
+            if (coupon.discountPercent === 100) {
+              studentUpdateData.isScholarship = true;
+              studentUpdateData.paymentPlanId = null;
+            } else if (payload.billing.isScholarship === true) {
+              return res.status(400).json({
+                message: "Uma bolsa integral não pode ser combinada com um cupom parcial",
+              });
+            }
+          }
+
+          studentUpdateData.couponCode = nextCouponCode;
+        }
       }
 
       // Only update student data if there are fields to update
@@ -2637,6 +2685,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         console.log('⚠️ No student data to update');
       }
+
+      if (couponUsageToIncrement !== null) {
+        await storage.incrementCouponUsage(couponUsageToIncrement);
+      }
+
       const user = await storage.getUser(student.userId);
 
       // Log activity
@@ -2695,7 +2748,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         billing: {
           planId: updatedStudent.paymentPlanId,
-          preferredDueDay: updatedStudent.preferredDueDate || 5
+          preferredDueDay: updatedStudent.preferredDueDate || 5,
+          isScholarship: updatedStudent.isScholarship || false,
+          couponCode: updatedStudent.couponCode || null,
         },
         // Dados do responsável financeiro
         financialResponsibleName: updatedStudent.financialResponsibleName || null,
@@ -4629,7 +4684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/coupons", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/coupons", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const coupons = await storage.getCoupons();
       res.json({ coupons });

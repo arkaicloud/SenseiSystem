@@ -139,6 +139,7 @@ export default function StudentEditDialog({
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>("personal");
   const [isScholarship, setIsScholarship] = useState(false);
+  const [couponPickerOpen, setCouponPickerOpen] = useState(false);
 
   const { allBeltOptions, isLoading: isLoadingBelts } = useBeltLevels();
 
@@ -156,7 +157,9 @@ export default function StudentEditDialog({
     enabled: open,
   });
 
-  const paymentPlans = paymentPlansData?.plans || [];
+  const paymentPlans = (paymentPlansData?.plans || []).filter(
+    (plan: any) => !plan.isScholarship
+  );
 
   const { data: couponsData } = useQuery<{ coupons: StudentCoupon[] }>({
     queryKey: ["/api/coupons"],
@@ -164,7 +167,7 @@ export default function StudentEditDialog({
       if (!r.ok) throw new Error("Não foi possível carregar os cupons");
       return r.json();
     }),
-    enabled: open && !readOnly,
+    enabled: open,
   });
 
   const coupons = couponsData?.coupons || [];
@@ -319,10 +322,10 @@ export default function StudentEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] p-0 overflow-hidden flex flex-col gap-0 rounded-2xl">
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-h-[92dvh]">
         {/* ── Dialog header ──────────────────────────────────────── */}
-        <DialogHeader className="px-6 pt-5 pb-0 flex-shrink-0">
-          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <DialogHeader className="flex-shrink-0 px-4 pt-4 pb-0 sm:px-6 sm:pt-5">
+          <DialogTitle className="pr-8 text-left text-lg font-semibold text-gray-900 dark:text-gray-100 sm:text-xl">
             {readOnly ? displayName : `Editar — ${displayName}`}
           </DialogTitle>
           <p className="text-sm text-gray-400 mt-0.5">
@@ -330,7 +333,7 @@ export default function StudentEditDialog({
           </p>
 
           {/* Underline tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-700 mt-4 -mx-6 px-6">
+          <div className="-mx-4 mt-4 border-b border-gray-200 px-4 dark:border-gray-700 sm:-mx-6 sm:px-6">
             <nav className="-mb-px flex gap-0 overflow-x-auto">
               {TABS.map((tab) => (
                 <button
@@ -351,7 +354,7 @@ export default function StudentEditDialog({
         </DialogHeader>
 
         {/* ── Body ───────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {isLoadingStudent ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4" />
@@ -360,7 +363,7 @@ export default function StudentEditDialog({
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} id="student-edit-form">
-                <div className="px-6 py-5 space-y-4">
+                <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
 
                   {/* ── Dados Pessoais ─────────────────────────── */}
                   {activeTab === "personal" && (
@@ -799,7 +802,10 @@ export default function StudentEditDialog({
                           isScholarship ? (
                             <button
                               type="button"
-                              onClick={() => { setIsScholarship(false); }}
+                              onClick={() => {
+                                setIsScholarship(false);
+                                form.setValue("couponCode", null);
+                              }}
                               className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium"
                             >
                               Remover bolsa →
@@ -807,7 +813,11 @@ export default function StudentEditDialog({
                           ) : (
                             <button
                               type="button"
-                              onClick={() => { setIsScholarship(true); form.setValue("paymentPlanId", null); }}
+                              onClick={() => {
+                                setIsScholarship(true);
+                                form.setValue("paymentPlanId", null);
+                                form.setValue("couponCode", null);
+                              }}
                               className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                             >
                               🎓 Aplicar bolsa →
@@ -893,7 +903,7 @@ export default function StudentEditDialog({
                                   Cupom de desconto (opcional)
                                 </FormLabel>
                                 <div className="flex gap-2">
-                                  <Popover>
+                                  <Popover open={couponPickerOpen} onOpenChange={setCouponPickerOpen}>
                                     <PopoverTrigger asChild>
                                       <Button
                                         type="button"
@@ -936,6 +946,7 @@ export default function StudentEditDialog({
                                                   onSelect={() => {
                                                     if (!usable) return;
                                                     field.onChange(coupon.code);
+                                                    setCouponPickerOpen(false);
                                                     if (coupon.discountPercent === 100) {
                                                       setIsScholarship(true);
                                                       form.setValue("paymentPlanId", null);
@@ -1008,7 +1019,7 @@ export default function StudentEditDialog({
 
         {/* ── Footer ─────────────────────────────────────────────── */}
         {!isLoadingStudent && (
-          <div className="flex-shrink-0 px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900">
+          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-700 dark:bg-gray-900 sm:px-6 sm:py-4">
             <div className="flex gap-1">
               {TABS.map((tab) => (
                 <div
@@ -1019,12 +1030,12 @@ export default function StudentEditDialog({
                 />
               ))}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="border-gray-200 text-gray-600 hover:bg-gray-100"
+                className="min-h-11 border-gray-200 px-3 text-gray-600 hover:bg-gray-100 sm:px-4"
               >
                 Cancelar
               </Button>
@@ -1033,7 +1044,7 @@ export default function StudentEditDialog({
                   type="submit"
                   form="student-edit-form"
                   disabled={updateStudentMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]"
+                  className="min-h-11 min-w-[92px] bg-blue-600 text-white hover:bg-blue-700 sm:min-w-[100px]"
                 >
                   {updateStudentMutation.isPending ? (
                     <span className="flex items-center gap-2">

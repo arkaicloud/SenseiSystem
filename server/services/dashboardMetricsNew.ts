@@ -144,9 +144,12 @@ export async function getDashboardMetrics(now = new Date()) {
     FROM students s
     JOIN users u ON u.id = s.user_id
     JOIN belt_levels bl ON bl.level_key = s.belt_level::text
-    WHERE AGE(NOW(), u.birth_date) >= INTERVAL '18 years'
-      AND bl.category = 'adult'
+    WHERE u.role = 'student'
       AND u.active = true
+      AND (
+        (u.birth_date IS NOT NULL AND AGE(NOW(), u.birth_date) >= INTERVAL '18 years')
+        OR (u.birth_date IS NULL AND bl.category = 'adult')
+      )
     GROUP BY bl.name, bl.order
     ORDER BY bl.order;
   `);
@@ -155,9 +158,12 @@ export async function getDashboardMetrics(now = new Date()) {
     FROM students s
     JOIN users u ON u.id = s.user_id
     JOIN belt_levels bl ON bl.level_key = s.belt_level::text
-    WHERE AGE(NOW(), u.birth_date) < INTERVAL '18 years'
-      AND bl.category = 'child'
+    WHERE u.role = 'student'
       AND u.active = true
+      AND (
+        (u.birth_date IS NOT NULL AND AGE(NOW(), u.birth_date) < INTERVAL '18 years')
+        OR (u.birth_date IS NULL AND bl.category = 'child')
+      )
     GROUP BY bl.name, bl.order
     ORDER BY bl.order;
   `);

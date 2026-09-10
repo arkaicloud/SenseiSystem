@@ -232,27 +232,29 @@ export class AsaasService {
 
     // Calcular data de vencimento baseada na preferência do aluno
     const today = new Date();
-    const preferredDay = studentData.preferredDueDate || 5; // Default dia 5 se não informado
-    
-    // Próximo mês
-    const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, preferredDay);
+    const preferredDay = Math.min(31, Math.max(1, Number(studentData.preferredDueDate) || 5));
+    let targetYear = today.getFullYear();
+    let targetMonth = today.getMonth() + 1;
     
     // Se a data preferida já passou no mês atual, usar no próximo mês
     if (planData.frequency === 'monthly') {
       const currentDay = today.getDate();
       if (currentDay >= preferredDay) {
         // Já passou do dia preferido no mês atual, usar próximo mês
-        dueDate.setMonth(dueDate.getMonth() + 1);
+        targetMonth = today.getMonth() + 1;
       } else {
         // Ainda não passou, usar no mês atual
-        dueDate.setMonth(today.getMonth());
+        targetMonth = today.getMonth();
       }
     }
 
     // Para planos anuais, sempre próximo ano
     if (planData.frequency === 'yearly' || planData.frequency === 'annual') {
-      dueDate.setFullYear(today.getFullYear() + 1);
+      targetYear = today.getFullYear() + 1;
     }
+
+    const lastDayOfTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const dueDate = new Date(targetYear, targetMonth, Math.min(preferredDay, lastDayOfTargetMonth));
 
     console.log(`📅 Data de vencimento calculada: ${dueDate.toISOString().split('T')[0]} (dia preferido: ${preferredDay})`);
 
@@ -376,14 +378,14 @@ export class AsaasService {
   private calculateNextDueDate(preferredDay: number): string {
     const today = new Date();
     const day = today.getDate();
-    let dueDate: Date;
-    if (day < preferredDay) {
-      // Preferred day is still ahead this month
-      dueDate = new Date(today.getFullYear(), today.getMonth(), preferredDay);
-    } else {
-      // Preferred day has already passed — use next month
-      dueDate = new Date(today.getFullYear(), today.getMonth() + 1, preferredDay);
-    }
+    const safePreferredDay = Math.min(31, Math.max(1, Number(preferredDay) || 5));
+    const targetMonth = day < safePreferredDay ? today.getMonth() : today.getMonth() + 1;
+    const lastDayOfTargetMonth = new Date(today.getFullYear(), targetMonth + 1, 0).getDate();
+    const dueDate = new Date(
+      today.getFullYear(),
+      targetMonth,
+      Math.min(safePreferredDay, lastDayOfTargetMonth)
+    );
     return dueDate.toISOString().split('T')[0];
   }
 

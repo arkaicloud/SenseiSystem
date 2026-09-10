@@ -72,7 +72,7 @@ const studentEditSchema = z.object({
   financialResponsibleRelation: z.string().nullable(),
   isStudentResponsible: z.boolean().default(true),
   paymentPlanId: z.number().nullable(),
-  preferredDueDate: z.number().nullable(),
+  preferredDueDate: z.number().int().min(1).max(31).nullable(),
   couponCode: z.string().nullable(),
   medicalObservations: z.string().nullable(),
   planObservations: z.string().nullable(),
@@ -882,7 +882,7 @@ export default function StudentEditDialog({
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {[5, 10, 15, 20, 25].map((d) => (
+                                  {Array.from({ length: 31 }, (_, index) => index + 1).map((d) => (
                                     <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
                                   ))}
                                 </SelectContent>

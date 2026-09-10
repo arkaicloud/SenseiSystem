@@ -45,6 +45,11 @@ function generateTempPassword(): string {
   return password;
 }
 
+function parsePreferredDueDay(value: unknown): number | null {
+  const day = Number(value);
+  return Number.isInteger(day) && day >= 1 && day <= 31 ? day : null;
+}
+
 /**
  * Auto-link a student to a guardian based on financialResponsibleCpf.
  * Checks if any user has a CPF matching the student's responsible CPF.
@@ -2104,6 +2109,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredDueDate // Added preferredDueDate
       } = updateData;
 
+      const validatedPreferredDueDate = preferredDueDate === undefined
+        ? undefined
+        : parsePreferredDueDay(preferredDueDate);
+      if (preferredDueDate !== undefined && validatedPreferredDueDate === null) {
+        return res.status(400).json({ message: "O dia de vencimento deve estar entre 1 e 31" });
+      }
+
       // Don't allow role changes unless admin
       if (userUpdateData.role && userUpdateData.role !== user.role && requestUser.role !== 'admin') {
         return res.status(403).json({ message: "Cannot change role" });
@@ -2152,7 +2164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             studentUpdateData.planObservations = planObservations;
           }
           if (preferredDueDate !== undefined) { // Update preferredDueDate
-            studentUpdateData.preferredDueDate = preferredDueDate;
+            studentUpdateData.preferredDueDate = validatedPreferredDueDate;
           }
 
           // Only update if there's data to update
@@ -2316,6 +2328,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalLogins: 0
       };
 
+      const preferredDueDate = parsePreferredDueDay(studentData.dueDate || 5);
+      if (preferredDueDate === null) {
+        return res.status(400).json({ message: "O dia de vencimento deve estar entre 1 e 31" });
+      }
+
       const user = await storage.createUser(userData);
 
       // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
@@ -2352,7 +2369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialResponsibleRelation: studentData.financialResponsibleRelationship || "self",
         asaasCustomerId: null,
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
-        preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5
+        preferredDueDate
       });
 
       // Create student record
@@ -2625,7 +2642,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         if (payload.billing.preferredDueDay !== undefined) {
-          studentUpdateData.preferredDueDate = payload.billing.preferredDueDay;
+          const preferredDueDay = parsePreferredDueDay(payload.billing.preferredDueDay);
+          if (preferredDueDay === null) {
+            return res.status(400).json({ message: "O dia de vencimento deve estar entre 1 e 31" });
+          }
+          studentUpdateData.preferredDueDate = preferredDueDay;
         }
 
         if (payload.billing.couponCode !== undefined) {
@@ -6877,6 +6898,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalLogins: 0
       };
 
+      const preferredDueDate = parsePreferredDueDay(studentData.dueDate || 5);
+      if (preferredDueDate === null) {
+        return res.status(400).json({ message: "O dia de vencimento deve estar entre 1 e 31" });
+      }
+
       const user = await storage.createUser(userData);
 
       // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
@@ -6913,7 +6939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialResponsibleRelation: studentData.financialResponsibleRelationship || "self",
         asaasCustomerId: null,
         paymentPlanId: studentData.paymentPlanId ? parseInt(studentData.paymentPlanId) : null,
-        preferredDueDate: studentData.dueDate ? parseInt(studentData.dueDate) : 5,
+        preferredDueDate,
         couponCode: studentData.couponCode || null,
         // Signature fields
         signatureData: studentData.signatureData || null,

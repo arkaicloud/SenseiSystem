@@ -68,7 +68,12 @@ const personalInfoSchema = z.object({
     errorMap: () => ({ message: "Selecione o grau de parentesco" })
   }),
   paymentPlanId: z.string().min(1, "Selecione um plano de pagamento"),
-  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  dueDate: z.string()
+    .min(1, "Data de vencimento é obrigatória")
+    .refine((value) => {
+      const day = Number(value);
+      return Number.isInteger(day) && day >= 1 && day <= 31;
+    }, "Selecione um dia entre 1 e 31"),
   couponCode: z.string().optional(),
 }).refine((data) => {
   if (data.financialResponsibleRelationship !== "self") {
@@ -498,22 +503,11 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
               <FormLabel className={labelCls}>Data de Vencimento Preferida *</FormLabel>
               <p className="text-xs text-slate-500 -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
               <FormControl>
-                <div className="flex gap-2">
-                  {[5, 10, 15, 20, 25].map((day) => (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => field.onChange(String(day))}
-                      className={`flex-1 h-12 rounded-xl border text-sm font-bold transition-all ${
-                        field.value === String(day)
-                          ? "bg-[#2B54FF] border-[#2B54FF] text-white"
-                          : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
-                      }`}
-                    >
-                      {day}
-                    </button>
+                <select value={field.value} onChange={(event) => field.onChange(event.target.value)} className={selectCls}>
+                  {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
+                    <option key={day} value={String(day)}>Dia {day}</option>
                   ))}
-                </div>
+                </select>
               </FormControl>
               <FormMessage className="text-red-400 text-xs" />
             </FormItem>

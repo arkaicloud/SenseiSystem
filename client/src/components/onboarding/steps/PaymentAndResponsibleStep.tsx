@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ArrowLeft, ArrowRight, CreditCard, User, Users, GraduationCap, CheckCircle, XCircle, Loader2, Ticket, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-const DUE_DATE_OPTIONS = [5, 10, 15, 20, 25];
+const DUE_DATE_OPTIONS = Array.from({ length: 31 }, (_, index) => index + 1);
 
 const validateCPF = (input: string): boolean => {
   const cpf = (input || "").replace(/\D+/g, "");
@@ -43,7 +43,12 @@ const paymentSchema = z.object({
   paymentPlanId: z.string().optional(),
   couponCode: z.string().optional(),
   isScholarship: z.boolean().default(false),
-  dueDate: z.string().default("5"),
+  dueDate: z.string()
+    .default("5")
+    .refine((value) => {
+      const day = Number(value);
+      return Number.isInteger(day) && day >= 1 && day <= 31;
+    }, "Selecione um dia entre 1 e 31"),
   financialResponsibleRelationship: z.enum(["self", "other"]).default("self"),
   financialResponsibleName: z.string().optional(),
   financialResponsibleCpf: z.string().optional(),
@@ -274,22 +279,15 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                     <FormLabel className={labelCls}>Data de Vencimento *</FormLabel>
                     <p className="text-xs text-slate-500 -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
                     <FormControl>
-                      <div className="flex gap-2">
+                      <select
+                        value={field.value}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        className="h-12 w-full appearance-none rounded-xl border border-white/10 bg-slate-900 px-3 text-sm text-white focus:border-[#2B54FF]/50 focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 [color-scheme:dark]"
+                      >
                         {DUE_DATE_OPTIONS.map((day) => (
-                          <button
-                            key={day}
-                            type="button"
-                            onClick={() => field.onChange(String(day))}
-                            className={`flex-1 h-12 rounded-xl border text-sm font-bold transition-all ${
-                              field.value === String(day)
-                                ? "bg-[#2B54FF] border-[#2B54FF] text-white"
-                                : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
-                            }`}
-                          >
-                            {day}
-                          </button>
+                          <option key={day} value={String(day)}>Dia {day}</option>
                         ))}
-                      </div>
+                      </select>
                     </FormControl>
                     <FormMessage className="text-red-400 text-xs" />
                   </FormItem>

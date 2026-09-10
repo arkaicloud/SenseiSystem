@@ -147,7 +147,7 @@ export const students = pgTable("students", {
   asaasSubscriptionId: text("asaas_subscription_id"), // ID da assinatura no ASAAS
   // Payment preferences
   paymentPlanId: integer("payment_plan_id").references(() => paymentPlans.id),
-  preferredDueDate: integer("preferred_due_date").default(5), // Dia preferido do mês para vencimento (1-28)
+  preferredDueDate: integer("preferred_due_date").default(5), // Dia preferido do mês para vencimento (1-31)
   // Health questionnaire status
   requiresMedicalCertificate: boolean("requires_medical_certificate").default(false),
   medicalCertificateStatus: medicalCertificateStatusEnum("medical_certificate_status").default('PENDING'),

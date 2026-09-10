@@ -1,0 +1,145 @@
+Claro. Você pode usar este prompt no outro sistema:
+
+```text
+Crie um recurso administrativo para copiar o banco de dados de produção para o banco de desenvolvimento.
+
+O recurso deve seguir estas regras:
+
+1. Interface
+
+Adicionar o recurso na página:
+
+Configurações → Segurança → Operações do banco
+
+Exibir o card e o botão somente quando o usuário autenticado tiver o perfil:
+
+SUPER_ADMIN
+
+Título do card:
+
+Operações do banco
+
+Descrição:
+
+Recursos administrativos para sincronizar os ambientes
+
+Adicionar um aviso visual informando:
+
+“Esta operação substitui todos os dados atuais do banco de desenvolvimento pelos dados de produção. Execute somente pelo ambiente de desenvolvimento.”
+
+Criar o botão:
+
+Copiar produção para desenvolvimento
+
+Usar uma cor de alerta, como amarelo ou laranja, para indicar que a operação é destrutiva.
+
+2. Confirmação
+
+Ao clicar no botão, abrir uma janela de confirmação com o título:
+
+Copiar produção para desenvolvimento?
+
+Exibir a mensagem:
+
+“Esta operação substituirá todos os dados atuais do banco de desenvolvimento pelos dados de produção. A operação pode levar alguns minutos e não pode ser desfeita pelo Dashboard.”
+
+Adicionar os botões:
+
+- Cancelar
+- Sim, substituir o banco de desenvolvimento
+
+O segundo botão deve ser destrutivo e iniciar a operação somente após a confirmação.
+
+3. Backend
+
+Criar uma rota protegida:
+
+POST /api/admin/database/prod-to-dev
+
+A rota deve:
+
+- exigir autenticação;
+- aceitar somente usuários com role SUPER_ADMIN;
+- verificar se PROD_DATABASE_URL está configurado;
+- verificar se DATABASE_URL está configurado;
+- bloquear a operação quando NODE_ENV for production;
+- bloquear a operação se PROD_DATABASE_URL e DATABASE_URL forem iguais;
+- impedir duas cópias simultâneas.
+
+A cópia deve ser executada no backend, nunca diretamente no navegador.
+
+Usar um script seguro equivalente a:
+
+- pg_dump do banco de produção;
+- pg_restore no banco de desenvolvimento;
+- opção de limpeza controlada do banco de destino;
+- regeneração do cliente Prisma, se o projeto usar Prisma;
+- remoção do arquivo temporário ao final.
+
+Não exibir URLs, senhas ou credenciais nos logs ou na interface.
+
+4. Execução assíncrona
+
+A rota POST não deve ficar bloqueada esperando a cópia terminar.
+
+Ela deve iniciar uma tarefa e retornar um identificador:
+
+{
+  "id": "job-id",
+  "status": "running"
+}
+
+Criar também uma rota para acompanhar o status:
+
+GET /api/admin/database/prod-to-dev/:jobId
+
+Retornar:
+
+{
+  "id": "job-id",
+  "status": "running" | "success" | "error",
+  "startedAt": "...",
+  "finishedAt": "...",
+  "error": "..."
+}
+
+5. Comportamento da interface
+
+Depois de iniciar:
+
+- alterar o texto do botão para “Copiando banco...”;
+- exibir um indicador de carregamento;
+- consultar o status periodicamente;
+- bloquear o botão enquanto a operação estiver em andamento;
+- informar “Cópia concluída com sucesso” ao finalizar;
+- exibir uma mensagem amigável se houver erro;
+- não iniciar outra cópia enquanto uma já estiver rodando.
+
+6. Segurança
+
+O controle de acesso deve existir no frontend e no backend.
+
+Mesmo que o botão seja ocultado para outros perfis, o backend também deve rejeitar chamadas feitas por usuários que não sejam SUPER_ADMIN.
+
+A operação deve funcionar somente no ambiente de desenvolvimento. O sistema nunca deve permitir que o banco de produção seja usado como destino por engano.
+
+7. Testes
+
+Adicionar testes para verificar:
+
+- o card aparece para SUPER_ADMIN;
+- o card não aparece para outros perfis;
+- usuários não autorizados recebem resposta de acesso negado;
+- a operação é bloqueada em NODE_ENV=production;
+- a operação é bloqueada quando origem e destino são o mesmo banco;
+- duas operações simultâneas não são permitidas;
+- a interface mostra os estados running, success e error.
+```
+
+No outro sistema, você só precisa adaptar:
+
+- o nome da página de configurações;
+- o nome do perfil administrativo;
+- as variáveis de ambiente;
+- o comando usado para fazer o dump e restore;
+- o framework do backend.

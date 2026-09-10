@@ -36,6 +36,11 @@ import { dashboardSummaryQuerySchema, type DashboardSummary } from "@shared/type
 import { businessRules } from "./config/businessRules";
 import crypto from "crypto";
 import { getSystemLogs } from "./services/systemLogger";
+import {
+  getDatabaseCopyJob,
+  isDatabaseCopyConfigured,
+  startDatabaseCopy,
+} from "./services/databaseCopyService";
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -183,6 +188,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up authentication
   setupAuth(app);
+
+  app.get(
+    "/api/admin/database/prod-to-dev/access",
+    isAuthenticated,
+    (req, res) => {
+      const canAccess = isSuperAdminUser(req.user);
+      res.json({
+        canAccess,
+        configured: canAccess ? isDatabaseCopyConfigured() : false,
+      });
+    },
+  );
+
+  app.post(
+    "/api/admin/database/prod-to-dev",
+    isAuthenticated,
+    isSuperAdmin,
+    (_req, res) => {
+      try {
+        const job = startDatabaseCopy();
+        res.status(202).json(job);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Não foi possível iniciar a cópia.";
+        const status = message.includes("andamento") ? 409 : 400;
+        res.status(status).json({ message });
+      }
+    },
+  );
+
+  app.get(
+    "/api/admin/database/prod-to-dev/:jobId",
+    isAuthenticated,
+    isSuperAdmin,
+    (req, res) => {
+      const job = getDatabaseCopyJob(req.params.jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Operação não encontrada." });
+      }
+      res.json(job);
+    },
+  );
 
   // =====Unified Dashboard Summary Route (Audit Requirements)=====
   app.get("/api/dashboard/summary", isAuthenticated, async (req, res) => {

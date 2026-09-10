@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Card,
@@ -15,7 +15,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Shield, User, LogOut } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  CheckCircle2,
+  Database,
+  Loader2,
+  LogOut,
+  Shield,
+  User,
+  XCircle,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -52,11 +62,22 @@ const passwordSchema = z
     path: ["confirmPassword"],
   });
 
+type DatabaseCopyJob = {
+  id: string;
+  status: "running" | "success" | "error";
+  startedAt: string;
+  finishedAt?: string;
+  error?: string;
+};
+
 export default function Settings() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isDatabaseCopyDialogOpen, setIsDatabaseCopyDialogOpen] = useState(false);
+  const [databaseCopyJobId, setDatabaseCopyJobId] = useState<string | null>(null);
+  const notifiedDatabaseCopyJob = useRef<string | null>(null);
 
   // Preferências de notificação
   const { data: notificationPreferences, isLoading: isLoadingPreferences } =
@@ -69,6 +90,80 @@ export default function Settings() {
   const { data: schoolConfig } = useQuery({
     queryKey: ["/api/school-config"],
   });
+
+  const { data: databaseCopyAccess } = useQuery<{
+    canAccess: boolean;
+    configured: boolean;
+  }>({
+    queryKey: ["/api/admin/database/prod-to-dev/access"],
+    retry: false,
+  });
+
+  const { data: databaseCopyJob } = useQuery<DatabaseCopyJob>({
+    queryKey: ["/api/admin/database/prod-to-dev", databaseCopyJobId],
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        `/api/admin/database/prod-to-dev/${databaseCopyJobId}`,
+      );
+      return response.json();
+    },
+    enabled: !!databaseCopyJobId,
+    refetchInterval: (query) =>
+      query.state.data?.status === "running" ? 2000 : false,
+    retry: false,
+  });
+
+  const databaseCopyMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/admin/database/prod-to-dev",
+      );
+      return response.json() as Promise<DatabaseCopyJob>;
+    },
+    onSuccess: (job) => {
+      setDatabaseCopyJobId(job.id);
+      setIsDatabaseCopyDialogOpen(false);
+      toast({
+        title: "Cópia iniciada",
+        description: "O banco está sendo copiado em segundo plano.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Não foi possível iniciar",
+        description: error.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (
+      !databaseCopyJob ||
+      databaseCopyJob.status === "running" ||
+      notifiedDatabaseCopyJob.current === databaseCopyJob.id
+    ) {
+      return;
+    }
+
+    notifiedDatabaseCopyJob.current = databaseCopyJob.id;
+    if (databaseCopyJob.status === "success") {
+      toast({
+        title: "Cópia concluída com sucesso",
+        description: "O banco de desenvolvimento agora contém os dados de produção.",
+      });
+    } else {
+      toast({
+        title: "Falha ao copiar o banco",
+        description:
+          databaseCopyJob.error ||
+          "Verifique a configuração e tente novamente.",
+        variant: "destructive",
+      });
+    }
+  }, [databaseCopyJob, toast]);
 
   const updateSchoolConfigMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -374,6 +469,83 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
+
+        {databaseCopyAccess?.canAccess && (
+          <Card className="border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+                Operações do banco
+              </CardTitle>
+              <CardDescription>
+                Recursos administrativos para sincronizar os ambientes
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-100 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <p>
+                  Esta operação substitui todos os dados atuais do banco de
+                  desenvolvimento pelos dados de produção. Execute somente pelo
+                  ambiente de desenvolvimento.
+                </p>
+              </div>
+
+              {!databaseCopyAccess.configured && (
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  Configure o segredo PROD_DATABASE_URL no ambiente de
+                  desenvolvimento para habilitar esta operação.
+                </p>
+              )}
+
+              {databaseCopyJob && (
+                <div
+                  className="flex items-center gap-2 text-sm"
+                  aria-live="polite"
+                >
+                  {databaseCopyJob.status === "running" && (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Cópia em andamento. Não feche o ambiente de desenvolvimento.
+                    </>
+                  )}
+                  {databaseCopyJob.status === "success" && (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      Cópia concluída com sucesso.
+                    </>
+                  )}
+                  {databaseCopyJob.status === "error" && (
+                    <>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      {databaseCopyJob.error || "A cópia não pôde ser concluída."}
+                    </>
+                  )}
+                </div>
+              )}
+
+              <Button
+                className="bg-amber-600 text-white hover:bg-amber-700"
+                disabled={
+                  !databaseCopyAccess.configured ||
+                  databaseCopyMutation.isPending ||
+                  databaseCopyJob?.status === "running"
+                }
+                onClick={() => setIsDatabaseCopyDialogOpen(true)}
+              >
+                {databaseCopyMutation.isPending ||
+                databaseCopyJob?.status === "running" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Copiando banco...
+                  </>
+                ) : (
+                  "Copiar produção para desenvolvimento"
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Logout — mobile only */}
@@ -482,6 +654,40 @@ export default function Settings() {
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isDatabaseCopyDialogOpen}
+        onOpenChange={setIsDatabaseCopyDialogOpen}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader className="pt-2 pr-8">
+            <DialogTitle>Copiar produção para desenvolvimento?</DialogTitle>
+            <DialogDescription>
+              Esta operação substituirá todos os dados atuais do banco de
+              desenvolvimento pelos dados de produção. A operação pode levar
+              alguns minutos e não pode ser desfeita pelo Dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDatabaseCopyDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={databaseCopyMutation.isPending}
+              onClick={() => databaseCopyMutation.mutate()}
+            >
+              {databaseCopyMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Sim, substituir o banco de desenvolvimento
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

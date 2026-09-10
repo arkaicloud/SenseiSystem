@@ -2308,19 +2308,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate an available username. The email prefix/name is only a base:
-      // public registration can be retried or used by multiple family members,
-      // so the base may already exist in the unique users.username column.
-      const requestedUsername = studentData.username ||
+      // Generate username
+      const username = studentData.username ||
         (studentEmail.includes("@interno.senseisystem")
-          ? `${studentData.firstName}.${studentData.lastName}`.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 30)
+          ? `${studentData.firstName}.${studentData.lastName}`.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 30) + `.${Date.now()}`
           : studentEmail.split('@')[0].toLowerCase());
-      const usernameBase = String(requestedUsername || "aluno").trim() || "aluno";
-      let username = usernameBase;
-      let usernameSuffix = 1;
-      while (await storage.getUserByUsername(username)) {
-        username = `${usernameBase}.${usernameSuffix++}`;
-      }
 
       // Create user without birthDate first to avoid timestamp issues
       const userData = {
@@ -2354,26 +2346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "O dia de vencimento deve estar entre 1 e 31" });
       }
 
-      // The availability check above avoids normal collisions. Retry a few
-      // times as well because two public registrations can pass the check
-      // concurrently before either insert reaches PostgreSQL.
-      let user: Awaited<ReturnType<typeof storage.createUser>> | undefined;
-      for (let attempt = 0; attempt < 5 && !user; attempt++) {
-        try {
-          user = await storage.createUser({ ...userData, username });
-        } catch (error) {
-          const dbError = error as { code?: string; constraint?: string };
-          const isUsernameCollision =
-            dbError.code === "23505" &&
-            dbError.constraint === "users_username_unique";
-
-          if (!isUsernameCollision || attempt === 4) throw error;
-          username = `${usernameBase}.${Date.now()}${crypto.randomInt(100, 1000)}`;
-        }
-      }
-      if (!user) {
-        throw new Error("Não foi possível gerar um usuário para o cadastro");
-      }
+      const user = await storage.createUser(userData);
 
       // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
       if (studentData.birthDate) {
@@ -6878,11 +6851,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate username
-      const username = studentData.username ||
+      // Treat the submitted username as a base because retries and family
+      // registrations can legitimately produce the same email prefix/name.
+      const requestedUsername = studentData.username ||
         (studentEmail.includes("@interno.senseisystem")
-          ? `${studentData.firstName}.${studentData.lastName}`.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 30) + `.${Date.now()}`
+          ? `${studentData.firstName}.${studentData.lastName}`.toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 30)
           : studentEmail.split('@')[0].toLowerCase());
+      const usernameBase = String(requestedUsername || "aluno").trim() || "aluno";
+      let username = usernameBase;
+      let usernameSuffix = 1;
+      while (await storage.getUserByUsername(username)) {
+        username = `${usernameBase}.${usernameSuffix++}`;
+      }
 
       // Create user without birthDate first to avoid timestamp issues
       const userData = {
@@ -6917,7 +6897,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "O dia de vencimento deve estar entre 1 e 31" });
       }
 
-      const user = await storage.createUser(userData);
+      // Retry only username collisions, covering two simultaneous requests
+      // that both passed the availability check before either insert.
+      let user: Awaited<ReturnType<typeof storage.createUser>> | undefined;
+      for (let attempt = 0; attempt < 5 && !user; attempt++) {
+        try {
+          user = await storage.createUser({ ...userData, username });
+        } catch (error) {
+          const dbError = error as { code?: string; constraint?: string };
+          const isUsernameCollision =
+            dbError.code === "23505" &&
+            dbError.constraint === "users_username_unique";
+
+          if (!isUsernameCollision || attempt === 4) throw error;
+          username = `${usernameBase}.${Date.now()}${crypto.randomInt(100, 1000)}`;
+        }
+      }
+      if (!user) {
+        throw new Error("Não foi possível gerar um usuário para o cadastro");
+      }
 
       // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
       if (studentData.birthDate) {

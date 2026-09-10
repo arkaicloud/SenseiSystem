@@ -35,6 +35,7 @@ import { emailService } from "./services/emailService";
 import { dashboardSummaryQuerySchema, type DashboardSummary } from "@shared/types/dashboard";
 import { businessRules } from "./config/businessRules";
 import crypto from "crypto";
+import { getSystemLogs } from "./services/systemLogger";
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -4988,6 +4989,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ logs });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Technical logs for diagnosing application errors (admin only).
+  app.get("/api/system-logs", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const limit = Number(req.query.limit || 100);
+      const hours = Math.min(Math.max(Number(req.query.hours || 168), 1), 24 * 90);
+      const level = typeof req.query.level === "string" ? req.query.level : undefined;
+      const path = typeof req.query.path === "string" ? req.query.path.trim().slice(0, 200) : undefined;
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+      const logs = await getSystemLogs({ limit, level, path, since });
+      res.json({ logs });
+    } catch (error) {
+      console.error("Erro ao consultar logs técnicos:", error);
+      res.status(500).json({ message: "Não foi possível consultar os logs técnicos" });
     }
   });
 

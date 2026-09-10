@@ -7,36 +7,48 @@ import { BeltWithLabel } from "@/components/ui/belt";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDateShort, formatCurrency } from "@/lib/utils";
 import { sanitizeHTML } from "@/lib/htmlUtils";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 const Reports: React.FC = () => {
   const { t } = useTranslation();
   const [periodFilter, setPeriodFilter] = useState("month");
+  const [systemLogHours, setSystemLogHours] = useState("168");
 
   // Fetch activity logs
-  const { data: activityLogsData, isLoading: activityLogsLoading } = useQuery({
+  const { data: activityLogsData, isLoading: activityLogsLoading } = useQuery<{ logs: any[] }>({
     queryKey: ['/api/activity-logs'],
     refetchInterval: false,
   });
 
+  const {
+    data: systemLogsData,
+    isLoading: systemLogsLoading,
+    refetch: refetchSystemLogs,
+  } = useQuery<{ logs: any[] }>({
+    queryKey: ['/api/system-logs', { hours: systemLogHours, level: 'error', limit: 200 }],
+    refetchInterval: false,
+  });
+
   // Fetch students data
-  const { data: studentsData, isLoading: studentsLoading } = useQuery({
+  const { data: studentsData, isLoading: studentsLoading } = useQuery<{ students: any[] }>({
     queryKey: ['/api/students'],
     refetchInterval: false,
   });
 
   // Fetch attendance data
-  const { data: attendanceData, isLoading: attendanceLoading } = useQuery({
+  const { data: attendanceData, isLoading: attendanceLoading } = useQuery<{ attendances: any[] }>({
     queryKey: ['/api/attendance'],
     refetchInterval: false,
   });
 
   // Fetch payments data
-  const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
+  const { data: paymentsData, isLoading: paymentsLoading } = useQuery<{ payments: any[] }>({
     queryKey: ['/api/student-payments'],
     refetchInterval: false,
   });
 
   const activityLogs = activityLogsData?.logs || [];
+  const systemLogs = systemLogsData?.logs || [];
   const students = studentsData?.students || [];
   const attendanceRecords = attendanceData?.attendances || [];
   const payments = paymentsData?.payments || [];
@@ -101,6 +113,7 @@ const Reports: React.FC = () => {
       <Tabs defaultValue="activities">
         <TabsList className="mb-4">
           <TabsTrigger value="activities">Activity Log</TabsTrigger>
+          <TabsTrigger value="system-errors">Erros do Sistema</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="finance">Financial</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
@@ -146,6 +159,83 @@ const Reports: React.FC = () => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="system-errors">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    Erros técnicos
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Exceções e respostas HTTP 500 registradas automaticamente.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={systemLogHours}
+                    onChange={(event) => setSystemLogHours(event.target.value)}
+                    className="h-9 rounded-md border bg-background px-3 text-sm"
+                  >
+                    <option value="24">Últimas 24 horas</option>
+                    <option value="168">Últimos 7 dias</option>
+                    <option value="720">Últimos 30 dias</option>
+                    <option value="2160">Últimos 90 dias</option>
+                  </select>
+                  <Button variant="outline" size="sm" onClick={() => refetchSystemLogs()}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Atualizar
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {systemLogsLoading ? (
+                <div className="py-8 text-center">Carregando logs...</div>
+              ) : systemLogs.length === 0 ? (
+                <div className="py-8 text-center text-gray-500">
+                  Nenhum erro registrado neste período.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {systemLogs.map((entry: any) => (
+                    <div key={entry.id} className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/20">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-semibold uppercase text-red-700 dark:bg-red-900 dark:text-red-200">
+                          {entry.level}
+                        </span>
+                        <span className="font-mono text-xs text-gray-500">{entry.requestId || `log-${entry.id}`}</span>
+                        <span className="ml-auto text-xs text-gray-500">
+                          {new Date(entry.createdAt).toLocaleString("pt-BR")}
+                        </span>
+                      </div>
+                      <p className="mt-3 font-medium text-gray-900 dark:text-gray-100">{entry.message}</p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                        {entry.method && <span>{entry.method} {entry.path}</span>}
+                        {entry.statusCode && <span>Status: {entry.statusCode}</span>}
+                        {entry.durationMs !== null && <span>Duração: {entry.durationMs} ms</span>}
+                        {entry.userId && <span>Usuário ID: {entry.userId}</span>}
+                        {entry.source && <span>Origem: {entry.source}</span>}
+                      </div>
+                      {entry.stack && (
+                        <details className="mt-3">
+                          <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Ver detalhes técnicos
+                          </summary>
+                          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-gray-950 p-3 text-xs text-gray-100">
+                            {entry.stack}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

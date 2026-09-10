@@ -378,6 +378,24 @@ export const activityLogs = pgTable('activity_logs', {
   timestamp: timestamp('timestamp').defaultNow()
 });
 
+// Technical application logs. Kept separate from business activity/audit logs.
+export const systemLogs = pgTable('system_logs', {
+  id: serial('id').primaryKey(),
+  requestId: uuid('request_id'),
+  level: varchar('level', { length: 10 }).notNull(),
+  source: varchar('source', { length: 100 }).notNull().default('server'),
+  message: text('message').notNull(),
+  errorName: varchar('error_name', { length: 150 }),
+  stack: text('stack'),
+  method: varchar('method', { length: 10 }),
+  path: text('path'),
+  statusCode: integer('status_code'),
+  durationMs: integer('duration_ms'),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+  metadata: text('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 // Password reset tokens
 export const passwordResetTokens = pgTable('password_reset_tokens', {
   id: serial('id').primaryKey(),
@@ -507,6 +525,8 @@ export const insertPaymentPlanSchema = createInsertSchema(paymentPlans).omit({ i
 export const insertStudentPaymentSchema = createInsertSchema(studentPayments).omit({ id: true });
 export const insertActivityLogSchema = createInsertSchema(activityLogs);
 export const selectActivityLogSchema = createSelectSchema(activityLogs);
+export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({ id: true, createdAt: true });
+export const selectSystemLogSchema = createSelectSchema(systemLogs);
 
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens);
 export const selectPasswordResetTokenSchema = createSelectSchema(passwordResetTokens);
@@ -554,6 +574,8 @@ export type InsertStudentPayment = z.infer<typeof insertStudentPaymentSchema>;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type SystemLog = typeof systemLogs.$inferSelect;
+export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 
 export type DashboardCustomization = typeof dashboardCustomizations.$inferSelect;
 

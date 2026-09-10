@@ -8,6 +8,8 @@ import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDefaultAdmin } from "./auth";
+import crypto from "crypto";
+import { buildSafeMetadata, initializeSystemLogs, systemLogger } from "./services/systemLogger";
 
 const app = express();
 
@@ -79,7 +81,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  const requestId = crypto.randomUUID();
+  let capturedJsonResponse: Record<string, any> | undefined;
+  res.locals.requestId = requestId;
+  res.setHeader("X-Request-Id", requestId);
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -91,15 +96,32 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
       log(logLine);
+
+      if (res.statusCode >= 500 && !res.locals.systemErrorLogged) {
+        void systemLogger.error(
+          new Error(
+            typeof capturedJsonResponse?.message === "string"
+              ? capturedJsonResponse.message
+              : `Falha HTTP ${res.statusCode}`,
+          ),
+          {
+            requestId,
+            source: "http",
+            message: `${req.method} ${path} respondeu com status ${res.statusCode}`,
+            method: req.method,
+            path,
+            statusCode: res.statusCode,
+            durationMs: duration,
+            userId: req.user?.id,
+            metadata: buildSafeMetadata({
+              responseMessage: capturedJsonResponse?.message,
+              queryKeys: Object.keys(req.query || {}),
+              bodyKeys: req.body && typeof req.body === "object" ? Object.keys(req.body) : [],
+            }),
+          },
+        );
+      }
     }
   });
 
@@ -110,22 +132,37 @@ app.use((req, res, next) => {
   // Initialize database and default users
   try {
     log("Initializing database and default users...");
+    await initializeSystemLogs();
     await initializeDefaultAdmin();
     log("Database initialization completed");
   } catch (error) {
     log(`Database initialization error: ${error}`);
+    await systemLogger.error(error, {
+      source: "startup",
+      message: "Falha durante a inicialização do banco de dados",
+    });
   }
 
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    res.locals.systemErrorLogged = true;
+    void systemLogger.error(err, {
+      requestId: res.locals.requestId,
+      source: "express",
+      message,
+      method: req.method,
+      path: req.path,
+      statusCode: status,
+      userId: req.user?.id,
+      metadata: buildSafeMetadata({
+        queryKeys: Object.keys(req.query || {}),
+        bodyKeys: req.body && typeof req.body === "object" ? Object.keys(req.body) : [],
+      }),
+    });
     res.status(status).json({ message });
-    // Only rethrow in development to avoid crashing production on handled errors
-    if (process.env.NODE_ENV === "development") {
-      throw err;
-    }
   });
 
   // importantly only setup vite in development and after

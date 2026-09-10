@@ -451,67 +451,67 @@ export async function initializeDefaultAdmin() {
       console.log("Jheni admin user created: jheni (jheni@huiosbjj.com.br)");
     }
 
-    // Create student user
-    const existingStudent = await storage.getUserByEmail("aluno@senseisystem.com.br");
-    const existingStudentUsername = await storage.getUserByUsername("aluno");
-    
-    if (!existingStudent && !existingStudentUsername) {
-      const hashedPassword = await hashPassword("12345678");
-      
-      const studentUser = await storage.createUser({
-        firstName: "Aluno",
-        lastName: "Teste",
-        username: "aluno",
-        email: "aluno@senseisystem.com.br",
-        password: hashedPassword,
-        role: "student",
-        active: true,
-        phone: null,
-        emergencyContact: null,
-        joinDate: new Date(),
-      });
+    // Test data must never be recreated in a normal app startup.
+    // Enable only in an isolated development environment when explicitly needed.
+    if (process.env.ENABLE_TEST_STUDENT_SEED === "true") {
+      const existingStudent = await storage.getUserByEmail("aluno@senseisystem.com.br");
+      const existingStudentUsername = await storage.getUserByUsername("aluno");
 
-      // Create student profile
-      const student = await storage.createStudent({
-        userId: studentUser.id,
-        beltLevel: "white",
-        stripes: 0,
-        lastPromotionDate: new Date(),
-        attendanceRate: 0,
-        notes: "Usuário de teste criado automaticamente"
-      });
+      if (!existingStudent && !existingStudentUsername) {
+        const hashedPassword = await hashPassword("12345678");
 
-      // Create a default payment plan if none exists
-      try {
-        const existingPlans = await storage.getPaymentPlans();
-        let defaultPlan = existingPlans.find(p => p.name === "Plano Básico");
-        
-        if (!defaultPlan) {
-          defaultPlan = await storage.createPaymentPlan({
-            name: "Plano Básico",
-            description: "Plano básico para usuários de teste",
-            amount: 10000, // em centavos
-            durationDays: 30,
-            active: true
+        const studentUser = await storage.createUser({
+          firstName: "Aluno",
+          lastName: "Teste",
+          username: "aluno",
+          email: "aluno@senseisystem.com.br",
+          password: hashedPassword,
+          role: "student",
+          active: true,
+          phone: null,
+          emergencyContact: null,
+          joinDate: new Date(),
+        });
+
+        const student = await storage.createStudent({
+          userId: studentUser.id,
+          beltLevel: "white",
+          stripes: 0,
+          lastPromotionDate: new Date(),
+          attendanceRate: 0,
+          notes: "Usuário de teste criado automaticamente"
+        });
+
+        try {
+          const existingPlans = await storage.getPaymentPlans();
+          let defaultPlan = existingPlans.find(p => p.name === "Plano Básico");
+
+          if (!defaultPlan) {
+            defaultPlan = await storage.createPaymentPlan({
+              name: "Plano Básico",
+              description: "Plano básico para usuários de teste",
+              amount: 10000,
+              durationDays: 30,
+              active: true
+            });
+          }
+
+          await storage.createStudentPayment({
+            studentId: student.id,
+            planId: defaultPlan.id,
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: "paid",
+            amount: defaultPlan.amount,
+            notes: "Plano de teste criado automaticamente"
           });
+
+          console.log("Default payment plan assigned to student user");
+        } catch (planError) {
+          console.error("Failed to create payment plan for student:", planError);
         }
 
-        // Create student payment record
-        await storage.createStudentPayment({
-          studentId: student.id,
-          planId: defaultPlan.id,
-          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          status: "paid",
-          amount: defaultPlan.amount,
-          notes: "Plano de teste criado automaticamente"
-        });
-        
-        console.log("Default payment plan assigned to student user");
-      } catch (planError) {
-        console.error("Failed to create payment plan for student:", planError);
+        console.log("Student user created: aluno (aluno@senseisystem.com.br)");
       }
-      
-      console.log("Student user created: aluno (aluno@senseisystem.com.br)");
     }
 
     // Create default classes (HUIOS BJJ schedule)

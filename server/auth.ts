@@ -7,7 +7,11 @@ import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { User as SchemaUser, userRoleEnum } from "@shared/schema";
 
-export const SUPER_ADMIN_EMAILS = ['adm@senseisystem.com.br', 'huiosbjj@senseisystem.com.br'];
+export const SUPER_ADMIN_EMAILS = [
+  'adm@senseisystem.com.br',
+  'huiosbjj@senseisystem.com.br',
+  'leonardo@arkaicloud.com.br',
+];
 
 export function isSuperAdminUser(user: Pick<SchemaUser, "role" | "email"> | undefined): boolean {
   return !!user && user.role === "admin" && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase());

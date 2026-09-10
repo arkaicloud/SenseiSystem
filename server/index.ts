@@ -9,7 +9,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDefaultAdmin } from "./auth";
 import crypto from "crypto";
-import { buildSafeMetadata, initializeSystemLogs, systemLogger } from "./services/systemLogger";
+import { buildSafeMetadata, systemLogger } from "./services/systemLogger";
 
 const app = express();
 
@@ -132,7 +132,6 @@ app.use((req, res, next) => {
   // Initialize database and default users
   try {
     log("Initializing database and default users...");
-    await initializeSystemLogs();
     await initializeDefaultAdmin();
     log("Database initialization completed");
   } catch (error) {

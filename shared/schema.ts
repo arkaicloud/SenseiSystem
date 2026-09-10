@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, uuid, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, uuid, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -379,22 +379,30 @@ export const activityLogs = pgTable('activity_logs', {
 });
 
 // Technical application logs. Kept separate from business activity/audit logs.
-export const systemLogs = pgTable('system_logs', {
-  id: serial('id').primaryKey(),
-  requestId: uuid('request_id'),
-  level: varchar('level', { length: 10 }).notNull(),
-  source: varchar('source', { length: 100 }).notNull().default('server'),
-  message: text('message').notNull(),
-  errorName: varchar('error_name', { length: 150 }),
-  stack: text('stack'),
-  method: varchar('method', { length: 10 }),
-  path: text('path'),
-  statusCode: integer('status_code'),
-  durationMs: integer('duration_ms'),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
-  metadata: text('metadata'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+export const systemLogs = pgTable(
+  'system_logs',
+  {
+    id: serial('id').primaryKey(),
+    requestId: uuid('request_id'),
+    level: varchar('level', { length: 10 }).notNull(),
+    source: varchar('source', { length: 100 }).notNull().default('server'),
+    message: text('message').notNull(),
+    errorName: varchar('error_name', { length: 150 }),
+    stack: text('stack'),
+    method: varchar('method', { length: 10 }),
+    path: text('path'),
+    statusCode: integer('status_code'),
+    durationMs: integer('duration_ms'),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+    metadata: text('metadata'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    createdAtIdx: index('idx_system_logs_created_at').on(table.createdAt.desc()),
+    levelIdx: index('idx_system_logs_level').on(table.level),
+    requestIdIdx: index('idx_system_logs_request_id').on(table.requestId),
+  }),
+);
 
 // Password reset tokens
 export const passwordResetTokens = pgTable('password_reset_tokens', {

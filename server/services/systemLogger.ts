@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import { and, desc, eq, gte, ilike, lt } from "drizzle-orm";
-import { db, pool } from "../db";
+import { db } from "../db";
 import { systemLogs, type InsertSystemLog } from "@shared/schema";
 
 const RETENTION_DAYS = 90;
@@ -143,32 +143,6 @@ export const systemLogger = {
     });
   },
 };
-
-export async function initializeSystemLogs(): Promise<void> {
-  if (!pool) return;
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS system_logs (
-      id SERIAL PRIMARY KEY,
-      request_id UUID,
-      level VARCHAR(10) NOT NULL,
-      source VARCHAR(100) NOT NULL DEFAULT 'server',
-      message TEXT NOT NULL,
-      error_name VARCHAR(150),
-      stack TEXT,
-      method VARCHAR(10),
-      path TEXT,
-      status_code INTEGER,
-      duration_ms INTEGER,
-      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      metadata TEXT,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_created_at ON system_logs(created_at DESC)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_level ON system_logs(level)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_request_id ON system_logs(request_id)`);
-}
 
 export async function getSystemLogs(filters: {
   limit?: number;

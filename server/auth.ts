@@ -7,6 +7,12 @@ import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { User as SchemaUser, userRoleEnum } from "@shared/schema";
 
+export const SUPER_ADMIN_EMAILS = ['adm@senseisystem.com.br', 'huiosbjj@senseisystem.com.br'];
+
+export function isSuperAdminUser(user: Pick<SchemaUser, "role" | "email"> | undefined): boolean {
+  return !!user && user.role === "admin" && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase());
+}
+
 // Add User type to Express' User interface
 declare global {
   namespace Express {
@@ -40,6 +46,14 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     return next();
   }
   res.status(403).json({ message: "Forbidden: Admin access required" });
+};
+
+// Middleware for highly sensitive operational data.
+export const isSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (req.isAuthenticated() && isSuperAdminUser(req.user)) {
+    return next();
+  }
+  res.status(403).json({ message: "Forbidden: Super admin access required" });
 };
 
 // Middleware to check if user is instructor/professor

@@ -23,7 +23,7 @@ import {
   insertBeltLevelSchema,
   insertUserNotificationPreferencesSchema
 } from "@shared/schema";
-import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, hashPassword } from "./auth";
+import { setupAuth, isAuthenticated, isAdmin, isInstructor, isSelfOrStaff, isSuperAdmin, isSuperAdminUser, hashPassword, SUPER_ADMIN_EMAILS } from "./auth";
 import bcrypt from "bcryptjs";
 import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
@@ -1460,13 +1460,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ─── Staff User Management (admin only) ──────────────────────────────────
 
   // List all staff users (admin + instructor)
-  // Super admin emails that are hidden from regular admins
-  const SUPER_ADMIN_EMAILS = ['adm@senseisystem.com.br', 'huiosbjj@senseisystem.com.br'];
-
   app.get("/api/admin/staff", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const currentUser = req.user as any;
-      const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(currentUser?.email);
+      const isSuperAdmin = isSuperAdminUser(currentUser);
       const allUsers = await storage.getUsers();
       const staff = allUsers
         .filter(u => u.role === 'admin' || u.role === 'instructor')
@@ -4992,8 +4989,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Technical logs for diagnosing application errors (admin only).
-  app.get("/api/system-logs", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/system-logs/access", isAuthenticated, (req, res) => {
+    res.json({ canView: isSuperAdminUser(req.user) });
+  });
+
+  // Technical logs contain operational details and are restricted to super admins.
+  app.get("/api/system-logs", isAuthenticated, isSuperAdmin, async (req, res) => {
     try {
       const limit = Number(req.query.limit || 100);
       const hours = Math.min(Math.max(Number(req.query.hours || 168), 1), 24 * 90);

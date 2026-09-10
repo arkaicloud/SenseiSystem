@@ -20,12 +20,19 @@ const Reports: React.FC = () => {
     refetchInterval: false,
   });
 
+  const { data: systemLogsAccess } = useQuery<{ canView: boolean }>({
+    queryKey: ['/api/system-logs/access'],
+    refetchInterval: false,
+  });
+  const canViewSystemLogs = systemLogsAccess?.canView === true;
+
   const {
     data: systemLogsData,
     isLoading: systemLogsLoading,
     refetch: refetchSystemLogs,
   } = useQuery<{ logs: any[] }>({
     queryKey: ['/api/system-logs', { hours: systemLogHours, level: 'error', limit: 200 }],
+    enabled: canViewSystemLogs,
     refetchInterval: false,
   });
 
@@ -113,7 +120,9 @@ const Reports: React.FC = () => {
       <Tabs defaultValue="activities">
         <TabsList className="mb-4">
           <TabsTrigger value="activities">Activity Log</TabsTrigger>
-          <TabsTrigger value="system-errors">Erros do Sistema</TabsTrigger>
+          {canViewSystemLogs && (
+            <TabsTrigger value="system-errors">Erros do Sistema</TabsTrigger>
+          )}
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="finance">Financial</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
@@ -165,6 +174,7 @@ const Reports: React.FC = () => {
           </Card>
         </TabsContent>
 
+        {canViewSystemLogs && (
         <TabsContent value="system-errors">
           <Card>
             <CardHeader>
@@ -241,6 +251,7 @@ const Reports: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         <TabsContent value="attendance">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

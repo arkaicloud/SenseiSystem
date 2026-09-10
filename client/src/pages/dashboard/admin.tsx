@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { BELT_NAMES } from '@/components/ui/belt';
 
 const KpiCard = ({ value, label, icon: Icon, iconBg, iconColor }: {
   value: string | number;
@@ -32,18 +33,60 @@ const KpiCard = ({ value, label, icon: Icon, iconBg, iconColor }: {
   </div>
 );
 
-const BELT_COLORS: Record<string, string> = {
-  white: '#CBD5E1', blue: '#3B82F6', purple: '#8B5CF6',
-  brown: '#92400E', black: '#1E293B',
+const BELT_CHART_STYLES: Record<string, {
+  fill: string;
+  legend: string;
+  stroke?: string;
+  strokeWidth?: number;
+}> = {
+  white:        { fill: '#FFFFFF', legend: '#FFFFFF', stroke: '#94A3B8', strokeWidth: 2 },
+  blue:         { fill: '#2563EB', legend: '#2563EB' },
+  purple:       { fill: '#7C3AED', legend: '#7C3AED' },
+  brown:        { fill: '#92400E', legend: '#92400E' },
+  black:        { fill: '#111827', legend: '#111827', stroke: '#94A3B8', strokeWidth: 1.5 },
+  coral:        { fill: '#FB7185', legend: '#FB7185' },
+  red_white:    { fill: 'url(#belt-red-white)', legend: 'linear-gradient(90deg, #DC2626 0 50%, #FFFFFF 50%)', stroke: '#94A3B8' },
+  red:          { fill: '#DC2626', legend: '#DC2626' },
+  grey_white:   { fill: 'url(#belt-grey-white)', legend: 'linear-gradient(90deg, #6B7280 0 50%, #FFFFFF 50%)', stroke: '#94A3B8' },
+  grey:         { fill: '#6B7280', legend: '#6B7280' },
+  grey_black:   { fill: 'url(#belt-grey-black)', legend: 'linear-gradient(90deg, #6B7280 0 50%, #111827 50%)' },
+  yellow_white: { fill: 'url(#belt-yellow-white)', legend: 'linear-gradient(90deg, #FACC15 0 50%, #FFFFFF 50%)', stroke: '#94A3B8' },
+  yellow:       { fill: '#FACC15', legend: '#FACC15', stroke: '#CA8A04' },
+  yellow_black: { fill: 'url(#belt-yellow-black)', legend: 'linear-gradient(90deg, #FACC15 0 50%, #111827 50%)' },
+  orange_white: { fill: 'url(#belt-orange-white)', legend: 'linear-gradient(90deg, #F97316 0 50%, #FFFFFF 50%)', stroke: '#94A3B8' },
+  orange:       { fill: '#F97316', legend: '#F97316' },
+  orange_black: { fill: 'url(#belt-orange-black)', legend: 'linear-gradient(90deg, #F97316 0 50%, #111827 50%)' },
+  green_white:  { fill: 'url(#belt-green-white)', legend: 'linear-gradient(90deg, #16A34A 0 50%, #FFFFFF 50%)', stroke: '#94A3B8' },
+  green:        { fill: '#16A34A', legend: '#16A34A' },
+  green_black:  { fill: 'url(#belt-green-black)', legend: 'linear-gradient(90deg, #16A34A 0 50%, #111827 50%)' },
 };
-const BELT_NAMES: Record<string, string> = {
-  white: 'Branca', blue: 'Azul', purple: 'Roxa', brown: 'Marrom', black: 'Preta',
-};
+
+const BELT_GRADIENTS = [
+  ['red-white', '#DC2626', '#FFFFFF'],
+  ['grey-white', '#6B7280', '#FFFFFF'],
+  ['grey-black', '#6B7280', '#111827'],
+  ['yellow-white', '#FACC15', '#FFFFFF'],
+  ['yellow-black', '#FACC15', '#111827'],
+  ['orange-white', '#F97316', '#FFFFFF'],
+  ['orange-black', '#F97316', '#111827'],
+  ['green-white', '#16A34A', '#FFFFFF'],
+  ['green-black', '#16A34A', '#111827'],
+] as const;
 
 const BeltDonut = ({ data }: { data: Record<string, number> }) => {
   const chartData = Object.entries(data)
     .filter(([, v]) => v > 0)
-    .map(([k, v]) => ({ name: BELT_NAMES[k] || k, value: v, color: BELT_COLORS[k] || '#94A3B8' }));
+    .map(([k, v]) => {
+      const style = BELT_CHART_STYLES[k] || {
+        fill: '#94A3B8',
+        legend: '#94A3B8',
+      };
+      return {
+        name: BELT_NAMES[k] || k,
+        value: v,
+        ...style,
+      };
+    });
   const total = chartData.reduce((s, d) => s + d.value, 0);
 
   if (!chartData.length) return (
@@ -55,9 +98,26 @@ const BeltDonut = ({ data }: { data: Record<string, number> }) => {
       <div className="relative">
         <ResponsiveContainer width="100%" height={190}>
           <PieChart>
+            <defs>
+              {BELT_GRADIENTS.map(([id, firstColor, secondColor]) => (
+                <linearGradient key={id} id={`belt-${id}`} x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={firstColor} />
+                  <stop offset="49.9%" stopColor={firstColor} />
+                  <stop offset="50%" stopColor={secondColor} />
+                  <stop offset="100%" stopColor={secondColor} />
+                </linearGradient>
+              ))}
+            </defs>
             <Pie data={chartData} cx="50%" cy="50%" innerRadius={58} outerRadius={85}
               dataKey="value" paddingAngle={3}>
-              {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
+              {chartData.map((d, i) => (
+                <Cell
+                  key={i}
+                  fill={d.fill}
+                  stroke={d.stroke || '#FFFFFF'}
+                  strokeWidth={d.strokeWidth || 2}
+                />
+              ))}
             </Pie>
             <Tooltip
               contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', fontSize: 13 }}
@@ -72,7 +132,10 @@ const BeltDonut = ({ data }: { data: Record<string, number> }) => {
       <div className="flex flex-wrap gap-x-3 gap-y-1.5 justify-center mt-1">
         {chartData.map((d, i) => (
           <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
-            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+            <div
+              className="h-2.5 w-2.5 flex-shrink-0 rounded-full border border-slate-300"
+              style={{ background: d.legend }}
+            />
             {d.name}
           </div>
         ))}

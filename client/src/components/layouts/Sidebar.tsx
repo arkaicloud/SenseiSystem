@@ -9,7 +9,7 @@ import {
   UserCheck, DollarSign, BarChart3, ChevronDown,
   FileText, Award, X, Bell, Ticket, HeartHandshake,
   ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen,
-  Building2, ShieldCheck, QrCode
+  ShieldCheck, QrCode
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -77,8 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     { id: "comunicados", label: "Comunicados", icon: MessageSquare, path: "/communications", roles: ["admin", "instructor"] },
     { id: "user-management", label: "Gestão de Usuários", icon: ShieldCheck, path: "/admin/user-management", roles: ["admin"] },
-    { id: "school-config", label: "Configuração da Escola", icon: Building2, path: "/school-config", roles: ["admin"] },
-    { id: "settings", label: "Configurações", icon: Settings, path: "/settings", roles: ["admin"] },
+    { id: "school-config", label: "Configuração da Escola", icon: Settings, path: "/school-config", roles: ["admin"] },
     { id: "asaas-integration", label: "Integração ASAAS", icon: CreditCard, path: "/asaas-payments", roles: ["admin"] },
     { id: "agenda-semana", label: "Agenda da Semana", icon: Calendar, path: "/agenda", roles: ["student"] },
     { id: "avisos-aluno", label: "Avisos", icon: Bell, path: "/student/notices", roles: ["student"] },

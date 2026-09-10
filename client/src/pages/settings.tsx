@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  getDatabaseCopyUiStatus,
+  shouldShowDatabaseOperations,
+} from "@/lib/databaseCopyUi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -113,7 +117,6 @@ export default function Settings() {
       query.state.data?.status === "running" ? 2000 : false,
     retry: false,
   });
-
   const databaseCopyMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest(
@@ -138,6 +141,10 @@ export default function Settings() {
       });
     },
   });
+  const databaseCopyUiStatus = getDatabaseCopyUiStatus(
+    databaseCopyJob?.status,
+    databaseCopyMutation.isPending,
+  );
 
   useEffect(() => {
     if (
@@ -470,7 +477,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {databaseCopyAccess?.canAccess && (
+        {shouldShowDatabaseOperations(databaseCopyAccess?.canAccess) && (
           <Card className="border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -491,7 +498,7 @@ export default function Settings() {
                 </p>
               </div>
 
-              {!databaseCopyAccess.configured && (
+              {!databaseCopyAccess?.configured && (
                 <p className="text-sm text-amber-800 dark:text-amber-300">
                   Configure o segredo PROD_DATABASE_URL no ambiente de
                   desenvolvimento para habilitar esta operação.
@@ -503,19 +510,19 @@ export default function Settings() {
                   className="flex items-center gap-2 text-sm"
                   aria-live="polite"
                 >
-                  {databaseCopyJob.status === "running" && (
+                  {databaseCopyUiStatus === "running" && (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Cópia em andamento. Não feche o ambiente de desenvolvimento.
                     </>
                   )}
-                  {databaseCopyJob.status === "success" && (
+                  {databaseCopyUiStatus === "success" && (
                     <>
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       Cópia concluída com sucesso.
                     </>
                   )}
-                  {databaseCopyJob.status === "error" && (
+                  {databaseCopyUiStatus === "error" && (
                     <>
                       <XCircle className="h-4 w-4 text-red-600" />
                       {databaseCopyJob.error || "A cópia não pôde ser concluída."}
@@ -527,14 +534,14 @@ export default function Settings() {
               <Button
                 className="bg-amber-600 text-white hover:bg-amber-700"
                 disabled={
-                  !databaseCopyAccess.configured ||
+                  !databaseCopyAccess?.configured ||
                   databaseCopyMutation.isPending ||
-                  databaseCopyJob?.status === "running"
+                  databaseCopyUiStatus === "running"
                 }
                 onClick={() => setIsDatabaseCopyDialogOpen(true)}
               >
                 {databaseCopyMutation.isPending ||
-                databaseCopyJob?.status === "running" ? (
+                databaseCopyUiStatus === "running" ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Copiando banco...

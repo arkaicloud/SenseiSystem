@@ -126,30 +126,36 @@ async function replaceDevelopmentDatabase(
   destinationUrl: string,
 ): Promise<void> {
   const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "sensei-db-copy-"));
-  const dumpPath = path.join(temporaryDirectory, "production.dump");
+  const productionDumpPath = path.join(temporaryDirectory, "production.dump");
+  const developmentDumpPath = path.join(temporaryDirectory, "development.dump");
+  let cleanupStarted = false;
+  let productionRestored = false;
 
   try {
     await assertDifferentDatabaseServers(sourceUrl, destinationUrl);
 
     await runPostgresCommand("pg_dump", [
       "--format=custom",
+      "--schema=public",
       "--no-owner",
       "--no-privileges",
       "--file",
-      dumpPath,
+      productionDumpPath,
       sourceUrl,
     ]);
 
-    const cleanupPool = new pg.Pool({
-      connectionString: destinationUrl,
-      max: 1,
-    });
-    try {
-      await cleanupPool.query("DROP SCHEMA IF EXISTS public CASCADE");
-      await cleanupPool.query("CREATE SCHEMA public");
-    } finally {
-      await cleanupPool.end();
-    }
+    await runPostgresCommand("pg_dump", [
+      "--format=custom",
+      "--schema=public",
+      "--no-owner",
+      "--no-privileges",
+      "--file",
+      developmentDumpPath,
+      destinationUrl,
+    ]);
+
+    cleanupStarted = true;
+    await resetPublicSchema(destinationUrl);
 
     await runPostgresCommand("pg_restore", [
       "--exit-on-error",
@@ -157,10 +163,48 @@ async function replaceDevelopmentDatabase(
       "--no-privileges",
       "--dbname",
       destinationUrl,
-      dumpPath,
+      productionDumpPath,
     ]);
+    productionRestored = true;
+
+    await runPostgresCommand("./node_modules/.bin/drizzle-kit", [
+      "push",
+      "--force",
+    ]);
+  } catch (error) {
+    if (cleanupStarted && !productionRestored) {
+      try {
+        await resetPublicSchema(destinationUrl);
+        await runPostgresCommand("pg_restore", [
+          "--exit-on-error",
+          "--no-owner",
+          "--no-privileges",
+          "--dbname",
+          destinationUrl,
+          developmentDumpPath,
+        ]);
+      } catch (recoveryError) {
+        console.error(
+          "[database-copy] Falha ao restaurar o backup de segurança:",
+          safeErrorMessage(recoveryError),
+        );
+      }
+    }
+    throw error;
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+}
+
+async function resetPublicSchema(destinationUrl: string): Promise<void> {
+  const cleanupPool = new pg.Pool({
+    connectionString: destinationUrl,
+    max: 1,
+  });
+  try {
+    await cleanupPool.query("DROP SCHEMA IF EXISTS public CASCADE");
+  } finally {
+    await cleanupPool.end();
   }
 }
 

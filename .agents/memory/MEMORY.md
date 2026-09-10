@@ -3,3 +3,4 @@
 - [ASAAS Filter Pattern](asaas-filter.md) — financial payments route must pass dueDateGe/dueDateLe to ASAAS API; frontend sends selectedMonth as query param to avoid client-side month filtering
 - [Staff Permissions](staff-permissions.md) — permissions stored as JSON text in users.permissions column; instructor dashboard checks canSeeFinancials before showing financial widgets
 - [Identidade em planos família](family-plan-student-identity.md) — vínculo financeiro nunca substitui o perfil esportivo; aulas e presenças usam sempre o aluno ativo
+- [Cópia PostgreSQL no Replit](replit-postgres-copy.md) — dumps entre produção e desenvolvimento devem limitar-se ao schema public e preservar um backup temporário do destino

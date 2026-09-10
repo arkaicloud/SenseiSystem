@@ -55,7 +55,14 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
     }
   };
 
-  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString("pt-BR") : "";
+  const formatDate = (date: string) => {
+    if (!date) return "";
+
+    const dateOnly = date.slice(0, 10);
+    const [year, month, day] = dateOnly.split("-");
+
+    return year && month && day ? `${day}/${month}/${year}` : date;
+  };
   const loading = isSubmitting || isProcessing;
 
   const beltLabel = BELT_LABEL[(formData as any)?.beltLevel] ?? (formData as any)?.beltLevel;

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useGuardian, ManagedStudent } from "@/contexts/guardian-context";
+import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { X, Check, ArrowLeftRight } from "lucide-react";
+import { X, Check, ArrowLeftRight, UserRound } from "lucide-react";
 
 const BELT_COLORS: Record<string, string> = {
   white: "#FFFFFF", blue: "#2563EB", purple: "#7C3AED",
@@ -41,6 +42,7 @@ function Avatar({ student, size = 36 }: { student: ManagedStudent; size?: number
 
 export function GuardianMobileSwitcher() {
   const { managedStudents, activeStudent, setActiveStudent, isGuardianMode } = useGuardian();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
 
@@ -61,13 +63,23 @@ export function GuardianMobileSwitcher() {
     setLocation("/dashboard");
   }
 
+  function handleSwitchToSelf() {
+    setActiveStudent(null);
+    setOpen(false);
+    setLocation("/dashboard");
+  }
+
+  const ownInitials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
+  const canUseOwnProfile = user?.role === "student";
+
   return (
     <>
       {/* Trigger button — floating top-right avatar pill */}
       <button
+        type="button"
         data-testid="button-guardian-switcher-mobile"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-full pr-2 pl-0.5 py-0.5 transition-all active:scale-95"
+        className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         style={{
           background: "rgba(255,255,255,0.18)",
           backdropFilter: "blur(8px)",
@@ -75,9 +87,19 @@ export function GuardianMobileSwitcher() {
           border: "1.5px solid rgba(255,255,255,0.35)",
         }}
         aria-label="Trocar perfil de aluno"
+        aria-haspopup="dialog"
+        aria-expanded={open}
       >
-        {activeStudent && <Avatar student={activeStudent} size={30} />}
-        <ArrowLeftRight className="w-3.5 h-3.5 text-white/90" strokeWidth={2.2} />
+        {activeStudent ? (
+          <Avatar student={activeStudent} size={38} />
+        ) : (
+          <div className="w-[38px] h-[38px] rounded-full bg-[#2B54FF] flex items-center justify-center text-xs font-bold text-white">
+            {ownInitials || <UserRound className="w-4 h-4" />}
+          </div>
+        )}
+        <span className="absolute -right-0.5 -bottom-0.5 w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100">
+          <ArrowLeftRight className="w-3 h-3 text-[#2B54FF]" strokeWidth={2.5} />
+        </span>
       </button>
 
       {/* Backdrop */}
@@ -91,6 +113,9 @@ export function GuardianMobileSwitcher() {
 
       {/* Bottom sheet */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Trocar perfil de aluno"
         className="fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white"
         style={{
           zIndex: 201,
@@ -108,9 +133,9 @@ export function GuardianMobileSwitcher() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-3 pb-4">
           <div>
-            <h2 className="text-base font-bold text-gray-900 font-inter">Trocar de aluno</h2>
+            <h2 className="text-base font-bold text-gray-900 font-inter">Trocar perfil</h2>
             <p className="text-xs text-gray-400 mt-0.5 font-inter">
-              {managedStudents.length} {managedStudents.length === 1 ? "aluno vinculado" : "alunos vinculados"}
+              Selecione quem vai visualizar e confirmar as aulas
             </p>
           </div>
           <button
@@ -124,6 +149,34 @@ export function GuardianMobileSwitcher() {
 
         {/* Student list */}
         <div className="px-4 space-y-2 max-h-72 overflow-y-auto pb-2">
+          {canUseOwnProfile && (
+            <button
+              type="button"
+              data-testid="guardian-switch-self-mobile"
+              onClick={handleSwitchToSelf}
+              className="w-full flex items-center gap-3 rounded-2xl p-4 transition-all active:scale-[0.98] text-left"
+              style={{
+                background: !activeStudent ? "#EEF1FF" : "#F8F9FF",
+                border: !activeStudent ? "1.5px solid #2B54FF" : "1.5px solid #EAEDF5",
+              }}
+            >
+              <div className="w-11 h-11 rounded-full bg-[#2B54FF] flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                {ownInitials || <UserRound className="w-5 h-5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-semibold text-sm font-inter truncate ${!activeStudent ? "text-[#2B54FF]" : "text-[#1A1A2E]"}`}>
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-gray-400 font-inter mt-1">Meu perfil</p>
+              </div>
+              {!activeStudent && (
+                <div className="w-6 h-6 rounded-full bg-[#2B54FF] flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                </div>
+              )}
+            </button>
+          )}
+
           {managedStudents.map((s) => {
             const isActive = activeStudent?.studentId === s.studentId;
             const beltColor = BELT_COLORS[s.beltLevel] ?? "#fff";
@@ -132,6 +185,7 @@ export function GuardianMobileSwitcher() {
 
             return (
               <button
+                type="button"
                 key={s.studentId}
                 data-testid={`guardian-switch-${s.studentId}`}
                 onClick={() => handleSwitch(s)}

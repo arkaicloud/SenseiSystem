@@ -17,33 +17,36 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const { isGuardianMode, activeStudent } = useGuardian();
 
-  // Guardian sees their active dependent's profile; student sees their own
-  const profileQueryKey = isGuardianMode && activeStudent
+  const isViewingManagedStudent = isGuardianMode && !!activeStudent;
+
+  // A selected dependent uses their own student profile; otherwise an adult
+  // student continues to use their independent profile.
+  const profileQueryKey = isViewingManagedStudent
     ? [`/api/student/profile/${activeStudent.userId}`]
     : ["/api/student/profile"];
 
   const { data: profileRaw, isLoading: isStudentLoading } = useQuery({
     queryKey: profileQueryKey,
-    enabled: isGuardianMode ? !!activeStudent?.userId : !!user?.id,
+    enabled: isViewingManagedStudent ? !!activeStudent?.userId : !!user?.id,
   });
 
   // Normalize data: guardian gets { student: {...} }, student gets { id, beltLevel, stripes, ... }
-  const studentData = isGuardianMode
+  const studentData = isViewingManagedStudent
     ? (profileRaw as any)?.student
     : profileRaw;
 
   // Display name: guardian shows active student's name, student shows their own
-  const displayFirstName = isGuardianMode && activeStudent
+  const displayFirstName = isViewingManagedStudent
     ? activeStudent.firstName
     : user?.firstName;
 
-  const classesTodayKey = isGuardianMode && activeStudent
+  const classesTodayKey = isViewingManagedStudent
     ? [`/api/classes/today?studentUserId=${activeStudent.userId}`]
     : ["/api/classes/today"];
 
   const { data: todayClasses, isLoading: isClassesLoading } = useQuery({
     queryKey: classesTodayKey,
-    enabled: isGuardianMode ? !!activeStudent?.userId : !!user?.id,
+    enabled: isViewingManagedStudent ? !!activeStudent?.userId : !!user?.id,
   });
 
   const { data: schoolInfo } = useQuery<{ schoolName: string }>({

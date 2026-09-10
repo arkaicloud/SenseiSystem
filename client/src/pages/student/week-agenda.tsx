@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { WeekAgenda } from '@/components/student/WeekAgenda';
 import { useAuth } from '@/hooks/use-auth';
+import { useGuardian } from '@/contexts/guardian-context';
 import { useQuery } from '@tanstack/react-query';
 import type { SchoolConfig } from '@shared/schema';
 import bannerImg from '@assets/Gemini_Generated_Image_niscg6niscg6nisc_1773260928823.png';
@@ -34,11 +35,21 @@ interface WeekDataResponse {
 
 export default function WeekAgendaPage() {
   const { user } = useAuth();
+  const { isGuardianMode, activeStudent } = useGuardian();
+  const isViewingManagedStudent = isGuardianMode && !!activeStudent;
 
-  const { data: studentData } = useQuery<StudentProfile>({
-    queryKey: ['/api/student/profile'],
-    enabled: !!user?.id && user?.role === 'student',
+  const profileQueryKey = isViewingManagedStudent
+    ? [`/api/student/profile/${activeStudent.userId}`]
+    : ['/api/student/profile'];
+
+  const { data: profileRaw } = useQuery<StudentProfile | { student: StudentProfile }>({
+    queryKey: profileQueryKey,
+    enabled: isViewingManagedStudent ? !!activeStudent?.userId : !!user?.id,
   });
+
+  const studentData = isViewingManagedStudent
+    ? (profileRaw as { student?: StudentProfile } | undefined)?.student
+    : profileRaw as StudentProfile | undefined;
 
   const { data: schoolConfigData } = useQuery<{ config: SchoolConfig }>({
     queryKey: ['/api/school-config'],

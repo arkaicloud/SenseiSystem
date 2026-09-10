@@ -2,6 +2,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useGuardian } from "@/contexts/guardian-context";
 
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | null;
 
@@ -21,6 +22,11 @@ export function useBookingMutations(providedStudentId?: number) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isGuardianMode, activeStudent } = useGuardian();
+  const todayClassesQueryKey =
+    isGuardianMode && activeStudent
+      ? [`/api/classes/today?studentUserId=${activeStudent.userId}`]
+      : ['/api/classes/today'];
 
   // Get student ID from user data if not provided
   const studentQuery = useQuery({
@@ -69,17 +75,17 @@ export function useBookingMutations(providedStudentId?: number) {
     },
     onMutate: async ({ classId, dateISO }: BookingMutationData) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['/api/classes/today'] });
+      await queryClient.cancelQueries({ queryKey: todayClassesQueryKey });
       await queryClient.cancelQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       await queryClient.cancelQueries({ queryKey: ['/api/attendance/by-student'] });
 
       // Snapshot the previous values
-      const previousTodayClasses = queryClient.getQueryData<any>(['/api/classes/today']);
+      const previousTodayClasses = queryClient.getQueryData<any>(todayClassesQueryKey);
       const previousWeekData = queryClient.getQueryData<any>([`/api/students/${studentId}/classes/week`]);
       const previousStudentAttendance = queryClient.getQueryData<any>(['/api/attendance/by-student']);
 
       // Optimistically update caches
-      queryClient.setQueryData(['/api/classes/today'], (old: any) => {
+      queryClient.setQueryData(todayClassesQueryKey, (old: any) => {
         if (!old?.classes) return old;
         return {
           ...old,
@@ -124,7 +130,7 @@ export function useBookingMutations(providedStudentId?: number) {
     onError: (error: Error, variables, context) => {
       // Rollback on error
       if (context?.previousTodayClasses) {
-        queryClient.setQueryData(['/api/classes/today'], context.previousTodayClasses);
+        queryClient.setQueryData(todayClassesQueryKey, context.previousTodayClasses);
       }
       if (context?.previousWeekData) {
         queryClient.setQueryData([`/api/students/${studentId}/classes/week`], context.previousWeekData);
@@ -141,7 +147,7 @@ export function useBookingMutations(providedStudentId?: number) {
     },
     onSuccess: () => {
       // Invalidate queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: todayClassesQueryKey });
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
       queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
@@ -154,7 +160,7 @@ export function useBookingMutations(providedStudentId?: number) {
     },
     onSettled: () => {
       // Always refetch to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: todayClassesQueryKey });
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
     },
@@ -187,17 +193,17 @@ export function useBookingMutations(providedStudentId?: number) {
     },
     onMutate: async ({ classId, dateISO }: BookingMutationData) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['/api/classes/today'] });
+      await queryClient.cancelQueries({ queryKey: todayClassesQueryKey });
       await queryClient.cancelQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       await queryClient.cancelQueries({ queryKey: ['/api/attendance/by-student'] });
 
       // Snapshot the previous values
-      const previousTodayClasses = queryClient.getQueryData<any>(['/api/classes/today']);
+      const previousTodayClasses = queryClient.getQueryData<any>(todayClassesQueryKey);
       const previousWeekData = queryClient.getQueryData<any>([`/api/students/${studentId}/classes/week`]);
       const previousStudentAttendance = queryClient.getQueryData<any>(['/api/attendance/by-student']);
 
       // Optimistically update caches
-      queryClient.setQueryData(['/api/classes/today'], (old: any) => {
+      queryClient.setQueryData(todayClassesQueryKey, (old: any) => {
         if (!old?.classes) return old;
         return {
           ...old,
@@ -242,7 +248,7 @@ export function useBookingMutations(providedStudentId?: number) {
     onError: (error: Error, variables, context) => {
       // Rollback on error
       if (context?.previousTodayClasses) {
-        queryClient.setQueryData(['/api/classes/today'], context.previousTodayClasses);
+        queryClient.setQueryData(todayClassesQueryKey, context.previousTodayClasses);
       }
       if (context?.previousWeekData) {
         queryClient.setQueryData([`/api/students/${studentId}/classes/week`], context.previousWeekData);
@@ -259,7 +265,7 @@ export function useBookingMutations(providedStudentId?: number) {
     },
     onSuccess: () => {
       // Invalidate queries to refetch data
-      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: todayClassesQueryKey });
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
       queryClient.invalidateQueries({ queryKey: ['/api/student/attendance-current-month'] });
@@ -272,7 +278,7 @@ export function useBookingMutations(providedStudentId?: number) {
     },
     onSettled: () => {
       // Always refetch to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['/api/classes/today'] });
+      queryClient.invalidateQueries({ queryKey: todayClassesQueryKey });
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/classes/week`] });
       queryClient.invalidateQueries({ queryKey: ['/api/attendance/by-student'] });
     },

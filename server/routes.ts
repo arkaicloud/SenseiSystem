@@ -2590,6 +2590,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/students/:id", isAuthenticated, isAdmin, async (req, res) => {
+    if (!pool) {
+      return res.status(503).json({ message: "Banco de dados indisponível" });
+    }
+
+    const studentId = Number(req.params.id);
+    if (!Number.isInteger(studentId) || studentId <= 0) {
+      return res.status(400).json({ message: "Aluno inválido" });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const studentResult = await client.query<{
+        student_id: number;
+        user_id: number;
+        first_name: string;
+        last_name: string;
+        role: string;
+        asaas_customer_id: string | null;
+        asaas_subscription_id: string | null;
+      }>(
+        `SELECT
+           s.id AS student_id,
+           s.user_id,
+           u.first_name,
+           u.last_name,
+           u.role,
+           s.asaas_customer_id,
+           s.asaas_subscription_id
+         FROM students s
+         INNER JOIN users u ON u.id = s.user_id
+         WHERE s.id = $1
+         FOR UPDATE OF s, u`,
+        [studentId],
+      );
+
+      if (studentResult.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Aluno não encontrado" });
+      }
+
+      const student = studentResult.rows[0];
+      if (student.role !== "student") {
+        await client.query("ROLLBACK");
+        return res.status(409).json({
+          message: "Este usuário possui outro perfil e não pode ser excluído por esta operação.",
+        });
+      }
+
+      const linksResult = await client.query<Record<string, string>>(
+        `SELECT
+           (SELECT count(*) FROM attendance WHERE student_id = $1)::text AS attendance,
+           (SELECT count(*) FROM attendance_changes WHERE student_id = $1)::text AS attendance_changes,
+           (SELECT count(*) FROM class_enrollments WHERE student_id = $1)::text AS class_enrollments,
+           (SELECT count(*) FROM student_payments WHERE student_id = $1)::text AS student_payments,
+           (SELECT count(*) FROM contas_receber WHERE student_id = $1)::text AS receivables,
+           (SELECT count(*) FROM health_questionnaires WHERE student_id = $1)::text AS health_questionnaires,
+           (SELECT count(*) FROM student_documents WHERE student_id = $1)::text AS student_documents,
+           (SELECT count(*) FROM documents WHERE student_id = $1)::text AS documents,
+           (SELECT count(*) FROM risk_actions WHERE student_id = $1)::text AS risk_actions,
+           (SELECT count(*) FROM student_notifications WHERE student_id = $1)::text AS notifications,
+           (SELECT count(*) FROM students WHERE guardian_id = $2 AND id <> $1)::text AS dependents,
+           (SELECT count(*) FROM attendance WHERE checked_in_by = $2)::text AS attendance_recorded,
+           (SELECT count(*) FROM class_cancellations WHERE cancelled_by = $2)::text AS class_cancellations,
+           (SELECT count(*) FROM classes WHERE instructor_id = $2)::text AS classes_taught,
+           (SELECT count(*) FROM documents WHERE uploaded_by = $2 OR verified_by = $2)::text AS documents_managed,
+           (SELECT count(*) FROM notices WHERE created_by = $2)::text AS notices_created,
+           (SELECT count(*) FROM risk_actions WHERE created_by = $2)::text AS risk_actions_created,
+           (SELECT count(*) FROM school_events WHERE created_by = $2)::text AS events_created`,
+        [studentId, student.user_id],
+      );
+
+      const labels: Record<string, string> = {
+        attendance: "presenças",
+        attendance_changes: "confirmações ou cancelamentos de aula",
+        class_enrollments: "inscrições em aulas",
+        student_payments: "pagamentos",
+        receivables: "faturas",
+        health_questionnaires: "questionário de saúde",
+        student_documents: "documentos enviados",
+        documents: "documentos",
+        risk_actions: "ações de acompanhamento",
+        notifications: "notificações",
+        dependents: "dependentes vinculados",
+        attendance_recorded: "presenças registradas pela conta",
+        class_cancellations: "cancelamentos de aulas",
+        classes_taught: "aulas vinculadas como professor",
+        documents_managed: "documentos enviados ou verificados",
+        notices_created: "comunicados criados",
+        risk_actions_created: "ações de acompanhamento criadas",
+        events_created: "eventos criados",
+      };
+
+      const blockers = Object.entries(linksResult.rows[0])
+        .filter(([, countValue]) => Number(countValue) > 0)
+        .map(([key]) => labels[key]);
+
+      if (student.asaas_customer_id || student.asaas_subscription_id) {
+        blockers.push("vínculo financeiro com o ASAAS");
+      }
+
+      if (blockers.length > 0) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({
+          message: `Não é possível excluir definitivamente. Existem vínculos: ${blockers.join(", ")}. Inative o aluno para preservar o histórico.`,
+          blockers,
+        });
+      }
+
+      // Preserve business audit records without retaining a foreign key to the deleted account.
+      await client.query("UPDATE activity_logs SET user_id = NULL WHERE user_id = $1", [
+        student.user_id,
+      ]);
+      await client.query("DELETE FROM students WHERE id = $1", [studentId]);
+      await client.query("DELETE FROM users WHERE id = $1", [student.user_id]);
+      await client.query(
+        `INSERT INTO activity_logs (user_id, activity, entity_type, entity_id, timestamp)
+         VALUES ($1, $2, 'student', $3, NOW())`,
+        [
+          req.user.id,
+          `Aluno excluído definitivamente por ausência de movimentações: ${student.first_name} ${student.last_name}`,
+          studentId,
+        ],
+      );
+
+      await client.query("COMMIT");
+      return res.json({
+        deleted: true,
+        message: "Aluno excluído definitivamente com sucesso.",
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Erro ao excluir aluno sem movimentações:", error);
+      return res.status(500).json({
+        message: "Não foi possível excluir o aluno. Nenhum dado foi removido.",
+      });
+    } finally {
+      client.release();
+    }
+  });
+
   app.put("/api/students/:id", isAuthenticated, isInstructor, async (req, res) => {
     try {
       const { id } = req.params;

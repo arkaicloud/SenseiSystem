@@ -11,6 +11,17 @@ import { ResultsInfo } from "@/components/ui/ResultsInfo";
 import StudentEditDialog from "@/components/students/StudentEditDialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   MoreVertical, Eye, Edit2, Ban, CheckCircle, Undo, Search,
-  Download, Plus, Users
+  Download, Plus, Users, Trash2, Loader2
 } from "lucide-react";
 
 interface Student {
@@ -115,9 +126,11 @@ function BeltDisplay({ beltLevel, stripes }: { beltLevel: string; stripes: numbe
 
 const Students: React.FC = () => {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [, setLocation] = useLocation();
   const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [searchInput, setSearchInput] = useState("");
 
   const { data, isFetching, page, pageSize, setParam, status, q } =
@@ -150,6 +163,36 @@ const Students: React.FC = () => {
     onSuccess: () => {
       toast({ title: "Sucesso", description: "Aluno revertido para pendente" });
       queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+  });
+
+  const deleteStudentMutation = useMutation({
+    mutationFn: async (studentId: number) => {
+      const res = await apiRequest("DELETE", `/api/students/${studentId}`);
+      const result = await res.json().catch(() => ({
+        message: "Não foi possível excluir o aluno.",
+      }));
+      if (!res.ok) {
+        throw new Error(result.message || "Não foi possível excluir o aluno.");
+      }
+      return result;
+    },
+    onSuccess: (result) => {
+      setStudentToDelete(null);
+      toast({
+        title: "Aluno excluído",
+        description: result.message || "O cadastro foi excluído definitivamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Exclusão não permitida",
+        description:
+          error.message ||
+          "O aluno possui movimentações e deve ser apenas inativado.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -382,6 +425,15 @@ const Students: React.FC = () => {
                                   Reverter para pendente
                                 </DropdownMenuItem>
                               )}
+                              {currentUser?.role === "admin" && (
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-700"
+                                  onClick={() => setStudentToDelete(student)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir definitivamente
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -417,6 +469,52 @@ const Students: React.FC = () => {
           }}
         />
       )}
+
+      <AlertDialog
+        open={!!studentToDelete}
+        onOpenChange={(open) => {
+          if (!open && !deleteStudentMutation.isPending) {
+            setStudentToDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir aluno definitivamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação só será concluída se{" "}
+              <strong>
+                {studentToDelete
+                  ? `${studentToDelete.user.firstName} ${studentToDelete.user.lastName}`
+                  : "o aluno"}
+              </strong>{" "}
+              não tiver pagamentos, presenças, aulas, documentos ou outros
+              vínculos. Se houver qualquer movimentação, nada será apagado e o
+              aluno deverá ser inativado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteStudentMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={deleteStudentMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (studentToDelete) {
+                  deleteStudentMutation.mutate(studentToDelete.id);
+                }
+              }}
+            >
+              {deleteStudentMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Sim, excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

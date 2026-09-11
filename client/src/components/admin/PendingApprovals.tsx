@@ -125,9 +125,14 @@ export default function PendingApprovals() {
   // Mutation para rejeitar aluno
   const rejectMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest(`/api/admin/student/${userId}/reject`, {
+      const response = await apiRequest(`/api/users/${userId}/reject`, {
         method: 'POST',
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || "Não foi possível rejeitar o aluno");
+      }
+      return result;
     },
     onSuccess: () => {
       toast({ title: "Aluno rejeitado", description: "O cadastro foi removido do sistema." });

@@ -294,6 +294,40 @@ export default function PendingApprovalsBatch() {
     },
   });
 
+  // Individual rejection mutation
+  const rejectMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await fetch(`/api/users/${userId}/reject`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Erro ao rejeitar aluno");
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, userId) => {
+      const newSelection = new Set(selectedUsers);
+      newSelection.delete(userId);
+      setSelectedUsers(newSelection);
+      toast({
+        title: "Cadastro rejeitado",
+        description: "O cadastro pendente foi removido.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao rejeitar cadastro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Batch selection functions
   const toggleUserSelection = (userId: number) => {
     const newSelected = new Set(selectedUsers);
@@ -550,7 +584,9 @@ export default function PendingApprovalsBatch() {
                             <Button
                               size="sm"
                               onClick={() => approveMutation.mutate(user.id)}
-                              disabled={approveMutation.isPending}
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
+                              aria-label={`Aprovar ${user.firstName} ${user.lastName}`}
+                              title="Aprovar aluno"
                               className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white"
                             >
                               {approveMutation.isPending ? (
@@ -560,6 +596,28 @@ export default function PendingApprovalsBatch() {
                               )}
                             </Button>
                           )}
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (window.confirm(
+                                `Rejeitar o cadastro de ${user.firstName} ${user.lastName}? Esta ação removerá o cadastro pendente.`
+                              )) {
+                                rejectMutation.mutate(user.id);
+                              }
+                            }}
+                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                            aria-label={`Rejeitar ${user.firstName} ${user.lastName}`}
+                            title="Rejeitar cadastro"
+                            className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          >
+                            {rejectMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
 

@@ -6,3 +6,4 @@
 - [Cobrança de plano familiar](family-plan-billing.md) — fatura única pertence ao login responsável; atraso alerta, mas check-in só bloqueia quando houver bloqueio financeiro explícito
 - [Cópia PostgreSQL no Replit](replit-postgres-copy.md) — dumps entre produção e desenvolvimento devem limitar-se ao schema public e preservar um backup temporário do destino
 - [Visualização como aluno](student-view-mode.md) — Super Admin pode assumir temporariamente a experiência do aluno, sempre em modo somente leitura e com retorno visível
+- [Estado de aprovação](approval-state-consistency.md) — active=true com status=pending é recuperável; a aprovação deve concluir e normalizar o cadastro

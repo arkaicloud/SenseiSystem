@@ -1769,7 +1769,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (user.active) {
+      // A previous registration flow could leave a user active while still
+      // pending. Allow approval to finish and normalize that recoverable state.
+      if (user.active && user.status !== 'pending') {
         return res.status(400).json({ message: "User is already active" });
       }
 
@@ -7381,12 +7383,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Get user and student data
           const user = await storage.getUser(userId);
-          if (!user || user.active) {
-            const errorMsg = `não encontrado ou já ativo`;
+          if (!user) {
+            const errorMsg = `usuário não encontrado`;
             results.errors.push(`Usuário ${userId}: ${errorMsg}`);
             results.userResults.push({
               userId,
-              userName: user ? `${user.firstName} ${user.lastName}` : 'Usuário não encontrado',
+              userName: 'Usuário não encontrado',
+              status: 'error',
+              message: errorMsg
+            });
+            results.failed++;
+            continue;
+          }
+
+          // Recover records created with the inconsistent active+pending
+          // combination by completing the normal approval flow.
+          if (user.active && user.status !== 'pending') {
+            const errorMsg = `usuário já está ativo`;
+            results.errors.push(`Usuário ${userId}: ${errorMsg}`);
+            results.userResults.push({
+              userId,
+              userName: `${user.firstName} ${user.lastName}`,
               status: 'error',
               message: errorMsg
             });

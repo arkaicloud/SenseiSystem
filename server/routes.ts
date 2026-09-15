@@ -186,6 +186,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return guardianLink.rows.length > 0 ? requestedStudent : null;
   };
 
+  const normalizeIdentity = (value: unknown) =>
+    String(value || "").trim().toLowerCase().replace(/\D/g, "");
+
+  const normalizeEmail = (value: unknown) =>
+    String(value || "").trim().toLowerCase();
+
+  const resolveFinancialFamily = async (requestUser: any) => {
+    if (!db) {
+      throw new Error("Banco de dados indisponível");
+    }
+    const ownStudent = await storage.getStudentByUserId(requestUser.id);
+    const ownerUserId = ownStudent?.guardianId || requestUser.id;
+    const ownerUser = await storage.getUser(ownerUserId);
+
+    const familyStudents = await db
+      .select()
+      .from(students)
+      .where(or(
+        eq(students.userId, ownerUserId),
+        eq(students.guardianId, ownerUserId),
+      ));
+
+    if (ownStudent && !familyStudents.some(student => student.id === ownStudent.id)) {
+      familyStudents.push(ownStudent);
+    }
+
+    const requestCpf = normalizeIdentity(requestUser.cpf);
+    const requestEmail = normalizeEmail(requestUser.email);
+    const matchesResponsibleIdentity = familyStudents.some(student => {
+      const responsibleCpf = normalizeIdentity(student.financialResponsibleCpf);
+      const responsibleEmail = normalizeEmail(student.financialResponsibleEmail);
+      return (
+        (requestCpf.length === 11 && responsibleCpf === requestCpf) ||
+        (!!requestEmail && responsibleEmail === requestEmail)
+      );
+    });
+
+    const isFinancialResponsible =
+      requestUser.id === ownerUserId || matchesResponsibleIdentity;
+
+    const customerIds = Array.from(new Set(
+      familyStudents
+        .map(student => student.asaasCustomerId)
+        .filter((customerId): customerId is string => !!customerId),
+    ));
+
+    const isFinanciallyBlocked =
+      ownerUser?.status === "blocked" ||
+      ownerUser?.active === false;
+
+    return {
+      ownerUser,
+      ownerUserId,
+      familyStudents,
+      customerIds,
+      isFinancialResponsible,
+      isFinanciallyBlocked,
+    };
+  };
+
+  const assertFinanciallyAllowed = async (student: any) => {
+    const studentUser = await storage.getUser(student.userId);
+    const ownerUser = student.guardianId
+      ? await storage.getUser(student.guardianId)
+      : studentUser;
+
+    const blocked =
+      studentUser?.status === "blocked" ||
+      studentUser?.active === false ||
+      ownerUser?.status === "blocked" ||
+      ownerUser?.active === false;
+
+    if (blocked) {
+      const error = new Error(
+        "Seu acesso às aulas está temporariamente bloqueado. Regularize as parcelas pendentes e fale com a academia para liberar o check-in.",
+      ) as Error & { code: string };
+      error.code = "FINANCIAL_BLOCKED";
+      throw error;
+    }
+  };
+
   // Set up authentication
   setupAuth(app);
 
@@ -946,6 +1027,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      try {
+        await assertFinanciallyAllowed(student);
+      } catch (error: any) {
+        if (error?.code === "FINANCIAL_BLOCKED") {
+          return res.status(403).json({ code: error.code, error: error.message, message: error.message });
+        }
+        throw error;
       }
 
       // Check if class exists
@@ -4310,6 +4400,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student profile not found" });
       }
 
+      try {
+        await assertFinanciallyAllowed(student);
+      } catch (error: any) {
+        if (error?.code === "FINANCIAL_BLOCKED") {
+          return res.status(403).json({ code: error.code, message: error.message });
+        }
+        throw error;
+      }
+
       // Ensure date is valid
       let classDate;
       try {
@@ -4560,6 +4659,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (student.id !== sid) {
         console.error("❌ Student ID mismatch:", { studentId: student.id, requestedSid: sid });
         return res.status(403).json({ success: false, message: "Acesso negado - ID não corresponde" });
+      }
+
+      try {
+        await assertFinanciallyAllowed(student);
+      } catch (error: any) {
+        if (error?.code === "FINANCIAL_BLOCKED") {
+          return res.status(403).json({ success: false, code: error.code, message: error.message });
+        }
+        throw error;
       }
 
       // Check if class exists
@@ -6409,64 +6517,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/student/financial", isAuthenticated, async (req, res) => {
     try {
       const requestUser = (req as any).user;
-
-      // Only students can access this endpoint
-      if (requestUser.role !== 'student') {
+      if (!["student", "guardian"].includes(requestUser.role)) {
         return res.status(403).json({ error: 'Access denied' });
       }
+      const family = await resolveFinancialFamily(requestUser);
+      const paymentsById = new Map<string, any>();
 
-      // Fetch student data
-      const student = await storage.getStudentByUserId(requestUser.id);
-      if (!student) {
-        return res.status(404).json({ error: "Student profile not found" });
-      }
-
-      // Check if the user is the financial responsible
-      const isFinancialResponsible = student.financialResponsibleCpf === requestUser.cpf;
-
-      if (!isFinancialResponsible) {
-        return res.json({
-          isFinancialResponsible: false,
-          message: "Você não é o responsável financeiro"
-        });
-      }
-
-      // If financial responsible, fetch payment data
-      let asaasData = null;
-      let localPayments = [];
-
-      try {
-        // Fetch ASAAS configuration
-        const config = await storage.getSchoolConfig();
-        if (config?.asaasApiKey && student.asaasCustomerId) {
-          const asaasService = new AsaasService(config.asaasApiKey, true);
-
-          // Fetch invoices from ASAAS for the customer
-          const invoices = await asaasService.getCustomerInvoices(student.asaasCustomerId);
-          asaasData = {
-            invoices,
-            customerId: student.asaasCustomerId
-          };
+      for (const student of family.familyStudents) {
+        const receivables = await storage.getContasReceberByStudentId(student.id);
+        for (const receivable of receivables) {
+          const key = receivable.asaasPaymentId || `local-${receivable.id}`;
+          paymentsById.set(key, {
+            id: key,
+            status: String(receivable.status || "PENDING").toUpperCase(),
+            billingType: receivable.billingType || "BOLETO",
+            value: Number(receivable.value || 0),
+            dueDate: receivable.dueDate,
+            description: receivable.description || "Plano familiar",
+            invoiceUrl: receivable.invoiceUrl,
+            bankSlipUrl: receivable.bankSlipUrl,
+            pixCopyAndPaste: receivable.pixCopyAndPaste,
+            createdAt: receivable.createdAt,
+          });
         }
-
-        // Fetch local payments as a fallback
-        const studentPayments = await storage.getStudentPaymentsByStudent(student.id);
-        localPayments = studentPayments;
-
-      } catch (error) {
-        console.error('Error fetching financial data:', error);
-        // Continue even with ASAAS error, use local data
       }
+
+      if (family.isFinancialResponsible && family.customerIds.length > 0) {
+        try {
+          const config = await storage.getSchoolConfig();
+          if (config?.asaasApiKey) {
+            const asaasService = new AsaasService(config.asaasApiKey);
+            for (const customerId of family.customerIds) {
+              const invoices = await asaasService.getCustomerInvoices(customerId);
+              for (const invoice of invoices) {
+                paymentsById.set(invoice.id, {
+                  id: invoice.id,
+                  status: String(invoice.status || "PENDING").toUpperCase(),
+                  billingType: invoice.billingType || "BOLETO",
+                  value: Math.round(Number(invoice.value || 0) * 100),
+                  dueDate: invoice.dueDate,
+                  description: invoice.description || "Plano familiar",
+                  invoiceUrl: invoice.invoiceUrl,
+                  bankSlipUrl: invoice.bankSlipUrl,
+                  pixCopyAndPaste: invoice.pixCopyAndPaste,
+                  createdAt: invoice.dateCreated || invoice.dueDate,
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching family invoices from ASAAS:", error);
+        }
+      }
+
+      const paidStatuses = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH", "REFUNDED"]);
+      const ignoredStatuses = new Set(["CANCELLED", "DELETED"]);
+      const now = new Date();
+      const allPayments = Array.from(paymentsById.values())
+        .map(payment => {
+          const dueDate = new Date(payment.dueDate);
+          const isPastDue =
+            !Number.isNaN(dueDate.getTime()) &&
+            dueDate.getTime() < now.getTime() &&
+            !paidStatuses.has(payment.status) &&
+            !ignoredStatuses.has(payment.status);
+          return {
+            ...payment,
+            status: isPastDue ? "OVERDUE" : payment.status,
+          };
+        })
+        .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+
+      const visiblePayments = family.isFinancialResponsible ? allPayments : [];
 
       res.json({
-        isFinancialResponsible: true,
-        student: {
-          id: student.id,
-          name: `${requestUser.firstName} ${requestUser.lastName}`,
-          financialResponsibleCpf: student.financialResponsibleCpf
-        },
-        asaasData,
-        localPayments
+        isFinancialResponsible: family.isFinancialResponsible,
+        isFinanciallyBlocked: family.isFinanciallyBlocked,
+        hasOverdue: allPayments.some(payment => payment.status === "OVERDUE"),
+        overdueCount: allPayments.filter(payment => payment.status === "OVERDUE").length,
+        familyMemberCount: family.familyStudents.length,
+        payments: visiblePayments,
+        message: family.isFinancialResponsible
+          ? null
+          : "As cobranças do plano familiar ficam disponíveis somente no perfil do responsável financeiro.",
       });
 
     } catch (error) {
@@ -6477,64 +6610,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Endpoint to check if student is financial responsible and fetch data (by ID)
   app.get("/api/student/financial/:studentId", isAuthenticated, async (req, res) => {
-    try {
-      const studentId = parseInt(req.params.studentId);
-      const userId = req.user?.id;
-
-      // Fetch student data to validate access
-      const student = await storage.getStudent(studentId);
-      if (!student) {
-        return res.status(404).json({ error: "Estudante não encontrado" });
-      }
-
-      // Check if logged-in user has permission to view financial data
-      if (req.user?.role === 'student' && student.userId !== req.user.id) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      // Check if student has CPF as financial responsible
-      const isFinancialResponsible = student.financialResponsibleCpf && 
-        student.financialResponsibleRelation === 'self';
-
-      if (!isFinancialResponsible) {
-        return res.json({ 
-          isFinancialResponsible: false,
-          message: "Este aluno não é responsável financeiro"
-        });
-      }
-
-      // Fetch ASAAS financial data if available
-      let asaasData = null;
-      if (student.asaasCustomerId) {
-        try {
-          // Simulate ASAAS data for demonstration
-          asaasData = {
-            invoices: [],
-            customerId: student.asaasCustomerId
-          };
-        } catch (error) {
-          console.warn("Error fetching ASAAS data:", error);
-        }
-      }
-
-      // Fetch student's local payments
-      const studentPayments = await storage.getStudentPaymentsByStudent(studentId);
-
-      res.json({
-        isFinancialResponsible: true,
-        student: {
-          id: student.id,
-          name: `${student.userId}`, // Name will be fetched from user data
-          financialResponsibleCpf: student.financialResponsibleCpf,
-        },
-        asaasData,
-        localPayments: studentPayments
-      });
-
-    } catch (error) {
-      console.error('Erro ao buscar dados financeiros:', error);
-      res.status(500).json({ error: "Erro interno do servidor" });
-    }
+    res.status(410).json({
+      error: "As cobranças não são mais separadas por aluno. Use o perfil do responsável financeiro.",
+    });
   });
 
   // =====Student Attendance History Routes=====
@@ -8981,6 +9059,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Perfil de aluno não encontrado' });
       }
 
+      try {
+        await assertFinanciallyAllowed(student);
+      } catch (error: any) {
+        if (error?.code === "FINANCIAL_BLOCKED") {
+          return res.status(403).json({ code: error.code, error: error.message });
+        }
+        throw error;
+      }
+
       // Same category-filter logic as /api/classes/today
       const userData = await storage.getUser(requestUser.id);
       if (!userData) {
@@ -9074,6 +9161,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const student = await storage.getStudentByUserId(requestUser.id);
       if (!student) {
         return res.status(404).json({ error: 'Perfil de aluno não encontrado' });
+      }
+
+      try {
+        await assertFinanciallyAllowed(student);
+      } catch (error: any) {
+        if (error?.code === "FINANCIAL_BLOCKED") {
+          return res.status(403).json({ code: error.code, error: error.message });
+        }
+        throw error;
       }
 
       const classSession = await storage.getClass(classIdNum);

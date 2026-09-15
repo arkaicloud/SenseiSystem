@@ -24,8 +24,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 
 interface Payment {
-  id: number;
-  asaasPaymentId: string;
+  id: number | string;
+  asaasPaymentId?: string;
   status: string;
   billingType: string;
   value: number;
@@ -44,15 +44,20 @@ interface Payment {
 
 interface PaymentResponse {
   payments: Payment[];
+  isFinancialResponsible: boolean;
+  isFinanciallyBlocked: boolean;
+  hasOverdue: boolean;
+  overdueCount: number;
+  familyMemberCount: number;
+  message?: string | null;
 }
 
 export default function PaymentPanel() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Buscar pagamentos do aluno
   const { data: paymentsData, isLoading } = useQuery<PaymentResponse>({
-    queryKey: [`/api/student/${user?.id}/payments`],
+    queryKey: ['/api/student/financial'],
     enabled: !!user?.id,
   });
 
@@ -161,14 +166,18 @@ export default function PaymentPanel() {
             <CreditCard className="h-5 w-5" />
             Meus Pagamentos
           </CardTitle>
-          <CardDescription>
-            Suas mensalidades e cobranças aparecerão aqui
-          </CardDescription>
+            <CardDescription>
+              {paymentsData?.message || "As mensalidades do plano familiar aparecerão aqui"}
+            </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <CreditCard className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">Nenhum pagamento encontrado</p>
+            <p className="text-gray-500">
+              {paymentsData?.isFinancialResponsible
+                ? "Nenhum pagamento encontrado"
+                : "As cobranças são exibidas no perfil do responsável financeiro"}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -178,9 +187,9 @@ export default function PaymentPanel() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Meus Pagamentos</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Plano familiar</h2>
         <p className="text-muted-foreground">
-          {payments.length} pagamento{payments.length !== 1 ? 's' : ''} registrado{payments.length !== 1 ? 's' : ''}
+          {payments.length} cobrança{payments.length !== 1 ? 's' : ''} para toda a família
         </p>
       </div>
 
@@ -233,7 +242,7 @@ export default function PaymentPanel() {
               )}
 
               {/* PIX - Mostrar QR Code e código para cópia */}
-              {payment.billingType === 'PIX' && payment.status === 'PENDING' && (
+              {payment.billingType === 'PIX' && (payment.status === 'PENDING' || payment.status === 'OVERDUE') && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <QrCode className="h-4 w-4" />
@@ -299,7 +308,7 @@ export default function PaymentPanel() {
               </div>
 
               {/* Ações do pagamento */}
-              {payment.status === 'PENDING' && (
+              {(payment.status === 'PENDING' || payment.status === 'OVERDUE') && (
                 <div className="flex flex-wrap gap-2 pt-4 border-t">
                   {payment.bankSlipUrl && (
                     <Button
@@ -316,8 +325,8 @@ export default function PaymentPanel() {
                       variant="outline"
                       onClick={() => openInvoice(payment.invoiceUrl!)}
                     >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Ver Fatura
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Pagar no ASAAS
                     </Button>
                   )}
 

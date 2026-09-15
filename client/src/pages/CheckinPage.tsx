@@ -211,6 +211,17 @@ export default function CheckinPage() {
     enabled: !!user && user.role === "student",
     staleTime: 0,
     refetchInterval: 60_000,
+    queryFn: async () => {
+      const response = await fetch("/api/checkin/classes", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || "Erro ao buscar aulas disponíveis");
+      }
+      return json;
+    },
   });
 
   const checkinMutation = useMutation({
@@ -319,7 +330,17 @@ export default function CheckinPage() {
             {classesError && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <AlertCircle className="w-8 h-8 text-red-400" />
-                <p className="text-slate-600 font-medium">Erro ao carregar aulas</p>
+                <p className="text-slate-700 font-medium">
+                  {(classesError as Error).message || "Erro ao carregar aulas"}
+                </p>
+                {(classesError as Error).message?.includes("parcelas") && (
+                  <a
+                    href="/payments"
+                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+                  >
+                    Ver pagamentos
+                  </a>
+                )}
                 <button
                   onClick={() => refetch()}
                   data-testid="button-checkin-retry"

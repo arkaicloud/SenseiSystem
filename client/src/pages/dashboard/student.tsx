@@ -53,6 +53,15 @@ export default function StudentDashboard() {
     queryKey: ["/api/school/public-info"],
   });
 
+  const { data: financialSummary } = useQuery<{
+    isFinancialResponsible: boolean;
+    hasOverdue: boolean;
+    overdueCount: number;
+  }>({
+    queryKey: ["/api/student/financial"],
+    enabled: !!user?.id,
+  });
+
   if (isStudentLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -170,7 +179,7 @@ export default function StudentDashboard() {
           />
         )}
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Link href="/student/week-agenda" className="flex-1">
             <div className="vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center gap-3">
@@ -193,6 +202,32 @@ export default function StudentDashboard() {
               <ChevronRight className="w-4 h-4 text-[#B0B0B0]" />
             </div>
           </Link>
+          {financialSummary?.isFinancialResponsible && (
+            <Link href="/payments" className="flex-1">
+              <div className={`vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer ${
+                financialSummary.hasOverdue ? "border border-amber-300 bg-amber-50/60" : ""
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    financialSummary.hasOverdue ? "bg-amber-100" : "bg-[#EEF1FF]"
+                  }`}>
+                    <CreditCard className={`w-5 h-5 ${
+                      financialSummary.hasOverdue ? "text-amber-600" : "text-[#2B54FF]"
+                    }`} />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-sm font-inter block">Pagamentos</span>
+                    {financialSummary.hasOverdue && (
+                      <span className="text-xs text-amber-700">
+                        {financialSummary.overdueCount} em atraso
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#B0B0B0]" />
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>

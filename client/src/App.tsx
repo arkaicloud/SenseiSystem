@@ -47,6 +47,7 @@ import UserManagementPage from "@/pages/admin/user-management";
 import { GuardianProvider } from "@/contexts/guardian-context";
 import CheckinPage from "@/pages/CheckinPage";
 import QrCodePage from "@/pages/admin/QrCodePage";
+import { FinancialAlert } from "@/components/student/FinancialAlert";
 
 function Router() {
   return (
@@ -96,7 +97,7 @@ function Router() {
       <ProtectedRoute
         path="/payments"
         component={() => <Payments />}
-        allowedRoles={["admin", "instructor"]}
+        allowedRoles={["student", "guardian"] as any}
       />
       <ProtectedRoute
         path="/payment-plans"
@@ -208,6 +209,7 @@ function App() {
               <ThemeProvider>
                 <div className="w-full h-full min-h-screen m-0 p-0">
                   <Toaster />
+                  <FinancialAlert />
                   <PendingRouteGuard>
                     <RootGuard>
                       <Router />

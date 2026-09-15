@@ -19,7 +19,6 @@ import {
   User, 
   Mail, 
   Phone, 
-  CreditCard, 
   CheckCircle, 
   XCircle, 
   AlertTriangle,
@@ -27,10 +26,7 @@ import {
   ChevronRight,
   Search,
   Filter,
-  Calendar,
   Edit,
-  Clock,
-  Download,
   Users,
   Loader2
 } from "lucide-react";
@@ -46,9 +42,9 @@ interface PendingUser {
   email: string;
   phone?: string;
   joinDate: string;
+  birthDate?: string | null;
   student?: {
     id: number;
-    birthDate?: string | null;
     enrollmentDate?: string | null;
     beltLevel?: string | null;
     stripes?: number | null;
@@ -380,15 +376,6 @@ export default function PendingApprovalsBatch() {
     setExpandedUsers(newExpanded);
   };
 
-  const getPaymentPlanName = (planId?: number) => {
-    if (!planId || !paymentPlans?.plans) return "Não definido";
-    const plan = paymentPlans.plans.find(p => p.id === planId);
-    return plan ? `${plan.name} - ${new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(plan.amount / 100)}` : "Não definido";
-  };
-
   const getPaymentPlan = (planId?: number) => {
     if (!planId || !paymentPlans?.plans) return undefined;
     return paymentPlans.plans.find(plan => plan.id === planId);
@@ -593,6 +580,9 @@ export default function PendingApprovalsBatch() {
             const validation = validateStudentData(user);
             const isExpanded = expandedUsers.has(user.id);
             const isSelected = selectedUsers.has(user.id);
+            const isScholarship = user.student?.isScholarship === true;
+            const selectedPlan = getPaymentPlan(user.student?.paymentPlanId);
+            const medicalStatus = getMedicalStatus(user.student);
             const daysSinceJoin = Math.floor(
               (new Date().getTime() - new Date(user.joinDate).getTime()) / (1000 * 60 * 60 * 24)
             );
@@ -604,7 +594,7 @@ export default function PendingApprovalsBatch() {
                   validation.isValid ? 'border-l-green-500' : 'border-l-yellow-500'
                 } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
               >
-                <CardContent className="p-3 md:p-5">
+                <CardContent className="p-4 md:p-6">
                   {/* Top row: checkbox + name + badge + actions */}
                   <div className="flex items-start gap-3">
                     {/* Checkbox */}
@@ -618,27 +608,35 @@ export default function PendingApprovalsBatch() {
                     {/* Main content */}
                     <div className="flex-1 min-w-0">
                       {/* Name + badge + action buttons row */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
-                          <h3 className="text-base font-semibold leading-tight truncate">
-                            {user.firstName} {user.lastName}
-                          </h3>
-                          <div className="mt-1">{getStatusBadge(user)}</div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-lg font-semibold leading-tight">
+                              {user.firstName} {user.lastName}
+                            </h3>
+                            {getStatusBadge(user)}
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Cadastro recebido em {formatDate(user.joinDate)}
+                            <span className="mx-1.5">•</span>
+                            há {daysSinceJoin} dia{daysSinceJoin !== 1 ? 's' : ''}
+                          </p>
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => toggleExpanded(user.id)}
-                            className="h-8 w-8 p-0"
+                            className="gap-1.5"
                           >
                             {isExpanded ? (
                               <ChevronDown className="h-4 w-4" />
                             ) : (
                               <ChevronRight className="h-4 w-4" />
                             )}
+                            <span className="hidden sm:inline">Detalhes</span>
                           </Button>
 
                           {!validation.isValid && user.student?.id && (
@@ -646,9 +644,10 @@ export default function PendingApprovalsBatch() {
                               variant="outline"
                               size="sm"
                               onClick={() => setEditingStudent(user.student!.id)}
-                              className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50"
+                              className="gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50"
                             >
                               <Edit className="h-4 w-4" />
+                              <span className="hidden sm:inline">Corrigir</span>
                             </Button>
                           )}
 
@@ -659,13 +658,14 @@ export default function PendingApprovalsBatch() {
                               disabled={approveMutation.isPending || rejectMutation.isPending}
                               aria-label={`Aprovar ${user.firstName} ${user.lastName}`}
                               title="Aprovar aluno"
-                              className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white"
+                              className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
                             >
                               {approveMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <CheckCircle className="h-4 w-4" />
                               )}
+                              <span className="hidden sm:inline">Aprovar</span>
                             </Button>
                           )}
 
@@ -682,42 +682,88 @@ export default function PendingApprovalsBatch() {
                             disabled={approveMutation.isPending || rejectMutation.isPending}
                             aria-label={`Rejeitar ${user.firstName} ${user.lastName}`}
                             title="Rejeitar cadastro"
-                            className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                              className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
                           >
                             {rejectMutation.isPending ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <XCircle className="h-4 w-4" />
                             )}
+                              <span className="hidden sm:inline">Rejeitar</span>
                           </Button>
                         </div>
                       </div>
 
-                      {/* Info grid */}
-                      <div className="grid grid-cols-1 gap-y-1 text-xs text-muted-foreground mb-3">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Mail className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{user.email}</span>
-                        </div>
-                        {user.phone && (
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="h-3.5 w-3.5 shrink-0" />
-                            <span>{user.phone}</span>
+                      {/* Resumo rápido para a análise do administrador */}
+                      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-lg border bg-muted/20 p-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Contato do aluno</p>
+                          <div className="mt-2 space-y-1.5 text-sm">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span className="truncate" title={user.email}>{user.email}</span>
+                            </div>
+                            {user.phone && (
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                <span>{user.phone}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 shrink-0" />
-                          <span>Cadastrado há {daysSinceJoin} dia{daysSinceJoin !== 1 ? 's' : ''}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <CreditCard className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{getPaymentPlanName(user.student?.paymentPlanId)}</span>
+
+                        <div className="rounded-lg border bg-muted/20 p-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Perfil esportivo</p>
+                          <div className="mt-2 space-y-1.5 text-sm">
+                            <p><span className="text-muted-foreground">Idade:</span> {getAge(user.birthDate)}</p>
+                            <p><span className="text-muted-foreground">Faixa:</span> {getBeltLabel(user.student?.beltLevel)}</p>
+                            <p><span className="text-muted-foreground">Graus:</span> {user.student?.stripes ?? 0}</p>
+                          </div>
+                        </div>
+
+                        <div className={`rounded-lg border p-3 ${isScholarship ? "border-blue-200 bg-blue-50/60" : "border-emerald-200 bg-emerald-50/60"}`}>
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Plano selecionado</p>
+                          {isScholarship ? (
+                            <div className="mt-2">
+                              <p className="font-semibold text-blue-800">Bolsista</p>
+                              <p className="mt-1 text-sm text-blue-700">
+                                {user.student?.couponCode ? `Cupom: ${user.student.couponCode}` : "Isento de cobrança"}
+                              </p>
+                            </div>
+                          ) : selectedPlan ? (
+                            <div className="mt-2">
+                              <p className="font-semibold text-emerald-800">{selectedPlan.name}</p>
+                              <p className="mt-1 text-sm text-emerald-700">
+                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(selectedPlan.amount / 100)}
+                                {" / "}{getFrequencyLabel(selectedPlan.frequency)}
+                              </p>
+                              {selectedPlan.description && (
+                                <p className="mt-1 line-clamp-2 text-xs text-emerald-700/80">{selectedPlan.description}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="mt-2 font-semibold text-red-700">Plano não definido</p>
+                          )}
+                        </div>
+
+                        <div className="rounded-lg border bg-muted/20 p-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Análise cadastral</p>
+                          <div className="mt-2 space-y-1.5 text-sm">
+                            <p><span className="text-muted-foreground">Matrícula:</span> {formatDate(user.student?.enrollmentDate || user.joinDate)}</p>
+                            <p>
+                              <span className="text-muted-foreground">Atestado:</span>{" "}
+                              <span className={medicalStatus.className}>{medicalStatus.label}</span>
+                            </p>
+                            {!isScholarship && (
+                              <p><span className="text-muted-foreground">Vencimento:</span> dia {user.student?.preferredDueDate || 5}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                        {/* User Status (ASAAS errors, etc.) */}
-                        {userStatuses.has(user.id) && (
-                          <Alert className={`mb-3 ${
+                      {/* User Status (ASAAS errors, etc.) */}
+                      {userStatuses.has(user.id) && (
+                          <Alert className={`mt-4 ${
                             userStatuses.get(user.id)?.status === 'error' 
                               ? 'border-red-500 bg-red-50 dark:bg-red-950' 
                               : 'border-green-500 bg-green-50 dark:bg-green-950'
@@ -744,11 +790,11 @@ export default function PendingApprovalsBatch() {
                               )}
                             </AlertDescription>
                           </Alert>
-                        )}
+                      )}
 
-                        {/* Validation Issues */}
-                        {!validation.isValid && (
-                          <Alert className="mb-3">
+                      {/* Validation Issues */}
+                      {!validation.isValid && (
+                          <Alert className="mt-4">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertDescription>
                               <div className="font-medium mb-1">Pendências para aprovação:</div>
@@ -759,41 +805,64 @@ export default function PendingApprovalsBatch() {
                               </ul>
                             </AlertDescription>
                           </Alert>
-                        )}
+                      )}
 
-                        {/* Expanded Details */}
-                        {isExpanded && user.student && (
-                          <div className="border-t pt-4 mt-4">
-                            <h4 className="font-medium mb-3">Detalhes do Responsável Financeiro</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      {/* Expanded Details */}
+                      {isExpanded && user.student && (
+                          <div className="mt-5 rounded-xl border bg-slate-50/70 p-4 dark:bg-slate-900/40">
+                            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                               <div>
-                                <span className="font-medium">Nome:</span>
-                                <span className="ml-2">{user.student.financialResponsibleName || 'Não informado'}</span>
+                                <h4 className="font-semibold">Detalhes para conferência</h4>
+                                <p className="text-xs text-muted-foreground">
+                                  Confira os dados financeiros antes de aprovar e criar a cobrança.
+                                </p>
+                              </div>
+                              <Badge variant="outline" className="w-fit">
+                                {user.student.financialResponsibleRelation === 'self'
+                                  ? 'Responsável: próprio aluno'
+                                  : 'Responsável financeiro'}
+                              </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                              <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Nome</p>
+                                <p className="mt-1 break-words font-medium">{user.student.financialResponsibleName || 'Não informado'}</p>
                               </div>
                               <div>
-                                <span className="font-medium">CPF:</span>
-                                <span className="ml-2">{user.student.financialResponsibleCpf || 'Não informado'}</span>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">CPF</p>
+                                <p className="mt-1 break-words">{user.student.financialResponsibleCpf || 'Não informado'}</p>
                               </div>
                               <div>
-                                <span className="font-medium">Email:</span>
-                                <span className="ml-2">{user.student.financialResponsibleEmail || 'Não informado'}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium">Telefone:</span>
-                                <span className="ml-2">{user.student.financialResponsiblePhone || 'Não informado'}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium">Relação:</span>
-                                <span className="ml-2">
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Relação</p>
+                                <p className="mt-1 break-words">
                                   {user.student.financialResponsibleRelation === 'self' ? 'Próprio aluno' : 
                                    user.student.financialResponsibleRelation === 'parent' ? 'Pai/Mãe' :
+                                   user.student.financialResponsibleRelation === 'guardian' ? 'Responsável legal' :
                                    user.student.financialResponsibleRelation === 'spouse' ? 'Cônjuge' :
                                    user.student.financialResponsibleRelation || 'Não informado'}
-                                </span>
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">E-mail</p>
+                                <p className="mt-1 break-words">{user.student.financialResponsibleEmail || 'Não informado'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Telefone</p>
+                                <p className="mt-1 break-words">{user.student.financialResponsiblePhone || 'Não informado'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Cupom aplicado</p>
+                                <p className="mt-1 break-words">{user.student.couponCode || 'Nenhum cupom'}</p>
                               </div>
                             </div>
+                            {user.student.medicalObservations && (
+                              <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
+                                <span className="font-semibold">Observação médica:</span> {user.student.medicalObservations}
+                              </div>
+                            )}
                           </div>
-                        )}
+                      )}
                     </div>
                   </div>
                 </CardContent>

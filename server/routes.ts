@@ -37,8 +37,10 @@ import { businessRules } from "./config/businessRules";
 import crypto from "crypto";
 import { getSystemLogs } from "./services/systemLogger";
 import {
+  acquireDatabaseMutationPermit,
   getDatabaseCopyJob,
   isDatabaseCopyConfigured,
+  shouldGuardDatabaseMutation,
   startDatabaseCopy,
 } from "./services/databaseCopyService";
 
@@ -267,7 +269,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Set up authentication
+  app.use(async (req, res, next) => {
+    const shouldGuard = shouldGuardDatabaseMutation(
+      req.method,
+      req.path,
+      isDatabaseCopyConfigured(),
+    );
+    if (!shouldGuard) return next();
+
+    try {
+      const releasePermit = await acquireDatabaseMutationPermit();
+      if (!releasePermit) {
+        return res.status(503).json({
+          message: "O banco de desenvolvimento está em manutenção. Aguarde a conclusão da cópia.",
+        });
+      }
+
+      const releaseOnce = () => {
+        void releasePermit().catch((error) => {
+          console.error("[database-copy] Falha ao liberar lock de escrita:", error);
+        });
+      };
+      res.once("finish", releaseOnce);
+      res.once("close", releaseOnce);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Set up authentication only after the distributed maintenance guard so
+  // register/login/logout and other auth mutations are also quiesced.
   setupAuth(app);
 
   app.get(

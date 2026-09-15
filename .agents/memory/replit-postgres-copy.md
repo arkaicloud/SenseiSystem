@@ -3,8 +3,8 @@ name: Cópia PostgreSQL no Replit
 description: Restrições não óbvias ao restaurar produção no banco de desenvolvimento gerenciado pelo Replit.
 ---
 
-Ao copiar produção para desenvolvimento, inclua somente o schema `public`. Não tente restaurar schemas internos gerenciados pelo Replit, como `_system`. Deixe o próprio `pg_restore` recriar `public` depois da limpeza, pois recriá-lo antes causa conflito.
+Ao copiar produção para desenvolvimento, limite a cópia ao schema `public`, preserve as sessões locais e impeça gravações concorrentes em todas as instâncias.
 
-**Why:** Um dump sem filtro incluiu `_system` e falhou porque esse schema já existia. Em seguida, recriar `public` manualmente antes do restore também conflitou com o `CREATE SCHEMA public` presente no dump.
+**Why:** Schemas internos do Replit não devem ser restaurados. Alterar o schema enquanto o app aceita gravações ou perde sua tabela de sessão pode corromper o destino e impedir até o acompanhamento ou rollback do job.
 
-**How to apply:** Gere primeiro o dump de produção e um backup temporário do destino. Só então remova `public`; restaure o dump filtrado e reaplique o schema atual de desenvolvimento. Se o restore falhar, tente recuperar o backup do destino.
+**How to apply:** Faça backup do destino antes de alterá-lo, coordene a manutenção com lock compartilhado entre processos e mantenha o backup disponível quando a recuperação automática não terminar.

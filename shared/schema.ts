@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, uuid, pgEnum, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, uuid, pgEnum, index, json } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -74,6 +74,16 @@ export const billingTypeEnum = pgEnum('billing_type', ['BOLETO', 'PIX', 'CREDIT_
 export const riskActionEnum = pgEnum('risk_action', ['call', 'email', 'whatsapp', 'visit', 'discount', 'other']);
 export const noticeLevelEnum = pgEnum('notice_level', ['LOW', 'MEDIUM', 'HIGH']);
 export const noticeAudienceEnum = pgEnum('notice_audience', ['ALL', 'STUDENTS', 'INSTRUCTORS']);
+
+// Session table managed by connect-pg-simple. Declaring it here prevents
+// drizzle-kit from removing active development sessions during schema sync.
+export const sessions = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+}, (table) => ({
+  expireIdx: index("IDX_session_expire").on(table.expire),
+}));
 
 // Belt levels management table
 export const beltLevels = pgTable("belt_levels", {

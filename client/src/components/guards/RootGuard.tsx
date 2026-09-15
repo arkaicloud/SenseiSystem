@@ -5,6 +5,7 @@ import { useLocation } from 'wouter';
 import { AppLoadingOverlay } from '@/components/loading/AppLoadingOverlay';
 import MainLayout from '@/components/layouts/MainLayout';
 import GuardianSelectPage from '@/pages/guardian-select';
+import StudentViewBanner from '@/components/admin/StudentViewBanner';
 
 interface RootGuardProps {
   children: React.ReactNode;
@@ -31,6 +32,14 @@ export function RootGuard({ children }: RootGuardProps) {
 
   // Show overlay during authentication or boot process
   const showOverlay = authLoading || isBooting;
+  const isViewingAsStudent = Boolean((user as any)?.isImpersonating);
+
+  const withStudentViewBanner = (content: React.ReactNode) => (
+    <>
+      <StudentViewBanner />
+      <div className={isViewingAsStudent ? 'pt-14' : ''}>{content}</div>
+    </>
+  );
 
   // Redirect to login if not authenticated and not loading
   useEffect(() => {
@@ -41,12 +50,16 @@ export function RootGuard({ children }: RootGuardProps) {
 
   // For public routes, render without layout or guards
   if (isPublicRoute) {
-    return <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">{children}</div>;
+    return withStudentViewBanner(
+      <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">{children}</div>
+    );
   }
 
   // Render overlay if loading/booting
   if (showOverlay) {
-    return <AppLoadingOverlay visible={true} progress={progress} quote={quote} />;
+    return withStudentViewBanner(
+      <AppLoadingOverlay visible={true} progress={progress} quote={quote} />
+    );
   }
 
   // Render main layout if user is authenticated
@@ -61,7 +74,7 @@ export function RootGuard({ children }: RootGuardProps) {
         return <GuardianSelectPage />;
       }
     }
-    return <MainLayout>{children}</MainLayout>;
+    return withStudentViewBanner(<MainLayout>{children}</MainLayout>);
   }
 
   // Fallback: render nothing while redirect happens

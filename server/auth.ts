@@ -24,6 +24,16 @@ declare global {
   }
 }
 
+declare module "express-session" {
+  interface SessionData {
+    studentView?: {
+      originalAdminUserId: number;
+      targetUserId: number;
+      startedAt: string;
+    };
+  }
+}
+
 
 
 // Helper function to hash passwords
@@ -97,6 +107,7 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "senseisystem-dev-only-not-for-production",
     resave: false,
     saveUninitialized: false,
+    store: storage.sessionStore,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 1 day (reduced from 30)
       httpOnly: true,
@@ -105,7 +116,7 @@ export function setupAuth(app: Express) {
     }
   };
 
-  // Use memory store for development
+  // Persist sessions in PostgreSQL so login and student preview survive restarts.
   app.use(session(sessionOptions));
   
   // Initialize passport
@@ -189,6 +200,87 @@ export function setupAuth(app: Express) {
       done(null, user);
     } catch (err) {
       done(err);
+    }
+  });
+
+  // Student preview is read-only and expires automatically after two hours.
+  app.use(async (req, res, next) => {
+    const studentView = req.session.studentView;
+    if (!studentView) return next();
+
+    try {
+      if (!req.isAuthenticated()) {
+        delete req.session.studentView;
+        return res.status(401).json({ message: "Sessão de visualização inválida." });
+      }
+
+      const originalAdmin = await storage.getUser(studentView.originalAdminUserId);
+      const targetUser = await storage.getUser(studentView.targetUserId);
+      const startedAt = new Date(studentView.startedAt).getTime();
+      const isExpired =
+        !Number.isFinite(startedAt) ||
+        Date.now() - startedAt > 2 * 60 * 60 * 1000;
+      const isOriginalAdminValid =
+        !!originalAdmin &&
+        isSuperAdminUser(originalAdmin) &&
+        originalAdmin.active === true &&
+        originalAdmin.status === "active";
+      const isTargetValid =
+        !!targetUser &&
+        targetUser.role === "student" &&
+        targetUser.active === true &&
+        targetUser.status === "active";
+
+      if (req.user.id === studentView.originalAdminUserId && isOriginalAdminValid) {
+        delete req.session.studentView;
+        return req.session.save(error => error ? next(error) : next());
+      }
+
+      if (
+        req.user.id !== studentView.targetUserId ||
+        isExpired ||
+        !isTargetValid ||
+        !isOriginalAdminValid
+      ) {
+        if (!originalAdmin || !isOriginalAdminValid) {
+          delete req.session.studentView;
+          return req.logout(() => {
+            req.session.destroy(() =>
+              res.status(401).json({ message: "A sessão do Super Admin não está mais disponível." })
+            );
+          });
+        }
+
+        return req.login(originalAdmin, loginError => {
+          if (loginError) return next(loginError);
+          delete req.session.studentView;
+          req.session.save(saveError => {
+            if (saveError) {
+              return req.session.destroy(() => next(saveError));
+            }
+            if (req.path === "/api/user") return next();
+            return res.status(409).json({
+              message: "A visualização expirou. Você voltou ao Super Admin.",
+            });
+          });
+        });
+      }
+
+      res.setHeader("Cache-Control", "no-store");
+      const isReadOnlyMethod = ["GET", "HEAD", "OPTIONS"].includes(req.method);
+      const isAllowedAction =
+        req.path === "/api/admin/student-view/stop" ||
+        req.path === "/api/logout";
+
+      if (!isReadOnlyMethod && !isAllowedAction) {
+        return res.status(403).json({
+          message: "A visualização como aluno é somente leitura. Volte ao Super Admin para fazer alterações.",
+        });
+      }
+
+      next();
+    } catch (error) {
+      next(error);
     }
   });
 
@@ -310,40 +402,218 @@ export function setupAuth(app: Express) {
         
         // Return user without password
         const { password, ...userWithoutPassword } = user;
-        return res.json({ user: userWithoutPassword });
+        return res.json({
+          user: {
+            ...userWithoutPassword,
+            isSuperAdmin: isSuperAdminUser(user),
+            isImpersonating: false,
+          },
+        });
       });
     })(req, res, next);
   });
 
   // Logout route
-  app.post("/api/logout", (req, res) => {
-    if (req.user) {
-      const userId = req.user.id;
-      const userName = `${req.user.firstName} ${req.user.lastName}`;
-      
-      req.logout((err) => {
-        if (err) {
-          return res.status(500).json({ message: "Logout failed" });
-        }
-        
-        // Create activity log for logout
-        storage.createActivityLog({
-          activity: `User logged out: ${userName}`,
-          userId: userId,
-          entityType: "user",
-          entityId: userId,
-          timestamp: new Date()
-        });
-        
-        req.session.destroy((err) => {
+  app.post("/api/logout", async (req, res) => {
+    try {
+      if (req.user) {
+        const originalAdminId = req.session.studentView?.originalAdminUserId;
+        const auditUser = originalAdminId
+          ? await storage.getUser(originalAdminId)
+          : req.user;
+        const userId = auditUser?.id || req.user.id;
+        const userName = auditUser
+          ? `${auditUser.firstName} ${auditUser.lastName}`
+          : `${req.user.firstName} ${req.user.lastName}`;
+
+        req.logout((err) => {
           if (err) {
-            return res.status(500).json({ message: "Session destruction failed" });
+            return res.status(500).json({ message: "Logout failed" });
           }
-          res.json({ message: "Logged out successfully" });
+
+          // Create activity log for logout
+          storage.createActivityLog({
+            activity: `User logged out: ${userName}`,
+            userId: userId,
+            entityType: "user",
+            entityId: userId,
+            timestamp: new Date()
+          });
+
+          req.session.destroy((err) => {
+            if (err) {
+              return res.status(500).json({ message: "Session destruction failed" });
+            }
+            res.json({ message: "Logged out successfully" });
+          });
+        });
+      } else {
+        res.json({ message: "No user to log out" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  // List active students available for safe Super Admin preview.
+  app.get("/api/admin/student-view/options", isSuperAdmin, async (_req, res, next) => {
+    try {
+      const users = await storage.getUsers();
+      const students = users
+        .filter(user =>
+          user.role === "student" &&
+          user.active === true &&
+          user.status === "active"
+        )
+        .map(user => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        }))
+        .sort((a, b) =>
+          `${a.firstName} ${a.lastName}`.localeCompare(
+            `${b.firstName} ${b.lastName}`,
+            "pt-BR"
+          )
+        );
+
+      res.json({ students });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Start a temporary student session while preserving the Super Admin identity.
+  app.post("/api/admin/student-view/start", isSuperAdmin, async (req, res, next) => {
+    try {
+      if (req.session.studentView) {
+        return res.status(409).json({ message: "Já existe uma visualização de aluno ativa." });
+      }
+
+      const targetUserId = Number(req.body?.userId);
+      if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+        return res.status(400).json({ message: "Selecione um aluno válido." });
+      }
+
+      const originalAdmin = req.user;
+      const targetUser = await storage.getUser(targetUserId);
+      if (
+        !targetUser ||
+        targetUser.role !== "student" ||
+        targetUser.active !== true ||
+        targetUser.status !== "active"
+      ) {
+        return res.status(404).json({ message: "Aluno ativo não encontrado." });
+      }
+
+      const student = await storage.getStudentByUserId(targetUser.id);
+      if (!student) {
+        return res.status(400).json({ message: "Este usuário não possui um perfil de aluno válido." });
+      }
+
+      req.login(targetUser, async (loginError) => {
+        if (loginError) {
+          return next(loginError);
+        }
+
+        req.session.studentView = {
+          originalAdminUserId: originalAdmin.id,
+          targetUserId: targetUser.id,
+          startedAt: new Date().toISOString(),
+        };
+
+        req.session.save(async (sessionError) => {
+          if (sessionError) {
+            return req.login(originalAdmin, restoreError => {
+              if (restoreError) {
+                return req.session.destroy(() => next(sessionError));
+              }
+              delete req.session.studentView;
+              req.session.save(restoreSaveError => {
+                if (restoreSaveError) {
+                  return req.session.destroy(() => next(sessionError));
+                }
+                next(sessionError);
+              });
+            });
+          }
+
+          try {
+            await storage.createActivityLog({
+              activity: `Super admin iniciou visualização como aluno (admin_user_id=${originalAdmin.id}, target_user_id=${targetUser.id})`,
+              userId: originalAdmin.id,
+              entityType: "user",
+              entityId: targetUser.id,
+              timestamp: new Date(),
+            });
+          } catch (logError) {
+            console.warn("Falha ao registrar início da visualização como aluno:", logError);
+          }
+
+          const { password, ...targetWithoutPassword } = targetUser;
+          res.json({
+            user: {
+              ...targetWithoutPassword,
+              isSuperAdmin: false,
+              isImpersonating: true,
+            },
+          });
         });
       });
-    } else {
-      res.json({ message: "No user to log out" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Restore the original Super Admin session.
+  app.post("/api/admin/student-view/stop", isAuthenticated, async (req, res, next) => {
+    try {
+      const studentView = req.session.studentView;
+      if (!studentView || studentView.targetUserId !== req.user.id) {
+        return res.status(403).json({ message: "Nenhuma visualização de aluno ativa." });
+      }
+
+      const originalAdmin = await storage.getUser(studentView.originalAdminUserId);
+      if (!originalAdmin || !isSuperAdminUser(originalAdmin)) {
+        delete req.session.studentView;
+        return res.status(403).json({ message: "Não foi possível restaurar o Super Admin." });
+      }
+
+      const targetUserId = req.user.id;
+      req.login(originalAdmin, async (loginError) => {
+        if (loginError) return next(loginError);
+
+        delete req.session.studentView;
+        req.session.save(async (sessionError) => {
+          if (sessionError) {
+            return req.session.destroy(() => next(sessionError));
+          }
+
+          try {
+            await storage.createActivityLog({
+              activity: `Super admin encerrou visualização como aluno (admin_user_id=${originalAdmin.id}, target_user_id=${targetUserId})`,
+              userId: originalAdmin.id,
+              entityType: "user",
+              entityId: targetUserId,
+              timestamp: new Date(),
+            });
+          } catch (logError) {
+            console.warn("Falha ao registrar encerramento da visualização como aluno:", logError);
+          }
+
+          const { password, ...adminWithoutPassword } = originalAdmin;
+          res.json({
+            user: {
+              ...adminWithoutPassword,
+              isSuperAdmin: true,
+              isImpersonating: false,
+            },
+          });
+        });
+      });
+    } catch (error) {
+      next(error);
     }
   });
 
@@ -351,7 +621,15 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (req.isAuthenticated()) {
       const { password, ...userWithoutPassword } = req.user;
-      return res.json({ user: userWithoutPassword });
+      const isImpersonating =
+        req.session.studentView?.targetUserId === req.user.id;
+      return res.json({
+        user: {
+          ...userWithoutPassword,
+          isSuperAdmin: isSuperAdminUser(req.user),
+          isImpersonating,
+        },
+      });
     }
     res.status(401).json({ message: "Not authenticated" });
   });

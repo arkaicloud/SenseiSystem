@@ -9,12 +9,13 @@ import { useQuery } from "@tanstack/react-query";
 import type { SchoolConfig } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Sun, Moon, LogOut, Building2, User, UserCheck, ChevronDown } from "lucide-react";
+import { Sun, Moon, LogOut, Building2, User, UserCheck, ChevronDown, Eye } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { StudentBell } from "@/components/student/StudentBell";
 import BottomNav from "@/components/student/BottomNav";
 import { StudentSwitcher } from "@/components/guardian/StudentSwitcher";
+import StudentViewDialog from "@/components/admin/StudentViewDialog";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     try { return localStorage.getItem('sidebar-collapsed') === 'true'; } catch { return false; }
   });
   const [isPWA, setIsPWA] = useState(false);
+  const [studentViewDialogOpen, setStudentViewDialogOpen] = useState(false);
 
   const toggleCollapse = () => {
     setSidebarCollapsed(prev => {
@@ -63,6 +65,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const schoolConfig = schoolConfigData?.config;
   const pendingCount = (pendingUsersData as any)?.users?.length || 0;
+  const isSuperAdmin = Boolean((user as any)?.isSuperAdmin);
 
   // Don't show layout on auth page
   const isAuthPage = location === "/auth";
@@ -118,7 +121,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const isPublicRoute = publicRoutes.some(route => location === route || location.startsWith(route));
   
   if (isAuthPage || isPublicRoute || !user) {
-    return <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">{children}</div>;
+    return (
+      <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">
+        {children}
+      </div>
+    );
   }
 
   // Remove loading check - handled by RootGuard now
@@ -204,6 +211,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   {/* Admin Options */}
                   {user?.role === 'admin' && (
                     <>
+                      {isSuperAdmin && (
+                        <DropdownMenuItem
+                          onSelect={() => setStudentViewDialogOpen(true)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>Visualizar como aluno</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link href="/admin/pending-approvals" className="flex items-center space-x-2 w-full">
                           <UserCheck className="w-4 h-4" />
@@ -315,6 +331,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <DropdownMenuContent align="end" className="w-56">
                   {user?.role === 'admin' && (
                     <>
+                      {isSuperAdmin && (
+                        <DropdownMenuItem
+                          onSelect={() => setStudentViewDialogOpen(true)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>Visualizar como aluno</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link href="/admin/pending-approvals" className="flex items-center space-x-2 w-full">
                           <UserCheck className="w-4 h-4" />
@@ -382,6 +407,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Bottom Navigation - for students and guardians on mobile */}
       {(user?.role === 'student' || user?.role === 'guardian') && <BottomNav />}
+      {isSuperAdmin && (
+        <StudentViewDialog
+          open={studentViewDialogOpen}
+          onOpenChange={setStudentViewDialogOpen}
+        />
+      )}
     </div>
   );
 };

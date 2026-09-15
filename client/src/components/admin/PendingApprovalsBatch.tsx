@@ -48,12 +48,20 @@ interface PendingUser {
   joinDate: string;
   student?: {
     id: number;
+    birthDate?: string | null;
+    enrollmentDate?: string | null;
+    beltLevel?: string | null;
+    stripes?: number | null;
     financialResponsibleName?: string;
     financialResponsibleCpf?: string;
     financialResponsibleEmail?: string;
     financialResponsiblePhone?: string;
     financialResponsibleRelation?: string;
     paymentPlanId?: number;
+    preferredDueDate?: number | null;
+    requiresMedicalCertificate?: boolean;
+    medicalCertificateStatus?: string | null;
+    medicalObservations?: string | null;
     isScholarship?: boolean;
     couponCode?: string;
   };
@@ -63,6 +71,7 @@ interface PaymentPlan {
   id: number;
   name: string;
   amount: number;
+  frequency?: string;
   description?: string;
 }
 
@@ -378,6 +387,69 @@ export default function PendingApprovalsBatch() {
       style: 'currency',
       currency: 'BRL'
     }).format(plan.amount / 100)}` : "Não definido";
+  };
+
+  const getPaymentPlan = (planId?: number) => {
+    if (!planId || !paymentPlans?.plans) return undefined;
+    return paymentPlans.plans.find(plan => plan.id === planId);
+  };
+
+  const formatDate = (date?: string | null) => {
+    if (!date) return "Não informado";
+    const parsedDate = new Date(date);
+    return Number.isNaN(parsedDate.getTime())
+      ? "Não informado"
+      : format(parsedDate, "dd/MM/yyyy", { locale: ptBR });
+  };
+
+  const getAge = (birthDate?: string | null) => {
+    if (!birthDate) return "Não informado";
+    const birth = new Date(birthDate);
+    if (Number.isNaN(birth.getTime())) return "Não informado";
+
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const birthdayHasPassed =
+      today.getMonth() > birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
+    if (!birthdayHasPassed) age -= 1;
+    return `${age} ${age === 1 ? "ano" : "anos"}`;
+  };
+
+  const getBeltLabel = (beltLevel?: string | null) => {
+    const belts: Record<string, string> = {
+      white: "Branca",
+      blue: "Azul",
+      purple: "Roxa",
+      brown: "Marrom",
+      black: "Preta",
+      coral: "Coral",
+      red: "Vermelha",
+    };
+    return beltLevel ? belts[beltLevel.toLowerCase()] || beltLevel : "Não informado";
+  };
+
+  const getMedicalStatus = (student?: PendingUser["student"]) => {
+    if (!student?.requiresMedicalCertificate) {
+      return { label: "Sem exigência de atestado", className: "text-green-700" };
+    }
+
+    if (student.medicalCertificateStatus === "PENDING") {
+      return { label: "Atestado pendente", className: "text-orange-700" };
+    }
+
+    return { label: "Atestado recebido", className: "text-green-700" };
+  };
+
+  const getFrequencyLabel = (frequency?: string) => {
+    if (!frequency) return "mensalidade";
+    const frequencies: Record<string, string> = {
+      monthly: "mensal",
+      quarterly: "trimestral",
+      yearly: "anual",
+      monthly_payment: "mensal",
+    };
+    return frequencies[frequency.toLowerCase()] || frequency;
   };
 
   const getStatusBadge = (user: PendingUser) => {

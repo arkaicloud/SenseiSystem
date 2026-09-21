@@ -28,6 +28,10 @@ export const upload = multer({
       "image/jpg"
     ];
     const isValid = allowedTypes.includes(file.mimetype);
-    cb(isValid ? null : new Error("Tipo de arquivo inválido"), isValid);
+    if (!isValid) {
+      cb(new Error("Tipo de arquivo inválido"));
+      return;
+    }
+    cb(null, true);
   },
 });

@@ -8,3 +8,4 @@
 - [Visualização como aluno](student-view-mode.md) — Super Admin pode assumir temporariamente a experiência do aluno, sempre em modo somente leitura e com retorno visível
 - [Estado de aprovação](approval-state-consistency.md) — active=true com status=pending é recuperável; a aprovação deve concluir e normalizar o cadastro
 - [Contrato de datas](calendar-date-contract.md) — datas de calendário usam chaves em Brasília; timestamps reais continuam sendo instantes
+- [Overrides de segurança npm](npm-security-overrides.md) — use overrides por faixa quando o pacote-pai compatível mais recente ainda fixa transitivos vulneráveis

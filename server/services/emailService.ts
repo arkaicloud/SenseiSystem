@@ -2,15 +2,17 @@
 import nodemailer from 'nodemailer';
 import { storage } from '../storage';
 
+type MailTransporter = ReturnType<typeof nodemailer.createTransport>;
+
 export class EmailService {
-  private transporter: nodemailer.Transporter | null = null;
+  private transporter: MailTransporter | null = null;
   private smtpConfigured: boolean = false;
 
   constructor() {
     // Transporter será criado dinamicamente com base nas configurações da escola
   }
 
-  private async createTransporter(): Promise<nodemailer.Transporter> {
+  private async createTransporter(): Promise<MailTransporter> {
     try {
       // Buscar configurações SMTP da escola
       const schoolConfig = await storage.getSchoolConfig();
@@ -55,7 +57,7 @@ export class EmailService {
     }
   }
 
-  private async getTransporter(): Promise<nodemailer.Transporter> {
+  private async getTransporter(): Promise<MailTransporter> {
     if (!this.transporter || !this.smtpConfigured) {
       this.transporter = await this.createTransporter();
     }

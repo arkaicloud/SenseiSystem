@@ -29,12 +29,12 @@ import { dashboardMetricsService } from "./services/dashboardMetrics";
 import { engagementMetricsService } from "./services/engagementMetrics";
 import { AsaasPaymentsService } from "./services/asaasPaymentsService";
 import { syncAsaasPayments } from "./services/asaasSyncService";
-import { toDayUTC, toDateString, getBrasiliaDate, getBrasiliaDayOfWeek } from "./utils/date.js";
+import { toDayUTC, toDateString, getBrasiliaDate, getBrasiliaDayOfWeek, getBrasiliaClock } from "./utils/date.js";
 import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
 import { dashboardSummaryQuerySchema, type DashboardSummary } from "@shared/types/dashboard";
 import { dateKeyInTimeZone, isPaymentDateBefore } from "@shared/paymentDates";
-import { calendarDateKey, calendarDateKeyInTimeZone } from "@shared/calendarDates";
+import { calendarDateKey, calendarDateKeyInTimeZone, shiftCalendarDateKey, calendarDayOfWeek, calendarDayDifference } from "@shared/calendarDates";
 import { reconcileFamilyPayments } from "@shared/paymentReconciliation";
 import { businessRules } from "./config/businessRules";
 import crypto from "crypto";
@@ -59,6 +59,16 @@ function generateTempPassword(): string {
 function parsePreferredDueDay(value: unknown): number | null {
   const day = Number(value);
   return Number.isInteger(day) && day >= 1 && day <= 31 ? day : null;
+}
+
+function calendarAge(birthDate: string | Date | null | undefined, todayKey = calendarDateKeyInTimeZone(new Date())): number | null {
+  const birthKey = calendarDateKey(birthDate);
+  if (!birthKey) return null;
+  const [todayYear, todayMonth, todayDay] = todayKey.split("-").map(Number);
+  const [birthYear, birthMonth, birthDay] = birthKey.split("-").map(Number);
+  return todayYear - birthYear - (
+    todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay) ? 1 : 0
+  );
 }
 
 /**
@@ -634,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const todayBirthdays = birthdaysResult.map(birthday => ({
         id: birthday.id,
         name: `${birthday.firstName} ${birthday.lastName}`,
-        age: birthday.birthDate ? new Date().getFullYear() - new Date(birthday.birthDate).getFullYear() : null,
+        age: calendarAge(birthday.birthDate),
         phone: birthday.phone,
         beltLevel: birthday.beltLevel
       }));
@@ -655,8 +665,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedAt,
         period: {
           type: 'month',
-          from: fromDate.toISOString().split('T')[0],
-          to: toDate.toISOString().split('T')[0]
+          from: calendarDateKeyInTimeZone(fromDate),
+          to: calendarDateKeyInTimeZone(toDate)
         },
         metrics: {
           activeStudents,
@@ -972,19 +982,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current month attendance count
-      const currentDate = new Date();
-      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const currentMonthKey = calendarDateKeyInTimeZone(new Date()).slice(0, 7);
 
       // Get attendance records for current month
       const attendances = await storage.getAttendanceByStudent(student.id);
       const currentMonthAttendances = attendances.filter(att => {
-        const attDate = new Date(att.date);
-        return attDate >= firstDay && attDate <= lastDay && att.status === 'present';
+        return calendarDateKey(att.date)?.slice(0, 7) === currentMonthKey && att.status === 'present';
       });
 
       // Calculate total available classes this month (rough estimate)
-      const daysInMonth = lastDay.getDate();
+      const [monthYear, monthNumber] = currentMonthKey.split("-").map(Number);
+      const daysInMonth = new Date(Date.UTC(monthYear, monthNumber, 0)).getUTCDate();
       const weekdaysInMonth = Math.floor(daysInMonth * 5 / 7); // Rough estimate of weekdays
       const availableClasses = Math.min(weekdaysInMonth, 20); // Cap at 20 classes per month
 
@@ -1021,14 +1029,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current month attendance count
-      const currentDate = new Date();
-      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const currentMonthKey = calendarDateKeyInTimeZone(new Date()).slice(0, 7);
 
       const attendances = await storage.getAttendanceByStudent(student.id);
       const currentMonthAttendances = attendances.filter(att => {
-        const attDate = new Date(att.date);
-        return attDate >= firstDay && attDate <= lastDay && att.status === 'present';
+        return calendarDateKey(att.date)?.slice(0, 7) === currentMonthKey && att.status === 'present';
       });
 
       res.json({ 
@@ -1106,15 +1111,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate chart data for each day in the period
       const chartData = [];
       for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = shiftCalendarDateKey(calendarDateKeyInTimeZone(today), -i);
 
         // Calculate received and pending amounts for this date
         const dayPayments = payments.filter(payment => {
           if (payment.paidDate) {
-            const paidDate = new Date(payment.paidDate);
-            return paidDate.toISOString().split('T')[0] === dateStr;
+            return calendarDateKeyInTimeZone(new Date(payment.paidDate)) === dateStr;
           }
           return false;
         });
@@ -1124,7 +1126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .reduce((sum, p) => sum + p.amount, 0);
 
         const pending = payments
-          .filter(p => p.status === 'pending' && p.dueDate && new Date(p.dueDate).toISOString().split('T')[0] <= dateStr)
+          .filter(p => p.status === 'pending' && p.dueDate && (calendarDateKey(p.dueDate) || "") <= dateStr)
           .reduce((sum, p) => sum + p.amount, 0);
 
         chartData.push({
@@ -1156,15 +1158,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let cumulativeTotal = 0;
 
       for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = shiftCalendarDateKey(calendarDateKeyInTimeZone(today), -i);
 
         // Count new students registered on this date
         const newStudents = students.filter(student => {
           if (student.createdAt) {
-            const createdDate = new Date(student.createdAt);
-            return createdDate.toISOString().split('T')[0] === dateStr;
+            return calendarDateKeyInTimeZone(new Date(student.createdAt)) === dateStr;
           }
           return false;
         }).length;
@@ -1174,8 +1173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Calculate total active students up to this date
         const totalStudents = students.filter(student => {
           if (student.createdAt) {
-            const createdDate = new Date(student.createdAt);
-            return createdDate <= date && student.active !== false;
+            return calendarDateKeyInTimeZone(new Date(student.createdAt)) <= dateStr && student.active !== false;
           }
           return false;
         }).length;
@@ -1225,8 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const overduePayments = payments.filter(payment => {
         if (payment.status === 'overdue') return true;
         if (payment.status === 'pending' && payment.dueDate) {
-          const dueDate = new Date(payment.dueDate);
-          return dueDate < currentDate;
+          return (calendarDateKey(payment.dueDate) || "") < calendarDateKeyInTimeZone(currentDate);
         }
         return false;
       });
@@ -3341,8 +3338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Determinar categoria do aluno
-      const isChild = userData.birthDate ? 
-        ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
+      const isChild = userData.birthDate ? (calendarAge(userData.birthDate) ?? 0) < 16 : false;
       const userSex = userData.sex?.toLowerCase() || 'misto';
 
       // Buscar todas as aulas ativas
@@ -3353,7 +3349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentDayOfWeek = getBrasiliaDayOfWeek();
       const dayOfWeekName = today.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' }).toLowerCase();
 
-      console.log(`Buscando aulas para hoje: ${today.toISOString().split('T')[0]}, dia da semana: ${dayOfWeekName} (${currentDayOfWeek})`);
+      console.log(`Buscando aulas para hoje: ${calendarDateKeyInTimeZone(today)}, dia da semana: ${dayOfWeekName} (${currentDayOfWeek})`);
       console.log(`Total de aulas encontradas: ${allClasses.length}`);
 
       // Filtrar aulas baseado na categoria do aluno
@@ -3396,11 +3392,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         todaysClasses.map(async (classItem) => {
           try {
             const attendances = await storage.getAttendanceByClass(classItem.id);
-            const todayStr = today.toISOString().split('T')[0];
+            const todayStr = calendarDateKeyInTimeZone(today);
 
             // Contar presenças confirmadas para hoje
             const todayAttendanceCount = attendances.filter(attendance => {
-              const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+               const attendanceDate = calendarDateKey(attendance.date);
               return attendanceDate === todayStr && (attendance.status === 'confirmed' || attendance.status === 'present');
             }).length;
 
@@ -3409,7 +3405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             let bookingStatus = null;
             if (student) {
               const userAttendance = attendances.find(attendance => {
-                const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+               const attendanceDate = calendarDateKey(attendance.date);
                 return attendance.studentId === student.id && 
                        attendanceDate === todayStr && 
                        (attendance.status === 'confirmed' || attendance.status === 'present' || attendance.status === 'cancelled');
@@ -3450,7 +3446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               attendanceConfirmed: false,
               bookingStatus: null,
               isCancelled: false,
-              dateISO: today.toISOString().split('T')[0],
+               dateISO: calendarDateKeyInTimeZone(today),
               instructorName: classItem.instructor 
                 ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
                 : 'Sem instrutor'
@@ -3501,8 +3497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Determinar categoria do aluno
-      const isChild = userData.birthDate ? 
-        ((new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16) : false;
+      const isChild = userData.birthDate ? (calendarAge(userData.birthDate) ?? 0) < 16 : false;
       const userSex = userData.sex?.toLowerCase() || 'misto';
 
       console.log(`👤 Buscando aulas — sexo: ${userSex}, criança: ${isChild}`);
@@ -3550,10 +3545,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (let i = 0; i < 7; i++) {
         // Criar data para o dia atual + i (considerando fuso horário de Brasília)
-        const currentDate = new Date(today);
-        currentDate.setDate(today.getDate() + i);
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const dayOfWeek = currentDate.getDay();
+        const dateStr = shiftCalendarDateKey(calendarDateKeyInTimeZone(today), i);
+        const dayOfWeek = calendarDayOfWeek(dateStr);
 
         console.log(`📅 Processando dia: ${dateStr} (${dayOfWeek})`);
 
@@ -3576,7 +3569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               // Verificar se o aluno confirmou presença para este dia
               const userAttendance = attendances.find(attendance => {
-                const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+                 const attendanceDate = calendarDateKey(attendance.date);
                 return attendance.studentId === student.id && 
                        attendanceDate === dateStr && 
                        (attendance.status === 'confirmed' || attendance.status === 'present' || attendance.status === 'cancelled');
@@ -3755,7 +3748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const dateStr = date; // 'YYYY-MM-DD'
         const confirmedStudentIds = confirmedAttendances
           .filter((a) => {
-            const aDate = new Date(a.date).toISOString().split('T')[0];
+            const aDate = calendarDateKey(a.date);
             return aDate === dateStr && (a.status === 'confirmed' || a.status === 'present');
           })
           .map((a) => a.studentId);
@@ -3842,7 +3835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(classId)) return res.status(400).json({ message: "ID de aula inválido" });
 
       const { date } = req.query as { date?: string };
-      const dateStr = date || new Date().toISOString().split('T')[0];
+      const dateStr = date || calendarDateKeyInTimeZone(new Date());
 
       // 1. Enrolled students
       const enrolled = await db
@@ -4362,14 +4355,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { classId } = req.params;
       const { date } = req.query;
 
-      const targetDate = date ? new Date(date as string) : new Date();
-      const dateStr = targetDate.toISOString().split('T')[0];
+      const dateStr = date ? calendarDateKey(date as string) : calendarDateKeyInTimeZone(new Date());
 
       const attendances = await storage.getAttendanceByClass(Number(classId));
 
       // Count attendances for the specific date and status 'present'
       const count = attendances.filter(attendance => {
-        const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+        const attendanceDate = calendarDateKey(attendance.date);
         return attendanceDate === dateStr && attendance.status === 'present';
       }).length;
 
@@ -4455,7 +4447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ensure date is valid
       let classDate;
       try {
-        classDate = date ? new Date(date) : new Date();
+         classDate = date ? toDayUTC(date) : toDayUTC(calendarDateKeyInTimeZone(new Date()));
         // Check if date is valid
         if (isNaN(classDate.getTime())) {
           throw new Error('Invalid date');
@@ -4465,13 +4457,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         classDate = new Date(); // Use current date if provided date is invalid
       }
 
-      const classDateStr = classDate.toISOString().split('T')[0];
+       const classDateStr = calendarDateKey(classDate)!;
 
       // Check class student limit
       if (classItem.maxStudents && classItem.maxStudents > 0) {
         const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
         const confirmedCount = existingAttendances.filter(att => 
-          new Date(att.date).toISOString().split('T')[0] === classDateStr &&
+          calendarDateKey(att.date) === classDateStr &&
           (att.status === 'confirmed' || att.status === 'present')
         ).length;
 
@@ -4486,7 +4478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === classDateStr &&
+        calendarDateKey(att.date) === classDateStr &&
         (att.status === 'confirmed' || att.status === 'present')
       );
 
@@ -4555,14 +4547,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student profile not found" });
       }
 
-      const classDate = date ? new Date(date) : new Date();
-      const classDateStr = classDate.toISOString().split('T')[0];
+       const classDate = date ? toDayUTC(date) : toDayUTC(calendarDateKeyInTimeZone(new Date()));
+       const classDateStr = calendarDateKey(classDate)!;
 
       // Get existing attendance for the specified date
       const existingAttendances = await storage.getAttendanceByClass(classId, classDate);
       const existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === classDateStr &&
+        calendarDateKey(att.date) === classDateStr &&
         (att.status === 'confirmed' || att.status === 'present')
       );
 
@@ -4723,7 +4715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (classItem.maxCapacity && classItem.maxCapacity > 0) {
         const existingAttendances = await storage.getAttendanceByClass(classId, date);
         const confirmedCount = existingAttendances.filter(att => 
-          new Date(att.date).toISOString().split('T')[0] === toDateString(date) &&
+          calendarDateKey(att.date) === toDateString(date) &&
           (att.status === 'confirmed' || att.status === 'present') &&
           att.studentId !== student.id // Don't count current student
         ).length;
@@ -4740,7 +4732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAttendances = await storage.getAttendanceByClass(classId, date);
       let existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === toDateString(date)
+        calendarDateKey(att.date) === toDateString(date)
       );
 
       let booking;
@@ -4809,7 +4801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAttendances = await storage.getAttendanceByClass(classId, date);
       let existingAttendance = existingAttendances.find(att => 
         att.studentId === student.id && 
-        new Date(att.date).toISOString().split('T')[0] === toDateString(date)
+        calendarDateKey(att.date) === toDateString(date)
       );
 
       let booking;
@@ -5357,25 +5349,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { month } = req.query;
 
       const students = await storage.getStudentsWithUsers();
-      const currentMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      const currentMonth = month ? parseInt(month as string) : Number(calendarDateKeyInTimeZone(new Date()).slice(5, 7));
 
       // Filter students who have birthdays in the specified month
       const birthdayStudents = students.filter(student => {
         if (!student.user?.birthDate) return false;
 
-        const birthDate = new Date(student.user.birthDate);
-        return birthDate.getMonth() + 1 === currentMonth;
+        const birthDateKey = calendarDateKey(student.user.birthDate);
+        return !!birthDateKey && Number(birthDateKey.slice(5, 7)) === currentMonth;
       }).map(student => ({
         id: student.id,
         name: `${student.user.firstName} ${student.user.lastName}`,
         birthDate: student.user.birthDate,
-        age: student.user.birthDate ? 
-          new Date().getFullYear() - new Date(student.user.birthDate).getFullYear() : null,
+        age: calendarAge(student.user.birthDate),
         belt: student.belt || 'white',
         stripes: student.stripes || 0
       })).sort((a, b) => {
-        const dateA = new Date(a.birthDate!).getDate();
-        const dateB = new Date(b.birthDate!).getDate();
+        const dateA = Number(calendarDateKey(a.birthDate)?.slice(8, 10) || 0);
+        const dateB = Number(calendarDateKey(b.birthDate)?.slice(8, 10) || 0);
         return dateA - dateB;
       });
 
@@ -6168,10 +6159,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Calculate days since last attendance
           const lastAttendance = studentAttendances.length > 0 ?
-            studentAttendances.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
+            studentAttendances.sort((a: any, b: any) => (calendarDateKey(b.date) || "").localeCompare(calendarDateKey(a.date) || ""))[0] : null;
 
           const daysSinceLastAttendance = lastAttendance ? 
-            Math.floor((Date.now() - new Date(lastAttendance.date).getTime()) / (1000 * 60 * 60 * 24)) : 999;
+            (calendarDayDifference(lastAttendance.date, calendarDateKeyInTimeZone(new Date())) ?? 999) : 999;
 
           // Determine risk level
           let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
@@ -6416,9 +6407,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If overdue for more than 10 days, block the school
       if (newStatus === 'overdue') {
-        const dueDate = new Date(schoolPayment.dueDate);
-        const now = new Date();
-        const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        const diffDays = calendarDayDifference(
+          schoolPayment.dueDate,
+          calendarDateKeyInTimeZone(new Date()),
+        ) ?? 0;
 
         if (diffDays > 10) {
           await storage.updateSchoolConfig({
@@ -6669,7 +6661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 : payment.status,
           };
         })
-        .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        .sort((a, b) => (calendarDateKey(b.dueDate) || "").localeCompare(calendarDateKey(a.dueDate) || ""));
       const allPayments = reconcileFamilyPayments(normalizedPayments);
 
       const visiblePayments = family.isFinancialResponsible ? allPayments : [];
@@ -6724,10 +6716,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (month && year) {
         const targetMonth = parseInt(month as string);
         const targetYear = parseInt(year as string);
+        const targetMonthKey = `${targetYear}-${String(targetMonth).padStart(2, "0")}`;
 
         filteredAttendances = attendances.filter(att => {
-          const attDate = new Date(att.date);
-          return attDate.getMonth() + 1 === targetMonth && attDate.getFullYear() === targetYear;
+          return calendarDateKey(att.date)?.slice(0, 7) === targetMonthKey;
         });
       }
 
@@ -6796,10 +6788,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (month && year) {
         const targetMonth = parseInt(month as string);
         const targetYear = parseInt(year as string);
+        const targetMonthKey = `${targetYear}-${String(targetMonth).padStart(2, "0")}`;
 
         filteredAttendances = attendances.filter(att => {
-          const attDate = new Date(att.date);
-          return attDate.getMonth() + 1 === targetMonth && attDate.getFullYear() === targetYear;
+          return calendarDateKey(att.date)?.slice(0, 7) === targetMonthKey;
         });
       }
 
@@ -6854,17 +6846,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get today's date range
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      const todayKey = calendarDateKeyInTimeZone(new Date());
 
       // Get all attendance records with details
       const attendances = await storage.getAttendanceWithDetails();
       const todayConfirmedAttendances = attendances.filter(att => {
-        const attDate = new Date(att.attendance.date);
         return att.attendance.classId === classIdNumber && 
-               attDate >= startOfDay && 
-               attDate < endOfDay &&
+               calendarDateKey(att.attendance.date) === todayKey &&
                att.attendance.status === 'present';
       });
 
@@ -6894,10 +6882,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if instructor has already marked attendance for any of these students
       const instructorAttendances = attendances.filter(att => {
-        const attDate = new Date(att.attendance.date);
         return att.attendance.classId === classIdNumber && 
-               attDate >= startOfDay && 
-               attDate < endOfDay &&
+               calendarDateKey(att.attendance.date) === todayKey &&
                att.attendance.checkedInBy !== att.attendance.studentId; // Marked by instructor, not self-confirmed
       });
 
@@ -8163,8 +8149,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Default to current month if not provided
       const now = new Date();
-      const dueDateGe = startDateParam || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const dueDateLe = endDateParam   || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      const currentMonthStart = `${calendarDateKeyInTimeZone(now).slice(0, 7)}-01`;
+      const nextMonthStart = `${shiftCalendarDateKey(currentMonthStart, 32).slice(0, 7)}-01`;
+      const dueDateGe = startDateParam || currentMonthStart;
+      const dueDateLe = endDateParam || shiftCalendarDateKey(nextMonthStart, -1);
 
       console.log(`🔄 Force refreshing ASAAS financial data (server-side date filter: ${dueDateGe} → ${dueDateLe})...`);
 
@@ -8419,7 +8407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               billingType: payment.billingType as 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER',
               value: Math.round(payment.value * 100),
               netValue: payment.netValue ? Math.round(payment.netValue * 100) : null,
-              dueDate: new Date(payment.dueDate),
+              dueDate: toDayUTC(payment.dueDate),
               description: payment.description || '',
               externalReference: payment.externalReference || null,
               invoiceUrl: payment.invoiceUrl || null,
@@ -9112,21 +9100,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     classId: number,
     checkedInById: number,
   ): Promise<{ alreadyExists: boolean; date: Date }> {
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay   = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const todayKey = calendarDateKeyInTimeZone(new Date());
 
     const existing = await storage.getAttendanceByStudent(studentId);
     const todayRecord = existing.find(att => {
-      const d = new Date(att.date);
-      return att.classId === classId && d >= startOfDay && d < endOfDay;
+      return att.classId === classId && calendarDateKey(att.date) === todayKey;
     });
 
     if (todayRecord) {
       return { alreadyExists: true, date: new Date(todayRecord.date) };
     }
 
-    const date = new Date();
+    const date = toDayUTC(todayKey);
     console.log('Creating attendance record:', { studentId, classId, checkedInById, date });
     await storage.createAttendance({
       studentId,
@@ -9172,15 +9157,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userData) {
         return res.status(404).json({ error: 'Dados do usuário não encontrados' });
       }
-      const isChild = userData.birthDate
-        ? (new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16
-        : false;
+      const isChild = userData.birthDate ? (calendarAge(userData.birthDate) ?? 0) < 16 : false;
       const userSex = userData.sex?.toLowerCase() || 'misto';
 
       const now = getBrasiliaDate();
       const currentDayOfWeek = getBrasiliaDayOfWeek();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const todayStr = now.toISOString().split('T')[0];
+      const brasiliaClock = getBrasiliaClock(now);
+      const currentMinutes = brasiliaClock.hour * 60 + brasiliaClock.minute;
+      const todayStr = calendarDateKeyInTimeZone(now);
 
       const allClasses = await storage.getClassesWithInstructors();
 
@@ -9211,7 +9195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const attendances = await storage.getAttendanceByClass(classItem.id);
         const checkedInRecord = attendances.find(a => {
-          const aDate = new Date(a.date).toISOString().split('T')[0];
+          const aDate = calendarDateKey(a.date);
           return a.studentId === student.id && aDate === todayStr &&
             (a.status === 'confirmed' || a.status === 'present');
         });
@@ -9286,9 +9270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userData) {
         return res.status(404).json({ error: 'Dados do usuário não encontrados' });
       }
-      const isChild = userData.birthDate
-        ? (new Date().getFullYear() - new Date(userData.birthDate).getFullYear()) < 16
-        : false;
+      const isChild = userData.birthDate ? (calendarAge(userData.birthDate) ?? 0) < 16 : false;
       const userSex = userData.sex?.toLowerCase() || 'misto';
 
       if (classSession.type) {
@@ -9307,8 +9289,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const now = getBrasiliaDate();
       const currentDayOfWeek = getBrasiliaDayOfWeek();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const todayStr = now.toISOString().split('T')[0];
+      const brasiliaClock = getBrasiliaClock(now);
+      const currentMinutes = brasiliaClock.hour * 60 + brasiliaClock.minute;
+      const todayStr = calendarDateKeyInTimeZone(now);
 
       if (classSession.dayOfWeek !== currentDayOfWeek) {
         return res.status(400).json({ error: 'Esta aula não ocorre hoje.' });
@@ -9331,12 +9314,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 1. Idempotency check FIRST — must succeed even when class is full
-      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const dayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
       const priorAttendances = await storage.getAttendanceByStudent(student.id);
       const existingRecord = priorAttendances.find(att => {
-        const d = new Date(att.date);
-        return att.classId === classIdNum && d >= dayStart && d < dayEnd;
+        return att.classId === classIdNum && calendarDateKey(att.date) === todayStr;
       });
 
       if (existingRecord) {
@@ -9352,7 +9332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (classSession.maxStudents) {
         const classAttendances = await storage.getAttendanceByClass(classIdNum);
         const todayCount = classAttendances.filter(a => {
-          const aDate = new Date(a.date).toISOString().split('T')[0];
+          const aDate = calendarDateKey(a.date);
           return aDate === todayStr && (a.status === 'confirmed' || a.status === 'present');
         }).length;
         if (todayCount >= classSession.maxStudents) {

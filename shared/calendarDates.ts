@@ -24,6 +24,36 @@ export function localCalendarDateKey(value = new Date()): string {
   ].join("-");
 }
 
+export function shiftCalendarDateKey(value: string, days: number): string {
+  const key = calendarDateKey(value);
+  if (!key) return value;
+  const [year, month, day] = key.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return shifted.toISOString().slice(0, 10);
+}
+
+export function calendarDayOfWeek(value: string): number {
+  const key = calendarDateKey(value);
+  if (!key) return NaN;
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+export function calendarDayDifference(
+  fromDate: string | Date,
+  toDate: string | Date,
+): number | null {
+  const fromKey = calendarDateKey(fromDate);
+  const toKey = calendarDateKey(toDate);
+  if (!fromKey || !toKey) return null;
+  const [fromYear, fromMonth, fromDay] = fromKey.split("-").map(Number);
+  const [toYear, toMonth, toDay] = toKey.split("-").map(Number);
+  return Math.round(
+    (Date.UTC(toYear, toMonth - 1, toDay) - Date.UTC(fromYear, fromMonth - 1, fromDay)) /
+    (24 * 60 * 60 * 1000),
+  );
+}
+
 export function calendarDateKeyInTimeZone(
   value: Date,
   timeZone = "America/Sao_Paulo",

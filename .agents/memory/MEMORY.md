@@ -7,3 +7,4 @@
 - [Cópia PostgreSQL no Replit](replit-postgres-copy.md) — dumps entre produção e desenvolvimento devem limitar-se ao schema public e preservar um backup temporário do destino
 - [Visualização como aluno](student-view-mode.md) — Super Admin pode assumir temporariamente a experiência do aluno, sempre em modo somente leitura e com retorno visível
 - [Estado de aprovação](approval-state-consistency.md) — active=true com status=pending é recuperável; a aprovação deve concluir e normalizar o cadastro
+- [Contrato de datas](calendar-date-contract.md) — datas de calendário usam chaves em Brasília; timestamps reais continuam sendo instantes

@@ -66,7 +66,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import {
   calendarDateKey,
-  localCalendarDateKey,
+  calendarDateKeyInTimeZone,
   parseCalendarDateAsLocal,
 } from "@shared/calendarDates";
 
@@ -284,14 +284,14 @@ export default function FinancialDashboard() {
   });
 
   // ── Derived metrics (calculated client-side from month-filtered payments) ─
-  const todayKey = localCalendarDateKey();
+  const todayKey = calendarDateKeyInTimeZone(new Date());
   const derivedMetrics = (() => {
     const received  = monthPayments.filter((p) => p.status === "RECEIVED" || p.status === "CONFIRMED");
     const pending   = monthPayments.filter((p) => p.status === "PENDING"  && (calendarDateKey(p.dueDate) || "") >= todayKey);
     const overdue   = monthPayments.filter((p) => (p.status === "PENDING" || p.status === "OVERDUE") && (calendarDateKey(p.dueDate) || "") < todayKey);
     const late      = monthPayments.filter((p) => {
       const dueKey = calendarDateKey(p.dueDate);
-      const paymentKey = p.paymentDate ? localCalendarDateKey(new Date(p.paymentDate)) : null;
+      const paymentKey = p.paymentDate ? calendarDateKeyInTimeZone(new Date(p.paymentDate)) : null;
       return (p.status === "RECEIVED" || p.status === "CONFIRMED") && !!paymentKey && !!dueKey && paymentKey > dueKey;
     });
 

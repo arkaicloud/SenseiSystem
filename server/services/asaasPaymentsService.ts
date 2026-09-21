@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { calendarDateKey, calendarDateKeyInTimeZone, parseCalendarDateAsLocal, shiftCalendarDateKey } from '@shared/calendarDates';
 
 interface AsaasPayment {
   id: string;
@@ -290,7 +291,8 @@ export class AsaasPaymentsService {
 
   private getMockPayments(): AsaasPaymentsResponse {
     const today = new Date();
-    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    const todayKey = calendarDateKeyInTimeZone(today);
+    const lastMonthKey = shiftCalendarDateKey(todayKey, -30);
     
     return {
       object: 'list',
@@ -304,32 +306,32 @@ export class AsaasPaymentsService {
           customer: 'cus_mock_1',
           value: 150.00,
           status: 'RECEIVED',
-          dueDate: lastMonth.toISOString().split('T')[0],
+          dueDate: lastMonthKey,
           description: 'Mensalidade - Mock Data',
-          dateCreated: lastMonth.toISOString(),
-          originalDueDate: lastMonth.toISOString().split('T')[0],
-          paymentDate: lastMonth.toISOString(),
-          clientPaymentDate: lastMonth.toISOString()
+          dateCreated: `${lastMonthKey}T12:00:00.000Z`,
+          originalDueDate: lastMonthKey,
+          paymentDate: `${lastMonthKey}T12:00:00.000Z`,
+          clientPaymentDate: `${lastMonthKey}T12:00:00.000Z`
         },
         {
           id: 'mock_2',
           customer: 'cus_mock_2',
           value: 200.00,
           status: 'PENDING',
-          dueDate: today.toISOString().split('T')[0],
+          dueDate: todayKey,
           description: 'Mensalidade - Mock Data',
-          dateCreated: today.toISOString(),
-          originalDueDate: today.toISOString().split('T')[0]
+          dateCreated: `${todayKey}T12:00:00.000Z`,
+          originalDueDate: todayKey
         },
         {
           id: 'mock_3',
           customer: 'cus_mock_3',
           value: 150.00,
           status: 'OVERDUE',
-          dueDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          dueDate: shiftCalendarDateKey(todayKey, -5),
           description: 'Mensalidade - Mock Data',
-          dateCreated: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          originalDueDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          dateCreated: `${shiftCalendarDateKey(todayKey, -5)}T12:00:00.000Z`,
+          originalDueDate: shiftCalendarDateKey(todayKey, -5)
         }
       ]
     };
@@ -398,27 +400,24 @@ export class AsaasPaymentsService {
 
   calculateMetrics(payments: AsaasPaymentWithCustomer[]): FinancialMetrics {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    // Previous month dates
-    const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const currentMonthKey = calendarDateKeyInTimeZone(now).slice(0, 7);
+    const [currentYear, currentMonth] = currentMonthKey.split("-").map(Number);
+    const previousMonthDate = new Date(Date.UTC(currentYear, currentMonth - 2, 1));
+    const previousMonthKey = `${previousMonthDate.getUTCFullYear()}-${String(previousMonthDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    const paymentMonthKey = (value: string) => calendarDateKeyInTimeZone(new Date(value)).slice(0, 7);
 
     // Received this month
     const receivedThisMonth = payments
       .filter(p => p.status === 'RECEIVED' &&
         p.paymentDate &&
-        new Date(p.paymentDate) >= startOfMonth &&
-        new Date(p.paymentDate) <= endOfMonth)
+        paymentMonthKey(p.paymentDate) === currentMonthKey)
       .reduce((sum, p) => sum + p.value, 0);
 
     // Received previous month
     const previousMonthRevenue = payments
       .filter(p => p.status === 'RECEIVED' &&
         p.paymentDate &&
-        new Date(p.paymentDate) >= startOfPreviousMonth &&
-        new Date(p.paymentDate) <= endOfPreviousMonth)
+        paymentMonthKey(p.paymentDate) === previousMonthKey)
       .reduce((sum, p) => sum + p.value, 0);
 
     // Count of paying students this month (unique customers)
@@ -443,14 +442,14 @@ export class AsaasPaymentsService {
     // Pending payments (not received, not overdue)
     const pendingPayments = payments.filter(p =>
       p.status === 'PENDING' &&
-      new Date(p.dueDate) >= now
+      (calendarDateKey(p.dueDate) || "") >= currentMonthKey + "-01"
     );
     const pendingValue = pendingPayments.reduce((sum, p) => sum + p.value, 0);
 
     // Overdue payments - CORRIGIDO: inclui status OVERDUE também
     const overduePayments = payments.filter(p =>
       (p.status === 'PENDING' || p.status === 'OVERDUE') &&
-      new Date(p.dueDate) < now
+      (calendarDateKey(p.dueDate) || "") < calendarDateKeyInTimeZone(now)
     );
     const overdueCount = overduePayments.length;
 
@@ -466,7 +465,7 @@ export class AsaasPaymentsService {
       p.status === 'RECEIVED' && 
       p.paymentDate && 
       p.dueDate &&
-      new Date(p.paymentDate) > new Date(p.dueDate)
+      calendarDateKeyInTimeZone(new Date(p.paymentDate)) > (calendarDateKey(p.dueDate) || "")
     );
     const latePaymentsCount = latePayments.length;
     const latePaymentsValue = latePayments.reduce((sum, p) => sum + p.value, 0);
@@ -474,15 +473,15 @@ export class AsaasPaymentsService {
     // Payments this month (all statuses)
     const totalPaymentsThisMonth = payments.filter(p => {
       const paymentDate = new Date(p.dateCreated);
-      return paymentDate >= startOfMonth && paymentDate <= endOfMonth;
+      return paymentMonthKey(p.dateCreated) === currentMonthKey;
     }).length;
 
     // Next due date
     const upcomingPayments = payments
-      .filter(p => p.status === 'PENDING' && new Date(p.dueDate) >= now)
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+      .filter(p => p.status === 'PENDING' && (calendarDateKey(p.dueDate) || "") >= calendarDateKeyInTimeZone(now))
+      .sort((a, b) => (calendarDateKey(a.dueDate) || "").localeCompare(calendarDateKey(b.dueDate) || ""));
 
-    const nextDueDate = upcomingPayments.length > 0 ? new Date(upcomingPayments[0].dueDate) : null;
+    const nextDueDate = upcomingPayments.length > 0 ? parseCalendarDateAsLocal(upcomingPayments[0].dueDate) : null;
 
     // Debug para verificar dados vencidos - ENHANCED
     console.log(`📊 Metrics Debug:`);
@@ -507,8 +506,8 @@ export class AsaasPaymentsService {
     if (suspiciousPayments.length > 0) {
       console.log(`   🔍 Payments with dueDate 2025-09-04:`);
       suspiciousPayments.forEach((p, i) => {
-        const dueDate = new Date(p.dueDate);
-        const isOverdueByDate = dueDate < now;
+        const dueDate = calendarDateKey(p.dueDate);
+        const isOverdueByDate = !!dueDate && dueDate < calendarDateKeyInTimeZone(now);
         console.log(`      ${i+1}. Status: ${p.status} | Due: ${p.dueDate} | isOverdue: ${isOverdueByDate} | Value: R$ ${p.value}`);
       });
     }

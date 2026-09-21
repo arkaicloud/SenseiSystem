@@ -2,6 +2,7 @@ import { db } from '../db';
 import { students, classes, attendance, studentPayments, users } from '@shared/schema';
 import { eq, gte, lt, lte, and, sql, count, avg, sum } from 'drizzle-orm';
 import { asaasRevenueService } from './asaasRevenue';
+import { calendarDateKeyInTimeZone } from '@shared/calendarDates';
 
 export interface DashboardMetrics {
   activeStudents: number;
@@ -48,8 +49,10 @@ export class DashboardMetricsService {
 
   private async calculateMetrics(): Promise<DashboardMetrics> {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const currentMonthKey = calendarDateKeyInTimeZone(now).slice(0, 7);
+    const [year, month] = currentMonthKey.split("-").map(Number);
+    const startOfMonth = new Date(Date.UTC(year, month - 1, 1));
+    const startOfNextMonth = new Date(Date.UTC(year, month, 1));
 
     try {
       // Active Students
@@ -83,7 +86,7 @@ export class DashboardMetricsService {
         .where(
           and(
             gte(users.joinDate, startOfMonth),
-            lt(users.joinDate, endOfMonth)
+            lt(users.joinDate, startOfNextMonth)
           )
         );
       

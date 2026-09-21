@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Users, Clock, UserCheck } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import type { Class } from "@shared/schema";
+import { localCalendarDateKey } from "@shared/calendarDates";
 
 interface ClassAttendanceCounterProps {
   classData: Class;
@@ -22,7 +23,7 @@ const ClassAttendanceCounter: React.FC<ClassAttendanceCounterProps> = ({
   const { data: attendanceCount, isLoading } = useQuery({
     queryKey: ['/api/attendance/count', classData.id],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localCalendarDateKey();
       const res = await fetch(`/api/attendance/count/${classData.id}?date=${today}`);
       if (!res.ok) return { count: 0 };
       return await res.json();

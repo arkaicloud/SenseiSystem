@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { formatTime } from "@/lib/utils";
+import { calendarDateKey, localCalendarDateKey } from "@shared/calendarDates";
 
 interface QuickAttendanceConfirmProps {
   userId: number;
@@ -54,11 +55,11 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
   useEffect(() => {
     if (attendanceData && Array.isArray(attendanceData)) {
       // Criar uma lista de IDs de aulas em que o aluno já marcou presença hoje
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const today = localCalendarDateKey();
       
       const confirmedIds = attendanceData
         .filter(attendance => {
-          const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+          const attendanceDate = calendarDateKey(attendance.date);
           return attendanceDate === today;
         })
         .map(attendance => attendance.classId);

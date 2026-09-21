@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 interface FinancialPanelProps {
   studentId: number;
@@ -146,7 +147,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
                         {getStatusText(invoice.status)}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        Vence em: {format(parseISO(invoice.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                         Vence em: {format(parseCalendarDateAsLocal(invoice.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
                     </div>
                     <p className="font-semibold">{formatCurrency(invoice.value)}</p>
@@ -189,7 +190,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
                         {getStatusText(payment.status)}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        Vencimento: {format(new Date(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                         Vencimento: {format(parseCalendarDateAsLocal(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
                     </div>
                     <p className="font-semibold">{formatCurrency(payment.amount)}</p>

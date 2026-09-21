@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatDateShort, formatCurrency } from "@/lib/utils";
 import { sanitizeHTML } from "@/lib/htmlUtils";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 const Reports: React.FC = () => {
   const { t } = useTranslation();
@@ -542,7 +543,7 @@ const Reports: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {payment.status === 'paid' && payment.paidDate 
                               ? formatDateShort(new Date(payment.paidDate))
-                              : formatDateShort(new Date(payment.dueDate))}
+                               : formatDateShort(parseCalendarDateAsLocal(payment.dueDate))}
                           </td>
                         </tr>
                       ))}

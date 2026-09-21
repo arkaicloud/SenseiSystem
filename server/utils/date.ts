@@ -1,5 +1,9 @@
 // Date normalization utilities for ensuring consistent date handling
 // Based on Brazil timezone (America/Sao_Paulo)
+import {
+  calendarDateKey,
+  calendarDateKeyInTimeZone,
+} from "@shared/calendarDates";
 
 /**
  * Normalizes a date string to 00:00:00 UTC for the given timezone
@@ -9,12 +13,13 @@
  * @returns Date object normalized to start of day in UTC
  */
 export function toDayUTC(dateStr: string, tz = "America/Sao_Paulo"): Date {
-  // Parse the date string and create a Date object at 00:00:00 in the specified timezone
-  // For Brazil (UTC-3), we add 3 hours to get the UTC equivalent of midnight local time
-  const localDate = new Date(`${dateStr}T00:00:00${tz === "America/Sao_Paulo" ? "-03:00" : "Z"}`);
-  
-  // Create a normalized UTC date for consistent database storage
-  return new Date(Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate()));
+  // Calendar dates are deliberately stored at UTC midnight in timestamp columns.
+  // Do not parse YYYY-MM-DD with Date.parse: that makes the result dependent on
+  // the host timezone (and the timezone is not part of a date-only value).
+  const key = calendarDateKey(dateStr);
+  if (!key) return new Date(dateStr);
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 /**
@@ -23,12 +28,7 @@ export function toDayUTC(dateStr: string, tz = "America/Sao_Paulo"): Date {
  * @returns Date object for today at 00:00:00 UTC
  */
 export function todayUTC(tz = "America/Sao_Paulo"): Date {
-  const now = new Date();
-  // Ajustar para fuso horário de Brasília
-  const brasiliaOffset = -3 * 60; // -3 horas em minutos
-  const brasiliaTime = new Date(now.getTime() + (brasiliaOffset + now.getTimezoneOffset()) * 60000);
-  const todayStr = brasiliaTime.toISOString().split('T')[0]; // Get YYYY-MM-DD
-  return toDayUTC(todayStr, tz);
+  return toDayUTC(calendarDateKeyInTimeZone(new Date(), tz), tz);
 }
 
 /**
@@ -45,9 +45,9 @@ export function toDateString(date: Date): string {
  * @returns Date object adjusted for Brazil timezone
  */
 export function getBrasiliaDate(): Date {
-  const now = new Date();
-  const brasiliaOffset = -3 * 60; // -3 horas em minutos (UTC-3)
-  return new Date(now.getTime() + (brasiliaOffset + now.getTimezoneOffset()) * 60000);
+  // This returns the current instant. Callers that need a Brasília calendar
+  // component must use Intl (see getBrasiliaDayOfWeek), not Date#get*.
+  return new Date();
 }
 
 /**
@@ -55,5 +55,9 @@ export function getBrasiliaDate(): Date {
  * @returns Number (0=Sunday, 1=Monday, etc.)
  */
 export function getBrasiliaDayOfWeek(): number {
-  return getBrasiliaDate().getDay();
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+  }).format(new Date());
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(day);
 }

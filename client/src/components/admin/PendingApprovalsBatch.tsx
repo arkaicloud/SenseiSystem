@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
 import { apiRequest } from "@/lib/queryClient";
 import StudentEditDialog from "@/components/students/StudentEditDialog";
 
@@ -391,7 +392,7 @@ export default function PendingApprovalsBatch() {
 
   const getAge = (birthDate?: string | null) => {
     if (!birthDate) return "Não informado";
-    const birth = new Date(birthDate);
+    const birth = parseCalendarDateAsLocal(birthDate);
     if (Number.isNaN(birth.getTime())) return "Não informado";
 
     const today = new Date();

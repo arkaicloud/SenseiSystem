@@ -64,6 +64,11 @@ import {
   subMonths,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  calendarDateKey,
+  localCalendarDateKey,
+  parseCalendarDateAsLocal,
+} from "@shared/calendarDates";
 
 interface Payment {
   id: string;
@@ -235,7 +240,7 @@ export default function FinancialDashboard() {
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-  const formatDate = (s: string) => format(new Date(s), "dd/MM/yyyy", { locale: ptBR });
+  const formatDate = (s: string) => format(parseCalendarDateAsLocal(s), "dd/MM/yyyy", { locale: ptBR });
 
   const monthLabel = format(selectedMonth, "MMMM yyyy", { locale: ptBR });
   const monthLabelCap = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
@@ -279,12 +284,16 @@ export default function FinancialDashboard() {
   });
 
   // ── Derived metrics (calculated client-side from month-filtered payments) ─
-  const now = new Date();
+  const todayKey = localCalendarDateKey();
   const derivedMetrics = (() => {
     const received  = monthPayments.filter((p) => p.status === "RECEIVED" || p.status === "CONFIRMED");
-    const pending   = monthPayments.filter((p) => p.status === "PENDING"  && new Date(p.dueDate) >= now);
-    const overdue   = monthPayments.filter((p) => (p.status === "PENDING" || p.status === "OVERDUE") && new Date(p.dueDate) < now);
-    const late      = monthPayments.filter((p) => (p.status === "RECEIVED" || p.status === "CONFIRMED") && p.paymentDate && new Date(p.paymentDate) > new Date(p.dueDate));
+    const pending   = monthPayments.filter((p) => p.status === "PENDING"  && (calendarDateKey(p.dueDate) || "") >= todayKey);
+    const overdue   = monthPayments.filter((p) => (p.status === "PENDING" || p.status === "OVERDUE") && (calendarDateKey(p.dueDate) || "") < todayKey);
+    const late      = monthPayments.filter((p) => {
+      const dueKey = calendarDateKey(p.dueDate);
+      const paymentKey = p.paymentDate ? localCalendarDateKey(new Date(p.paymentDate)) : null;
+      return (p.status === "RECEIVED" || p.status === "CONFIRMED") && !!paymentKey && !!dueKey && paymentKey > dueKey;
+    });
 
     const totalReceived  = received.reduce((s, p) => s + p.value, 0);
     const totalPending   = pending.reduce((s, p) => s + p.value, 0);
@@ -294,8 +303,8 @@ export default function FinancialDashboard() {
     const defaultRate    = (totalReceived + totalOverdue) > 0 ? (totalOverdue / (totalReceived + totalOverdue)) * 100 : 0;
 
     const upcoming = monthPayments
-      .filter((p) => p.status === "PENDING" && new Date(p.dueDate) >= now)
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+      .filter((p) => p.status === "PENDING" && (calendarDateKey(p.dueDate) || "") >= todayKey)
+      .sort((a, b) => (calendarDateKey(a.dueDate) || "").localeCompare(calendarDateKey(b.dueDate) || ""));
 
     return {
       totalReceived,
@@ -329,7 +338,7 @@ export default function FinancialDashboard() {
 
       return true;
     })
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    .sort((a, b) => (calendarDateKey(a.dueDate) || "").localeCompare(calendarDateKey(b.dueDate) || ""));
 
   // ── Pagination ────────────────────────────────────────────────────────────
   const totalFiltered = filteredPayments.length;
@@ -744,7 +753,10 @@ export default function FinancialDashboard() {
                           {formatDate(payment.dueDate)}
                           {payment.status === "OVERDUE" && (
                             <div className="text-xs text-red-500">
-                              {Math.floor((Date.now() - new Date(payment.dueDate).getTime()) / 86400000)} dias
+                              {Math.max(0, Math.round(
+                                (parseCalendarDateAsLocal(todayKey).getTime() -
+                                  parseCalendarDateAsLocal(payment.dueDate).getTime()) / 86400000
+                              ))} dias
                             </div>
                           )}
                         </div>

@@ -6,6 +6,7 @@ import { Clock, User, CheckCircle, XCircle, Loader2, Calendar, BanIcon } from "l
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { localCalendarDateKey } from "@shared/calendarDates";
 
 interface ClassSession {
   id: number;
@@ -68,7 +69,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
   };
 
   const isToday = (dateStr: string) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localCalendarDateKey();
     return dateStr === today;
   };
 

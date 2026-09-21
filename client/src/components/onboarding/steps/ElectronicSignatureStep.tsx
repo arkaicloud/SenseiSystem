@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, ArrowRight, PenLine, Type, RotateCcw, MapPin, Clock, CheckCircle, FileText, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 export interface SignatureData {
   signatureData: string;
@@ -59,7 +60,7 @@ export default function ElectronicSignatureStep({
   const studentCpf = formData.cpf || "";
   const isMinor = (() => {
     if (!formData.birthDate) return false;
-    const birth = new Date(formData.birthDate);
+    const birth = parseCalendarDateAsLocal(formData.birthDate);
     const today = new Date();
     const age = today.getFullYear() - birth.getFullYear() -
       (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0);

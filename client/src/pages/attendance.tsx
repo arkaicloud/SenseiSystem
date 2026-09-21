@@ -8,6 +8,7 @@ import {
   addMonths, subMonths, parseISO
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { localCalendarDateKey } from "@shared/calendarDates";
 import {
   ChevronLeft, ChevronRight, Search, Users, CheckCircle2, XCircle,
   Clock, Calendar, Save, Loader2, UserCheck, LayoutList, Check, X,
@@ -95,7 +96,7 @@ function MiniCalendar({
   const month = viewDate.getMonth();
   const daysInMonth = getDaysInMonth(viewDate);
   const firstWeekday = getDay(startOfMonth(viewDate));
-  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todayStr = localCalendarDateKey();
   const weekdays = ["D", "S", "T", "Q", "Q", "S", "S"];
 
   const cells = [
@@ -270,7 +271,7 @@ export default function AttendancePage() {
   const { toast } = useToast();
 
   const [viewDate, setViewDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [selectedDate, setSelectedDate] = useState(localCalendarDateKey());
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
 
   // localMap: instructor overrides — only present/absent set by instructor

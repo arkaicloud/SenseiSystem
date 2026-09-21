@@ -33,6 +33,9 @@ import { toDayUTC, toDateString, getBrasiliaDate, getBrasiliaDayOfWeek } from ".
 import { AsaasService } from "./services/asaasService";
 import { emailService } from "./services/emailService";
 import { dashboardSummaryQuerySchema, type DashboardSummary } from "@shared/types/dashboard";
+import { dateKeyInTimeZone, isPaymentDateBefore } from "@shared/paymentDates";
+import { calendarDateKey, calendarDateKeyInTimeZone } from "@shared/calendarDates";
+import { reconcileFamilyPayments } from "@shared/paymentReconciliation";
 import { businessRules } from "./config/businessRules";
 import crypto from "crypto";
 import { getSystemLogs } from "./services/systemLogger";
@@ -2259,7 +2262,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rg: updateData.rg,
         emergencyContact: updateData.emergencyContactName,
         emergencyPhone: updateData.emergencyContactPhone,
-        birthDate: updateData.birthDate ? new Date(updateData.birthDate) : undefined,
+        birthDate: updateData.birthDate
+          ? toDayUTC(calendarDateKey(updateData.birthDate)!)
+          : undefined,
         street: updateData.street,
         number: updateData.number,
         complement: updateData.complement,
@@ -2520,7 +2525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
       if (studentData.birthDate) {
         await db.execute(sql`
-          UPDATE users SET birth_date = ${new Date(studentData.birthDate)} WHERE id = ${user.id}
+          UPDATE users SET birth_date = ${toDayUTC(calendarDateKey(studentData.birthDate)!)} WHERE id = ${user.id}
         `);
       }
 
@@ -2880,7 +2885,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (payload.firstName) userUpdateData.firstName = payload.firstName;
         if (payload.lastName) userUpdateData.lastName = payload.lastName;
-        if (payload.birthDate) userUpdateData.birthDate = new Date(payload.birthDate);
+        if (payload.birthDate) {
+          userUpdateData.birthDate = toDayUTC(calendarDateKey(payload.birthDate)!);
+        }
         if (payload.sex) userUpdateData.sex = payload.sex;
         if (payload.cpf) userUpdateData.cpf = payload.cpf;
         if (payload.rg) userUpdateData.rg = payload.rg;
@@ -2913,7 +2920,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process enrollment date
       if (payload.enrollmentDate !== undefined) {
-        studentUpdateData.enrollmentDate = payload.enrollmentDate ? new Date(payload.enrollmentDate) : null;
+        studentUpdateData.enrollmentDate = payload.enrollmentDate
+          ? toDayUTC(calendarDateKey(payload.enrollmentDate)!)
+          : null;
       }
 
       if (payload.health?.notes !== undefined) {
@@ -5186,7 +5195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Convert date strings to Date objects
       if (paymentData.dueDate && typeof paymentData.dueDate === 'string') {
-        paymentData.dueDate = new Date(paymentData.dueDate);
+        paymentData.dueDate = toDayUTC(calendarDateKey(paymentData.dueDate)!);
       }
       if (paymentData.paidDate && typeof paymentData.paidDate === 'string') {
         paymentData.paidDate = new Date(paymentData.paidDate);
@@ -6561,6 +6570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const receivables = await storage.getContasReceberByStudentId(student.id);
         for (const receivable of receivables) {
           const key = receivable.asaasPaymentId || `local-${receivable.id}`;
+          // A subscription is only a recurring-payment template, not an invoice.
+          // Actual ASAAS invoices use pay_* IDs and are fetched below.
+          if (key.startsWith("sub_")) continue;
           paymentsById.set(key, {
             id: key,
             status: String(receivable.status || "PENDING").toUpperCase(),
@@ -6572,16 +6584,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
             bankSlipUrl: receivable.bankSlipUrl,
             pixCopyAndPaste: receivable.pixCopyAndPaste,
             createdAt: receivable.createdAt,
+            externalReference: receivable.externalReference,
           });
         }
       }
 
-      if (family.isFinancialResponsible && family.customerIds.length > 0) {
+      if (family.isFinancialResponsible) {
         try {
           const config = await storage.getSchoolConfig();
           if (config?.asaasApiKey) {
             const asaasService = new AsaasService(config.asaasApiKey);
-            for (const customerId of family.customerIds) {
+            const canonicalCustomerIds = new Set<string>();
+            const resolvedIdentities = new Map<string, string[]>();
+
+            for (const student of family.familyStudents) {
+              const responsibleCpf = normalizeIdentity(student.financialResponsibleCpf);
+              const responsibleEmail = normalizeEmail(student.financialResponsibleEmail);
+              const identityKey = `${responsibleCpf}:${responsibleEmail}`;
+              let matchedCustomerIds = resolvedIdentities.get(identityKey);
+
+              if (!matchedCustomerIds) {
+                const [cpfMatches, emailMatches] = await Promise.all([
+                  responsibleCpf
+                    ? asaasService.findCustomersByCpf(responsibleCpf)
+                    : Promise.resolve([]),
+                  responsibleEmail
+                    ? asaasService.findCustomersByEmail(responsibleEmail)
+                    : Promise.resolve([]),
+                ]);
+                matchedCustomerIds = Array.from(new Set(
+                  [...cpfMatches, ...emailMatches].map(customer => customer.id),
+                ));
+                resolvedIdentities.set(identityKey, matchedCustomerIds);
+              }
+
+              for (const customerId of matchedCustomerIds) {
+                canonicalCustomerIds.add(customerId);
+              }
+              if (student.asaasCustomerId) {
+                canonicalCustomerIds.add(student.asaasCustomerId);
+              }
+            }
+
+            for (const customerId of canonicalCustomerIds) {
               const invoices = await asaasService.getCustomerInvoices(customerId);
               for (const invoice of invoices) {
                 paymentsById.set(invoice.id, {
@@ -6595,6 +6640,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   bankSlipUrl: invoice.bankSlipUrl,
                   pixCopyAndPaste: invoice.pixCopyAndPaste,
                   createdAt: invoice.dateCreated || invoice.dueDate,
+                  externalReference: invoice.externalReference,
+                  subscription: invoice.subscription,
                 });
               }
             }
@@ -6604,23 +6651,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const paidStatuses = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH", "REFUNDED"]);
-      const ignoredStatuses = new Set(["CANCELLED", "DELETED"]);
-      const now = new Date();
-      const allPayments = Array.from(paymentsById.values())
+      const paidStatuses = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
+      const ignoredStatuses = new Set(["CANCELLED", "DELETED", "REFUNDED"]);
+      const brasiliaToday = dateKeyInTimeZone(new Date());
+      const normalizedPayments = Array.from(paymentsById.values())
         .map(payment => {
-          const dueDate = new Date(payment.dueDate);
           const isPastDue =
-            !Number.isNaN(dueDate.getTime()) &&
-            dueDate.getTime() < now.getTime() &&
+            isPaymentDateBefore(payment.dueDate, brasiliaToday) &&
             !paidStatuses.has(payment.status) &&
             !ignoredStatuses.has(payment.status);
           return {
             ...payment,
-            status: isPastDue ? "OVERDUE" : payment.status,
+            status: paidStatuses.has(payment.status)
+              ? "RECEIVED"
+              : isPastDue
+                ? "OVERDUE"
+                : payment.status,
           };
         })
         .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+      const allPayments = reconcileFamilyPayments(normalizedPayments);
 
       const visiblePayments = family.isFinancialResponsible ? allPayments : [];
 
@@ -7241,7 +7291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update the user's birth date using direct SQL to avoid Drizzle timestamp issues  
       if (studentData.birthDate) {
         await db.execute(sql`
-          UPDATE users SET birth_date = ${new Date(studentData.birthDate)} WHERE id = ${user.id}
+          UPDATE users SET birth_date = ${toDayUTC(calendarDateKey(studentData.birthDate)!)} WHERE id = ${user.id}
         `);
       }
 

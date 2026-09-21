@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useQuery } from "@tanstack/react-query";
 import { Gift, Phone, Mail, MessageCircle, Cake } from "lucide-react";
 import { BeltWithLabel } from "@/components/ui/belt";
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 interface BirthdayStudent {
   id: number;
@@ -30,7 +31,7 @@ export function BirthdayNotifications() {
 
   const calculateAge = (birthDate: string) => {
     const today = new Date();
-    const birth = new Date(birthDate);
+    const birth = parseCalendarDateAsLocal(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     
@@ -102,7 +103,7 @@ interface BirthdayListProps {
 function BirthdayList({ birthdays, onContact }: BirthdayListProps) {
   const calculateAge = (birthDate: string) => {
     const today = new Date();
-    const birth = new Date(birthDate);
+    const birth = parseCalendarDateAsLocal(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     

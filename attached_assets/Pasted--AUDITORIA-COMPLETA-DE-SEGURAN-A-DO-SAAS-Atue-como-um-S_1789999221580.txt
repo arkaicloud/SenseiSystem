@@ -1,0 +1,168 @@
+# AUDITORIA COMPLETA DE SEGURANÇA DO SAAS
+
+Atue como um **Senior Application Security Engineer (AppSec)** especializado em segurança de aplicações SaaS B2B, APIs REST, bancos de dados, autenticação, OWASP Top 10 e arquitetura multi-tenant.
+
+Sua tarefa é realizar uma **auditoria de segurança completa deste projeto**, analisando o código-fonte, backend, frontend, banco de dados, APIs, autenticação, autorização, configurações e infraestrutura disponíveis.
+
+IMPORTANTE:
+- Não altere código inicialmente.
+- Não remova funcionalidades.
+- Primeiro faça somente diagnóstico.
+- Não exponha valores de secrets, tokens, senhas ou dados pessoais no relatório.
+- Sempre informe arquivo, rota, tabela ou componente relacionado ao problema encontrado.
+- Não considere algo seguro apenas porque existe uma implementação. Verifique se ela realmente protege o fluxo.
+- Diferencie claramente: `SEGURO`, `ATENÇÃO`, `VULNERÁVEL` e `NÃO FOI POSSÍVEL VALIDAR`.
+
+---
+
+# 1. AUTENTICAÇÃO
+
+Verifique:
+
+- Todas as rotas privadas da API exigem autenticação?
+- Existem endpoints que deveriam ser privados, mas podem ser acessados sem login?
+- O backend valida o token ou apenas confia no frontend?
+- JWT/session é validado corretamente?
+- Tokens expirados são rejeitados?
+- Existe refresh token? Está implementado de forma segura?
+- Logout invalida sessão/token quando aplicável?
+- Existe proteção contra reutilização indevida de tokens?
+- Cookies utilizam `HttpOnly`, `Secure` e `SameSite` quando aplicável?
+- Há proteção contra session fixation/session hijacking?
+- Reset de senha utiliza tokens seguros, temporários e de uso único?
+- Existe enumeração de usuários no login, cadastro ou recuperação de senha?
+
+Tente identificar especialmente rotas do tipo:
+
+`/api/admin`
+`/api/users`
+`/api/customers`
+`/api/payments`
+`/api/files`
+`/api/settings`
+`/api/webhooks`
+
+e qualquer endpoint que manipule informações privadas.
+
+---
+
+# 2. AUTORIZAÇÃO E IDOR
+
+Não basta verificar se o usuário está autenticado.
+
+Valide se ele possui autorização para acessar cada recurso.
+
+Exemplo:
+
+`GET /api/customers/123`
+
+Um usuário do cliente A jamais deve conseguir consultar informações do cliente B alterando IDs, UUIDs ou parâmetros.
+
+Procure vulnerabilidades:
+
+- IDOR/BOLA
+- Broken Access Control
+- privilege escalation
+- horizontal privilege escalation
+- vertical privilege escalation
+- alteração de `user_id`
+- alteração de `tenant_id`
+- alteração de `company_id`
+- alteração de IDs enviados pelo frontend
+
+Verifique se permissões são validadas no BACKEND.
+
+---
+
+# 3. ISOLAMENTO MULTI-TENANT
+
+Se o SaaS possui múltiplas empresas/clientes:
+
+Valide se existe isolamento real entre tenants.
+
+Verifique:
+
+- `tenant_id`
+- `organization_id`
+- `company_id`
+- relacionamento usuário → empresa
+- queries filtradas pelo tenant
+- APIs filtradas pelo tenant
+- storage separado/logicamente isolado
+- relatórios
+- exports
+- dashboards
+- jobs/background workers
+
+Procure qualquer possibilidade de um cliente acessar dados de outro cliente.
+
+Considere vazamento cross-tenant como vulnerabilidade CRÍTICA.
+
+---
+
+# 4. SENHAS
+
+Verifique como as senhas são armazenadas.
+
+Senhas NÃO devem ser:
+
+- plaintext
+- criptografadas de forma reversível
+- SHA1
+- MD5
+- SHA256 simples
+
+Verifique se é utilizado algoritmo apropriado para password hashing, como:
+
+- Argon2id
+- bcrypt
+- scrypt
+- PBKDF2 adequadamente configurado
+
+Analise também:
+
+- salt
+- parâmetros de custo
+- comparação segura
+- política de senha
+- reset de senha
+- logs contendo senha
+
+Nunca exiba hashes ou senhas reais no relatório.
+
+---
+
+# 5. BANCO DE DADOS E RLS
+
+Analise todas as tabelas que armazenam dados de usuários ou empresas.
+
+Verifique:
+
+- Row Level Security (RLS)
+- tabelas sem RLS
+- policies excessivamente permissivas
+- policies usando `true`
+- acesso público indevido
+- roles com permissões excessivas
+- SELECT
+- INSERT
+- UPDATE
+- DELETE
+
+Se estiver utilizando Supabase/PostgreSQL, analise especialmente:
+
+- RLS habilitado
+- policies
+- `auth.uid()`
+- service_role
+- anon key
+- funções `SECURITY DEFINER`
+- grants
+- views
+- RPC/functions
+
+Verifique se `service_role` jamais é exposta no frontend.
+
+Produza uma tabela:
+
+| Tabela | RLS | Policies | Isolamento Tenant | R

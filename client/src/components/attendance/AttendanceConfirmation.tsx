@@ -10,6 +10,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { trackEvent } from "@/lib/analytics";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { calendarDateKey, localCalendarDateKey } from "@shared/calendarDates";
 
 interface ClassWithAttendance {
   id: number;
@@ -42,7 +43,7 @@ const AttendanceConfirmation: React.FC = () => {
   const classes: ClassWithAttendance[] = (todayClassesData?.classes || []).map((classItem: any) => {
     const userConfirmation = (userAttendanceData?.attendances || []).find(
       (att: any) => att.classId === classItem.id && 
-      format(new Date(att.date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+      calendarDateKey(att.date) === localCalendarDateKey()
     );
 
     return {

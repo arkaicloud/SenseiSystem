@@ -1,6 +1,15 @@
 // Utilitários para formatação de data brasileira
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
+
+const parseDisplayDate = (date: Date | string): Date => {
+  if (typeof date !== "string") return date;
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? parseCalendarDateAsLocal(date)
+    : new Date(date);
+};
+
 export const formatDate = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = parseDisplayDate(date);
   return new Intl.DateTimeFormat('pt-BR').format(d);
 };
 
@@ -24,7 +33,7 @@ export const formatTime = (date: Date | string): string => {
 };
 
 export const getDayOfWeek = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = parseDisplayDate(date);
   const days = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
   return days[d.getDay()];
 };

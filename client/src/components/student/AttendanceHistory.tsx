@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 interface AttendanceHistoryProps {
   studentId: number;
@@ -244,7 +245,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium">
-                          📅 {format(new Date(attendance.date), 'dd/MM/yyyy', { locale: ptBR })}
+                          📅 {format(parseCalendarDateAsLocal(attendance.date), 'dd/MM/yyyy', { locale: ptBR })}
                         </span>
                         <Badge className={getStatusBadgeColor(attendance.status)}>
                           {getStatusText(attendance.status)}

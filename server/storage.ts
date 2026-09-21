@@ -81,6 +81,8 @@ import {
 } from "@shared/schema";
 import { hashPassword } from "./auth";
 import { eq, and, gte, lte, desc, or, gt, isNull, lt, asc, sql } from "drizzle-orm";
+import { calendarDateKey } from "@shared/calendarDates";
+import { toDayUTC } from "./utils/date";
 
 export interface IStorage {
   // Database connection test
@@ -496,7 +498,9 @@ export class MemStorage implements IStorage {
       rg: insertUser.rg || null,
       emergencyContact: insertUser.emergencyContact || null,
       emergencyPhone: insertUser.emergencyPhone || null,
-      birthDate: insertUser.birthDate ? new Date(insertUser.birthDate) : null,
+      birthDate: insertUser.birthDate
+        ? toDayUTC(calendarDateKey(insertUser.birthDate)!)
+        : null,
       street: insertUser.street || null,
       number: insertUser.number || null,
       complement: insertUser.complement || null,
@@ -595,7 +599,9 @@ export class MemStorage implements IStorage {
       healthQuestionnaireCompletedAt: insertStudent.healthQuestionnaireCompletedAt || null,
       agreedToHealthTerms: insertStudent.agreedToHealthTerms || false,
       healthTermsAgreedAt: insertStudent.healthTermsAgreedAt || null,
-      enrollmentDate: insertStudent.enrollmentDate || new Date()
+      enrollmentDate: insertStudent.enrollmentDate
+        ? toDayUTC(calendarDateKey(insertStudent.enrollmentDate)!)
+        : new Date()
     };
     this.students.set(id, student);
     return student;
@@ -689,9 +695,9 @@ export class MemStorage implements IStorage {
     );
 
     if (date) {
-      const targetDate = date.toISOString().split('T')[0];
+      const targetDate = calendarDateKey(date);
       attendances = attendances.filter(attendance => {
-        const attendanceDate = new Date(attendance.date).toISOString().split('T')[0];
+        const attendanceDate = calendarDateKey(attendance.date);
         return attendanceDate === targetDate;
       });
     }
@@ -710,8 +716,14 @@ export class MemStorage implements IStorage {
       (attendance) => {
         if (attendance.studentId !== studentId) return false;
 
-        const attendanceDate = new Date(attendance.date);
-        return attendanceDate >= startDate && attendanceDate <= endDate;
+        const attendanceDate = calendarDateKey(attendance.date);
+        const startDateKey = calendarDateKey(startDate);
+        const endDateKey = calendarDateKey(endDate);
+        return !!attendanceDate &&
+          !!startDateKey &&
+          !!endDateKey &&
+          attendanceDate >= startDateKey &&
+          attendanceDate <= endDateKey;
       }
     );
 
@@ -1482,6 +1494,9 @@ export class DatabaseStorage implements IStorage {
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values({
       ...userData,
+      birthDate: userData.birthDate
+        ? toDayUTC(calendarDateKey(userData.birthDate)!)
+        : userData.birthDate,
       role: userData.role || "student",
       joinDate: userData.joinDate || new Date(),
       active: userData.active ?? true
@@ -1490,9 +1505,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const normalizedUserData = {
+      ...userData,
+      ...(userData.birthDate !== undefined
+        ? {
+            birthDate: userData.birthDate
+              ? toDayUTC(calendarDateKey(userData.birthDate)!)
+              : userData.birthDate,
+          }
+        : {}),
+    };
     const [updatedUser] = await db
       .update(users)
-      .set(userData)
+      .set(normalizedUserData)
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
@@ -1572,6 +1597,9 @@ export class DatabaseStorage implements IStorage {
   async createStudent(studentData: InsertStudent): Promise<Student> {
     const [student] = await db.insert(students).values({
       ...studentData,
+      enrollmentDate: studentData.enrollmentDate
+        ? toDayUTC(calendarDateKey(studentData.enrollmentDate)!)
+        : studentData.enrollmentDate,
       beltLevel: studentData.beltLevel || "white",
       stripes: studentData.stripes || 0,
       lastPromotionDate: studentData.lastPromotionDate || new Date(),
@@ -1581,9 +1609,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateStudent(id: number, studentData: Partial<Student>): Promise<Student | undefined> {
+    const normalizedStudentData = {
+      ...studentData,
+      ...(studentData.enrollmentDate !== undefined
+        ? {
+            enrollmentDate: studentData.enrollmentDate
+              ? toDayUTC(calendarDateKey(studentData.enrollmentDate)!)
+              : studentData.enrollmentDate,
+          }
+        : {}),
+    };
     const [updatedStudent] = await db
       .update(students)
-      .set(studentData)
+      .set(normalizedStudentData)
       .where(eq(students.id, id))
       .returning();
     return updatedStudent;
@@ -1678,11 +1716,11 @@ export class DatabaseStorage implements IStorage {
 
   async getAttendanceByClass(classId: number, date?: Date): Promise<Attendance[]> {
     if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      const dateKey = calendarDateKey(date);
+      if (!dateKey) return [];
+      const startOfDay = toDayUTC(dateKey);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
       return await db.select()
         .from(attendance)
@@ -1690,7 +1728,7 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(attendance.classId, classId),
             gte(attendance.date, startOfDay),
-            lte(attendance.date, endOfDay)
+            lt(attendance.date, endOfDay)
           )
         );
     }
@@ -1779,13 +1817,17 @@ export class DatabaseStorage implements IStorage {
 
   // Attendance Changes
   async getAttendanceChanges(studentId: number, classId: number, date: Date): Promise<AttendanceChanges[]> {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = calendarDateKey(date);
+    if (!dateStr) return [];
+    const startDate = toDayUTC(dateStr);
+    const endDate = new Date(startDate);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
     return await db.select().from(attendanceChanges)
       .where(and(
         eq(attendanceChanges.studentId, studentId),
         eq(attendanceChanges.classId, classId),
-        gte(attendanceChanges.date, new Date(dateStr + ' 00:00:00')),
-        lte(attendanceChanges.date, new Date(dateStr + ' 23:59:59'))
+        gte(attendanceChanges.date, startDate),
+        lt(attendanceChanges.date, endDate)
       ));
   }
 

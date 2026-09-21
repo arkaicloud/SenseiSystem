@@ -6,6 +6,7 @@ import { Clock, User, CheckCircle, XCircle, Loader2, Calendar, BanIcon } from "l
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { localCalendarDateKey } from "@shared/calendarDates";
 
 interface ClassSession {
   id: number;
@@ -36,7 +37,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
 
   const handleConfirm = (classSession: ClassSession) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localCalendarDateKey();
     const dateISO = classSession.dateISO || today;
 
     confirmMutation.mutate({
@@ -46,7 +47,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   };
 
   const handleCancel = (classSession: ClassSession) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localCalendarDateKey();
     const dateISO = classSession.dateISO || today;
 
     cancelMutation.mutate({

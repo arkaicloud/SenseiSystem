@@ -1,4 +1,6 @@
 // client/src/lib/formatters.ts
+import { calendarDateKey, parseCalendarDateAsLocal } from "@shared/calendarDates";
+
 export const onlyDigits = (v?: string | null) => (v || "").replace(/\D+/g, "");
 export const formatName = (s?: string | null) => (s || "").trim();
 
@@ -49,7 +51,7 @@ export const unformatCEP = (v?: string | null) => {
 
 export function toDisplayDate(iso?: string | null) {
   if (!iso) return "";
-  const d = new Date(iso);
+  const d = parseCalendarDateAsLocal(iso);
   if (Number.isNaN(d.getTime())) return "";
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -65,8 +67,11 @@ export function toISODate(display?: string | null): string | null {
       const [day, month, year] = parts;
       if (day && month && year && year.length === 4) {
         const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        if (!isNaN(date.getTime())) {
-          return date.toISOString().split("T")[0];
+        if (!isNaN(date.getTime()) &&
+            date.getFullYear() === parseInt(year) &&
+            date.getMonth() === parseInt(month) - 1 &&
+            date.getDate() === parseInt(day)) {
+          return calendarDateKey(date) || `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
         }
       }
     }

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { parseCalendarDateAsLocal } from '@shared/calendarDates';
 
 export interface BeltLevel {
   id: number;
@@ -33,7 +34,7 @@ export function useBeltLevels(birthDate?: string | Date, usePublicEndpoint?: boo
   const getAgeBasedCategory = (): 'adult' | 'child' | 'all' => {
     if (!birthDate) return 'all';
     
-    const birth = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
+    const birth = typeof birthDate === 'string' ? parseCalendarDateAsLocal(birthDate) : birthDate;
     const today = new Date();
     const age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();

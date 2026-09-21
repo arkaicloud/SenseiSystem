@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { parsePaymentDateAsLocal } from '@shared/paymentDates';
 
 interface Payment {
   id: number | string;
@@ -135,10 +136,6 @@ export default function PaymentPanel() {
     window.open(url, '_blank');
   };
 
-  const isOverdue = (dueDate: string) => {
-    return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -196,7 +193,7 @@ export default function PaymentPanel() {
       <div className="grid gap-4">
         {payments.map((payment) => (
           <Card key={payment.id} className={`${
-            payment.status === 'OVERDUE' || isOverdue(payment.dueDate) 
+            payment.status === 'OVERDUE'
               ? 'border-l-4 border-l-red-500' 
               : payment.status === 'RECEIVED' 
                 ? 'border-l-4 border-l-green-500'
@@ -209,7 +206,7 @@ export default function PaymentPanel() {
                   <CardDescription className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      Vencimento: {format(new Date(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                      Vencimento: {format(parsePaymentDateAsLocal(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                     </span>
                     <span className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
@@ -231,7 +228,7 @@ export default function PaymentPanel() {
 
             <CardContent className="space-y-4">
               {/* Alerta de vencimento */}
-              {(payment.status === 'OVERDUE' || isOverdue(payment.dueDate)) && (
+              {payment.status === 'OVERDUE' && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">

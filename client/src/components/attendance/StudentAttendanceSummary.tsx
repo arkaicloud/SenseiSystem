@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { calendarDateKey, localCalendarDateKey, parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 interface StudentAttendanceSummaryProps {
   studentId: number;
@@ -70,7 +71,7 @@ const StudentAttendanceSummary: React.FC<StudentAttendanceSummaryProps> = ({
     targetMonth.setMonth(targetMonth.getMonth() - (5 - index));
     
     return attendances.filter(att => {
-      const attDate = new Date(att.date);
+      const attDate = parseCalendarDateAsLocal(att.date);
       return attDate.getMonth() === targetMonth.getMonth() && 
              attDate.getFullYear() === targetMonth.getFullYear();
     }).length;
@@ -82,7 +83,7 @@ const StudentAttendanceSummary: React.FC<StudentAttendanceSummaryProps> = ({
   
   // Obter últimas 5 presenças
   const recentAttendances = [...attendances]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) => (calendarDateKey(b.date) || "").localeCompare(calendarDateKey(a.date) || ""))
     .slice(0, 5);
     
   return (
@@ -149,7 +150,7 @@ const StudentAttendanceSummary: React.FC<StudentAttendanceSummaryProps> = ({
                     <span>{attendance.class?.name || t('aula')}</span>
                   </div>
                   <Badge variant="outline">
-                    {formatDate(new Date(attendance.date))}
+                    {formatDate(parseCalendarDateAsLocal(attendance.date))}
                   </Badge>
                 </div>
               ))}

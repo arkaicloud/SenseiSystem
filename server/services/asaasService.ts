@@ -212,17 +212,40 @@ export class AsaasService {
     return response.data;
   }
 
-  async findCustomerByCpf(cpfCnpj: string): Promise<AsaasCustomer | null> {
+  async findCustomersByCpf(cpfCnpj: string): Promise<AsaasCustomer[]> {
     try {
+      const normalizedCpfCnpj = String(cpfCnpj || '').replace(/\D/g, '');
+      if (!normalizedCpfCnpj) return [];
       const response = await this.client.get('/customers', {
-        params: { cpfCnpj }
+        params: { cpfCnpj: normalizedCpfCnpj }
       });
-      
-      return response.data?.data?.[0] || null;
+      return response.data?.data || [];
     } catch (error) {
       console.error('Error finding customer by CPF:', error);
-      return null;
+      return [];
     }
+  }
+
+  async findCustomerByCpf(cpfCnpj: string): Promise<AsaasCustomer | null> {
+    return (await this.findCustomersByCpf(cpfCnpj))[0] || null;
+  }
+
+  async findCustomersByEmail(email: string): Promise<AsaasCustomer[]> {
+    try {
+      const normalizedEmail = String(email || '').trim().toLowerCase();
+      if (!normalizedEmail) return [];
+      const response = await this.client.get('/customers', {
+        params: { email: normalizedEmail }
+      });
+      return response.data?.data || [];
+    } catch (error) {
+      console.error('Error finding customer by email:', error);
+      return [];
+    }
+  }
+
+  async findCustomerByEmail(email: string): Promise<AsaasCustomer | null> {
+    return (await this.findCustomersByEmail(email))[0] || null;
   }
 
   async createPaymentForStudent(customerId: string, studentData: any, planData: any): Promise<AsaasPayment> {
@@ -285,6 +308,9 @@ export class AsaasService {
     if (cpf) {
       existingCustomer = await this.findCustomerByCpf(cpf);
     }
+    if (!existingCustomer && email) {
+      existingCustomer = await this.findCustomerByEmail(email);
+    }
 
     if (existingCustomer) {
       return { customer: existingCustomer, created: false };
@@ -341,10 +367,7 @@ export class AsaasService {
       
       // If not found by CPF, try by email
       if (!customer && cpfOrEmail.includes('@')) {
-        const response = await this.client.get('/customers', {
-          params: { email: cpfOrEmail }
-        });
-        customer = response.data?.data?.[0] || null;
+        customer = await this.findCustomerByEmail(cpfOrEmail);
       }
 
       if (!customer) {

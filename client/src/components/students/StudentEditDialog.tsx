@@ -41,6 +41,7 @@ import { Check, ChevronsUpDown, Ticket, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { calendarDateKey, localCalendarDateKey } from "@shared/calendarDates";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 const studentEditSchema = z.object({
@@ -262,8 +263,8 @@ export default function StudentEditDialog({
       form.reset({
         firstName: studentData.firstName || "",
         lastName: studentData.lastName || "",
-        birthDate: studentData.birthDate ? new Date(studentData.birthDate).toISOString().split("T")[0] : null,
-        enrollmentDate: studentData.enrollmentDate ? new Date(studentData.enrollmentDate).toISOString().split("T")[0] : null,
+        birthDate: calendarDateKey(studentData.birthDate),
+        enrollmentDate: calendarDateKey(studentData.enrollmentDate),
         sex: studentData.sex || null,
         cpf: studentData.cpf || null,
         rg: studentData.rg || null,
@@ -280,9 +281,7 @@ export default function StudentEditDialog({
         zipCode: studentData.address?.zip || null,
         beltLevel: studentData.graduation?.beltLevel || "white",
         stripes: studentData.graduation?.stripes || 0,
-        lastPromotionDate: studentData.graduation?.graduationDate
-          ? new Date(studentData.graduation.graduationDate).toISOString().split("T")[0]
-          : null,
+        lastPromotionDate: calendarDateKey(studentData.graduation?.graduationDate),
         financialResponsibleName: studentData.financialResponsibleName || null,
         financialResponsibleCpf: studentData.financialResponsibleCpf || null,
         financialResponsibleEmail: studentData.financialResponsibleEmail || null,
@@ -894,7 +893,7 @@ export default function StudentEditDialog({
                             const selectedCoupon = coupons.find((coupon) => coupon.code === field.value);
                             const isCouponUsable = (coupon: StudentCoupon) =>
                               coupon.active &&
-                              (!coupon.expiresAt || new Date(coupon.expiresAt) >= new Date()) &&
+                              (!coupon.expiresAt || calendarDateKey(coupon.expiresAt)! >= localCalendarDateKey()) &&
                               (coupon.maxUses === null || coupon.usedCount < coupon.maxUses);
 
                             return (
@@ -932,7 +931,7 @@ export default function StudentEditDialog({
                                               const usable = isCouponUsable(coupon);
                                               const status = !coupon.active
                                                 ? "Inativo"
-                                                : coupon.expiresAt && new Date(coupon.expiresAt) < new Date()
+                                                : coupon.expiresAt && calendarDateKey(coupon.expiresAt)! < localCalendarDateKey()
                                                   ? "Expirado"
                                                   : coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses
                                                     ? "Esgotado"

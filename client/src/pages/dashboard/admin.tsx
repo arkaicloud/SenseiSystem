@@ -14,6 +14,7 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BELT_NAMES } from '@/components/ui/belt';
+import { localCalendarDateKey } from '@shared/calendarDates';
 
 const KpiCard = ({ value, label, icon: Icon, iconBg, iconColor }: {
   value: string | number;
@@ -160,8 +161,8 @@ const DashboardSkeleton = () => (
 export default function AdminDashboard() {
   const { data, isLoading } = useDashboard();
   const now = new Date();
-  const monthStart = startOfMonth(now).toISOString().slice(0, 10);
-  const monthEnd   = endOfMonth(now).toISOString().slice(0, 10);
+  const monthStart = localCalendarDateKey(startOfMonth(now));
+  const monthEnd   = localCalendarDateKey(endOfMonth(now));
   const { data: financialData } = useQuery<any>({
     queryKey: ['/api/financial/payments', monthStart, monthEnd],
     queryFn: async () => {
@@ -303,7 +304,7 @@ export default function AdminDashboard() {
                       <Button
                         size="sm"
                         className="h-8 px-3 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg border-0"
-                        onClick={() => window.location.href = `/attendance?date=${new Date().toISOString().split('T')[0]}&class=${c.id}`}
+                        onClick={() => window.location.href = `/attendance?date=${localCalendarDateKey()}&class=${c.id}`}
                       >
                         Acessar
                       </Button>

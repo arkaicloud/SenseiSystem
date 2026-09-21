@@ -42,6 +42,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Ticket, Search, Loader2, GraduationCap } from "lucide-react";
+import { calendarDateKey, localCalendarDateKey, parseCalendarDateAsLocal } from "@shared/calendarDates";
 
 type Coupon = {
   id: number;
@@ -176,7 +177,7 @@ export default function CouponsPage() {
       maxUses: coupon.maxUses ?? undefined,
       active: coupon.active,
       expiresAt: coupon.expiresAt
-        ? new Date(coupon.expiresAt).toISOString().split("T")[0]
+        ? calendarDateKey(coupon.expiresAt)
         : null,
     });
     setDialogOpen(true);
@@ -293,7 +294,7 @@ export default function CouponsPage() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {coupon.expiresAt
-                      ? new Date(coupon.expiresAt).toLocaleDateString("pt-BR")
+                       ? parseCalendarDateAsLocal(coupon.expiresAt).toLocaleDateString("pt-BR")
                       : "Sem vencimento"}
                   </TableCell>
                   <TableCell>
@@ -429,7 +430,7 @@ export default function CouponsPage() {
                       <FormControl>
                         <Input
                           type="date"
-                          min={new Date().toISOString().split("T")[0]}
+                           min={localCalendarDateKey()}
                           value={field.value || ""}
                           onChange={(e) => field.onChange(e.target.value || null)}
                         />

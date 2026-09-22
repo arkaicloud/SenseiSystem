@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGuardian } from "@/contexts/guardian-context";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Calendar, ChartNoAxesColumnIncreasing, ReceiptText, UserRound } from "lucide-react";
+import { Bell, Calendar, Camera, ChartNoAxesColumnIncreasing, ReceiptText, UserRound } from "lucide-react";
 import { TodayClasses } from "@/components/student/TodayClasses";
 import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
@@ -40,6 +40,9 @@ export default function StudentDashboard() {
   const displayFirstName = isViewingManagedStudent
     ? activeStudent.firstName
     : user?.firstName;
+  const displayLastName = isViewingManagedStudent
+    ? activeStudent.lastName
+    : user?.lastName;
 
   const classesTodayKey = isViewingManagedStudent
     ? [`/api/classes/today?studentUserId=${activeStudent.userId}`]
@@ -169,10 +172,7 @@ export default function StudentDashboard() {
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
                 {schoolInfo?.schoolName?.split(" ")[0] ?? "HUIOS"}
               </span>
-              <p className="mt-5 text-sm text-white/70">Seu perfil</p>
-              <h1 className="mt-1 text-2xl font-bold leading-tight text-white">
-                {displayFirstName}
-              </h1>
+              <p className="mt-5 text-sm text-white/70">Bem-vindo de volta</p>
             </div>
             <div className="flex items-center gap-2">
               <Link
@@ -193,17 +193,6 @@ export default function StudentDashboard() {
                   </span>
                 )}
               </Link>
-              <Avatar className="size-16 border-2 border-white/70 shadow-lg">
-                <AvatarImage
-                  src={(studentData as any)?.avatarImage || undefined}
-                  alt={displayFirstName || "Aluno"}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-white/20 text-lg font-bold text-white">
-                  {(displayFirstName || "?").charAt(0).toUpperCase()}
-                  {(user?.lastName || "").charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
               <div className="md:hidden">
                 <GuardianMobileSwitcher />
               </div>
@@ -232,6 +221,40 @@ export default function StudentDashboard() {
       </div>
 
       <div className="relative z-20 -mt-12 space-y-5 px-4 pb-24 md:px-5">
+        <Link
+          href="/settings"
+          className="group relative block rounded-[28px] border border-border/60 bg-card px-5 pb-4 pt-12 text-center shadow-xl shadow-slate-900/10 transition-shadow hover:shadow-2xl hover:shadow-slate-900/15"
+          aria-label="Abrir perfil e alterar foto"
+        >
+          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+            <div className="relative">
+              <Avatar className="size-24 border-4 border-card bg-primary shadow-lg ring-1 ring-border/40">
+                <AvatarImage
+                  src={(studentData as any)?.avatarImage || undefined}
+                  alt={displayFirstName || "Aluno"}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-primary text-2xl font-bold text-primary-foreground">
+                  {(displayFirstName || "?").charAt(0).toUpperCase()}
+                  {(displayLastName || "").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground shadow-md">
+                <Camera className="size-3.5" />
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="truncate text-lg font-bold text-foreground">
+              {displayFirstName} {displayLastName}
+            </h1>
+            <Camera className="size-4 shrink-0 text-primary" />
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Toque para alterar sua foto de perfil
+          </p>
+        </Link>
+
         <div className="rounded-3xl border border-border/60 bg-card p-3 shadow-xl shadow-slate-900/10">
           <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Acesso rápido

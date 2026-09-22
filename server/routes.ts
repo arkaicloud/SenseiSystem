@@ -933,6 +933,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         beltLevel: student.beltLevel,
         stripes: student.stripes,
         paymentPlanId: student.paymentPlanId,
+        requiresMedicalCertificate: student.requiresMedicalCertificate,
+        medicalCertificateStatus: student.medicalCertificateStatus,
         isFinancialResponsible: student.financialResponsibleCpf === requestUser.cpf
       });
     } catch (error) {

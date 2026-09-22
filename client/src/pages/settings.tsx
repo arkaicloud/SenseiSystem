@@ -97,6 +97,13 @@ export default function Settings() {
   });
   const profileStudent = studentData?.student || studentData;
 
+  const { data: schoolPublicInfo } = useQuery<{
+    schoolName?: string;
+    whatsapp?: string | null;
+  }>({
+    queryKey: ["/api/school/public-info"],
+  });
+
   const updateAvatarMutation = useMutation({
     mutationFn: async (data: AvatarData) => {
       const response = await apiRequest(
@@ -348,6 +355,20 @@ export default function Settings() {
     }
   };
 
+  const openSchoolWhatsApp = () => {
+    const digits = (schoolPublicInfo?.whatsapp || "").replace(/\D/g, "");
+    if (!digits) {
+      toast({
+        title: "WhatsApp não cadastrado",
+        description: "Peça à secretaria da escola para cadastrar o WhatsApp de atendimento.",
+      });
+      return;
+    }
+
+    const phone = digits.startsWith("55") ? digits : `55${digits}`;
+    window.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="mx-auto w-full max-w-md space-y-5 px-4 pb-24 pt-4 md:px-5 md:pb-8 md:pt-5">
       <header className="relative flex items-center justify-center">
@@ -510,8 +531,11 @@ export default function Settings() {
             className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={() =>
               toast({
-                title: "SenseiSystem",
-                description: "Gestão da sua escola de artes marciais.",
+                title: schoolPublicInfo?.schoolName
+                  ? `Sobre o ${schoolPublicInfo.schoolName}`
+                  : "Sobre o SenseiSystem",
+                description:
+                  "Acompanhe sua agenda, reserve aulas, registre presenças, veja sua graduação, receba avisos e consulte pagamentos em um só lugar.",
               })
             }
           >
@@ -524,17 +548,15 @@ export default function Settings() {
           <button
             type="button"
             className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
-            onClick={() =>
-              toast({
-                title: "Ajuda e FAQ",
-                description: "Fale com a secretaria da escola para tirar dúvidas.",
-              })
-            }
+            onClick={openSchoolWhatsApp}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
               <MessageCircle className="size-4" />
             </span>
-            <span className="min-w-0 flex-1 text-sm font-medium text-foreground">Ajuda e FAQ</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-foreground">Dúvidas e suporte</span>
+              <span className="block text-[11px] text-muted-foreground">Fale com a escola pelo WhatsApp</span>
+            </span>
             <ChevronRight className="size-4 text-muted-foreground" />
           </button>
           <button

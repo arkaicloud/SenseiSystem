@@ -286,6 +286,12 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
+                      <h3
+                        className={`text-base font-bold ${classSession.isCancelled ? "line-through text-muted-foreground" : "text-foreground"}`}
+                        data-testid={`text-class-name-${selectedDay?.date}-${classSession.id}`}
+                      >
+                        {classSession.name}
+                      </h3>
                       <div className="flex items-center gap-2">
                         <Clock className="size-3.5 text-primary" />
                         <span className="text-sm font-medium text-primary">
@@ -305,12 +311,6 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                           </p>
                         </div>
                       </div>
-                      <h3
-                        className={`mt-2 text-base font-bold ${classSession.isCancelled ? "line-through text-muted-foreground" : "text-foreground"}`}
-                        data-testid={`text-class-name-${selectedDay?.date}-${classSession.id}`}
-                      >
-                        {classSession.name}
-                      </h3>
                       {classSession.isCancelled && (
                         <p className="mt-1 text-[10px] font-semibold text-red-500">
                           Esta aula foi cancelada pela academia.

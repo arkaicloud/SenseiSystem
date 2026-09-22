@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,12 @@ interface TodayClassesProps {
 
 export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: TodayClassesProps) => {
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const handleConfirm = (classSession: ClassSession) => {
     const today = localCalendarDateKey();
@@ -76,6 +82,33 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
     return time;
   };
 
+  const getTimeInMinutes = (time?: string) => {
+    if (!time) return Number.MAX_SAFE_INTEGER;
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const currentBrasiliaMinutes = (() => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now);
+    return (
+      Number(parts.find((part) => part.type === "hour")?.value || 0) * 60 +
+      Number(parts.find((part) => part.type === "minute")?.value || 0)
+    );
+  })();
+
+  const visibleClasses = classes.filter((classSession) => {
+    if (classSession.isCancelled) return false;
+    const endTime = classSession.endTime
+      ? getTimeInMinutes(classSession.endTime)
+      : getTimeInMinutes(classSession.startTime) + (classSession.duration || 90);
+    return endTime > currentBrasiliaMinutes;
+  });
+
   if (isLoading) {
     return (
       <Card>
@@ -100,19 +133,19 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
     );
   }
 
-  if (!classes || classes.length === 0) {
+  if (!visibleClasses || visibleClasses.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="overflow-hidden rounded-2xl border-border/60 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
             Aulas de Hoje
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p>Nenhuma aula agendada para hoje</p>
+        <CardContent className="pb-8">
+          <div className="py-5 text-center text-muted-foreground">
+            <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+            <p className="text-sm">Nenhuma aula disponível para hoje</p>
           </div>
         </CardContent>
       </Card>
@@ -120,86 +153,60 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="overflow-hidden rounded-2xl border-border/60 shadow-sm">
+      <CardHeader className="flex-row items-start justify-between gap-3 pb-3">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base">
           <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
           Aulas de Hoje
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-        </p>
+          </CardTitle>
+          <p className="mt-1 text-xs capitalize text-muted-foreground">
+            {format(now, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+          </p>
+        </div>
+        <Badge variant="secondary" className="rounded-full px-2.5 text-[11px]">
+          {visibleClasses.length} {visibleClasses.length === 1 ? "aula" : "aulas"}
+        </Badge>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {classes.map((classSession) => (
+      <CardContent className="space-y-3 px-3 pb-4 pt-0">
+        {visibleClasses.map((classSession) => (
           <div
             key={classSession.id}
-            className={`border rounded-lg p-4 transition-shadow ${
-              classSession.isCancelled
-                ? 'border-red-200 bg-red-50/50 opacity-80'
-                : 'hover:shadow-sm'
-            }`}
+            className="rounded-2xl border border-border/60 border-l-4 border-l-primary bg-card px-3 py-3 shadow-[0_5px_18px_rgba(30,64,175,0.06)] transition-shadow hover:shadow-[0_8px_24px_rgba(30,64,175,0.10)]"
           >
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className={`font-medium ${classSession.isCancelled ? 'line-through text-muted-foreground' : ''}`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="truncate text-[15px] font-bold text-foreground">
                     {classSession.name}
                   </h4>
-                  {classSession.isCancelled ? (
-                    <Badge className="text-xs bg-red-100 text-red-600 border-red-200 gap-1">
-                      <BanIcon className="w-3 h-3" /> Cancelada
+                  {classSession.maxCapacity && (
+                    <Badge variant="secondary" className="shrink-0 rounded-full px-2 text-[10px]">
+                      {classSession.attendanceCount || 0}/{classSession.maxCapacity}
                     </Badge>
-                  ) : (
-                    <>
-                      <Badge variant="outline" className="text-xs">
-                        {classSession.location || 'Tatame Principal'}
-                      </Badge>
-                      {classSession.maxCapacity && (
-                        <Badge variant="secondary" className="text-xs">
-                          {classSession.attendanceCount || 0}/{classSession.maxCapacity}
-                        </Badge>
-                      )}
-                    </>
                   )}
                 </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{formatTime(classSession.startTime, classSession.duration)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span>{classSession.instructorName || 'Instrutor'}</span>
-                  </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1 font-medium text-primary">
+                    <Clock className="h-3.5 w-3.5" />
+                    {formatTime(classSession.startTime, classSession.duration)}
+                  </span>
+                  {classSession.location && <span className="truncate">{classSession.location}</span>}
                 </div>
-
-                {classSession.isCancelled && (
-                  <p className="text-xs text-red-500 font-medium mt-1">
-                    Esta aula foi cancelada pela academia.
-                  </p>
-                )}
               </div>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 sm:flex-shrink-0">
-                {classSession.isCancelled ? (
-                  <div className="flex items-center justify-center gap-2 text-red-500 py-2 px-3 bg-red-100 rounded-md text-sm font-medium">
-                    <BanIcon className="w-4 h-4" />
-                    <span>Aula cancelada</span>
-                  </div>
-                ) : isConfirmed(classSession) ? (
+              <div className="flex shrink-0 items-center gap-2">
+                {isConfirmed(classSession) ? (
                   <>
-                    <div className="flex items-center justify-center gap-2 text-green-600 py-2 px-3 bg-green-50 rounded-md sm:bg-transparent sm:p-0">
-                      <CheckCircle className="w-5 h-5" />
-                      <span className="text-sm font-medium">Confirmado</span>
+                    <div className="flex items-center gap-1.5 text-emerald-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-xs font-semibold">Reservada</span>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleCancel(classSession)}
                       disabled={isMutating}
-                      className="w-full sm:w-auto text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+                      className="h-8 px-2 text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-700"
                     >
                       {isMutating ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -221,7 +228,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     ) : (
                       <CheckCircle className="w-4 h-4 mr-2" />
                     )}
-                    Confirmar Presença
+                     Reservar aula
                   </Button>
                 )}
               </div>

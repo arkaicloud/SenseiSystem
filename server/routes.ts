@@ -3494,6 +3494,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = getBrasiliaDate();
       const currentDayOfWeek = getBrasiliaDayOfWeek();
       const dayOfWeekName = today.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' }).toLowerCase();
+       const currentClock = getBrasiliaClock(today);
+       const currentMinutes = currentClock.hour * 60 + currentClock.minute;
 
       console.log(`Buscando aulas para hoje: ${calendarDateKeyInTimeZone(today)}, dia da semana: ${dayOfWeekName} (${currentDayOfWeek})`);
       console.log(`Total de aulas encontradas: ${allClasses.length}`);
@@ -3529,7 +3531,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Filtrar aulas APENAS do dia atual da semana
       const todaysClasses = allowedClasses.filter(classItem => {
-        return classItem.isActive !== false && classItem.dayOfWeek === currentDayOfWeek;
+         if (classItem.isActive === false || classItem.dayOfWeek !== currentDayOfWeek) {
+           return false;
+         }
+
+         const [startHour, startMinute] = classItem.startTime.split(":").map(Number);
+         const endMinutes = startHour * 60 + startMinute + classItem.duration;
+
+         // A tela inicial mostra somente aulas ainda válidas hoje.
+         return endMinutes > currentMinutes;
       });
 
       console.log(`Aulas filtradas para hoje (${dayOfWeekName}): ${todaysClasses.length}`);

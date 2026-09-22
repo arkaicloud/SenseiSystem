@@ -11,7 +11,6 @@ import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
 import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import { Link } from "wouter";
-const beltImg = "/dashboard-assets/training-card.webp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function StudentDashboard() {
@@ -288,26 +287,6 @@ export default function StudentDashboard() {
               status={(studentData as any).medicalCertificateStatus}
             />
           )}
-
-        <div className="vyta-card-hero">
-          <img
-            src={beltImg}
-            alt="Treino"
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: 'center 30%' }}
-          />
-          <div className="vyta-card-hero-gradient" />
-          <div className="vyta-card-hero-content">
-            <span className="vyta-pill mb-2">
-              <Calendar className="w-3 h-3" />
-              {new Date().toLocaleDateString('pt-BR', { weekday: 'long' })}
-            </span>
-            <h3 className="text-lg font-bold text-white font-inter mt-1">Aulas de Hoje</h3>
-            <p className="text-sm text-white/70 font-inter">Confirme sua presença nas aulas</p>
-          </div>
-        </div>
 
         {(studentData as any)?.id && (
           <TodayClasses

@@ -85,7 +85,7 @@ export default function WeekAgendaPage() {
   }
 
   return (
-    <div className="min-h-full bg-muted/20 font-inter -mx-3 -mt-3 px-3 pb-24 pt-3 md:mx-0 md:mt-0 md:px-0 md:pt-0">
+    <div className="min-h-full bg-muted/20 font-inter -mx-3 -mt-3 px-3 pb-32 pt-3 md:mx-0 md:mt-0 md:px-0 md:pb-8 md:pt-0">
       <div className="mx-auto max-w-2xl">
         <WeekAgenda
           weekData={weekData?.weekData || []}

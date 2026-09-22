@@ -3768,7 +3768,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 canCancel: !isCancelled && (attendanceConfirmed || bookingStatus === 'CONFIRMED'),
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
-                  : 'Instrutor'
+                  : null
               };
 
               console.log(`  📝 Aula processada: ${classData.name} - ${classData.startTime}`);
@@ -3791,7 +3791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 canCancel: false,
                 instructorName: classItem.instructor 
                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}`
-                  : 'Instrutor'
+                  : null
               };
             }
           })

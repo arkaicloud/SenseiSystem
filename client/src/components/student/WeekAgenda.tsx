@@ -8,13 +8,12 @@ import {
   CheckCircle,
   Clock,
   Loader2,
-  Plus,
   XCircle,
 } from "lucide-react";
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { localCalendarDateKey } from "@shared/calendarDates";
+import { calendarDateKeyInTimeZone } from "@shared/calendarDates";
 import { Link } from "wouter";
 
 interface ClassSession {
@@ -49,7 +48,7 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
   const days = weekData ?? [];
   const firstDayWithClasses = days.find((day) => day.classes.length > 0)?.date;
-  const today = localCalendarDateKey();
+  const today = calendarDateKeyInTimeZone(new Date());
   const [selectedDate, setSelectedDate] = useState(today);
 
   useEffect(() => {
@@ -100,7 +99,10 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
   const formatSelectedDate = (dateStr?: string) => {
     if (!dateStr) return "Aulas";
     try {
-      return format(parseISO(dateStr), "EEEE, d 'de' MMMM", { locale: ptBR });
+      const dateLabel = format(parseISO(dateStr), "d 'de' MMMM", { locale: ptBR });
+      if (dateStr === today) return `Hoje, ${dateLabel}`;
+      const weekday = format(parseISO(dateStr), "EEEE", { locale: ptBR });
+      return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${dateLabel}`;
     } catch {
       return dateStr;
     }
@@ -123,6 +125,30 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
     }
   };
 
+  const getTimeInMinutes = (time?: string) => {
+    if (!time) return Number.MAX_SAFE_INTEGER;
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const isClassPast = (classSession: ClassSession, date: string) => {
+    if (date < today) return true;
+    if (date > today) return false;
+
+    const endTime = classSession.endTime
+      ? getTimeInMinutes(classSession.endTime)
+      : getTimeInMinutes(classSession.startTime) + 90;
+    const brasiliaTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date());
+    const currentHour = Number(brasiliaTime.find((part) => part.type === "hour")?.value || 0);
+    const currentMinute = Number(brasiliaTime.find((part) => part.type === "minute")?.value || 0);
+    return endTime <= currentHour * 60 + currentMinute;
+  };
+
   const getInstructorInitials = (name?: string) =>
     (name || "Professor")
       .split(" ")
@@ -133,8 +159,26 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
       .toUpperCase();
 
   const selectedClasses = selectedDay?.classes || [];
+  const sortedSelectedClasses = useMemo(
+    () => [...selectedClasses].sort((a, b) => getTimeInMinutes(a.startTime) - getTimeInMinutes(b.startTime)),
+    [selectedClasses],
+  );
+  const upcomingClasses = sortedSelectedClasses.filter(
+    (classSession) => !isClassPast(classSession, selectedDay?.date || selectedDate),
+  );
+  const pastClasses = sortedSelectedClasses.filter(
+    (classSession) => isClassPast(classSession, selectedDay?.date || selectedDate),
+  );
 
-  const renderClassActions = (classSession: ClassSession, date: string) => {
+  const renderClassActions = (classSession: ClassSession, date: string, isPast: boolean) => {
+    if (isPast) {
+      return (
+        <Badge variant="secondary" className="shrink-0 rounded-full text-[10px]">
+          Encerrada
+        </Badge>
+      );
+    }
+
     if (classSession.isCancelled) {
       return (
         <Badge variant="destructive" className="shrink-0 gap-1 rounded-full text-[10px]">
@@ -149,7 +193,7 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
             <CheckCircle className="size-3.5" />
-            Confirmado
+            Reservada
           </span>
           <Button
             variant="ghost"
@@ -175,8 +219,64 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
         data-testid={`button-confirm-${date}-${classSession.id}`}
       >
         {isMutating ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <CheckCircle className="mr-1.5 size-3.5" />}
-        Confirmar
+        Reservar aula
       </Button>
+    );
+  };
+
+  const renderClassCard = (classSession: ClassSession, isPast: boolean) => {
+    const duration = getDuration(classSession);
+    const date = selectedDay?.date || selectedDate;
+
+    return (
+      <div
+        key={`${date}-${classSession.id}`}
+        className={`rounded-2xl border border-border/60 border-l-[3px] bg-card/75 px-3 py-2.5 shadow-[0_5px_18px_rgba(30,64,175,0.06)] backdrop-blur-md transition-shadow hover:shadow-[0_8px_24px_rgba(30,64,175,0.10)] ${
+          classSession.isCancelled ? "border-red-300 border-l-red-400 opacity-70" : "border-l-primary"
+        }`}
+        data-testid={`class-card-${date}-${classSession.id}`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3
+              className={`text-[15px] font-bold leading-tight ${classSession.isCancelled ? "line-through text-muted-foreground" : "text-foreground"}`}
+              data-testid={`text-class-name-${date}-${classSession.id}`}
+            >
+              {classSession.name}
+            </h3>
+            <div className="mt-1 flex items-center gap-2">
+              <Clock className="size-3.5 text-primary" />
+              <span className="text-sm font-medium text-primary">
+                {formatTime(classSession.startTime)}
+                {classSession.endTime && ` — ${formatTime(classSession.endTime)}`}
+              </span>
+            </div>
+            <div className="mt-1.5 flex min-w-0 items-center gap-2">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[8px] font-bold text-primary">
+                {getInstructorInitials(classSession.instructorName)}
+              </div>
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[11px]">
+                <span className="truncate font-semibold text-foreground">
+                  {classSession.instructorName || "Professor não informado"}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <span className="truncate text-muted-foreground">
+                  {classSession.location || "Local não informado"}
+                </span>
+              </div>
+            </div>
+            {classSession.isCancelled && (
+              <p className="mt-1 text-[10px] font-semibold text-red-500">
+                Esta aula foi cancelada pela academia.
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            {duration && <span className="text-xs text-muted-foreground">{duration}</span>}
+            {renderClassActions(classSession, date, isPast)}
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -231,6 +331,7 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
           {days.map((day) => {
             const parts = getDateParts(day.date, day.dayName);
             const isSelected = day.date === selectedDay?.date;
+            const isTodayDate = day.date === today;
             const hasClasses = day.classes.length > 0;
             return (
               <button
@@ -238,11 +339,15 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                 type="button"
                 onClick={() => setSelectedDate(day.date)}
                 className={`flex min-w-[43px] flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 transition-colors ${
-                  isSelected ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
+                  isSelected
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : isTodayDate
+                      ? "ring-2 ring-primary/30 text-primary hover:bg-primary/5"
+                      : "text-muted-foreground hover:bg-muted"
                 }`}
                 aria-pressed={isSelected}
               >
-                <span className={`text-[9px] font-medium capitalize ${isSelected ? "text-white/75" : ""}`}>
+                <span className={`text-[9px] font-medium capitalize ${isSelected ? "text-primary-foreground/75" : ""}`}>
                   {parts.weekday}
                 </span>
                 <span className="text-base font-bold leading-none">{parts.dayNumber}</span>
@@ -255,17 +360,15 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
       </div>
 
       <div className="border-t border-border/60 px-4 pb-5 pt-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wide text-foreground">
-            {selectedDay?.date === today ? "Hoje" : formatSelectedDate(selectedDay?.date)}
+        <div className="mb-4">
+          <h2 className="text-sm font-bold capitalize text-foreground">
+            {formatSelectedDate(selectedDay?.date)}
           </h2>
-          <button
-            type="button"
-            aria-label="Adicionar aula"
-            className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
-          >
-            <Plus className="size-4" />
-          </button>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {upcomingClasses.length}{" "}
+            {upcomingClasses.length === 1 ? "aula disponível" : "aulas disponíveis"}
+            {pastClasses.length > 0 && ` · ${pastClasses.length} encerrada${pastClasses.length === 1 ? "" : "s"}`}
+          </p>
         </div>
 
         {selectedClasses.length === 0 ? (
@@ -273,58 +376,28 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
             Nenhuma aula para este dia.
           </div>
         ) : (
-          <div className="space-y-2 rounded-2xl bg-muted/20 p-2">
-            {selectedClasses.map((classSession) => {
-              const duration = getDuration(classSession);
-              return (
-                <div
-                  key={`${selectedDay?.date}-${classSession.id}`}
-                  className={`rounded-2xl border border-border/60 border-l-[3px] bg-card/75 px-3 py-3 shadow-[0_5px_18px_rgba(30,64,175,0.06)] backdrop-blur-md transition-shadow hover:shadow-[0_8px_24px_rgba(30,64,175,0.10)] ${
-                    classSession.isCancelled ? "border-red-300 border-l-red-400 opacity-70" : "border-l-primary"
-                  }`}
-                  data-testid={`class-card-${selectedDay?.date}-${classSession.id}`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3
-                        className={`text-base font-bold ${classSession.isCancelled ? "line-through text-muted-foreground" : "text-foreground"}`}
-                        data-testid={`text-class-name-${selectedDay?.date}-${classSession.id}`}
-                      >
-                        {classSession.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Clock className="size-3.5 text-primary" />
-                        <span className="text-sm font-medium text-primary">
-                          {formatTime(classSession.startTime)}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                          {getInstructorInitials(classSession.instructorName)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-[11px] font-semibold text-foreground">
-                            {classSession.instructorName || "Professor"}
-                          </p>
-                          <p className="truncate text-[10px] text-muted-foreground">
-                            {classSession.location || "Professor da escola"}
-                          </p>
-                        </div>
-                      </div>
-                      {classSession.isCancelled && (
-                        <p className="mt-1 text-[10px] font-semibold text-red-500">
-                          Esta aula foi cancelada pela academia.
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      {duration && <span className="text-sm text-muted-foreground">{duration}</span>}
-                      {renderClassActions(classSession, selectedDay?.date || selectedDate)}
-                    </div>
-                  </div>
+          <div className="space-y-4">
+            {upcomingClasses.length > 0 && (
+              <section>
+                <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  Próximas aulas
+                </h3>
+                <div className="space-y-2 rounded-2xl bg-muted/20 p-2">
+                  {upcomingClasses.map((classSession) => renderClassCard(classSession, false))}
                 </div>
-              );
-            })}
+              </section>
+            )}
+
+            {pastClasses.length > 0 && (
+              <section>
+                <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  Aulas encerradas
+                </h3>
+                <div className="space-y-2 rounded-2xl bg-muted/20 p-2">
+                  {pastClasses.map((classSession) => renderClassCard(classSession, true))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>

@@ -557,14 +557,14 @@ export default function Settings() {
           </button>
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left text-destructive transition-colors hover:bg-destructive/5"
+            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left text-red-600 transition-colors hover:bg-red-500/5 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200"
             onClick={() => logout()}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-600 dark:bg-red-500/15 dark:text-red-300">
               <LogOut className="size-4" />
             </span>
             <span className="min-w-0 flex-1 text-sm font-medium">Sair da conta</span>
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4 text-red-500 dark:text-red-300" />
           </button>
         </div>
       </section>

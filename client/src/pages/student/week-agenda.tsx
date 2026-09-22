@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useGuardian } from '@/contexts/guardian-context';
 import { useQuery } from '@tanstack/react-query';
 import type { SchoolConfig } from '@shared/schema';
-const bannerImg = '/dashboard-assets/week-agenda.webp';
 
 interface StudentProfile {
   id: number;
@@ -72,8 +71,6 @@ export default function WeekAgendaPage() {
     }
   }, [studentData?.id, error, weekData]);
 
-  const primaryColor = '#2B54FF';
-
   if (!studentData?.id) {
     return (
       <div className="space-y-6 p-4 md:p-6">
@@ -88,30 +85,11 @@ export default function WeekAgendaPage() {
   }
 
   return (
-    <div className="font-inter -mx-3 -mt-3 md:mx-0 md:mt-0">
-      <div className="vyta-hero h-[180px] md:rounded-2xl">
-        <img
-          src={bannerImg}
-          alt="Jiu-Jitsu Training"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="vyta-hero-gradient" />
-        <div className="vyta-hero-content flex flex-col justify-end h-full p-5 pb-5">
-          <span className="vyta-pill mb-2 w-fit">Sua Semana</span>
-          <h1 className="text-[26px] font-bold text-white leading-[32px] font-inter">
-            Agenda Semanal
-          </h1>
-          <p className="text-[14px] text-white/70 font-inter mt-1">
-            Confirme sua presenca nas aulas
-          </p>
-        </div>
-      </div>
-
-      <div className="px-4 pt-6 pb-24 md:px-6">
+    <div className="min-h-full bg-muted/20 font-inter -mx-3 -mt-3 px-3 pb-24 pt-3 md:mx-0 md:mt-0 md:px-0 md:pt-0">
+      <div className="mx-auto max-w-2xl">
         <WeekAgenda
           weekData={weekData?.weekData || []}
           studentId={studentData.id}
-          primaryColor={primaryColor}
           isLoading={isLoading}
         />
       </div>

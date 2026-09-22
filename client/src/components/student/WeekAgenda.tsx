@@ -6,11 +6,9 @@ import {
   BanIcon,
   CalendarDays,
   CheckCircle,
-  ChevronRight,
   Clock,
   Loader2,
   Plus,
-  User,
   XCircle,
 } from "lucide-react";
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
@@ -44,11 +42,10 @@ interface DayAgenda {
 interface WeekAgendaProps {
   weekData: DayAgenda[];
   studentId: number;
-  primaryColor: string;
   isLoading?: boolean;
 }
 
-export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: WeekAgendaProps) => {
+export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) => {
   const { confirmMutation, cancelMutation, isLoading: isMutating } = useBookingMutations(studentId);
   const days = weekData ?? [];
   const firstDayWithClasses = days.find((day) => day.classes.length > 0)?.date;
@@ -210,7 +207,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
     <section className="overflow-hidden rounded-[28px] bg-card shadow-sm">
       <header className="flex items-center justify-between px-4 pb-2 pt-4">
         <Link
-          href="/student"
+          href="/"
           aria-label="Voltar para início"
           className="flex size-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
         >

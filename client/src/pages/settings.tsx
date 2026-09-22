@@ -23,7 +23,9 @@ import {
   ChevronRight,
   Loader2,
   LogOut,
+  Moon,
   Shield,
+  Sun,
   User,
   XCircle,
 } from "lucide-react";
@@ -38,6 +40,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { UserNotificationPreferences } from "@shared/schema";
 import CustomAvatar, { type AvatarData } from "@/components/students/CustomAvatar";
+import { useTheme } from "@/hooks/use-theme";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +81,7 @@ type DatabaseCopyJob = {
 
 export default function Settings() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -465,8 +469,43 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Segurança */}
+        {/* Aparência */}
         <Card className="order-2 overflow-hidden rounded-[22px]">
+          <CardHeader className="border-b border-border/70 px-3.5 py-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              {theme === "dark" ? (
+                <Moon className="size-4 text-primary" />
+              ) : (
+                <Sun className="size-4 text-primary" />
+              )}
+              Aparência
+            </CardTitle>
+            <CardDescription className="mt-0.5 text-xs">
+              Escolha como o aplicativo deve aparecer
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="px-3.5 py-0">
+            <div className="flex items-center justify-between gap-3 py-2.5">
+              <div className="min-w-0 space-y-0.5">
+                <Label className="text-sm font-semibold">
+                  {theme === "dark" ? "Modo escuro" : "Modo claro"}
+                </Label>
+                <div className="text-[11px] leading-4 text-muted-foreground">
+                  Alternar entre o tema claro e escuro
+                </div>
+              </div>
+              <IosSwitch
+                checked={theme === "dark"}
+                onChange={() => toggleTheme()}
+                label="Alternar modo escuro"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Segurança */}
+        <Card className="order-3 overflow-hidden rounded-[22px]">
           <CardHeader className="border-b border-border/70 px-3.5 py-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Shield className="size-4 text-primary" />

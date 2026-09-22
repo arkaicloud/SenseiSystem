@@ -49,15 +49,17 @@ interface PaymentResponse {
   hasOverdue: boolean;
   overdueCount: number;
   familyMemberCount: number;
+  view?: 'upcoming' | 'paid';
   message?: string | null;
 }
 
 export default function PaymentPanel() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [paymentView, setPaymentView] = React.useState<'upcoming' | 'paid'>('upcoming');
 
   const { data: paymentsData, isLoading } = useQuery<PaymentResponse>({
-    queryKey: ['/api/student/financial'],
+    queryKey: [`/api/student/financial?view=${paymentView}`],
     enabled: !!user?.id,
   });
 
@@ -67,7 +69,7 @@ export default function PaymentPanel() {
     switch (status.toUpperCase()) {
       case 'PENDING':
         return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+          <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-primary">
             <Clock className="h-3 w-3 mr-1" />
             Pendente
           </Badge>
@@ -157,32 +159,6 @@ export default function PaymentPanel() {
     );
   }
 
-  if (payments.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Meus Pagamentos
-          </CardTitle>
-            <CardDescription>
-              {paymentsData?.message || "As mensalidades do plano familiar aparecerão aqui"}
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              {paymentsData?.isFinancialResponsible
-                ? "Nenhum pagamento encontrado"
-                : "As cobranças são exibidas no perfil do responsável financeiro"}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-5">
       <div className="relative overflow-hidden rounded-[28px] border border-slate-700/60 bg-gradient-to-br from-slate-950 via-slate-900 to-[#1d3fae] p-5 text-white shadow-[0_18px_50px_rgba(15,23,42,0.18)] sm:p-6">
@@ -206,6 +182,50 @@ export default function PaymentPanel() {
         </div>
       </div>
 
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-1.5 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setPaymentView('upcoming')}
+          className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+            paymentView === 'upcoming'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted'
+          }`}
+        >
+          Em aberto
+        </button>
+        <button
+          type="button"
+          onClick={() => setPaymentView('paid')}
+          className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+            paymentView === 'paid'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted'
+          }`}
+        >
+          Faturas pagas
+        </button>
+      </div>
+
+      {payments.length === 0 ? (
+        <Card className="rounded-[24px] border-border/70 shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center px-6 py-12 text-center">
+            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+              <CreditCard className="size-6 text-primary" />
+            </div>
+            <h3 className="font-semibold text-foreground">
+              {paymentView === 'paid' ? 'Nenhuma fatura paga encontrada' : 'Nenhuma cobrança em aberto'}
+            </h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              {paymentsData?.isFinancialResponsible
+                ? paymentView === 'paid'
+                  ? 'Quando uma cobrança for paga, ela aparecerá neste histórico.'
+                  : 'Não há cobranças do mês atual ou do próximo no momento.'
+                : 'As cobranças são exibidas no perfil do responsável financeiro.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
       <div className="grid gap-4">
         {payments.map((payment) => (
           <Card key={payment.id} className={`group overflow-hidden rounded-[24px] border-border/70 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
@@ -213,14 +233,14 @@ export default function PaymentPanel() {
               ? 'border-red-200/80 dark:border-red-900/60'
               : payment.status === 'RECEIVED' 
                 ? 'border-emerald-200/80 dark:border-emerald-900/60'
-                : 'border-amber-200/80 dark:border-amber-900/60'
+                : 'border-primary/25'
           }`}>
             <div className={`h-1 ${
               payment.status === 'OVERDUE'
                 ? 'bg-red-500'
                 : payment.status === 'RECEIVED'
                   ? 'bg-emerald-500'
-                  : 'bg-amber-400'
+                  : 'bg-primary'
             }`} />
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -343,6 +363,7 @@ export default function PaymentPanel() {
           </Card>
         ))}
       </div>
+      )}
     </div>
   );
 }

@@ -6832,6 +6832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const family = await resolveFinancialFamily(requestUser);
       const paymentsById = new Map<string, any>();
+      const paymentView = req.query.view === "paid" ? "paid" : "upcoming";
       const currentMonthKey = dateKeyInTimeZone(new Date()).slice(0, 7);
       const nextMonthKey = shiftCalendarDateKey(`${currentMonthKey}-15`, 31).slice(0, 7);
       const visibleMonthKeys = new Set([currentMonthKey, nextMonthKey]);
@@ -6843,7 +6844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const receivables = await storage.getContasReceberByStudentId(student.id);
         for (const receivable of receivables) {
           const dueMonth = calendarDateKey(receivable.dueDate)?.slice(0, 7);
-          if (!dueMonth || !visibleMonthKeys.has(dueMonth)) continue;
+          if (paymentView === "upcoming" && (!dueMonth || !visibleMonthKeys.has(dueMonth))) continue;
           const key = receivable.asaasPaymentId || `local-${receivable.id}`;
           // A subscription is only a recurring-payment template, not an invoice.
           // Actual ASAAS invoices use pay_* IDs and are fetched below.
@@ -6902,10 +6903,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             for (const customerId of canonicalCustomerIds) {
-              const invoices = await asaasService.getCustomerInvoices(customerId, {
-                dueDateGe: `${currentMonthKey}-01`,
-                dueDateLe: nextMonthEnd,
-              });
+              const invoices = await asaasService.getCustomerInvoices(
+                customerId,
+                paymentView === "upcoming"
+                  ? {
+                      dueDateGe: `${currentMonthKey}-01`,
+                      dueDateLe: nextMonthEnd,
+                    }
+                  : undefined,
+              );
               for (const invoice of invoices) {
                 paymentsById.set(invoice.id, {
                   id: invoice.id,
@@ -6952,6 +6958,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const visiblePayments = family.isFinancialResponsible
         ? allPayments.filter((payment) => {
+            if (paymentView === "paid") {
+              return payment.status === "RECEIVED";
+            }
             const dueMonth = calendarDateKey(payment.dueDate)?.slice(0, 7);
             return !!dueMonth && visibleMonthKeys.has(dueMonth);
           })
@@ -6963,6 +6972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasOverdue: allPayments.some(payment => payment.status === "OVERDUE"),
         overdueCount: allPayments.filter(payment => payment.status === "OVERDUE").length,
         familyMemberCount: family.familyStudents.length,
+        view: paymentView,
         payments: visiblePayments,
         message: family.isFinancialResponsible
           ? null

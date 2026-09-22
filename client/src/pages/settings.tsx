@@ -321,20 +321,20 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-md space-y-2.5 px-3 py-3 md:px-5 md:py-5">
-      <section className="rounded-[24px] border border-border/70 bg-card p-4 shadow-sm">
+      <section className="rounded-[20px] border border-border/70 bg-card p-3.5 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
               Minha conta
             </p>
-            <h1 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">
+            <h1 className="mt-0.5 text-lg font-bold tracking-tight text-foreground">
               Meu perfil
             </h1>
           </div>
           <User className="size-4 text-muted-foreground" />
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-2.5 flex items-center gap-2.5">
           {user?.role === "student" && profileStudent?.id ? (
             <CustomAvatar
               studentId={profileStudent.id}
@@ -343,23 +343,23 @@ export default function Settings() {
               avatarStyle={profileStudent.avatarStyle || "initials"}
               avatarColor={profileStudent.avatarColor || "blue"}
               avatarImage={profileStudent.avatarImage || ""}
-              size="md"
+              size="sm"
               onSave={(data) => updateAvatarMutation.mutate(data)}
               editable
               showActionLabel={false}
             />
           ) : (
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
               {user?.firstName?.charAt(0)}
               {user?.lastName?.charAt(0)}
             </div>
           )}
           <div className="min-w-0">
-            <h2 className="truncate text-base font-bold text-foreground">
+            <h2 className="truncate text-sm font-bold text-foreground">
               {user?.firstName} {user?.lastName}
             </h2>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{user?.email}</p>
-            <span className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{user?.email}</p>
+            <span className="mt-1 inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
               {user?.role === "admin"
                 ? "Administrador"
                 : user?.role === "instructor"

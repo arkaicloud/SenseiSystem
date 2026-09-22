@@ -1,4 +1,4 @@
-import { Home, CalendarDays, Bell, User, BarChart3 } from "lucide-react";
+import { Home, CalendarDays, ReceiptText, User, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -24,10 +24,10 @@ export default function BottomNav() {
       isActive: location === "/student/attendance-stats"
     },
     { 
-      to: "/student/notices", 
-      icon: Bell, 
-      label: "Avisos",
-      isActive: location.includes("/notices")
+      to: "/payments",
+      icon: ReceiptText,
+      label: "Pagamentos",
+      isActive: location === "/payments"
     },
     { 
       to: "/settings", 

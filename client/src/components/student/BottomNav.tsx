@@ -33,7 +33,7 @@ export default function BottomNav() {
       to: "/settings", 
       icon: User, 
       label: "Perfil",
-      isActive: location === "/settings"
+      isActive: location === "/settings" || location === "/profile"
     }
   ];
 

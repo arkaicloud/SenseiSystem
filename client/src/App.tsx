@@ -17,7 +17,6 @@ import Payments from "@/pages/payments";
 import PaymentPlans from "@/pages/payment-plans";
 import Coupons from "@/pages/coupons";
 import Reports from "@/pages/reports";
-import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import SchoolConfig from "@/pages/school-config";
 import Communications from "@/pages/communications";
@@ -39,7 +38,6 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { PendingRouteGuard } from "@/lib/pending-route-guard";
 import { RootGuard } from "@/components/guards/RootGuard";
 import StudentsAtRiskPage from "./pages/students-at-risk";
-import SettingsPage from "./pages/settings";
 import AsaasPaymentsPage from "./pages/asaas-payments";
 import CommunicationsPage from "./pages/admin/communications";
 import GuardianSelectPage from "@/pages/guardian-select";
@@ -127,7 +125,7 @@ function Router() {
       />
       <ProtectedRoute
         path="/profile"
-        component={() => <Profile />}
+        component={() => <Settings />}
       />
       <ProtectedRoute
         path="/settings"

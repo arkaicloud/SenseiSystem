@@ -183,7 +183,7 @@ export default function StudentDashboard() {
               </Link>
             )}
 
-            <Link href="/profile" className="group flex min-w-0 flex-col items-center gap-2">
+            <Link href="/settings" className="group flex min-w-0 flex-col items-center gap-2">
               <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
                 <UserRound className="size-5 text-primary" />
               </div>

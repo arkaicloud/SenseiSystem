@@ -36,6 +36,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { UserNotificationPreferences } from "@shared/schema";
+import CustomAvatar, { type AvatarData } from "@/components/students/CustomAvatar";
+import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import {
   Dialog,
   DialogContent,
@@ -83,17 +85,43 @@ export default function Settings() {
   const [databaseCopyJobId, setDatabaseCopyJobId] = useState<string | null>(null);
   const notifiedDatabaseCopyJob = useRef<string | null>(null);
 
+  const { data: studentData } = useQuery<any>({
+    queryKey: [`/api/students/by-user/${user?.id || 0}`],
+    enabled: !!user?.id && user?.role === "student",
+    retry: false,
+  });
+  const profileStudent = studentData?.student || studentData;
+
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (data: AvatarData) => {
+      const response = await apiRequest(
+        "PUT",
+        `/api/students/${profileStudent?.id}/avatar`,
+        data,
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [`/api/students/by-user/${user?.id || 0}`],
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/student/profile"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Não foi possível atualizar o avatar",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Preferências de notificação
   const { data: notificationPreferences, isLoading: isLoadingPreferences } =
     useQuery<UserNotificationPreferences>({
       queryKey: ["/api/user/notification-preferences"],
       retry: false,
     });
-
-  // Config da escola (se necessário em outra seção)
-  const { data: schoolConfig } = useQuery({
-    queryKey: ["/api/school-config"],
-  });
 
   const { data: databaseCopyAccess } = useQuery<{
     canAccess: boolean;
@@ -171,27 +199,6 @@ export default function Settings() {
       });
     }
   }, [databaseCopyJob, toast]);
-
-  const updateSchoolConfigMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest("PUT", "/api/school-config", data);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Configurações atualizadas",
-        description: "As configurações foram salvas com sucesso!",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/school-config"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao salvar configurações",
-        variant: "destructive",
-      });
-    },
-  });
 
   // Form para alterar senha
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
@@ -293,24 +300,24 @@ export default function Settings() {
   ) => updateNotificationPreferences.mutate({ [key]: value });
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 px-4 py-4 md:px-6 md:py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground dark:text-white">
-            Configurações
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">
+            Meu perfil
           </h1>
-          <p className="text-secondary-foreground dark:text-secondary-foreground mt-1">
-            Gerencie suas preferências e configurações do sistema
+          <p className="mt-1 text-sm text-muted-foreground">
+            Dados pessoais, notificações e segurança em um só lugar
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         {/* Notificações */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
+        <Card className="order-2 rounded-2xl">
+          <CardHeader className="p-4 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bell className="size-4 text-primary" />
               Notificações
             </CardTitle>
             <CardDescription>
@@ -318,12 +325,12 @@ export default function Settings() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 px-4 pb-4 pt-0">
             {/* Presença */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5 min-w-0">
-                <Label className="text-base">Notificações de presença</Label>
-                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
+                <Label className="text-sm font-semibold">Presença</Label>
+                <div className="text-xs text-muted-foreground">
                   Receber notificações sobre confirmação de presença
                 </div>
               </div>
@@ -347,10 +354,10 @@ export default function Settings() {
             <Separator />
 
             {/* Pagamento */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5 min-w-0">
-                <Label className="text-base">Notificações de pagamento</Label>
-                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
+                <Label className="text-sm font-semibold">Pagamentos</Label>
+                <div className="text-xs text-muted-foreground">
                   Receber notificações sobre pagamentos e vencimentos
                 </div>
               </div>
@@ -374,10 +381,10 @@ export default function Settings() {
             <Separator />
 
             {/* Eventos */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5 min-w-0">
-                <Label className="text-base">Notificações de eventos</Label>
-                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
+                <Label className="text-sm font-semibold">Eventos</Label>
+                <div className="text-xs text-muted-foreground">
                   Receber notificações sobre eventos da escola
                 </div>
               </div>
@@ -399,59 +406,74 @@ export default function Settings() {
         </Card>
 
         {/* Conta */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
+        <Card className="order-1 rounded-2xl">
+          <CardHeader className="p-4 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <User className="size-4 text-primary" />
               Informações da Conta
             </CardTitle>
             <CardDescription>Suas informações pessoais básicas</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input value={user?.firstName || ""} disabled />
-              </div>
-              <div className="space-y-2">
-                <Label>Sobrenome</Label>
-                <Input value={user?.lastName || ""} disabled />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={user?.email || ""} disabled />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Função</Label>
-              <Input
-                value={
-                  user?.role === "admin"
+          <CardContent className="space-y-3 px-4 pb-4 pt-0">
+            <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/25 p-3 text-left">
+              {user?.role === "student" && profileStudent?.id ? (
+                <CustomAvatar
+                  studentId={profileStudent.id}
+                  firstName={user?.firstName || ""}
+                  lastName={user?.lastName || ""}
+                  avatarStyle={profileStudent.avatarStyle || "initials"}
+                  avatarColor={profileStudent.avatarColor || "blue"}
+                  avatarImage={profileStudent.avatarImage || ""}
+                  size="md"
+                  onSave={(data) => updateAvatarMutation.mutate(data)}
+                  editable
+                  showActionLabel={false}
+                />
+              ) : (
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
+                  {user?.firstName?.charAt(0)}
+                  {user?.lastName?.charAt(0)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-bold text-foreground">
+                  {user?.firstName} {user?.lastName}
+                </h3>
+                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+                <span className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  {user?.role === "admin"
                     ? "Administrador"
                     : user?.role === "instructor"
                       ? "Professor"
-                      : "Aluno"
-                }
-                disabled
-              />
-            </div>
-
-            <div className="pt-4">
-              <p className="text-sm text-muted-foreground">
-                Para alterar suas informações pessoais, entre em contato com o
-                administrador.
-              </p>
+                      : user?.role === "guardian"
+                        ? "Responsável"
+                        : "Aluno"}
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
+        {user?.role === "student" &&
+          profileStudent?.id &&
+          (
+            profileStudent.requiresMedicalCertificate === true ||
+            ["PENDING", "UPLOADED", "RECEIVED"].includes(profileStudent.medicalCertificateStatus)
+          ) && (
+            <div className="order-3">
+              <MedicalCertificateUpload
+                studentId={profileStudent.id}
+                required={profileStudent.requiresMedicalCertificate}
+                status={profileStudent.medicalCertificateStatus}
+              />
+            </div>
+          )}
+
         {/* Segurança */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
+        <Card className="order-4 rounded-2xl">
+          <CardHeader className="p-4 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Shield className="size-4 text-primary" />
               Segurança
             </CardTitle>
             <CardDescription>
@@ -459,16 +481,18 @@ export default function Settings() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
+          <CardContent className="px-4 pb-4 pt-0">
+            <div className="flex items-center justify-between gap-3">
               <div className="space-y-0.5">
-                <Label className="text-base">Alterar senha</Label>
-                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
+                <Label className="text-sm font-semibold">Alterar senha</Label>
+                <div className="text-xs text-muted-foreground">
                   Atualize sua senha para manter sua conta segura
                 </div>
               </div>
               <Button
                 variant="outline"
+                size="sm"
+                className="shrink-0 rounded-xl"
                 onClick={() => setIsPasswordDialogOpen(true)}
               >
                 Alterar senha
@@ -478,7 +502,7 @@ export default function Settings() {
         </Card>
 
         {shouldShowDatabaseOperations(databaseCopyAccess?.canAccess) && (
-          <Card className="border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+          <Card className="order-5 border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Database className="h-5 w-5 text-amber-700 dark:text-amber-400" />

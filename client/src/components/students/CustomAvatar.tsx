@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Edit, ImageOff, Loader2 } from "lucide-react";
+import { Camera, ImageOff, Loader2 } from "lucide-react";
 
 // Estilos de avatar disponíveis
 const AVATAR_STYLES = [
@@ -54,6 +54,7 @@ interface CustomAvatarProps {
   onSave: (data: AvatarData) => void;
   size?: "sm" | "md" | "lg";
   editable?: boolean;
+  showActionLabel?: boolean;
 }
 
 export default function CustomAvatar({
@@ -65,7 +66,8 @@ export default function CustomAvatar({
   avatarImage,
   onSave,
   size = "md",
-  editable = true
+  editable = true,
+  showActionLabel = true,
 }: CustomAvatarProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(avatarImage || "");
@@ -238,19 +240,18 @@ export default function CustomAvatar({
       <div className="relative inline-block">
         {renderAvatarContent()}
         {editable && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-background shadow"
+          <button
+            type="button"
+            className="absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition-transform hover:scale-105"
             onClick={() => setIsDialogOpen(true)}
             aria-label="Editar foto e avatar"
           >
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
+            <Camera className="size-3" />
+          </button>
         )}
       </div>
 
-      {editable && (
+      {editable && showActionLabel && (
         <Button
           type="button"
           variant="ghost"

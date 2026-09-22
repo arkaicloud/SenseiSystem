@@ -60,11 +60,14 @@ export default function BottomNav() {
           <Link
             href="/checkin"
             aria-label="Abrir check-in"
-            className="absolute -top-7 flex size-[62px] items-center justify-center rounded-full border-4 border-background bg-primary text-primary-foreground shadow-[0_8px_18px_rgba(43,84,255,0.35)] transition-transform hover:-translate-y-0.5 active:scale-95"
+            className="absolute -top-7 flex size-[62px] items-center justify-center rounded-full border-4 border-background bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:-translate-y-0.5 active:scale-95"
           >
             <CheckCircle2 className="size-7" strokeWidth={2.2} />
             <span className="sr-only">Check-in</span>
           </Link>
+          <span className="pointer-events-none absolute bottom-1 text-[9px] font-bold text-primary">
+            Check-in
+          </span>
         </li>
 
         {navItems.slice(2).map((item) => {

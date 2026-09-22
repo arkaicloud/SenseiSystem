@@ -33,25 +33,25 @@ export default function IosSwitch({
       onClick={() => !disabled && onChange(!checked)}
       onKeyDown={handleKeyDown}
       className={[
-        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-[28px] p-1",
+        "relative inline-flex h-[18px] w-[40px] shrink-0 items-center rounded-[18px] p-[2px]",
         "transition-colors duration-200",
         checked ? "bg-[#34C759]" : "bg-[#ccc] dark:bg-[#555]",
         disabled
           ? "opacity-50 cursor-not-allowed"
           : "focus:outline-none focus:ring-2 focus:ring-[#34C759]/40",
         // leve borda interna do trilho (iOS tem uma sutileza)
-        "shadow-[inset_0_0_0_24px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_24px_rgba(255,255,255,0.08)]",
+        "shadow-[inset_0_0_0_18px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_18px_rgba(255,255,255,0.08)]",
       ].join(" ")}
     >
       {/* botão branco */}
       <span
         aria-hidden="true"
         className={[
-          "size-5 rounded-full bg-white",
+          "size-[14px] rounded-full bg-white",
           // sombras parecidas com iOS
           "shadow-[0_1px_2px_rgba(0,0,0,0.35),_0_0_0_0.5px_rgba(0,0,0,0.04)]",
           "transform transition-transform duration-200 will-change-transform",
-          checked ? "translate-x-5" : "translate-x-0",
+          checked ? "translate-x-[22px]" : "translate-x-0",
         ].join(" ")}
       />
     </button>

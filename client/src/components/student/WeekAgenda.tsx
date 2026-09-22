@@ -273,14 +273,14 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
             Nenhuma aula para este dia.
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-2 rounded-2xl bg-muted/20 p-2">
             {selectedClasses.map((classSession) => {
               const duration = getDuration(classSession);
               return (
                 <div
                   key={`${selectedDay?.date}-${classSession.id}`}
-                  className={`border-l-2 py-2 pl-3 pr-1 ${
-                    classSession.isCancelled ? "border-red-400 opacity-70" : "border-primary"
+                  className={`rounded-2xl border border-border/60 border-l-[3px] bg-card/75 px-3 py-3 shadow-[0_5px_18px_rgba(30,64,175,0.06)] backdrop-blur-md transition-shadow hover:shadow-[0_8px_24px_rgba(30,64,175,0.10)] ${
+                    classSession.isCancelled ? "border-red-300 border-l-red-400 opacity-70" : "border-l-primary"
                   }`}
                   data-testid={`class-card-${selectedDay?.date}-${classSession.id}`}
                 >

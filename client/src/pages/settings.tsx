@@ -20,6 +20,7 @@ import {
   Bell,
   CheckCircle2,
   Database,
+  ChevronRight,
   Loader2,
   LogOut,
   Shield,
@@ -300,34 +301,77 @@ export default function Settings() {
   ) => updateNotificationPreferences.mutate({ [key]: value });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 py-4 md:px-6 md:py-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">
-            Meu perfil
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Dados pessoais, notificações e segurança em um só lugar
-          </p>
+    <div className="mx-auto max-w-md space-y-3 px-4 py-4 md:px-5 md:py-6">
+      <section className="rounded-[28px] border border-border/70 bg-card p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              Minha conta
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+              Meu perfil
+            </h1>
+          </div>
+          <User className="size-5 text-muted-foreground" />
         </div>
-      </div>
 
-      <div className="grid gap-4">
+        <div className="mt-5 flex items-center gap-4">
+          {user?.role === "student" && profileStudent?.id ? (
+            <CustomAvatar
+              studentId={profileStudent.id}
+              firstName={user?.firstName || ""}
+              lastName={user?.lastName || ""}
+              avatarStyle={profileStudent.avatarStyle || "initials"}
+              avatarColor={profileStudent.avatarColor || "blue"}
+              avatarImage={profileStudent.avatarImage || ""}
+              size="lg"
+              onSave={(data) => updateAvatarMutation.mutate(data)}
+              editable
+              showActionLabel={false}
+            />
+          ) : (
+            <div className="flex size-20 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              {user?.firstName?.charAt(0)}
+              {user?.lastName?.charAt(0)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-bold text-foreground">
+              {user?.firstName} {user?.lastName}
+            </h2>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{user?.email}</p>
+            <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+              {user?.role === "admin"
+                ? "Administrador"
+                : user?.role === "instructor"
+                  ? "Professor"
+                  : user?.role === "guardian"
+                    ? "Responsável"
+                    : "Aluno"}
+            </span>
+          </div>
+        </div>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Toque no ícone da câmera para alterar sua foto
+        </p>
+      </section>
+
+      <div className="grid gap-3">
         {/* Notificações */}
-        <Card className="order-2 rounded-2xl">
-          <CardHeader className="p-4 pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Card className="order-1 overflow-hidden rounded-[24px]">
+          <CardHeader className="border-b border-border/70 px-4 py-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Bell className="size-4 text-primary" />
               Notificações
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1">
               Configure suas preferências de notificações
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-3 px-4 pb-4 pt-0">
+          <CardContent className="space-y-0 px-4 py-1">
             {/* Presença */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 py-3">
               <div className="space-y-0.5 min-w-0">
                 <Label className="text-sm font-semibold">Presença</Label>
                 <div className="text-xs text-muted-foreground">
@@ -354,7 +398,7 @@ export default function Settings() {
             <Separator />
 
             {/* Pagamento */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 py-3">
               <div className="space-y-0.5 min-w-0">
                 <Label className="text-sm font-semibold">Pagamentos</Label>
                 <div className="text-xs text-muted-foreground">
@@ -381,7 +425,7 @@ export default function Settings() {
             <Separator />
 
             {/* Eventos */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 py-3">
               <div className="space-y-0.5 min-w-0">
                 <Label className="text-sm font-semibold">Eventos</Label>
                 <div className="text-xs text-muted-foreground">
@@ -405,55 +449,6 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Conta */}
-        <Card className="order-1 rounded-2xl">
-          <CardHeader className="p-4 pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <User className="size-4 text-primary" />
-              Informações da Conta
-            </CardTitle>
-            <CardDescription>Suas informações pessoais básicas</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 px-4 pb-4 pt-0">
-            <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/25 p-3 text-left">
-              {user?.role === "student" && profileStudent?.id ? (
-                <CustomAvatar
-                  studentId={profileStudent.id}
-                  firstName={user?.firstName || ""}
-                  lastName={user?.lastName || ""}
-                  avatarStyle={profileStudent.avatarStyle || "initials"}
-                  avatarColor={profileStudent.avatarColor || "blue"}
-                  avatarImage={profileStudent.avatarImage || ""}
-                  size="md"
-                  onSave={(data) => updateAvatarMutation.mutate(data)}
-                  editable
-                  showActionLabel={false}
-                />
-              ) : (
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
-                  {user?.firstName?.charAt(0)}
-                  {user?.lastName?.charAt(0)}
-                </div>
-              )}
-              <div className="min-w-0">
-                <h3 className="truncate text-base font-bold text-foreground">
-                  {user?.firstName} {user?.lastName}
-                </h3>
-                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-                <span className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                  {user?.role === "admin"
-                    ? "Administrador"
-                    : user?.role === "instructor"
-                      ? "Professor"
-                      : user?.role === "guardian"
-                        ? "Responsável"
-                        : "Aluno"}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {user?.role === "student" &&
           profileStudent?.id &&
           (
@@ -470,9 +465,9 @@ export default function Settings() {
           )}
 
         {/* Segurança */}
-        <Card className="order-4 rounded-2xl">
-          <CardHeader className="p-4 pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Card className="order-2 overflow-hidden rounded-[24px]">
+          <CardHeader className="border-b border-border/70 px-4 py-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Shield className="size-4 text-primary" />
               Segurança
             </CardTitle>
@@ -481,8 +476,8 @@ export default function Settings() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="px-4 pb-4 pt-0">
-            <div className="flex items-center justify-between gap-3">
+          <CardContent className="px-4 py-2">
+            <div className="flex items-center justify-between gap-3 py-2">
               <div className="space-y-0.5">
                 <Label className="text-sm font-semibold">Alterar senha</Label>
                 <div className="text-xs text-muted-foreground">
@@ -497,12 +492,13 @@ export default function Settings() {
               >
                 Alterar senha
               </Button>
+              <ChevronRight className="size-4 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
 
         {shouldShowDatabaseOperations(databaseCopyAccess?.canAccess) && (
-          <Card className="order-5 border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+          <Card className="order-4 border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Database className="h-5 w-5 text-amber-700 dark:text-amber-400" />

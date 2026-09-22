@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, CheckCircle2, Clock, User, MapPin, Eye, EyeOff, Mail, Lock, QrCode, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import BottomNav from "@/components/student/BottomNav";
 
 interface CheckinClass {
   id: number;
@@ -262,7 +263,7 @@ export default function CheckinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-24">
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -385,6 +386,7 @@ export default function CheckinPage() {
           </div>
         )}
       </div>
+      {user?.role === "student" && <BottomNav />}
     </div>
   );
 }

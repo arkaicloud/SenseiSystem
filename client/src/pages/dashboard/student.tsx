@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGuardian } from "@/contexts/guardian-context";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CreditCard, ChevronRight } from "lucide-react";
+import { Calendar, ChartNoAxesColumnIncreasing, ReceiptText, UserRound } from "lucide-react";
 import { TodayClasses } from "@/components/student/TodayClasses";
 import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
@@ -148,6 +148,50 @@ export default function StudentDashboard() {
       </div>
 
       <div className="px-5 pt-6 pb-24 space-y-6">
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Acesso rápido
+          </p>
+          <div className={`grid gap-3 ${
+            financialSummary?.isFinancialResponsible ? "grid-cols-4" : "grid-cols-3"
+          }`}>
+            <Link href="/student/week-agenda" className="group flex min-w-0 flex-col items-center gap-2">
+              <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
+                <Calendar className="size-5 text-primary" />
+              </div>
+              <span className="text-center text-xs font-semibold text-foreground">Agenda</span>
+            </Link>
+
+            <Link href="/student/attendance-stats" className="group flex min-w-0 flex-col items-center gap-2">
+              <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
+                <ChartNoAxesColumnIncreasing className="size-5 text-primary" />
+              </div>
+              <span className="text-center text-xs font-semibold text-foreground">Presenças</span>
+            </Link>
+
+            {financialSummary?.isFinancialResponsible && (
+              <Link href="/payments" className="group flex min-w-0 flex-col items-center gap-2">
+                <div className="relative flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
+                  <ReceiptText className="size-5 text-primary" />
+                  {financialSummary.hasOverdue && (
+                    <span className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full border-2 border-background bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">
+                      {financialSummary.overdueCount}
+                    </span>
+                  )}
+                </div>
+                <span className="text-center text-xs font-semibold text-foreground">Pagamentos</span>
+              </Link>
+            )}
+
+            <Link href="/profile" className="group flex min-w-0 flex-col items-center gap-2">
+              <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
+                <UserRound className="size-5 text-primary" />
+              </div>
+              <span className="text-center text-xs font-semibold text-foreground">Perfil</span>
+            </Link>
+          </div>
+        </div>
+
         {(studentData as any)?.id &&
           (
             (studentData as any)?.requiresMedicalCertificate === true ||
@@ -201,56 +245,6 @@ export default function StudentDashboard() {
           />
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link href="/student/week-agenda" className="flex-1">
-            <div className="vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEF1FF] flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-primary" />
-                </div>
-                <span className="font-semibold text-sm font-inter">Agenda</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#B0B0B0]" />
-            </div>
-          </Link>
-          <Link href="/student/attendance-stats" className="flex-1">
-            <div className="vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEF1FF] flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                </div>
-                <span className="font-semibold text-sm font-inter">Presenças</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#B0B0B0]" />
-            </div>
-          </Link>
-          {financialSummary?.isFinancialResponsible && (
-            <Link href="/payments" className="flex-1">
-              <div className={`vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer ${
-                financialSummary.hasOverdue ? "border border-amber-300 bg-amber-50/60" : ""
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    financialSummary.hasOverdue ? "bg-amber-100" : "bg-[#EEF1FF]"
-                  }`}>
-                    <CreditCard className={`w-5 h-5 ${
-                      financialSummary.hasOverdue ? "text-amber-600" : "text-primary"
-                    }`} />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-sm font-inter block">Pagamentos</span>
-                    {financialSummary.hasOverdue && (
-                      <span className="text-xs text-amber-700">
-                        {financialSummary.overdueCount} em atraso
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#B0B0B0]" />
-              </div>
-            </Link>
-          )}
-        </div>
       </div>
     </div>
   );

@@ -171,12 +171,20 @@ export default function PaymentPanel() {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-100/75">Financeiro</p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight">Plano familiar</h2>
-              <p className="mt-1 text-sm text-slate-200/75">Mensalidades do mês atual e do próximo.</p>
+              <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+                Plano familiar
+              </h2>
+              <p className="mt-1 text-sm text-slate-200/75">
+                {paymentView === 'paid'
+                  ? 'Histórico de faturas já pagas.'
+                  : 'Mensalidades do mês atual e do próximo.'}
+              </p>
             </div>
           </div>
           <div className="shrink-0 rounded-2xl bg-white/10 px-3 py-2 text-right ring-1 ring-white/10">
-            <span className="block text-[10px] font-medium uppercase tracking-wider text-blue-100/70">Cobranças</span>
+            <span className="block text-[10px] font-medium uppercase tracking-wider text-blue-100/70">
+              {paymentView === 'paid' ? 'Pagas' : 'Cobranças'}
+            </span>
             <span className="mt-0.5 block text-2xl font-bold leading-none">{payments.length}</span>
           </div>
         </div>

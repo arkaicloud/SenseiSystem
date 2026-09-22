@@ -279,20 +279,20 @@ export default function CustomAvatar({
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="space-y-6 px-5 py-5">
+              <div className="space-y-5 px-5 py-5">
               {studentId && (
-                <div className="space-y-3">
+                <section className="space-y-3">
                   <div>
-                    <FormLabel className="text-sm font-semibold">Foto do perfil</FormLabel>
-                    <p className="mt-0.5 text-xs text-muted-foreground">Use uma foto nítida ou mantenha seu avatar personalizado.</p>
+                    <FormLabel className="text-base font-bold">Foto do perfil</FormLabel>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Adicione uma foto ou mantenha seu avatar com iniciais.</p>
                   </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-5 text-center">
+                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-5 text-center shadow-sm">
                     <div className="relative mx-auto w-fit">
-                      <Avatar className="size-28 border-4 border-background shadow-lg">
+                      <Avatar className="size-28 border-4 border-background shadow-md">
                         <AvatarImage src={photoPreview || undefined} alt={`${firstName} ${lastName}`} className="object-cover" />
                         <AvatarFallback className={cn(selectedColor.bg, selectedColor.text, "text-2xl font-bold")}>{initials}</AvatarFallback>
                       </Avatar>
-                      <label className="absolute bottom-0 right-0 flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-md transition-transform hover:scale-105">
+                      <label className="absolute bottom-0 right-0 flex size-9 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-md transition-transform hover:scale-105">
                         {isUploadingPhoto ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />}
                         <input
                           type="file"
@@ -306,11 +306,8 @@ export default function CustomAvatar({
                       </label>
                     </div>
                     <p className="mt-3 font-semibold text-foreground">{firstName} {lastName}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {photoPreview ? "Esta é a foto exibida no seu perfil." : "Adicione uma foto para personalizar seu perfil."}
-                    </p>
-                    <div className="mt-3 flex items-center justify-center gap-2">
-                      <Button type="button" variant="outline" size="sm" className="relative h-8 rounded-lg px-3 text-xs" disabled={isUploadingPhoto || isRemovingPhoto}>
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                      <Button type="button" variant="outline" size="sm" className="relative h-9 rounded-xl px-4 text-xs font-semibold" disabled={isUploadingPhoto || isRemovingPhoto}>
                         {isUploadingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
                         {photoPreview ? "Trocar foto" : "Adicionar foto"}
                         <input
@@ -324,15 +321,15 @@ export default function CustomAvatar({
                         />
                       </Button>
                       {photoPreview && (
-                        <Button type="button" variant="ghost" size="sm" className="h-8 rounded-lg px-3 text-xs text-muted-foreground" onClick={handlePhotoRemoval} disabled={isUploadingPhoto || isRemovingPhoto}>
+                        <Button type="button" variant="ghost" size="sm" className="h-9 rounded-xl px-3 text-xs text-muted-foreground" onClick={handlePhotoRemoval} disabled={isUploadingPhoto || isRemovingPhoto}>
                           {isRemovingPhoto ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <ImageOff className="mr-1.5 size-3.5" />}
-                          Remover foto
+                          Remover
                         </Button>
                       )}
                     </div>
                     <p className="mt-2 text-[11px] leading-4 text-muted-foreground">JPEG, PNG ou WebP · até 5 MB</p>
                   </div>
-                </div>
+                </section>
               )}
 
               {/* Estilo do Avatar */}
@@ -430,51 +427,6 @@ export default function CustomAvatar({
                 )}
               />
 
-              {/* Prévia do Avatar */}
-              <div className="flex items-center gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
-                <div className="shrink-0 rounded-2xl bg-background p-2 shadow-sm">
-                  {photoPreview ? (
-                    <Avatar className="size-16">
-                      <AvatarImage src={photoPreview} alt={`${firstName} ${lastName}`} className="object-cover" />
-                      <AvatarFallback className={cn(selectedColor.bg, selectedColor.text)}>{initials}</AvatarFallback>
-                    </Avatar>
-                  ) : form.watch("avatarStyle") === "initials" && (
-                    <Avatar className="size-16 text-xl">
-                      <AvatarFallback className={
-                        cn(
-                          AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
-                          AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
-                        )
-                      }>
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  {!photoPreview && form.watch("avatarStyle") === "circle" && (
-                    <div className={cn(
-                      "size-16 text-xl rounded-full flex items-center justify-center",
-                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
-                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
-                    )}>
-                      {initials}
-                    </div>
-                  )}
-                  {!photoPreview && form.watch("avatarStyle") === "square" && (
-                    <div className={cn(
-                      "size-16 text-xl rounded-xl flex items-center justify-center",
-                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
-                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
-                    )}>
-                      {initials}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">Prévia</p>
-                  <p className="mt-1 font-semibold text-foreground">{firstName} {lastName}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">Assim seu avatar aparecerá no aplicativo.</p>
-                </div>
-              </div>
               </div>
 
               <DialogFooter className="sticky bottom-0 flex-row gap-2 border-t border-border/70 bg-background/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">

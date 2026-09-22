@@ -187,6 +187,7 @@ export default function PaymentPanel() {
         <h2 className="text-2xl font-bold tracking-tight">Plano familiar</h2>
         <p className="text-muted-foreground">
           {payments.length} cobrança{payments.length !== 1 ? 's' : ''} para toda a família
+          <span className="ml-2 text-xs">• mês atual e próximo</span>
         </p>
       </div>
 

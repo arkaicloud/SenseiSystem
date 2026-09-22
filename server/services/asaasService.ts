@@ -559,10 +559,17 @@ export class AsaasService {
     return { subscription, created: true };
   }
 
-  async getCustomerInvoices(customerId: string): Promise<any[]> {
+  async getCustomerInvoices(
+    customerId: string,
+    dateRange?: { dueDateGe?: string; dueDateLe?: string },
+  ): Promise<any[]> {
     try {
       const response = await this.client.get('/payments', {
-        params: { customer: customerId }
+        params: {
+          customer: customerId,
+          ...(dateRange?.dueDateGe ? { dueDateGe: dateRange.dueDateGe } : {}),
+          ...(dateRange?.dueDateLe ? { dueDateLe: dateRange.dueDateLe } : {}),
+        }
       });
       return response.data?.data || [];
     } catch (error) {

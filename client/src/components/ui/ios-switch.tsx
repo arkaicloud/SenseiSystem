@@ -37,7 +37,7 @@ export default function IosSwitch({
         "transition-colors duration-200",
         disabled
           ? "opacity-50 cursor-not-allowed"
-          : "focus:outline-none focus:ring-2 focus:ring-[#34C759]/40",
+          : "focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted-foreground/40",
       ].join(" ")}
     >
       <span

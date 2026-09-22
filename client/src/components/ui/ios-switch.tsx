@@ -33,8 +33,7 @@ export default function IosSwitch({
       onClick={() => !disabled && onChange(!checked)}
       onKeyDown={handleKeyDown}
       className={[
-        // proporções adequadas do switch iOS
-        "relative inline-flex h-[34px] w-[64px] items-center rounded-full p-[2px]",
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full p-0.5",
         "transition-colors duration-200",
         checked ? "bg-[#34C759]" : "bg-[#E9E9EA] dark:bg-[#3a3a3c]",
         disabled
@@ -48,12 +47,11 @@ export default function IosSwitch({
       <span
         aria-hidden="true"
         className={[
-          // bolinha proporcional: 20x20 para h-[24px]
-          "h-[27px] w-[27px] rounded-full bg-card",
+          "size-5 rounded-full bg-card",
           // sombras parecidas com iOS
           "shadow-[0_1px_2px_rgba(0,0,0,0.35),_0_0_0_0.5px_rgba(0,0,0,0.04)]",
           "transform transition-transform duration-200 will-change-transform",
-          checked ? "translate-x-[30px]" : "translate-x-1",
+          checked ? "translate-x-5" : "translate-x-0",
         ].join(" ")}
       />
     </button>

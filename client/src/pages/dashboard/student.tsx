@@ -10,8 +10,8 @@ import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
 import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import { Link } from "wouter";
-const heroImg = "/dashboard-assets/student-hero.webp";
 const beltImg = "/dashboard-assets/training-card.webp";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function StudentDashboard() {
   const { t } = useTranslations();
@@ -96,98 +96,100 @@ export default function StudentDashboard() {
 
   return (
     <div className="font-inter -mx-3 -mt-3 md:mx-0 md:mt-0">
-      <div className="vyta-hero h-[280px] md:h-[220px] md:rounded-2xl">
-        <img
-          src={heroImg}
-          alt="BJJ Training"
-          loading="eager"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: 'center 20%' }}
-        />
-        <div className="vyta-hero-gradient" />
-        <div className="vyta-hero-content flex flex-col justify-between h-full p-5 pt-6">
-          <div className="flex items-center justify-between">
-            <span className="text-[22px] font-bold text-white tracking-[2px] font-inter">
-              {schoolInfo?.schoolName?.split(' ')[0]?.toUpperCase() ?? "HUIOS"}
-            </span>
-            {/* Guardian profile switcher — only visible for guardians on mobile */}
-            <div className="md:hidden">
-              <GuardianMobileSwitcher />
+      <div className="relative overflow-hidden bg-[#1726b8] px-5 pb-20 pt-6 md:rounded-2xl">
+        <div className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -bottom-36 -left-20 size-72 rounded-full bg-[#0d188e]/70" />
+        <div className="relative z-10">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
+                {schoolInfo?.schoolName?.split(" ")[0] ?? "HUIOS"}
+              </span>
+              <p className="mt-5 text-sm text-white/70">Seu perfil</p>
+              <h1 className="mt-1 text-2xl font-bold leading-tight text-white">
+                {displayFirstName}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Avatar className="size-16 border-2 border-white/70 shadow-lg">
+                <AvatarImage
+                  src={(studentData as any)?.avatarImage || undefined}
+                  alt={displayFirstName || "Aluno"}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-white/20 text-lg font-bold text-white">
+                  {(displayFirstName || "?").charAt(0).toUpperCase()}
+                  {(user?.lastName || "").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="md:hidden">
+                <GuardianMobileSwitcher />
+              </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-[28px] font-bold text-white leading-[34px] font-inter">
-              Fala, {displayFirstName}!
-            </h1>
-            <p className="text-[15px] text-white/80 font-inter">
-              Bora treinar hoje?
-            </p>
-            {(studentData as any)?.beltLevel && (
-              <div className="flex items-center gap-3 mt-3">
-                <div className="relative">
-                  <div
-                    className={`w-20 h-5 rounded-sm shadow-lg ${beltLevel === "white" ? "border border-white/50" : ""}`}
-                    style={{ backgroundColor: getBeltColor(beltLevel) }}
-                  />
-                  {stripes > 0 && (
-                    <div className="absolute inset-0 flex justify-end items-center pr-1 space-x-0.5">
-                      {Array.from({ length: stripes }, (_, i) => (
-                        <div key={i} className="w-0.5 h-3 rounded-full bg-card" />
-                      ))}
-                    </div>
-                  )}
+
+          <div className="mt-5 flex items-center gap-3">
+            <div className="relative">
+              <div
+                className={`h-4 w-16 rounded-sm shadow-lg ${beltLevel === "white" ? "border border-white/60" : ""}`}
+                style={{ backgroundColor: getBeltColor(beltLevel) }}
+              />
+              {stripes > 0 && (
+                <div className="absolute inset-0 flex items-center justify-end gap-0.5 pr-1">
+                  {Array.from({ length: stripes }, (_, i) => (
+                    <div key={i} className="h-3 w-0.5 rounded-full bg-card" />
+                  ))}
                 </div>
-                <span className="vyta-pill">
-                  Faixa {formatBelt(beltLevel, stripes)}
-                </span>
-              </div>
-            )}
+              )}
+            </div>
+            <span className="text-xs font-medium text-white/80">
+              Faixa {formatBelt(beltLevel, stripes)}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="px-5 pt-6 pb-24 space-y-6">
-        <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="relative z-20 -mt-12 space-y-5 px-4 pb-24 md:px-5">
+        <div className="rounded-3xl border border-border/60 bg-card p-3 shadow-xl shadow-slate-900/10">
+          <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Acesso rápido
           </p>
-          <div className={`grid gap-3 ${
+          <div className={`grid gap-2 ${
             financialSummary?.isFinancialResponsible ? "grid-cols-4" : "grid-cols-3"
           }`}>
-            <Link href="/student/week-agenda" className="group flex min-w-0 flex-col items-center gap-2">
-              <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
-                <Calendar className="size-5 text-primary" />
+            <Link href="/student/week-agenda" className="group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 transition-colors hover:bg-primary/5">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:-translate-y-0.5">
+                <Calendar className="size-4" />
               </div>
-              <span className="text-center text-xs font-semibold text-foreground">Agenda</span>
+              <span className="text-center text-[11px] font-semibold text-foreground">Agenda</span>
             </Link>
 
-            <Link href="/student/attendance-stats" className="group flex min-w-0 flex-col items-center gap-2">
-              <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
-                <ChartNoAxesColumnIncreasing className="size-5 text-primary" />
+            <Link href="/student/attendance-stats" className="group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 transition-colors hover:bg-primary/5">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:-translate-y-0.5">
+                <ChartNoAxesColumnIncreasing className="size-4" />
               </div>
-              <span className="text-center text-xs font-semibold text-foreground">Presenças</span>
+              <span className="text-center text-[11px] font-semibold text-foreground">Presenças</span>
             </Link>
 
             {financialSummary?.isFinancialResponsible && (
-              <Link href="/payments" className="group flex min-w-0 flex-col items-center gap-2">
-                <div className="relative flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
-                  <ReceiptText className="size-5 text-primary" />
+              <Link href="/payments" className="group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 transition-colors hover:bg-primary/5">
+                <div className="relative flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:-translate-y-0.5">
+                  <ReceiptText className="size-4" />
                   {financialSummary.hasOverdue && (
-                    <span className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full border-2 border-background bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">
+                    <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full border-2 border-card bg-red-500 px-1 text-[9px] font-bold leading-3 text-white">
                       {financialSummary.overdueCount}
                     </span>
                   )}
                 </div>
-                <span className="text-center text-xs font-semibold text-foreground">Pagamentos</span>
+                <span className="text-center text-[11px] font-semibold text-foreground">Pagamentos</span>
               </Link>
             )}
 
-            <Link href="/settings" className="group flex min-w-0 flex-col items-center gap-2">
-              <div className="flex size-14 items-center justify-center rounded-full border border-primary/10 bg-primary/10 shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:bg-primary/15 group-hover:shadow-md">
-                <UserRound className="size-5 text-primary" />
+            <Link href="/settings" className="group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 py-2 transition-colors hover:bg-primary/5">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:-translate-y-0.5">
+                <UserRound className="size-4" />
               </div>
-              <span className="text-center text-xs font-semibold text-foreground">Perfil</span>
+              <span className="text-center text-[11px] font-semibold text-foreground">Perfil</span>
             </Link>
           </div>
         </div>

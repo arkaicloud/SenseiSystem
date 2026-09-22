@@ -24,6 +24,7 @@ import {
   KeyRound,
   Loader2,
   LogOut,
+  Mail,
   MessageCircle,
   Moon,
   User,
@@ -85,6 +86,7 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isProfileDetailsOpen, setIsProfileDetailsOpen] = useState(false);
   const [isNotificationsExpanded, setIsNotificationsExpanded] = useState(false);
   const [isDatabaseCopyDialogOpen, setIsDatabaseCopyDialogOpen] = useState(false);
   const [databaseCopyJobId, setDatabaseCopyJobId] = useState<string | null>(null);
@@ -425,11 +427,7 @@ export default function Settings() {
           <button
             type="button"
             className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
-            onClick={() =>
-              document
-                .getElementById("profile-summary")
-                ?.scrollIntoView({ behavior: "smooth", block: "center" })
-            }
+            onClick={() => setIsProfileDetailsOpen(true)}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
               <User className="size-4" />
@@ -647,6 +645,56 @@ export default function Settings() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog
+        open={isProfileDetailsOpen}
+        onOpenChange={setIsProfileDetailsOpen}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader className="pt-2 pr-8">
+            <DialogTitle>Dados do perfil</DialogTitle>
+            <DialogDescription>
+              Confira as informações principais da sua conta.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <User className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Nome completo</p>
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Nome não informado"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Mail className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">E-mail</p>
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {user?.email || "E-mail não informado"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsProfileDetailsOpen(false)}
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Diálogo: Alterar senha */}
       <Dialog

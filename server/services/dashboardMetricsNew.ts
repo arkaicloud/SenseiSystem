@@ -150,7 +150,7 @@ export async function getDashboardMetrics(now = new Date()) {
         (u.birth_date IS NOT NULL AND AGE(NOW(), u.birth_date) >= INTERVAL '18 years')
         OR (u.birth_date IS NULL AND bl.category = 'adult')
       )
-    GROUP BY bl.name, bl.order
+    GROUP BY bl.level_key, bl.name, bl.order
     ORDER BY bl.order;
   `);
   const beltsKids = await db.execute(sql`
@@ -164,7 +164,7 @@ export async function getDashboardMetrics(now = new Date()) {
         (u.birth_date IS NOT NULL AND AGE(NOW(), u.birth_date) < INTERVAL '18 years')
         OR (u.birth_date IS NULL AND bl.category = 'child')
       )
-    GROUP BY bl.name, bl.order
+    GROUP BY bl.level_key, bl.name, bl.order
     ORDER BY bl.order;
   `);
 

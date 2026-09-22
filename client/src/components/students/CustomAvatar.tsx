@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Edit } from "lucide-react";
+import { Camera, Edit, ImageOff, Loader2 } from "lucide-react";
 
 // Estilos de avatar disponíveis
 const AVATAR_STYLES = [
@@ -45,6 +45,7 @@ export interface AvatarData {
 }
 
 interface CustomAvatarProps {
+  studentId?: number;
   firstName: string;
   lastName: string;
   avatarStyle: string;
@@ -56,6 +57,7 @@ interface CustomAvatarProps {
 }
 
 export default function CustomAvatar({
+  studentId,
   firstName,
   lastName,
   avatarStyle,
@@ -66,6 +68,9 @@ export default function CustomAvatar({
   editable = true
 }: CustomAvatarProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(avatarImage || "");
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
   const { toast } = useToast();
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
@@ -88,6 +93,94 @@ export default function CustomAvatar({
     }
   });
 
+  useEffect(() => {
+    const nextImage = avatarImage || "";
+    setPhotoPreview(nextImage);
+    form.setValue("avatarImage", nextImage);
+  }, [avatarImage, form]);
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !studentId) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast({
+        title: "Formato inválido",
+        description: "Escolha uma imagem JPEG, PNG ou WebP.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Imagem muito grande",
+        description: "A foto deve ter no máximo 5 MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const localPreview = URL.createObjectURL(file);
+    setPhotoPreview(localPreview);
+    setIsUploadingPhoto(true);
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch(`/api/students/${studentId}/avatar/photo`, {
+        method: "POST",
+        body,
+        credentials: "include",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || "Não foi possível enviar a foto.");
+
+      URL.revokeObjectURL(localPreview);
+      setPhotoPreview(result.avatarImage);
+      form.setValue("avatarImage", result.avatarImage);
+      onSave({ ...form.getValues(), avatarImage: result.avatarImage });
+      toast({ title: "Foto atualizada", description: "Sua nova foto de perfil foi salva." });
+    } catch (error) {
+      URL.revokeObjectURL(localPreview);
+      setPhotoPreview(avatarImage || "");
+      toast({
+        title: "Erro ao enviar foto",
+        description: error instanceof Error ? error.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handlePhotoRemoval = async () => {
+    if (!studentId) return;
+    setIsRemovingPhoto(true);
+    try {
+      const response = await fetch(`/api/students/${studentId}/avatar/photo`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || "Não foi possível remover a foto.");
+
+      setPhotoPreview("");
+      form.setValue("avatarImage", "");
+      onSave({ ...form.getValues(), avatarImage: "" });
+      toast({ title: "Foto removida", description: "O avatar voltou a usar suas iniciais." });
+    } catch (error) {
+      toast({
+        title: "Erro ao remover foto",
+        description: error instanceof Error ? error.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRemovingPhoto(false);
+    }
+  };
+
   const onSubmit = (data: AvatarData) => {
     onSave(data);
     setIsDialogOpen(false);
@@ -99,10 +192,11 @@ export default function CustomAvatar({
 
   // Renderização do avatar com base no estilo
   const renderAvatarContent = () => {
-    if (avatarImage) {
+    if (photoPreview) {
       return (
         <Avatar className={sizeClasses[size]}>
-          <img src={avatarImage} alt={`${firstName} ${lastName}`} className="h-full w-full object-cover" />
+          <AvatarImage src={photoPreview} alt={`${firstName} ${lastName}`} className="object-cover" />
+          <AvatarFallback className={selectedColor.text}>{initials}</AvatarFallback>
         </Avatar>
       );
     }
@@ -161,6 +255,40 @@ export default function CustomAvatar({
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {studentId && (
+                <div className="space-y-3">
+                  <FormLabel>Foto do perfil</FormLabel>
+                  <div className="flex flex-col gap-4 rounded-2xl border border-border bg-muted/30 p-4 sm:flex-row sm:items-center">
+                    <Avatar className="h-20 w-20 shrink-0">
+                      <AvatarImage src={photoPreview || undefined} alt={`${firstName} ${lastName}`} className="object-cover" />
+                      <AvatarFallback className={cn(selectedColor.bg, selectedColor.text, "text-xl")}>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-1 flex-wrap gap-2">
+                      <Button type="button" variant="outline" className="relative" disabled={isUploadingPhoto || isRemovingPhoto}>
+                        {isUploadingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                        {photoPreview ? "Trocar foto" : "Adicionar foto"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          capture="user"
+                          onChange={handlePhotoUpload}
+                          disabled={isUploadingPhoto || isRemovingPhoto}
+                          className="absolute inset-0 cursor-pointer opacity-0"
+                          aria-label="Selecionar ou tirar foto do perfil"
+                        />
+                      </Button>
+                      {photoPreview && (
+                        <Button type="button" variant="ghost" onClick={handlePhotoRemoval} disabled={isUploadingPhoto || isRemovingPhoto}>
+                          {isRemovingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageOff className="mr-2 h-4 w-4" />}
+                          Remover
+                        </Button>
+                      )}
+                      <p className="w-full text-xs text-muted-foreground">JPEG, PNG ou WebP, com até 5 MB.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Estilo do Avatar */}
               <FormField
                 control={form.control}

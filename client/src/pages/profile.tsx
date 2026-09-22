@@ -44,7 +44,7 @@ const Profile: React.FC = () => {
   // Update avatar mutation
   const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useMutation({
     mutationFn: async (data: AvatarData) => {
-      const res = await apiRequest('PUT', `/api/students/avatar/${studentData?.student?.id}`, data);
+      const res = await apiRequest('PUT', `/api/students/${studentData?.student?.id}/avatar`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -181,7 +181,8 @@ const Profile: React.FC = () => {
                 <div className="flex flex-col items-center">
                   {isStudent ? (
                     <div className="mb-4">
-                      <CustomAvatar 
+                      <CustomAvatar
+                        studentId={studentData?.student?.id}
                         firstName={userData?.user?.firstName || ""}
                         lastName={userData?.user?.lastName || ""}
                         avatarStyle={studentData?.student?.avatarStyle || "initials"}

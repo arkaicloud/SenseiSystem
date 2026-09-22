@@ -1084,7 +1084,7 @@ export default function StudentEditDialog({
           <aside className="rounded-[28px] border border-border bg-card p-5 lg:min-h-[660px]">
             <div className="flex flex-col items-center gap-3 py-4 text-center">
               <Avatar className="size-28 ring-4 ring-background">
-                <AvatarImage src={studentRecord?.photoUrl || studentRecord?.user?.photoUrl || undefined} alt={displayName} />
+                <AvatarImage src={studentRecord?.avatarImage || studentRecord?.photoUrl || studentRecord?.user?.photoUrl || undefined} alt={displayName} />
                 <AvatarFallback className="bg-accent text-3xl text-accent-foreground">{displayName.split(" ").slice(0,2).map((name: string) => name[0]).join("")}</AvatarFallback>
               </Avatar>
               <div><h1 className="text-lg font-semibold">{displayName}</h1><p className="mt-1 text-sm text-muted-foreground">Cadastro do aluno</p></div>

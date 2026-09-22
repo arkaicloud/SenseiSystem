@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useQuery } from '@tanstack/react-query';
 import { startOfMonth, endOfMonth } from 'date-fns';
@@ -78,17 +78,25 @@ const BeltDonut = ({ data }: { data: Record<string, number> }) => {
   const chartData = Object.entries(data)
     .filter(([, v]) => v > 0)
     .map(([k, v]) => {
-      const style = BELT_CHART_STYLES[k] || {
+      // Accept both the canonical level key and the descriptive name returned
+      // by older cached dashboard responses.
+      const beltKey = BELT_CHART_STYLES[k]
+        ? k
+        : Object.entries(BELT_NAMES).find(([, label]) => label === k)?.[0] || k;
+      const style = BELT_CHART_STYLES[beltKey] || {
         fill: 'hsl(var(--muted-foreground))',
         legend: '#94A3B8',
       };
       return {
-        name: BELT_NAMES[k] || k,
+        beltKey,
+        name: BELT_NAMES[beltKey] || k,
         value: v,
         ...style,
       };
     });
   const total = chartData.reduce((s, d) => s + d.value, 0);
+  const [selectedBeltKey, setSelectedBeltKey] = useState<string | null>(null);
+  const selectedBelt = chartData.find((belt) => belt.beltKey === selectedBeltKey) || null;
 
   if (!chartData.length) return (
     <p className="text-center text-sm text-muted-foreground py-8">Sem dados de faixas</p>
@@ -110,13 +118,16 @@ const BeltDonut = ({ data }: { data: Record<string, number> }) => {
               ))}
             </defs>
             <Pie data={chartData} cx="50%" cy="50%" innerRadius={58} outerRadius={85}
-              dataKey="value" paddingAngle={3}>
+              dataKey="value" paddingAngle={3}
+              onClick={(_, index) => setSelectedBeltKey(chartData[index]?.beltKey || null)}
+              style={{ cursor: 'pointer' }}>
               {chartData.map((d, i) => (
                 <Cell
                   key={i}
                   fill={d.fill}
                   stroke={d.stroke || '#FFFFFF'}
-                  strokeWidth={d.strokeWidth || 2}
+                  strokeWidth={d.beltKey === selectedBeltKey ? 4 : (d.strokeWidth || 2)}
+                  opacity={selectedBeltKey && d.beltKey !== selectedBeltKey ? 0.55 : 1}
                 />
               ))}
             </Pie>
@@ -129,14 +140,33 @@ const BeltDonut = ({ data }: { data: Record<string, number> }) => {
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1.5 justify-center mt-1">
         {chartData.map((d, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-xs text-secondary-foreground">
+          <button
+            key={i}
+            type="button"
+            aria-pressed={d.beltKey === selectedBeltKey}
+            onClick={() => setSelectedBeltKey(d.beltKey === selectedBeltKey ? null : d.beltKey)}
+            className="flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs text-secondary-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div
               className="h-2.5 w-2.5 flex-shrink-0 rounded-full border border-border"
               style={{ background: d.legend }}
             />
             {d.name}
-          </div>
+          </button>
         ))}
+      </div>
+      <div
+        className="mt-3 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-center text-sm"
+        aria-live="polite"
+      >
+        {selectedBelt ? (
+          <><span className="font-semibold text-foreground">{selectedBelt.name}</span>{": "}
+            <span className="font-bold text-primary">{selectedBelt.value}</span>
+            <span className="text-muted-foreground"> aluno{selectedBelt.value === 1 ? "" : "s"}</span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">Clique em uma faixa para ver a quantidade</span>
+        )}
       </div>
     </div>
   );

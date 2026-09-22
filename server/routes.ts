@@ -47,6 +47,7 @@ import {
   startDatabaseCopy,
 } from "./services/databaseCopyService";
 import { upload } from "./middleware/uploadMiddleware.js";
+import { avatarUpload } from "./middleware/avatarUploadMiddleware.js";
 import { saveStudentDocument } from "./services/uploadService.js";
 import fs from "fs";
 
@@ -933,6 +934,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         beltLevel: student.beltLevel,
         stripes: student.stripes,
         paymentPlanId: student.paymentPlanId,
+        avatarColor: student.avatarColor,
+        avatarStyle: student.avatarStyle,
+        avatarImage: student.avatarImage,
         requiresMedicalCertificate: student.requiresMedicalCertificate,
         medicalCertificateStatus: student.medicalCertificateStatus,
         isFinancialResponsible: student.financialResponsibleCpf === requestUser.cpf
@@ -2692,6 +2696,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         healthQuestionnaireCompletedAt: (student as any).health_questionnaire_completed_at,
         agreedToHealthTerms: (student as any).agreed_to_health_terms,
         healthTermsAgreedAt: (student as any).health_terms_agreed_at,
+        avatarColor: student.avatarColor || null,
+        avatarStyle: student.avatarStyle || null,
+        avatarImage: student.avatarImage || null,
         requiresMedicalCertificate: (student as any).requires_medical_certificate,
         medicalCertificateStatus: (student as any).medical_certificate_status,
         financialResponsible: {
@@ -3098,6 +3105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         healthQuestionnaireCompletedAt: (updatedStudent as any).health_questionnaire_completed_at,
         agreedToHealthTerms: (updatedStudent as any).agreed_to_health_terms,
         healthTermsAgreedAt: (updatedStudent as any).health_terms_agreed_at,
+        avatarColor: updatedStudent.avatarColor || null,
+        avatarStyle: updatedStudent.avatarStyle || null,
+        avatarImage: updatedStudent.avatarImage || null,
         requiresMedicalCertificate: (updatedStudent as any).requires_medical_certificate,
         medicalCertificateStatus: (updatedStudent as any).medical_certificate_status,
         financialResponsible: {
@@ -3164,6 +3174,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ student: updatedStudent });
     } catch (error) {
       res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post(
+    "/api/students/:id/avatar/photo",
+    isAuthenticated,
+    avatarUpload.single("file"),
+    async (req, res) => {
+      try {
+        const studentId = Number(req.params.id);
+        if (!Number.isInteger(studentId) || studentId <= 0) {
+          if (req.file?.path) fs.rmSync(req.file.path, { force: true });
+          return res.status(400).json({ message: "Aluno inválido" });
+        }
+
+        const requestUser = (req as any).user;
+        const student = await getAuthorizedStudent(requestUser, studentId);
+        if (!student) {
+          if (req.file?.path) fs.rmSync(req.file.path, { force: true });
+          return res.status(403).json({ message: "Sem permissão para alterar esta foto" });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ message: "Selecione uma imagem para o perfil." });
+        }
+
+        const previous = await db
+          .select({ id: studentDocuments.id, path: studentDocuments.path })
+          .from(studentDocuments)
+          .where(and(
+            eq(studentDocuments.studentId, studentId),
+            eq(studentDocuments.type, "other"),
+            eq(studentDocuments.description, "profile_avatar"),
+          ))
+          .orderBy(desc(studentDocuments.uploadedAt))
+          .limit(1);
+
+        await saveStudentDocument(
+          studentId,
+          req.file,
+          "other",
+          "profile_avatar",
+        );
+
+        const avatarImage = `/api/students/${studentId}/avatar/photo?v=${Date.now()}`;
+        await storage.updateStudent(studentId, { avatarImage });
+
+        if (previous[0]) {
+          await db.delete(studentDocuments).where(eq(studentDocuments.id, previous[0].id));
+          fs.rmSync(previous[0].path, { force: true });
+        }
+
+        await storage.createActivityLog({
+          userId: requestUser.id,
+          activity: `${requestUser.firstName} ${requestUser.lastName} atualizou a foto de perfil do aluno`,
+          entityType: "student",
+          entityId: studentId,
+          timestamp: new Date(),
+        });
+
+        res.status(201).json({ avatarImage });
+      } catch (error) {
+        if (req.file?.path) fs.rmSync(req.file.path, { force: true });
+        console.error("Erro ao enviar foto do perfil:", error);
+        res.status(500).json({ message: "Não foi possível enviar a foto do perfil" });
+      }
+    },
+  );
+
+  app.delete("/api/students/:id/avatar/photo", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = Number(req.params.id);
+      const requestUser = (req as any).user;
+      const student = await getAuthorizedStudent(requestUser, studentId);
+      if (!student) {
+        return res.status(403).json({ message: "Sem permissão para remover esta foto" });
+      }
+
+      const latest = await db
+        .select({ id: studentDocuments.id, path: studentDocuments.path })
+        .from(studentDocuments)
+        .where(and(
+          eq(studentDocuments.studentId, studentId),
+          eq(studentDocuments.type, "other"),
+          eq(studentDocuments.description, "profile_avatar"),
+        ))
+        .orderBy(desc(studentDocuments.uploadedAt))
+        .limit(1);
+
+      if (latest[0]) {
+        await db.delete(studentDocuments).where(eq(studentDocuments.id, latest[0].id));
+        fs.rmSync(latest[0].path, { force: true });
+      }
+
+      await storage.updateStudent(studentId, { avatarImage: null });
+      res.json({ avatarImage: null });
+    } catch (error) {
+      console.error("Erro ao remover foto do perfil:", error);
+      res.status(500).json({ message: "Não foi possível remover a foto do perfil" });
+    }
+  });
+
+  app.get("/api/students/:id/avatar/photo", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = Number(req.params.id);
+      const requestUser = (req as any).user;
+      const student = await getAuthorizedStudent(requestUser, studentId);
+      if (!student) {
+        return res.status(403).json({ message: "Sem permissão para acessar esta foto" });
+      }
+
+      const latest = await db
+        .select({ path: studentDocuments.path, mime: studentDocuments.mime })
+        .from(studentDocuments)
+        .where(and(
+          eq(studentDocuments.studentId, studentId),
+          eq(studentDocuments.type, "other"),
+          eq(studentDocuments.description, "profile_avatar"),
+        ))
+        .orderBy(desc(studentDocuments.uploadedAt))
+        .limit(1);
+
+      if (!latest[0] || !fs.existsSync(latest[0].path)) {
+        return res.status(404).json({ message: "Foto de perfil não encontrada" });
+      }
+
+      res.type(latest[0].mime);
+      res.sendFile(latest[0].path);
+    } catch (error) {
+      console.error("Erro ao abrir foto do perfil:", error);
+      res.status(500).json({ message: "Não foi possível abrir a foto do perfil" });
     }
   });
 

@@ -88,7 +88,7 @@ export default function StudentNoticesPage() {
   // Marcar aviso como lido
   const markAsReadMutation = useMutation({
     mutationFn: async (noticeId: number) => {
-      const response = await apiRequest('POST', `/api/students/${studentProfile?.id}/notices/${noticeId}/read`);
+       const response = await apiRequest('PATCH', `/api/students/${studentProfile?.id}/notifications/${noticeId}/read`);
       if (!response.ok) {
         throw new Error('Erro ao marcar como lido');
       }
@@ -96,6 +96,9 @@ export default function StudentNoticesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/students/${studentProfile?.id}/notices`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/students/${studentProfile?.id}/notifications?limit=1`],
+      });
     },
   });
 

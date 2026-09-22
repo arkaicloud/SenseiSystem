@@ -1,10 +1,11 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "@/hooks/use-translations";
 import { useAuth } from "@/hooks/use-auth";
 import { useGuardian } from "@/contexts/guardian-context";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, ChartNoAxesColumnIncreasing, ReceiptText, UserRound } from "lucide-react";
+import { Bell, Calendar, ChartNoAxesColumnIncreasing, ReceiptText, UserRound } from "lucide-react";
 import { TodayClasses } from "@/components/student/TodayClasses";
 import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
@@ -63,6 +64,70 @@ export default function StudentDashboard() {
     enabled: !!user?.id,
   });
 
+  const { data: notificationPreferences } = useQuery<{
+    eventNotifications?: boolean;
+  }>({
+    queryKey: ["/api/user/notification-preferences"],
+    enabled: !!user?.id,
+  });
+
+  const { data: studentNotifications } = useQuery<{
+    unreadCount?: number | string;
+  }>({
+    queryKey: [
+      `/api/students/${(studentData as any)?.id || 0}/notifications?limit=1`,
+    ],
+    enabled: !!(studentData as any)?.id,
+    refetchInterval: 30000,
+  });
+
+  const unreadSchoolNotifications = Number(
+    studentNotifications?.unreadCount || 0,
+  );
+
+  useEffect(() => {
+    if (
+      !(studentData as any)?.id ||
+      !user?.id ||
+      notificationPreferences?.eventNotifications !== true ||
+      unreadSchoolNotifications <= 0 ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const storageKey = `senseisystem:last-school-notification-count:${studentData.id}`;
+    const previousCount = Number(sessionStorage.getItem(storageKey));
+    sessionStorage.setItem(storageKey, String(unreadSchoolNotifications));
+
+    if (
+      !Number.isFinite(previousCount) ||
+      unreadSchoolNotifications <= previousCount ||
+      !("Notification" in window) ||
+      Notification.permission !== "granted"
+    ) {
+      return;
+    }
+
+    void navigator.serviceWorker.ready.then((registration) => {
+      registration.showNotification("Novo aviso da escola", {
+        body:
+          unreadSchoolNotifications === 1
+            ? "Você tem 1 aviso não lido."
+            : `Você tem ${unreadSchoolNotifications} avisos não lidos.`,
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/badge-72x72.png",
+        tag: "school-notices",
+        data: { url: "/student/notices" },
+      });
+    });
+  }, [
+    notificationPreferences?.eventNotifications,
+    (studentData as any)?.id,
+    unreadSchoolNotifications,
+    user?.id,
+  ]);
+
   if (isStudentLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -111,6 +176,24 @@ export default function StudentDashboard() {
               </h1>
             </div>
             <div className="flex items-center gap-2">
+              <Link
+                href="/student/notices"
+                aria-label={
+                  unreadSchoolNotifications > 0
+                    ? `${unreadSchoolNotifications} avisos não lidos`
+                    : "Avisos da escola"
+                }
+                className="relative flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              >
+                <Bell className="size-4" />
+                {unreadSchoolNotifications > 0 && (
+                  <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full border-2 border-[#1726b8] bg-red-500 px-1 text-[9px] font-bold leading-3 text-white">
+                    {unreadSchoolNotifications > 9
+                      ? "9+"
+                      : unreadSchoolNotifications}
+                  </span>
+                )}
+              </Link>
               <Avatar className="size-16 border-2 border-white/70 shadow-lg">
                 <AvatarImage
                   src={(studentData as any)?.avatarImage || undefined}

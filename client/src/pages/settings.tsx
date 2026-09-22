@@ -297,7 +297,27 @@ export default function Settings() {
       "attendanceNotifications" | "paymentNotifications" | "eventNotifications"
     >,
     value: boolean,
-  ) => updateNotificationPreferences.mutate({ [key]: value });
+  ) => {
+    if (
+      key === "eventNotifications" &&
+      value &&
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
+      void Notification.requestPermission().then((permission) => {
+        if (permission !== "granted") {
+          toast({
+            title: "Notificações do navegador desativadas",
+            description:
+              "Você continuará vendo o contador de avisos dentro do aplicativo.",
+          });
+        }
+      });
+    }
+
+    updateNotificationPreferences.mutate({ [key]: value });
+  };
 
   return (
     <div className="mx-auto max-w-md space-y-2.5 px-3 py-3 md:px-5 md:py-5">

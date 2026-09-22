@@ -85,7 +85,6 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  if (event.action === 'explore') {
-    event.waitUntil(clients.openWindow('/dashboard'));
-  }
+  const destination = event.notification.data?.url || '/dashboard';
+  event.waitUntil(clients.openWindow(destination));
 });

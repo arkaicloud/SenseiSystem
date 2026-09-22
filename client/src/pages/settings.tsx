@@ -11,21 +11,21 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import IosSwitch from "@/components/ui/ios-switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle,
+  ArrowLeft,
   Bell,
   CheckCircle2,
   Database,
   ChevronRight,
+  Info,
+  KeyRound,
   Loader2,
   LogOut,
+  MessageCircle,
   Moon,
-  Shield,
-  Sun,
   User,
   XCircle,
 } from "lucide-react";
@@ -85,6 +85,7 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isNotificationsExpanded, setIsNotificationsExpanded] = useState(false);
   const [isDatabaseCopyDialogOpen, setIsDatabaseCopyDialogOpen] = useState(false);
   const [databaseCopyJobId, setDatabaseCopyJobId] = useState<string | null>(null);
   const notifiedDatabaseCopyJob = useRef<string | null>(null);
@@ -323,309 +324,295 @@ export default function Settings() {
     updateNotificationPreferences.mutate({ [key]: value });
   };
 
-  return (
-    <div className="mx-auto max-w-md space-y-2.5 px-3 py-3 md:px-5 md:py-5">
-      <section className="rounded-[20px] border border-border/70 bg-card p-3.5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
-              Minha conta
-            </p>
-            <h1 className="mt-0.5 text-lg font-bold tracking-tight text-foreground">
-              Meu perfil
-            </h1>
-          </div>
-          <User className="size-4 text-muted-foreground" />
-        </div>
+  const roleLabel =
+    user?.role === "admin"
+      ? "Administrador"
+      : user?.role === "instructor"
+        ? "Professor"
+        : user?.role === "guardian"
+          ? "Responsável"
+          : "Aluno";
 
-        <div className="mt-2.5 flex items-center gap-2.5">
-          {user?.role === "student" && profileStudent?.id ? (
-            <CustomAvatar
-              studentId={profileStudent.id}
-              firstName={user?.firstName || ""}
-              lastName={user?.lastName || ""}
-              avatarStyle={profileStudent.avatarStyle || "initials"}
-              avatarColor={profileStudent.avatarColor || "blue"}
-              avatarImage={profileStudent.avatarImage || ""}
-              size="sm"
-              onSave={(data) => updateAvatarMutation.mutate(data)}
-              editable
-              showActionLabel={false}
-            />
-          ) : (
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-              {user?.firstName?.charAt(0)}
-              {user?.lastName?.charAt(0)}
-            </div>
-          )}
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-bold text-foreground">
-              {user?.firstName} {user?.lastName}
-            </h2>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{user?.email}</p>
-            <span className="mt-1 inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-              {user?.role === "admin"
-                ? "Administrador"
-                : user?.role === "instructor"
-                  ? "Professor"
-                  : user?.role === "guardian"
-                    ? "Responsável"
-                    : "Aluno"}
-            </span>
+  return (
+    <div className="mx-auto w-full max-w-md space-y-5 px-4 pb-24 pt-4 md:px-5 md:pb-8 md:pt-5">
+      <header className="relative flex items-center justify-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute left-0 size-9 rounded-full text-foreground hover:bg-muted"
+          onClick={() => window.history.back()}
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="size-5" />
+        </Button>
+        <h1 className="text-lg font-bold tracking-tight text-foreground">Perfil</h1>
+      </header>
+
+      <section
+        id="profile-summary"
+        className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3.5 shadow-sm"
+      >
+        {user?.role === "student" && profileStudent?.id ? (
+          <CustomAvatar
+            studentId={profileStudent.id}
+            firstName={user?.firstName || ""}
+            lastName={user?.lastName || ""}
+            avatarStyle={profileStudent.avatarStyle || "initials"}
+            avatarColor={profileStudent.avatarColor || "blue"}
+            avatarImage={profileStudent.avatarImage || ""}
+            size="md"
+            onSave={(data) => updateAvatarMutation.mutate(data)}
+            editable
+            showActionLabel={false}
+          />
+        ) : (
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
+            {user?.firstName?.charAt(0)}
+            {user?.lastName?.charAt(0)}
           </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[15px] font-bold text-foreground">
+            {user?.firstName} {user?.lastName}
+          </h2>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {roleLabel}
+          </p>
         </div>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
       </section>
 
-      <div className="grid gap-3">
-        {/* Notificações */}
-        <Card className="order-1 overflow-hidden rounded-[22px]">
-          <CardHeader className="border-b border-border/70 px-3.5 py-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Bell className="size-4 text-primary" />
-              Notificações
-            </CardTitle>
-            <CardDescription className="mt-0.5 text-xs">
-              Configure suas preferências de notificações
-            </CardDescription>
-          </CardHeader>
+      <section>
+        <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
+          Outras configurações
+        </h2>
+        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
+            onClick={() =>
+              document
+                .getElementById("profile-summary")
+                ?.scrollIntoView({ behavior: "smooth", block: "center" })
+            }
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <User className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-foreground">Dados do perfil</span>
+              <span className="block text-[11px] text-muted-foreground">Nome e avatar</span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </button>
 
-          <CardContent className="space-y-0 px-3.5 py-0">
-            {/* Presença */}
-            <div className="flex items-center justify-between gap-3 py-2.5">
-              <div className="space-y-0.5 min-w-0">
-                <Label className="text-sm font-semibold">Presença</Label>
-                <div className="text-[11px] leading-4 text-muted-foreground">
-                  Receber notificações sobre confirmação de presença
-                </div>
-              </div>
-              <div className="shrink-0">
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
+            onClick={() => setIsPasswordDialogOpen(true)}
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <KeyRound className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-medium text-foreground">Senha</span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </button>
+
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
+            onClick={() => setIsNotificationsExpanded((expanded) => !expanded)}
+            aria-expanded={isNotificationsExpanded}
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <Bell className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-medium text-foreground">Notificações</span>
+            <ChevronRight
+              className={`size-4 text-muted-foreground transition-transform ${
+                isNotificationsExpanded ? "rotate-90" : ""
+              }`}
+            />
+          </button>
+
+          {isNotificationsExpanded && (
+            <div className="space-y-3 border-t border-border/70 bg-muted/20 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-foreground">Presença</span>
                 <IosSwitch
-                  checked={
-                    notificationPreferences?.attendanceNotifications ?? true
-                  }
-                  onChange={(v) =>
-                    handleNotificationToggle("attendanceNotifications", v)
-                  }
-                  disabled={
-                    isLoadingPreferences ||
-                    updateNotificationPreferences.isPending
-                  }
+                  checked={notificationPreferences?.attendanceNotifications ?? true}
+                  onChange={(v) => handleNotificationToggle("attendanceNotifications", v)}
+                  disabled={isLoadingPreferences || updateNotificationPreferences.isPending}
                   label="Notificações de presença"
                 />
               </div>
-            </div>
-
-            <Separator />
-
-            {/* Pagamento */}
-            <div className="flex items-center justify-between gap-3 py-2.5">
-              <div className="space-y-0.5 min-w-0">
-                <Label className="text-sm font-semibold">Pagamentos</Label>
-                <div className="text-[11px] leading-4 text-muted-foreground">
-                  Receber notificações sobre pagamentos e vencimentos
-                </div>
-              </div>
-              <div className="shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-foreground">Pagamentos</span>
                 <IosSwitch
-                  checked={
-                    notificationPreferences?.paymentNotifications ?? true
-                  }
-                  onChange={(v) =>
-                    handleNotificationToggle("paymentNotifications", v)
-                  }
-                  disabled={
-                    isLoadingPreferences ||
-                    updateNotificationPreferences.isPending
-                  }
+                  checked={notificationPreferences?.paymentNotifications ?? true}
+                  onChange={(v) => handleNotificationToggle("paymentNotifications", v)}
+                  disabled={isLoadingPreferences || updateNotificationPreferences.isPending}
                   label="Notificações de pagamento"
                 />
               </div>
-            </div>
-
-            <Separator />
-
-            {/* Eventos */}
-            <div className="flex items-center justify-between gap-3 py-2.5">
-              <div className="space-y-0.5 min-w-0">
-                <Label className="text-sm font-semibold">Eventos</Label>
-                <div className="text-[11px] leading-4 text-muted-foreground">
-                  Receber notificações sobre eventos da escola
-                </div>
-              </div>
-              <div className="shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-foreground">Eventos</span>
                 <IosSwitch
                   checked={notificationPreferences?.eventNotifications ?? true}
-                  onChange={(v) =>
-                    handleNotificationToggle("eventNotifications", v)
-                  }
-                  disabled={
-                    isLoadingPreferences ||
-                    updateNotificationPreferences.isPending
-                  }
+                  onChange={(v) => handleNotificationToggle("eventNotifications", v)}
+                  disabled={isLoadingPreferences || updateNotificationPreferences.isPending}
                   label="Notificações de eventos"
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Aparência */}
-        <Card className="order-2 overflow-hidden rounded-[22px]">
-          <CardHeader className="border-b border-border/70 px-3.5 py-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              {theme === "dark" ? (
-                <Moon className="size-4 text-primary" />
-              ) : (
-                <Sun className="size-4 text-primary" />
-              )}
-              Aparência
+          <div className="flex min-h-14 items-center gap-3 border-t border-border/70 px-4">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <Moon className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-foreground">Modo escuro</span>
+              <span className="block text-[11px] text-muted-foreground">
+                {theme === "dark" ? "Ativado" : "Desativado"}
+              </span>
+            </span>
+            <IosSwitch
+              checked={theme === "dark"}
+              onChange={() => toggleTheme()}
+              label="Alternar modo escuro"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">
+          Aplicativo
+        </h2>
+        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
+            onClick={() =>
+              toast({
+                title: "SenseiSystem",
+                description: "Gestão da sua escola de artes marciais.",
+              })
+            }
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <Info className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-medium text-foreground">Sobre o aplicativo</span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
+            onClick={() =>
+              toast({
+                title: "Ajuda e FAQ",
+                description: "Fale com a secretaria da escola para tirar dúvidas.",
+              })
+            }
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+              <MessageCircle className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-medium text-foreground">Ajuda e FAQ</span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left text-destructive transition-colors hover:bg-destructive/5"
+            onClick={() => logout()}
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+              <LogOut className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-medium">Sair da conta</span>
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      </section>
+
+      {shouldShowDatabaseOperations(databaseCopyAccess?.canAccess) && (
+        <Card className="border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+              Operações do banco
             </CardTitle>
-            <CardDescription className="mt-0.5 text-xs">
-              Escolha como o aplicativo deve aparecer
+            <CardDescription>
+              Recursos administrativos para sincronizar os ambientes
             </CardDescription>
           </CardHeader>
-
-          <CardContent className="px-3.5 py-0">
-            <div className="flex items-center justify-between gap-3 py-2.5">
-              <div className="min-w-0 space-y-0.5">
-                <Label className="text-sm font-semibold">
-                  {theme === "dark" ? "Modo escuro" : "Modo claro"}
-                </Label>
-                <div className="text-[11px] leading-4 text-muted-foreground">
-                  Alternar entre o tema claro e escuro
-                </div>
-              </div>
-              <IosSwitch
-                checked={theme === "dark"}
-                onChange={() => toggleTheme()}
-                label="Alternar modo escuro"
-              />
+          <CardContent className="space-y-4">
+            <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-100 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+              <p>
+                Esta operação substitui todos os dados atuais do banco de
+                desenvolvimento pelos dados de produção. Execute somente pelo
+                ambiente de desenvolvimento.
+              </p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Segurança */}
-        <Card className="order-3 overflow-hidden rounded-[22px]">
-          <CardHeader className="border-b border-border/70 px-3.5 py-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Shield className="size-4 text-primary" />
-              Segurança
-            </CardTitle>
-            <CardDescription className="mt-0.5 text-xs">
-              Configurações de segurança da sua conta
-            </CardDescription>
-          </CardHeader>
+            {!databaseCopyAccess?.configured && (
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                Configure o segredo PROD_DATABASE_URL no ambiente de
+                desenvolvimento para habilitar esta operação.
+              </p>
+            )}
 
-          <CardContent className="px-3.5 py-1">
-            <div className="flex items-center justify-between gap-3 py-2">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-semibold">Alterar senha</Label>
-                <div className="text-xs text-muted-foreground">
-                  Atualize sua senha para manter sua conta segura
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 rounded-xl"
-                onClick={() => setIsPasswordDialogOpen(true)}
+            {databaseCopyJob && (
+              <div
+                className="flex items-center gap-2 text-sm"
+                aria-live="polite"
               >
-                Alterar senha
-              </Button>
-              <ChevronRight className="size-4 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {shouldShowDatabaseOperations(databaseCopyAccess?.canAccess) && (
-          <Card className="order-4 border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-amber-700 dark:text-amber-400" />
-                Operações do banco
-              </CardTitle>
-              <CardDescription>
-                Recursos administrativos para sincronizar os ambientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-100 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-                <p>
-                  Esta operação substitui todos os dados atuais do banco de
-                  desenvolvimento pelos dados de produção. Execute somente pelo
-                  ambiente de desenvolvimento.
-                </p>
-              </div>
-
-              {!databaseCopyAccess?.configured && (
-                <p className="text-sm text-amber-800 dark:text-amber-300">
-                  Configure o segredo PROD_DATABASE_URL no ambiente de
-                  desenvolvimento para habilitar esta operação.
-                </p>
-              )}
-
-              {databaseCopyJob && (
-                <div
-                  className="flex items-center gap-2 text-sm"
-                  aria-live="polite"
-                >
-                  {databaseCopyUiStatus === "running" && (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Cópia em andamento. Não feche o ambiente de desenvolvimento.
-                    </>
-                  )}
-                  {databaseCopyUiStatus === "success" && (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      Cópia concluída com sucesso.
-                    </>
-                  )}
-                  {databaseCopyUiStatus === "error" && (
-                    <>
-                      <XCircle className="h-4 w-4 text-red-600" />
-                      {databaseCopyJob.error || "A cópia não pôde ser concluída."}
-                    </>
-                  )}
-                </div>
-              )}
-
-              <Button
-                className="bg-amber-600 text-white hover:bg-amber-700"
-                disabled={
-                  !databaseCopyAccess?.configured ||
-                  databaseCopyMutation.isPending ||
-                  databaseCopyUiStatus === "running"
-                }
-                onClick={() => setIsDatabaseCopyDialogOpen(true)}
-              >
-                {databaseCopyMutation.isPending ||
-                databaseCopyUiStatus === "running" ? (
+                {databaseCopyUiStatus === "running" && (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Copiando banco...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Cópia em andamento. Não feche o ambiente de desenvolvimento.
                   </>
-                ) : (
-                  "Copiar produção para desenvolvimento"
                 )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                {databaseCopyUiStatus === "success" && (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Cópia concluída com sucesso.
+                  </>
+                )}
+                {databaseCopyUiStatus === "error" && (
+                  <>
+                    <XCircle className="h-4 w-4 text-red-600" />
+                    {databaseCopyJob.error || "A cópia não pôde ser concluída."}
+                  </>
+                )}
+              </div>
+            )}
 
-      {/* Logout — mobile only */}
-      <div className="md:hidden">
-        <Button
-          variant="outline"
-          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 font-semibold h-12 rounded-xl gap-2"
-          onClick={() => logout()}
-        >
-          <LogOut className="w-4 h-4" />
-          Sair da conta
-        </Button>
-      </div>
+            <Button
+              className="bg-amber-600 text-white hover:bg-amber-700"
+              disabled={
+                !databaseCopyAccess?.configured ||
+                databaseCopyMutation.isPending ||
+                databaseCopyUiStatus === "running"
+              }
+              onClick={() => setIsDatabaseCopyDialogOpen(true)}
+            >
+              {databaseCopyMutation.isPending ||
+              databaseCopyUiStatus === "running" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Copiando banco...
+                </>
+              ) : (
+                "Copiar produção para desenvolvimento"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Diálogo: Alterar senha */}
       <Dialog

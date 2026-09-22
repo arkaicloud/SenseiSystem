@@ -171,7 +171,7 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
         size="sm"
         onClick={() => handleConfirm(classSession, date)}
         disabled={isMutating}
-        className="h-8 rounded-lg bg-[#17151c] px-3 text-xs font-semibold text-white hover:bg-[#2b2832]"
+        className="h-8 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         data-testid={`button-confirm-${date}-${classSession.id}`}
       >
         {isMutating ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <CheckCircle className="mr-1.5 size-3.5" />}
@@ -238,7 +238,7 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                 type="button"
                 onClick={() => setSelectedDate(day.date)}
                 className={`flex min-w-[43px] flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 transition-colors ${
-                  isSelected ? "bg-[#6155e8] text-white shadow-sm" : "text-muted-foreground hover:bg-muted"
+                  isSelected ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
                 }`}
                 aria-pressed={isSelected}
               >
@@ -246,8 +246,8 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                   {parts.weekday}
                 </span>
                 <span className="text-base font-bold leading-none">{parts.dayNumber}</span>
-                {hasClasses && !isSelected && <span className="size-1 rounded-full bg-[#6155e8]" />}
-                {isSelected && <span className="size-1 rounded-full bg-white/80" />}
+                {hasClasses && !isSelected && <span className="size-1 rounded-full bg-primary" />}
+                {isSelected && <span className="size-1 rounded-full bg-primary-foreground/80" />}
               </button>
             );
           })}
@@ -280,20 +280,20 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                 <div
                   key={`${selectedDay?.date}-${classSession.id}`}
                   className={`border-l-2 py-2 pl-3 pr-1 ${
-                    classSession.isCancelled ? "border-red-400 opacity-70" : "border-[#6155e8]"
+                    classSession.isCancelled ? "border-red-400 opacity-70" : "border-primary"
                   }`}
                   data-testid={`class-card-${selectedDay?.date}-${classSession.id}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <Clock className="size-3.5 text-[#6155e8]" />
-                        <span className="text-sm font-medium text-[#6155e8]">
+                        <Clock className="size-3.5 text-primary" />
+                        <span className="text-sm font-medium text-primary">
                           {formatTime(classSession.startTime)}
                         </span>
                       </div>
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#e7e4ff] text-[9px] font-bold text-[#6155e8]">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
                           {getInstructorInitials(classSession.instructorName)}
                         </div>
                         <div className="min-w-0">

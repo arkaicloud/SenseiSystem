@@ -3,18 +3,10 @@ import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Form, FormLabel } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, ImageOff, Loader2 } from "lucide-react";
-
-// Estilos de avatar disponíveis
-const AVATAR_STYLES = [
-  { id: "initials", name: "Iniciais" },
-  { id: "circle", name: "Círculo" },
-  { id: "square", name: "Quadrado" },
-];
 
 // Cores de avatar disponíveis
 const AVATAR_COLORS = [
@@ -89,7 +81,7 @@ export default function CustomAvatar({
   // Configuração do formulário
   const form = useForm<AvatarData>({
     defaultValues: {
-      avatarStyle,
+      avatarStyle: "initials",
       avatarColor,
       avatarImage
     }
@@ -184,7 +176,7 @@ export default function CustomAvatar({
   };
 
   const onSubmit = (data: AvatarData) => {
-    onSave(data);
+    onSave({ ...data, avatarStyle: "initials", avatarColor });
     setIsDialogOpen(false);
     toast({
       title: "Avatar atualizado",
@@ -192,7 +184,7 @@ export default function CustomAvatar({
     });
   };
 
-  // Renderização do avatar com base no estilo
+  // Sem foto, o avatar usa sempre iniciais em formato circular.
   const renderAvatarContent = () => {
     if (photoPreview) {
       return (
@@ -203,34 +195,9 @@ export default function CustomAvatar({
       );
     }
 
-    if (avatarStyle === "initials") {
-      return (
-        <Avatar className={cn(sizeClasses[size], selectedColor.bg)}>
-          <AvatarFallback className={selectedColor.text}>{initials}</AvatarFallback>
-        </Avatar>
-      );
-    }
-
-    if (avatarStyle === "circle") {
-      return (
-        <div className={cn("rounded-full flex items-center justify-center", sizeClasses[size], selectedColor.bg)}>
-          <span className={selectedColor.text}>{initials}</span>
-        </div>
-      );
-    }
-
-    if (avatarStyle === "square") {
-      return (
-        <div className={cn("rounded-md flex items-center justify-center", sizeClasses[size], selectedColor.bg)}>
-          <span className={selectedColor.text}>{initials}</span>
-        </div>
-      );
-    }
-
-    // Fallback para iniciais
     return (
-      <Avatar className={cn(sizeClasses[size], "bg-secondary")}>
-        <AvatarFallback className="text-white">{initials}</AvatarFallback>
+      <Avatar className={cn(sizeClasses[size], selectedColor.bg)}>
+        <AvatarFallback className={selectedColor.text}>{initials}</AvatarFallback>
       </Avatar>
     );
   };
@@ -272,8 +239,8 @@ export default function CustomAvatar({
                 <Camera className="size-5 text-primary" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-bold tracking-tight">Foto e avatar</DialogTitle>
-                <p className="mt-0.5 text-sm text-muted-foreground">Escolha como seu perfil será exibido.</p>
+                <DialogTitle className="text-xl font-bold tracking-tight">Foto de perfil</DialogTitle>
+                <p className="mt-0.5 text-sm text-muted-foreground">Use uma foto ou mantenha suas iniciais.</p>
               </div>
             </div>
           </DialogHeader>
@@ -331,101 +298,6 @@ export default function CustomAvatar({
                   </div>
                 </section>
               )}
-
-              {/* Estilo do Avatar */}
-              <FormField
-                control={form.control}
-                name="avatarStyle"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                      <div>
-                        <FormLabel className="text-sm font-semibold">Formato do avatar</FormLabel>
-                        <p className="mt-0.5 text-xs text-muted-foreground">Escolha um formato para quando não houver foto.</p>
-                      </div>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                          value={field.value}
-                          className="grid grid-cols-3 gap-2"
-                      >
-                        {AVATAR_STYLES.map((style) => (
-                            <FormItem key={style.id} className="space-y-0">
-                            <FormControl>
-                                <RadioGroupItem value={style.id} id={`style-${style.id}`} className="sr-only" />
-                            </FormControl>
-                              <label
-                                htmlFor={`style-${style.id}`}
-                                className={cn(
-                                  "flex cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2 py-3 text-center transition-all",
-                                  field.value === style.id
-                                    ? "border-primary bg-primary/5 text-primary shadow-sm ring-1 ring-primary/20"
-                                    : "border-border/70 bg-card text-muted-foreground hover:border-primary/30 hover:bg-muted/40",
-                                )}
-                              >
-                                <span className={cn(
-                                  "flex size-9 items-center justify-center border-2 border-current text-xs font-bold",
-                                  style.id === "square" ? "rounded-lg" : "rounded-full",
-                                  style.id === "initials" && "bg-primary text-primary-foreground border-primary",
-                                )}>
-                                  {style.id === "circle" ? "" : initials}
-                                </span>
-                                <span className="text-xs font-semibold">{style.name}</span>
-                              </label>
-                          </FormItem>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {/* Cor do Avatar */}
-              <FormField
-                control={form.control}
-                name="avatarColor"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                      <div className="flex items-end justify-between gap-3">
-                        <div>
-                          <FormLabel className="text-sm font-semibold">Cor do avatar</FormLabel>
-                          <p className="mt-0.5 text-xs text-muted-foreground">Toque em uma cor para visualizar.</p>
-                        </div>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {AVATAR_COLORS.find(color => color.id === field.value)?.name}
-                        </span>
-                      </div>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                          value={field.value}
-                          className="grid grid-cols-6 gap-2 rounded-2xl border border-border/70 bg-muted/20 p-3"
-                      >
-                        {AVATAR_COLORS.map((color) => (
-                            <FormItem key={color.id} className="flex items-center justify-center space-y-0">
-                            <FormControl>
-                              <RadioGroupItem 
-                                value={color.id} 
-                                id={`color-${color.id}`}
-                                className="sr-only"
-                              />
-                            </FormControl>
-                            <label
-                              htmlFor={`color-${color.id}`}
-                              aria-label={color.name}
-                              title={color.name}
-                              className={cn(
-                                "size-9 cursor-pointer rounded-full border-2 border-background shadow-sm ring-offset-background transition-all hover:scale-110",
-                                color.bg,
-                                field.value === color.id && "scale-110 ring-2 ring-primary ring-offset-2"
-                              )}
-                            />
-                          </FormItem>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
 
               </div>
 

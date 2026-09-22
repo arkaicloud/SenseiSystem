@@ -149,6 +149,14 @@ export default function StudentDashboard() {
     return colors[beltLevel] || "#FFFFFF";
   };
 
+  const avatarFallbackClass: Record<string, string> = {
+    white: "bg-primary",
+    blue: "bg-blue-600",
+    purple: "bg-purple-600",
+    brown: "bg-orange-700",
+    black: "bg-slate-700",
+  };
+
   const formatBelt = (beltLevel: string, stripes: number) => {
     const beltNames: Record<string, string> = {
       white: "Branca", blue: "Azul", purple: "Roxa",
@@ -229,7 +237,7 @@ export default function StudentDashboard() {
                 alt={displayFirstName || "Aluno"}
                 className="object-cover"
               />
-              <AvatarFallback className="bg-primary text-2xl font-bold text-primary-foreground">
+              <AvatarFallback className={`${avatarFallbackClass[beltLevel] || "bg-primary"} text-2xl font-bold text-white`}>
                 {(displayFirstName || "?").charAt(0).toUpperCase()}
                 {(displayLastName || "").charAt(0).toUpperCase()}
               </AvatarFallback>

@@ -333,6 +333,21 @@ export default function Settings() {
           ? "Responsável"
           : "Aluno";
 
+  const getAvatarColorForBelt = (beltLevel?: string | null) => {
+    switch (beltLevel) {
+      case "purple":
+        return "purple";
+      case "brown":
+        return "orange";
+      case "black":
+        return "slate";
+      case "blue":
+        return "blue";
+      default:
+        return "blue";
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-md space-y-5 px-4 pb-24 pt-4 md:px-5 md:pb-8 md:pt-5">
       <header className="relative flex items-center justify-center">
@@ -357,8 +372,8 @@ export default function Settings() {
             studentId={profileStudent.id}
             firstName={user?.firstName || ""}
             lastName={user?.lastName || ""}
-            avatarStyle={profileStudent.avatarStyle || "initials"}
-            avatarColor={profileStudent.avatarColor || "blue"}
+            avatarStyle="initials"
+            avatarColor={getAvatarColorForBelt(profileStudent.beltLevel)}
             avatarImage={profileStudent.avatarImage || ""}
             size="lg"
             onSave={(data) => updateAvatarMutation.mutate(data)}

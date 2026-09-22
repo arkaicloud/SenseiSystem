@@ -531,9 +531,7 @@ export default function Settings() {
             className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={() =>
               toast({
-                title: schoolPublicInfo?.schoolName
-                  ? `Sobre o ${schoolPublicInfo.schoolName}`
-                  : "Sobre o SenseiSystem",
+                title: "Sobre o SenseiSystem",
                 description:
                   "Acompanhe sua agenda, reserve aulas, registre presenças, veja sua graduação, receba avisos e consulte pagamentos em um só lugar.",
               })

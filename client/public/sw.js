@@ -1,5 +1,5 @@
 // SenseiSystem Service Worker
-const CACHE_NAME = 'senseisystem-v1.0.2';
+const CACHE_NAME = 'senseisystem-v1.0.3';
 const OFFLINE_URL = '/offline.html';
 
 const CACHE_ASSETS = [

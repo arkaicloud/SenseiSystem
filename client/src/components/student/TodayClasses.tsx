@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, CheckCircle, XCircle, Loader2, Calendar, BanIcon } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Loader2, Calendar } from "lucide-react";
 import { useBookingMutations, type BookingStatus } from "@/hooks/useBookingMutations";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -157,8 +157,8 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
       <CardHeader className="flex-row items-start justify-between gap-3 pb-3">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-          <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
-          Aulas de Hoje
+            <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
+            Aulas de Hoje
           </CardTitle>
           <p className="mt-1 text-xs capitalize text-muted-foreground">
             {format(now, "EEEE, dd 'de' MMMM", { locale: ptBR })}
@@ -174,7 +174,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
             key={classSession.id}
             className="rounded-2xl border border-border/60 border-l-4 border-l-primary bg-card px-3 py-3 shadow-[0_5px_18px_rgba(30,64,175,0.06)] transition-shadow hover:shadow-[0_8px_24px_rgba(30,64,175,0.10)]"
           >
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h4 className="truncate text-[15px] font-bold text-foreground">
@@ -194,7 +194,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                   {classSession.location && <span className="truncate">{classSession.location}</span>}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
                 {isConfirmed(classSession) ? (
                   <>
                     <div className="flex items-center gap-1.5 text-emerald-600">
@@ -221,14 +221,14 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     size="sm"
                     onClick={() => handleConfirm(classSession)}
                     disabled={isMutating}
-                    className="w-full sm:w-auto text-white font-medium bg-primary hover:bg-[#1A3FCC] rounded-2xl font-inter"
+                     className="w-full sm:w-auto text-white font-medium bg-primary hover:bg-[#1A3FCC] rounded-2xl font-inter"
                   >
                     {isMutating ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : (
                       <CheckCircle className="w-4 h-4 mr-2" />
                     )}
-                     Reservar aula
+                    Reservar aula
                   </Button>
                 )}
               </div>

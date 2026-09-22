@@ -60,22 +60,22 @@ export function StudentSwitcher() {
           {displayStudent ? (
             <>
               <MiniAvatar student={displayStudent} size={24} />
-              <span className="max-w-[100px] truncate text-gray-800">
+              <span className="max-w-[100px] truncate text-foreground">
                 {displayStudent.firstName}
               </span>
             </>
           ) : (
             <>
-              <ArrowLeftRight className="w-4 h-4 text-[#2B54FF]" />
-              <span className="text-gray-700">Meu perfil</span>
+              <ArrowLeftRight className="w-4 h-4 text-primary" />
+              <span className="text-secondary-foreground">Meu perfil</span>
             </>
           )}
-          <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" className="w-52">
-        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1">
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
           <Users className="w-3 h-3" />
           Gerenciar como
         </div>
@@ -96,9 +96,9 @@ export function StudentSwitcher() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{ownName} (eu)</p>
-              <p className="text-xs text-gray-400">Meu próprio perfil</p>
+              <p className="text-xs text-muted-foreground">Meu próprio perfil</p>
             </div>
-            {!displayStudent && <div className="w-2 h-2 rounded-full bg-[#2B54FF] flex-shrink-0" />}
+            {!displayStudent && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
           </DropdownMenuItem>
         )}
 
@@ -114,14 +114,14 @@ export function StudentSwitcher() {
               <p className="font-medium text-sm truncate">{s.firstName} {s.lastName}</p>
               <div className="flex items-center gap-1">
                 <div
-                  className="w-3 h-3 rounded-sm border border-gray-300 flex-shrink-0"
+                  className="w-3 h-3 rounded-sm border border-border flex-shrink-0"
                   style={{ backgroundColor: BELT_COLORS[s.beltLevel] ?? "#fff" }}
                 />
-                <span className="text-xs text-gray-400 truncate">{s.beltLevel}</span>
+                <span className="text-xs text-muted-foreground truncate">{s.beltLevel}</span>
               </div>
             </div>
             {displayStudent?.studentId === s.studentId && (
-              <div className="w-2 h-2 rounded-full bg-[#2B54FF] flex-shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
             )}
           </DropdownMenuItem>
         ))}
@@ -132,7 +132,7 @@ export function StudentSwitcher() {
             <DropdownMenuItem
               data-testid="switcher-manage-all"
               onClick={() => setLocation("/guardian/select")}
-              className="text-[#2B54FF] text-sm"
+              className="text-primary text-sm"
             >
               <Users className="w-4 h-4 mr-2" />
               Ver todos os alunos

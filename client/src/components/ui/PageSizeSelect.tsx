@@ -7,7 +7,7 @@ interface PageSizeSelectProps {
 
 export function PageSizeSelect({ value, onChange }: PageSizeSelectProps) {
   return (
-    <div className="flex items-center gap-2 text-sm text-slate-600">
+    <div className="flex items-center gap-2 text-sm text-secondary-foreground">
       <span>Linhas por página:</span>
       <Select value={String(value)} onValueChange={(v) => onChange(parseInt(v))}>
         <SelectTrigger className="w-20 h-8">

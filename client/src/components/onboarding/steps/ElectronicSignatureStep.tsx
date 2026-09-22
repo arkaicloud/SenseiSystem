@@ -177,35 +177,35 @@ export default function ElectronicSignatureStep({
           <h3 className="text-lg font-semibold">Assinatura Eletrônica</h3>
           <p className="text-sm text-muted-foreground">Assine digitalmente para confirmar os termos de matrícula.</p>
         </div>
-        <div className="bg-white border rounded-xl p-5 shadow-sm space-y-4">
-          <p className="text-sm font-medium text-gray-700">Como deseja assinar?</p>
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-4">
+          <p className="text-sm font-medium text-secondary-foreground">Como deseja assinar?</p>
           <div className="grid grid-cols-2 gap-2">
             {(["drawn", "typed"] as const).map((m) => (
               <button key={m} onClick={() => setMode(m)}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 text-sm font-medium transition-all ${mode === m ? "border-[#2B54FF] bg-[#2B54FF]/5 text-[#2B54FF]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 text-sm font-medium transition-all ${mode === m ? "border-[#2B54FF] bg-primary/5 text-primary" : "border-border text-secondary-foreground hover:border-border"}`}>
                 {m === "drawn" ? <><PenLine className="w-4 h-4" /> Desenhar</> : <><Type className="w-4 h-4" /> Digitar nome</>}
               </button>
             ))}
           </div>
         </div>
         {mode === "typed" && (
-          <div className="bg-white border rounded-xl p-5 shadow-sm">
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">Digite seu nome completo</Label>
+          <div className="bg-card border rounded-xl p-5 shadow-sm">
+            <Label className="text-sm font-medium text-secondary-foreground mb-2 block">Digite seu nome completo</Label>
             <Input value={typedName} onChange={(e) => setTypedName(e.target.value)} placeholder="Nome completo" className="text-base" />
           </div>
         )}
-        <div className="bg-white border rounded-xl p-5 shadow-sm">
+        <div className="bg-card border rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-gray-700">{mode === "drawn" ? "Área de assinatura" : "Prévia"}</p>
-            <button onClick={clearCanvas} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"><RotateCcw className="w-3 h-3" /> Limpar</button>
+            <p className="text-sm font-medium text-secondary-foreground">{mode === "drawn" ? "Área de assinatura" : "Prévia"}</p>
+            <button onClick={clearCanvas} className="text-xs text-muted-foreground hover:text-secondary-foreground flex items-center gap-1"><RotateCcw className="w-3 h-3" /> Limpar</button>
           </div>
-          <div className="relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+          <div className="relative border-2 border-dashed border-border rounded-xl overflow-hidden bg-background">
             <canvas ref={canvasRef} width={600} height={180} className="w-full touch-none cursor-crosshair" style={{ display: "block" }}
               onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}
               onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
             {!hasSigned && mode === "drawn" && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <p className="text-gray-400 text-sm">Assine aqui com o mouse ou touchpad</p>
+                <p className="text-muted-foreground text-sm">Assine aqui com o mouse ou touchpad</p>
               </div>
             )}
           </div>
@@ -224,11 +224,11 @@ export default function ElectronicSignatureStep({
     <div className="flex flex-col pb-6">
       {/* Header */}
       <div className="px-6 pt-8 pb-6">
-        <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
-          <FileText className="w-6 h-6 text-[#2B54FF]" />
+        <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+          <FileText className="w-6 h-6 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-white">Termo de Adesão</h2>
-        <p className="text-sm text-slate-400 mt-1">Leia o contrato e assine para confirmar sua matrícula</p>
+        <p className="text-sm text-muted-foreground mt-1">Leia o contrato e assine para confirmar sua matrícula</p>
       </div>
 
       <div className="px-6 space-y-5">
@@ -236,32 +236,32 @@ export default function ElectronicSignatureStep({
         {/* ── CONTRATO ── */}
         <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
-            <FileText className="w-4 h-4 text-[#2B54FF]" />
+            <FileText className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold text-white">TERMO DE ADESÃO — HUIOS JIU JITSU</span>
           </div>
 
-          <div className="px-4 py-4 max-h-72 overflow-y-auto space-y-3 text-xs text-slate-300 leading-relaxed">
-            <p className="text-center text-slate-200 font-semibold text-sm">TERMO DE ADESÃO HUIOS JIU JITSU</p>
-            <p className="text-slate-400 italic text-center">Por meio deste termo, você está contratando os serviços da escola HUIOS BJJ, nas condições aqui estipuladas.</p>
+          <div className="px-4 py-4 max-h-72 overflow-y-auto space-y-3 text-xs text-muted-foreground leading-relaxed">
+            <p className="text-center text-muted-foreground font-semibold text-sm">TERMO DE ADESÃO HUIOS JIU JITSU</p>
+            <p className="text-muted-foreground italic text-center">Por meio deste termo, você está contratando os serviços da escola HUIOS BJJ, nas condições aqui estipuladas.</p>
 
             <p><strong className="text-white">1. Serviços:</strong> A HUIOS BJJ presta serviços relacionados à prática de artes marciais, especificamente o JIU JITSU, incluindo orientação, espaço e equipamentos conforme as normas de utilização.</p>
 
             <p><strong className="text-white">2. Contrato da modalidade:</strong> Ao preencher o formulário de matrícula você concorda com os serviços e horário contratado.</p>
 
-            <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/30 rounded-xl p-3 space-y-2">
+            <div className="bg-primary/10 border border-[#2B54FF]/30 rounded-xl p-3 space-y-2">
               <p className="font-semibold text-white text-xs">3. Plano, valor e data de vencimento:</p>
-              <p className="text-slate-400 text-xs">Os planos são anuais (12 meses) pagos através de boleto bancário ou via Pix mensalmente, e poderão sofrer reajuste com aviso prévio. Ao preencher a ficha de matrícula você concorda com o plano, valor e prazo abaixo:</p>
+              <p className="text-muted-foreground text-xs">Os planos são anuais (12 meses) pagos através de boleto bancário ou via Pix mensalmente, e poderão sofrer reajuste com aviso prévio. Ao preencher a ficha de matrícula você concorda com o plano, valor e prazo abaixo:</p>
               <div className="grid grid-cols-1 gap-1 pt-1">
                 <div className="flex justify-between items-center border-b border-white/10 pb-1">
-                  <span className="text-slate-400">Plano:</span>
+                  <span className="text-muted-foreground">Plano:</span>
                   <span className="font-semibold text-white">{selectedPlan ? selectedPlan.name : "A definir após aprovação"}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/10 pb-1">
-                  <span className="text-slate-400">Valor mensal:</span>
+                  <span className="text-muted-foreground">Valor mensal:</span>
                   <span className="font-semibold text-white">{selectedPlan ? formatCurrency(selectedPlan.amount) : "A definir"}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Vencimento:</span>
+                  <span className="text-muted-foreground">Vencimento:</span>
                   <span className="font-semibold text-white">Dia {formData.dueDate || "5"} de cada mês</span>
                 </div>
               </div>
@@ -286,7 +286,7 @@ export default function ElectronicSignatureStep({
             <p><strong className="text-white">12. Emergência:</strong> Em caso de emergência, fica autorizado o encaminhamento ao hospital público mais próximo ou particular indicado no momento, eximindo a escola de responsabilidade quanto ao atendimento.</p>
 
             <p><strong className="text-white">13. Disposições gerais:</strong></p>
-            <ul className="list-disc pl-4 space-y-1 text-slate-400">
+            <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
               <li>Uso padronizado dos Kimonos HUIOS BJJ obrigatório no prazo de 3 meses da matrícula. Não é permitido treinar com uniformes de outras equipes.</li>
               <li>É vedada a comercialização de produtos ou serviços nas dependências da escola.</li>
               <li>O aluno é responsável por seus objetos pessoais.</li>
@@ -299,21 +299,21 @@ export default function ElectronicSignatureStep({
               <p className="font-semibold text-white text-xs mb-2">RESPONSÁVEL FINANCEIRO:</p>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Nome:</span>
+                  <span className="text-muted-foreground">Nome:</span>
                   <span className="text-white font-medium text-right max-w-[55%]">{financialName || "—"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">CPF:</span>
+                  <span className="text-muted-foreground">CPF:</span>
                   <span className="text-white font-medium">{financialCpf ? formatCPF(financialCpf) : "—"}</span>
                 </div>
                 {showFinancialSection && formData.financialResponsibleRelationship && formData.financialResponsibleRelationship !== "self" && (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">E-mail:</span>
+                      <span className="text-muted-foreground">E-mail:</span>
                       <span className="text-white font-medium text-right max-w-[55%]">{formData.financialResponsibleEmail || "—"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Telefone:</span>
+                      <span className="text-muted-foreground">Telefone:</span>
                       <span className="text-white font-medium">{formData.financialResponsiblePhone || "—"}</span>
                     </div>
                   </>
@@ -321,7 +321,7 @@ export default function ElectronicSignatureStep({
               </div>
             </div>
 
-            <div className="border-t border-white/10 pt-3 text-center text-slate-400">
+            <div className="border-t border-white/10 pt-3 text-center text-muted-foreground">
               <p>{cityDateStr}</p>
             </div>
           </div>
@@ -342,7 +342,7 @@ export default function ElectronicSignatureStep({
           }`}>
             {hasReadTerms && <CheckCircle className="w-3.5 h-3.5 text-white" />}
           </div>
-          <span className={`text-sm leading-relaxed ${hasReadTerms ? "text-green-300" : "text-slate-300"}`}>
+          <span className={`text-sm leading-relaxed ${hasReadTerms ? "text-green-300" : "text-muted-foreground"}`}>
             Li e aceito o Termo de Adesão da HUIOS JIU JITSU, incluindo as condições de pagamento, cancelamento e regras de utilização.
           </span>
         </button>
@@ -358,11 +358,11 @@ export default function ElectronicSignatureStep({
 
         {/* ── Modo de assinatura ── */}
         <div className={`bg-white/5 border border-white/10 rounded-2xl p-4 transition-opacity ${!hasReadTerms ? "opacity-40 pointer-events-none" : ""}`}>
-          <p className="text-sm font-medium text-slate-300 mb-3">Como deseja assinar?</p>
+          <p className="text-sm font-medium text-muted-foreground mb-3">Como deseja assinar?</p>
           <div className="grid grid-cols-2 gap-2">
             {(["drawn", "typed"] as const).map((m) => (
               <button key={m} onClick={() => setMode(m)}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-medium transition-all ${mode === m ? "border-[#2B54FF] bg-[#2B54FF]/20 text-[#2B54FF]" : "border-white/10 text-slate-400 hover:border-white/20"}`}>
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-medium transition-all ${mode === m ? "border-[#2B54FF] bg-primary/20 text-primary" : "border-white/10 text-muted-foreground hover:border-white/20"}`}>
                 {m === "drawn" ? <><PenLine className="w-4 h-4" /> Desenhar</> : <><Type className="w-4 h-4" /> Digitar</>}
               </button>
             ))}
@@ -372,27 +372,27 @@ export default function ElectronicSignatureStep({
         {/* Typed input */}
         {mode === "typed" && hasReadTerms && (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <Label className="text-slate-300 text-sm font-medium mb-2 block">Nome completo para assinatura</Label>
+            <Label className="text-muted-foreground text-sm font-medium mb-2 block">Nome completo para assinatura</Label>
             <Input value={typedName} onChange={(e) => setTypedName(e.target.value)} placeholder="Digite seu nome completo"
-              className="h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl" />
+              className="h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl" />
           </div>
         )}
 
         {/* Canvas */}
         <div className={`bg-white/5 border border-white/10 rounded-2xl p-4 transition-opacity ${!hasReadTerms ? "opacity-40 pointer-events-none" : ""}`}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-300">{mode === "drawn" ? "Área de assinatura" : "Prévia da assinatura"}</p>
-            <button onClick={clearCanvas} className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1 transition-colors">
+            <p className="text-sm font-medium text-muted-foreground">{mode === "drawn" ? "Área de assinatura" : "Prévia da assinatura"}</p>
+            <button onClick={clearCanvas} className="text-xs text-muted-foreground hover:text-muted-foreground flex items-center gap-1 transition-colors">
               <RotateCcw className="w-3 h-3" /> Limpar
             </button>
           </div>
-          <div className="relative rounded-xl overflow-hidden bg-white">
+          <div className="relative rounded-xl overflow-hidden bg-card">
             <canvas ref={canvasRef} width={600} height={200} className="w-full touch-none cursor-crosshair" style={{ display: "block" }}
               onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}
               onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
             {!hasSigned && mode === "drawn" && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <p className="text-slate-400 text-sm">Assine aqui com o dedo</p>
+                <p className="text-muted-foreground text-sm">Assine aqui com o dedo</p>
               </div>
             )}
           </div>
@@ -401,31 +401,31 @@ export default function ElectronicSignatureStep({
 
         {/* Legal record */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-          <p className="text-sm font-medium text-slate-300">Registro legal</p>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+          <p className="text-sm font-medium text-muted-foreground">Registro legal</p>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
             <span>{timestamp.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })} às {timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
+            <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
             {locationStatus === "granted" && location ? (
               <span className="text-green-400">Localização confirmada</span>
             ) : locationStatus === "denied" ? (
               <span className="text-orange-400">Localização não autorizada</span>
             ) : locationStatus === "loading" ? (
-              <span className="text-slate-400">Obtendo localização...</span>
+              <span className="text-muted-foreground">Obtendo localização...</span>
             ) : (
-              <button onClick={requestLocation} className="text-[#2B54FF] hover:underline font-medium">Autorizar localização (recomendado)</button>
+              <button onClick={requestLocation} className="text-primary hover:underline font-medium">Autorizar localização (recomendado)</button>
             )}
           </div>
         </div>
 
         <div className="pt-2 space-y-3">
           <Button onClick={handleSubmit} disabled={!hasSigned || !hasReadTerms}
-            className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 disabled:opacity-40 text-white font-semibold rounded-2xl text-base">
+            className="w-full h-14 bg-primary hover:bg-primary/90 disabled:opacity-40 text-white font-semibold rounded-2xl text-base">
             Confirmar Assinatura <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
-          <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm">
+          <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm">
             <ArrowLeft className="mr-2 w-4 h-4" /> Voltar
           </Button>
         </div>

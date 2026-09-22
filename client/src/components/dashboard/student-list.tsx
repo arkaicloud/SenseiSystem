@@ -22,20 +22,20 @@ export const StudentList = ({
   const { t, locale } = useTranslations();
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-700">
+    <div className="bg-secondary rounded-xl shadow-md overflow-hidden">
+      <div className="px-6 py-5 border-b border-border">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-medium text-white">{title}</h2>
           {showViewAll && (
             <Link href={viewAllLink}>
-              <a className="text-sm font-medium text-primary hover:text-blue-400">
+              <a className="text-sm font-medium text-primary hover:text-accent-foreground">
                 {t('dashboard.viewAll')}
               </a>
             </Link>
           )}
         </div>
       </div>
-      <ul className="divide-y divide-gray-700">
+      <ul className="divide-y divide-border">
         {students.map((student) => (
           <li key={student.id} className="px-6 py-4 flex items-center">
             <Avatar>
@@ -46,12 +46,12 @@ export const StudentList = ({
             <div className="ml-4 flex-1">
               <div className="flex justify-between">
                 <p className="text-sm font-medium text-white">{student.name}</p>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {formatDate(student.joinDate, locale)}
                 </p>
               </div>
               <div className="flex justify-between mt-1">
-                <p className="text-sm text-gray-400 flex items-center">
+                <p className="text-sm text-muted-foreground flex items-center">
                   <BeltIcon belt={student.currentBelt} className="mr-1" />
                   {t(`student.${student.currentBelt}Belt`)}
                 </p>
@@ -63,7 +63,7 @@ export const StudentList = ({
           </li>
         ))}
         {students.length === 0 && (
-          <li className="px-6 py-4 text-center text-gray-400">
+          <li className="px-6 py-4 text-center text-muted-foreground">
             No students found
           </li>
         )}

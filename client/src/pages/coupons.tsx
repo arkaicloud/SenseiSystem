@@ -281,7 +281,7 @@ export default function CouponsPage() {
                       className={
                         coupon.discountPercent === 100
                           ? "bg-green-100 text-green-800 border-green-200"
-                          : "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-accent text-accent-foreground border-primary"
                       }
                       variant="outline"
                     >

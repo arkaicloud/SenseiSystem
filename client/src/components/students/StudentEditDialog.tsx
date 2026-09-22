@@ -37,7 +37,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, ChevronsUpDown, Ticket, X } from "lucide-react";
+import { Check, ChevronsUpDown, Ticket, X, UserRound, Phone, MapPin, HeartPulse, Wallet, ArrowLeft } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,6 +104,7 @@ interface StudentEditDialogProps {
   open: boolean;
   readOnly?: boolean;
   onOpenChange: (open: boolean) => void;
+  fullPage?: boolean;
 }
 
 // ── Tab types ────────────────────────────────────────────────────────────────
@@ -123,7 +125,7 @@ function FieldRow({ children }: { children: React.ReactNode }) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-1">
+    <h3 className="text-sm font-semibold text-secondary-foreground dark:text-secondary-foreground mb-3 mt-1">
       {children}
     </h3>
   );
@@ -136,6 +138,7 @@ export default function StudentEditDialog({
   open,
   readOnly = false,
   onOpenChange,
+  fullPage = false,
 }: StudentEditDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -316,34 +319,39 @@ export default function StudentEditDialog({
     updateStudentMutation.mutate(data);
   };
 
-  const displayName = studentData
-    ? `${studentData.firstName} ${studentData.lastName}`
-    : studentName || "Aluno";
+  const studentRecord = studentData?.student || studentData;
+  const displayName = [studentRecord?.firstName, studentRecord?.lastName]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join(" ") || studentName?.trim() || "Aluno";
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-h-[92dvh]">
+  const content = (
+    <>
         {/* ── Dialog header ──────────────────────────────────────── */}
+        {!fullPage && <>
         <DialogHeader className="flex-shrink-0 px-4 pt-4 pb-0 sm:px-6 sm:pt-5">
-          <DialogTitle className="pr-8 text-left text-lg font-semibold text-gray-900 dark:text-gray-100 sm:text-xl">
-            {readOnly ? displayName : `Editar — ${displayName}`}
+          <div className="mb-1 flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">✎</div>
+            <div>
+          <DialogTitle className="pr-8 text-left text-lg font-semibold text-foreground sm:text-xl">
+            {readOnly ? `Aluno — ${displayName}` : `Editar aluno — ${displayName}`}
           </DialogTitle>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {readOnly ? "Visualizando dados do aluno" : "Atualize as informações do aluno nos campos abaixo"}
-          </p>
+          </p></div></div>
 
           {/* Underline tabs */}
-          <div className="-mx-4 mt-4 border-b border-gray-200 px-4 dark:border-gray-700 sm:-mx-6 sm:px-6">
-            <nav className="-mb-px flex gap-0 overflow-x-auto">
+          <div className="-mx-4 mt-4 border-b border-border px-4 dark:border-border sm:-mx-6 sm:px-6">
+            <nav className="-mb-px grid grid-cols-5 gap-1 overflow-x-auto [scrollbar-width:none]">
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex-shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  aria-current={activeTab === tab.key ? "page" : undefined}
+                  className={`flex min-h-12 min-w-[108px] items-center justify-center rounded-t-lg border-b-2 px-2 py-3 text-center text-[11px] font-semibold transition-colors whitespace-nowrap sm:min-w-0 sm:px-4 sm:text-sm ${
                     activeTab === tab.key
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
+                      ? "border-primary text-accent-foreground"
+                      : "border-transparent text-muted-foreground hover:text-secondary-foreground hover:border-border dark:text-muted-foreground dark:hover:text-foreground"
                   }`}
                 >
                   {tab.label}
@@ -352,18 +360,19 @@ export default function StudentEditDialog({
             </nav>
           </div>
         </DialogHeader>
+        </>}
 
         {/* ── Body ───────────────────────────────────────────────── */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className={fullPage ? "min-w-0 flex-1" : "min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background/40"}>
           {isLoadingStudent ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4" />
-              <p className="text-sm text-gray-400">Carregando dados do aluno...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4" />
+              <p className="text-sm text-muted-foreground">Carregando dados do aluno...</p>
             </div>
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} id="student-edit-form">
-                <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
+                <div className={fullPage ? "student-profile-fields flex flex-col gap-6 p-5 sm:p-8" : "flex flex-col gap-4 px-4 py-5 sm:px-8 sm:py-7"}>
 
                   {/* ── Dados Pessoais ─────────────────────────── */}
                   {activeTab === "personal" && (
@@ -372,18 +381,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="firstName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Nome *</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nome *</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="lastName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Sobrenome *</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sobrenome *</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -393,18 +402,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="birthDate" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Data de Nascimento</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data de Nascimento</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input type="date" {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="enrollmentDate" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Data de Matrícula</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data de Matrícula</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input type="date" {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -414,10 +423,10 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="sex" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Gênero</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gênero</FormLabel>
                             <Select disabled={readOnly} value={field.value || ""} onValueChange={field.onChange}>
                               <FormControl>
-                                <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                <SelectTrigger className="border-border dark:border-border focus:ring-primary">
                                   <SelectValue placeholder="Selecionar" />
                                 </SelectTrigger>
                               </FormControl>
@@ -431,9 +440,9 @@ export default function StudentEditDialog({
                         )} />
                         <FormField control={form.control} name="cpf" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">CPF</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">CPF</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="000.000.000-00" className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="000.000.000-00" className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -443,9 +452,9 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="rg" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">RG</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">RG</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -461,18 +470,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="email" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">E-mail</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">E-mail</FormLabel>
                             <FormControl>
-                              <Input type="email" {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input type="email" {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="phone" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Telefone</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Telefone</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="(00) 00000-0000" className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="(00) 00000-0000" className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -483,18 +492,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="emergencyContactName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Nome</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nome</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="emergencyContactPhone" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Telefone</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Telefone</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="(00) 00000-0000" className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="(00) 00000-0000" className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -510,18 +519,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="zipCode" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">CEP</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">CEP</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="00000-000" className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="00000-000" className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="street" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Logradouro</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Logradouro</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -531,18 +540,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="number" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Número</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Número</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="complement" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Complemento</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Complemento</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -552,18 +561,18 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="neighborhood" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Bairro</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bairro</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="city" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Cidade</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cidade</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -573,9 +582,9 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="state" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Estado (UF)</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Estado (UF)</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={readOnly} value={field.value || ""} maxLength={2} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input {...field} disabled={readOnly} value={field.value || ""} maxLength={2} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -591,10 +600,10 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="beltLevel" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Faixa</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Faixa</FormLabel>
                             <Select disabled={readOnly || isLoadingBelts} value={field.value} onValueChange={field.onChange}>
                               <FormControl>
-                                <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                <SelectTrigger className="border-border dark:border-border focus:ring-primary">
                                   <SelectValue placeholder="Selecionar faixa" />
                                 </SelectTrigger>
                               </FormControl>
@@ -615,10 +624,10 @@ export default function StudentEditDialog({
                         )} />
                         <FormField control={form.control} name="stripes" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Graus (Listras)</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Graus (Listras)</FormLabel>
                             <Select disabled={readOnly} value={field.value?.toString() || "0"} onValueChange={(v) => field.onChange(parseInt(v, 10) || 0)}>
                               <FormControl>
-                                <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                <SelectTrigger className="border-border dark:border-border focus:ring-primary">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -636,9 +645,9 @@ export default function StudentEditDialog({
                       <FieldRow>
                         <FormField control={form.control} name="lastPromotionDate" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Data da Última Graduação</FormLabel>
+                            <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data da Última Graduação</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} disabled={readOnly} value={field.value || ""} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                              <Input type="date" {...field} disabled={readOnly} value={field.value || ""} className="border-border dark:border-border focus-visible:ring-primary" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -648,9 +657,9 @@ export default function StudentEditDialog({
                       <SectionTitle>Observações de Saúde</SectionTitle>
                       <FormField control={form.control} name="medicalObservations" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Observações Médicas</FormLabel>
+                          <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Observações Médicas</FormLabel>
                           <FormControl>
-                            <Textarea {...field} disabled={readOnly} value={field.value || ""} rows={3} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500 resize-none" />
+                            <Textarea {...field} disabled={readOnly} value={field.value || ""} rows={3} className="border-border dark:border-border focus-visible:ring-primary resize-none" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -658,14 +667,14 @@ export default function StudentEditDialog({
 
                       {/* Health questionnaire info */}
                       {(studentData?.healthQuestionnaireCompletedAt || studentData?.agreedToHealthTerms) && (
-                        <div className="mt-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900">
-                          <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-1.5">
+                        <div className="mt-4 p-4 rounded-xl bg-accent dark:bg-accent border border-primary dark:border-primary">
+                          <p className="text-xs font-semibold text-accent-foreground dark:text-accent-foreground mb-2 flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Questionário de Saúde (PAR-Q+) — Assinatura Eletrônica
                           </p>
-                          <div className="grid grid-cols-2 gap-3 text-xs text-blue-700 dark:text-blue-300">
+                          <div className="grid grid-cols-2 gap-3 text-xs text-accent-foreground dark:text-accent-foreground">
                             {studentData.healthQuestionnaireCompletedAt && (
                               <div>
                                 <span className="font-medium">Preenchido em:</span>
@@ -746,9 +755,9 @@ export default function StudentEditDialog({
                                   form.setValue("financialResponsiblePhone", null);
                                 }
                               }}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="rounded border-border text-accent-foreground focus:ring-primary"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                            <span className="text-sm text-secondary-foreground dark:text-secondary-foreground">
                               O próprio aluno é o responsável financeiro
                             </span>
                           </label>
@@ -756,23 +765,23 @@ export default function StudentEditDialog({
                       )} />
 
                       {!form.watch("isStudentResponsible") && (
-                        <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Dados do Responsável</p>
+                        <div className="rounded-xl border border-border dark:border-border p-4 space-y-4 bg-background dark:bg-background">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados do Responsável</p>
                           <FieldRow>
                             <FormField control={form.control} name="financialResponsibleName" render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Nome</FormLabel>
+                                <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nome</FormLabel>
                                 <FormControl>
-                                  <Input {...field} disabled={readOnly} value={field.value || ""} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                                  <Input {...field} disabled={readOnly} value={field.value || ""} className="bg-card dark:bg-card border-border dark:border-border focus-visible:ring-primary" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )} />
                             <FormField control={form.control} name="financialResponsibleCpf" render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">CPF</FormLabel>
+                                <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">CPF</FormLabel>
                                 <FormControl>
-                                  <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="000.000.000-00" className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                                  <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="000.000.000-00" className="bg-card dark:bg-card border-border dark:border-border focus-visible:ring-primary" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -781,18 +790,18 @@ export default function StudentEditDialog({
                           <FieldRow>
                             <FormField control={form.control} name="financialResponsibleEmail" render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">E-mail</FormLabel>
+                                <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">E-mail</FormLabel>
                                 <FormControl>
-                                  <Input type="email" {...field} disabled={readOnly} value={field.value || ""} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                                  <Input type="email" {...field} disabled={readOnly} value={field.value || ""} className="bg-card dark:bg-card border-border dark:border-border focus-visible:ring-primary" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )} />
                             <FormField control={form.control} name="financialResponsiblePhone" render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Telefone</FormLabel>
+                                <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Telefone</FormLabel>
                                 <FormControl>
-                                  <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="(00) 00000-0000" className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500" />
+                                  <Input {...field} disabled={readOnly} value={field.value || ""} placeholder="(00) 00000-0000" className="bg-card dark:bg-card border-border dark:border-border focus-visible:ring-primary" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -803,7 +812,7 @@ export default function StudentEditDialog({
 
                       {/* Cabeçalho com toggle bolsista */}
                       <div className="flex items-center justify-between mb-3 mt-1">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plano de Pagamento</h3>
+                        <h3 className="text-sm font-semibold text-secondary-foreground dark:text-secondary-foreground">Plano de Pagamento</h3>
                         {!readOnly && (
                           isScholarship ? (
                             <button
@@ -852,14 +861,14 @@ export default function StudentEditDialog({
                         <FieldRow>
                           <FormField control={form.control} name="paymentPlanId" render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Plano</FormLabel>
+                              <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Plano</FormLabel>
                               <Select
                                 disabled={readOnly}
                                 value={field.value ? String(field.value) : ""}
                                 onValueChange={(v) => field.onChange(v ? parseInt(v) : null)}
                               >
                                 <FormControl>
-                                  <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                  <SelectTrigger className="border-border dark:border-border focus:ring-primary">
                                     <SelectValue placeholder="Selecionar plano" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -876,14 +885,14 @@ export default function StudentEditDialog({
                           )} />
                           <FormField control={form.control} name="preferredDueDate" render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vencimento (dia)</FormLabel>
+                              <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Vencimento (dia)</FormLabel>
                               <Select
                                 disabled={readOnly}
                                 value={field.value ? String(field.value) : "5"}
                                 onValueChange={(v) => field.onChange(parseInt(v))}
                               >
                                 <FormControl>
-                                  <SelectTrigger className="border-gray-200 dark:border-gray-700 focus:ring-blue-500">
+                                  <SelectTrigger className="border-border dark:border-border focus:ring-primary">
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
@@ -905,7 +914,7 @@ export default function StudentEditDialog({
 
                             return (
                               <FormItem className="sm:col-span-2">
-                                <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                   Cupom de desconto (opcional)
                                 </FormLabel>
                                 <div className="flex gap-2">
@@ -915,9 +924,9 @@ export default function StudentEditDialog({
                                         type="button"
                                         variant="outline"
                                         disabled={readOnly}
-                                        className="min-w-0 flex-1 justify-between border-gray-200 bg-white font-normal dark:border-gray-700 dark:bg-gray-800"
+                                        className="min-w-0 flex-1 justify-between border-border bg-card font-normal dark:border-border dark:bg-card"
                                       >
-                                        <span className={`flex min-w-0 items-center gap-2 ${selectedCoupon ? "text-gray-900 dark:text-gray-100" : "text-muted-foreground"}`}>
+                                        <span className={`flex min-w-0 items-center gap-2 ${selectedCoupon ? "text-foreground dark:text-foreground" : "text-muted-foreground"}`}>
                                           <Ticket className="h-4 w-4 shrink-0" />
                                           <span className="truncate">
                                             {selectedCoupon
@@ -1007,9 +1016,9 @@ export default function StudentEditDialog({
 
                       <FormField control={form.control} name="planObservations" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">Observações Financeiras</FormLabel>
+                          <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Observações Financeiras</FormLabel>
                           <FormControl>
-                            <Textarea {...field} disabled={readOnly} value={field.value || ""} rows={3} className="border-gray-200 dark:border-gray-700 focus-visible:ring-blue-500 resize-none" />
+                            <Textarea {...field} disabled={readOnly} value={field.value || ""} rows={3} className="border-border dark:border-border focus-visible:ring-primary resize-none" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1025,45 +1034,69 @@ export default function StudentEditDialog({
 
         {/* ── Footer ─────────────────────────────────────────────── */}
         {!isLoadingStudent && (
-          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-700 dark:bg-gray-900 sm:px-6 sm:py-4">
-            <div className="flex gap-1">
+          <div className="flex flex-shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+            <div className={fullPage ? "hidden" : "flex gap-1"}>
               {TABS.map((tab) => (
                 <div
                   key={tab.key}
                   className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    activeTab === tab.key ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+                    activeTab === tab.key ? "bg-primary" : "bg-muted dark:bg-muted"
                   }`}
                 />
               ))}
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className={fullPage ? "grid w-full grid-cols-2 gap-4" : "flex items-center gap-2 sm:gap-3"}>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="min-h-11 border-gray-200 px-3 text-gray-600 hover:bg-gray-100 sm:px-4"
+                className="min-h-11 flex-1 border-border px-3 text-secondary-foreground hover:bg-muted sm:flex-none sm:px-4"
               >
-                Cancelar
+                {fullPage ? "Descartar alterações" : "Cancelar"}
               </Button>
               {!readOnly && (
                 <Button
                   type="submit"
                   form="student-edit-form"
                   disabled={updateStudentMutation.isPending}
-                  className="min-h-11 min-w-[92px] bg-blue-600 text-white hover:bg-blue-700 sm:min-w-[100px]"
+                  className="min-h-11 min-w-[92px] flex-1 bg-primary text-primary-foreground hover:bg-primary-light sm:flex-none sm:min-w-[100px]"
                 >
                   {updateStudentMutation.isPending ? (
                     <span className="flex items-center gap-2">
                       <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                       Salvando...
                     </span>
-                  ) : "Salvar"}
+                  ) : "Salvar alterações"}
                 </Button>
               )}
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+    </>
   );
+
+  if (fullPage) {
+    const icons = { personal: UserRound, contact: Phone, address: MapPin, health: HeartPulse, financial: Wallet };
+    return (
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+        <Button variant="ghost" className="w-fit" onClick={() => onOpenChange(false)}><ArrowLeft className="mr-2 size-4" />Voltar para alunos</Button>
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className="rounded-[28px] border border-border bg-card p-5 lg:min-h-[660px]">
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <Avatar className="size-28 ring-4 ring-background">
+                <AvatarImage src={studentRecord?.photoUrl || studentRecord?.user?.photoUrl || undefined} alt={displayName} />
+                <AvatarFallback className="bg-accent text-3xl text-accent-foreground">{displayName.split(" ").slice(0,2).map((name: string) => name[0]).join("")}</AvatarFallback>
+              </Avatar>
+              <div><h1 className="text-lg font-semibold">{displayName}</h1><p className="mt-1 text-sm text-muted-foreground">Cadastro do aluno</p></div>
+            </div>
+            <nav aria-label="Seções do cadastro" className="mt-6 flex gap-2 overflow-x-auto lg:flex-col">
+              {TABS.map((tab) => { const Icon = icons[tab.key]; return <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)} aria-current={activeTab === tab.key ? "page" : undefined} className={`flex shrink-0 items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm transition-colors ${activeTab === tab.key ? "bg-accent font-semibold text-accent-foreground" : "text-muted-foreground hover:bg-muted"}`}><Icon className="size-4 shrink-0" />{tab.label}</button>; })}
+            </nav>
+          </aside>
+          <section aria-label="Editar cadastro do aluno" className="flex min-w-0 flex-col overflow-hidden rounded-[28px] border border-border bg-card [&>div:last-child]:border-t-0 [&>div:last-child]:px-5 [&>div:last-child]:pb-7 sm:[&>div:last-child]:px-8">{content}</section>
+        </div>
+      </div>
+    );
+  }
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="flex max-h-[92dvh] max-w-4xl flex-col gap-0 overflow-hidden p-0">{content}</DialogContent></Dialog>;
 }

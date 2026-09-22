@@ -150,8 +150,8 @@ export default function AttendanceStatsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#2B54FF]/20" />
-          <div className="h-4 w-48 bg-gray-200 rounded" />
+          <div className="w-12 h-12 rounded-full bg-primary/20" />
+          <div className="h-4 w-48 bg-muted rounded" />
         </div>
       </div>
     );
@@ -196,12 +196,12 @@ export default function AttendanceStatsPage() {
         <div>
           <h2 className="text-[17px] font-bold text-[#0D0D0D] dark:text-white font-inter mb-3">Consistência</h2>
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+          <div className="bg-card dark:bg-background rounded-2xl p-4 shadow-sm border border-border dark:border-border">
             {/* Month navigator */}
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() => setViewDate(d => subMonths(d, 1))}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#2B54FF] hover:bg-[#EEF1FF] transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-primary hover:bg-[#EEF1FF] transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -211,7 +211,7 @@ export default function AttendanceStatsPage() {
                   {monthTitleCapitalized}
                 </span>
                 {isCurrentMonthView && (
-                  <span className="ml-2 text-[10px] font-semibold text-[#2B54FF] bg-[#EEF1FF] px-2 py-0.5 rounded-full">
+                  <span className="ml-2 text-[10px] font-semibold text-primary bg-[#EEF1FF] px-2 py-0.5 rounded-full">
                     Atual
                   </span>
                 )}
@@ -222,8 +222,8 @@ export default function AttendanceStatsPage() {
                 disabled={isCurrentMonthView}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                   isCurrentMonthView
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-[#2B54FF] hover:bg-[#EEF1FF]'
+                    ? 'text-muted-foreground cursor-not-allowed'
+                    : 'text-primary hover:bg-[#EEF1FF]'
                 }`}
               >
                 <ChevronRight className="w-5 h-5" />
@@ -234,7 +234,7 @@ export default function AttendanceStatsPage() {
             {!isMonthLoading && totalClasses > 0 && (
               <div className="flex items-center justify-center gap-1 mb-3">
                 <span className="text-[13px] text-[#8D8D8D] font-inter">
-                  <span className="text-[15px] font-bold text-[#2B54FF]">{presentCount}</span>
+                  <span className="text-[15px] font-bold text-primary">{presentCount}</span>
                   {' '}de {totalClasses} aulas
                 </span>
               </div>
@@ -253,7 +253,7 @@ export default function AttendanceStatsPage() {
             {isMonthLoading ? (
               <div className="grid grid-cols-7 gap-1">
                 {Array.from({ length: 35 }).map((_, i) => (
-                  <div key={i} className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
+                  <div key={i} className="aspect-square rounded-lg bg-muted animate-pulse" />
                 ))}
               </div>
             ) : (
@@ -295,7 +295,7 @@ export default function AttendanceStatsPage() {
             {/* Legend */}
             <div className="flex items-center gap-4 mt-4 justify-end">
               <div className="flex items-center gap-1.5">
-                <div className="w-3.5 h-3.5 rounded-[4px] bg-[#2B54FF]" />
+                <div className="w-3.5 h-3.5 rounded-[4px] bg-primary" />
                 <span className="text-[10px] text-[#8D8D8D] font-inter">Treinou</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -308,9 +308,9 @@ export default function AttendanceStatsPage() {
 
         {/* Stats — current month */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center gap-2">
+          <div className="bg-card dark:bg-background rounded-2xl p-5 shadow-sm border border-border dark:border-border flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-[#EEF1FF] flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-[#2B54FF]" />
+              <CheckCircle2 className="w-5 h-5 text-primary" />
             </div>
             <span className="text-[32px] font-bold text-[#0D0D0D] dark:text-white font-inter leading-none">
               {stats.totalPresent}
@@ -318,9 +318,9 @@ export default function AttendanceStatsPage() {
             <span className="text-[11px] text-[#8D8D8D] font-inter text-center leading-tight">Treinos no Mês</span>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center gap-2">
+          <div className="bg-card dark:bg-background rounded-2xl p-5 shadow-sm border border-border dark:border-border flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-[#EEF1FF] flex items-center justify-center">
-              <Target className="w-5 h-5 text-[#2B54FF]" />
+              <Target className="w-5 h-5 text-primary" />
             </div>
             <span className="text-[32px] font-bold text-[#0D0D0D] dark:text-white font-inter leading-none">
               {stats.rate}%

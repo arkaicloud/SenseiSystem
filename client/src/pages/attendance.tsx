@@ -108,14 +108,14 @@ function MiniCalendar({
     <div className="select-none">
       <div className="flex items-center justify-between px-4 py-3">
         <button onClick={() => onChangeMonth(subMonths(viewDate, 1))}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted transition-colors">
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <span className="text-sm font-bold text-slate-700 capitalize">
+        <span className="text-sm font-bold text-secondary-foreground capitalize">
           {format(viewDate, "MMMM yyyy", { locale: ptBR })}
         </span>
         <button onClick={() => onChangeMonth(addMonths(viewDate, 1))}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted transition-colors">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -123,7 +123,7 @@ function MiniCalendar({
       <div className="px-3 pb-3">
         <div className="grid grid-cols-7 mb-1">
           {weekdays.map((wd, i) => (
-            <div key={i} className="text-center text-[10px] font-bold text-slate-400 py-1">{wd}</div>
+            <div key={i} className="text-center text-[10px] font-bold text-muted-foreground py-1">{wd}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-0.5">
@@ -139,8 +139,8 @@ function MiniCalendar({
                 className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-medium transition-all
                   ${isSelected ? "bg-indigo-600 text-white font-bold shadow-sm"
                     : isTodayDay ? "border border-indigo-400 text-indigo-600 font-bold"
-                    : hasClass ? "text-slate-700 hover:bg-slate-100"
-                    : "text-slate-400 hover:bg-slate-50"}`}>
+                    : hasClass ? "text-secondary-foreground hover:bg-muted"
+                    : "text-muted-foreground hover:bg-background"}`}>
                 {day}
                 {hasClass && (
                   <span className={`absolute bottom-1 w-1 h-1 rounded-full ${isSelected ? "bg-white/70" : "bg-indigo-400"}`} />
@@ -180,13 +180,13 @@ function StudentRow({
 
   return (
     <div
-      className={`flex items-center gap-3 px-5 py-3 border-b border-slate-50 cursor-pointer transition-colors
-        ${isSelected ? "bg-indigo-50/60" : "hover:bg-slate-50/70"} ${rowBorderClass}`}
+      className={`flex items-center gap-3 px-5 py-3 border-b border-border cursor-pointer transition-colors
+        ${isSelected ? "bg-indigo-50/60" : "hover:bg-background/70"} ${rowBorderClass}`}
       onClick={onToggleSelect}
     >
       {/* Checkbox */}
       <div className={`flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all
-          ${isSelected ? "bg-indigo-600 border-indigo-600" : "border-slate-300 hover:border-indigo-400"}`}
+          ${isSelected ? "bg-indigo-600 border-indigo-600" : "border-border hover:border-indigo-400"}`}
         style={{ width: 18, height: 18 }}>
         {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
       </div>
@@ -200,13 +200,13 @@ function StudentRow({
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-slate-700 truncate">
+          <p className="text-sm font-semibold text-secondary-foreground truncate">
             {student.first_name} {student.last_name}
           </p>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {student.belt_level && (
-            <span className="flex items-center gap-1 text-[11px] text-slate-400">
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ background: bc }} />
               {beltPt(student.belt_level)}
               {(student.stripes ?? 0) > 0 && Array.from({ length: student.stripes! }).map((_, i) => (
@@ -229,20 +229,20 @@ function StudentRow({
       </div>
 
       {/* P/A Toggle */}
-      <div className="flex bg-slate-100 border border-slate-200 rounded-xl overflow-hidden flex-shrink-0"
+      <div className="flex bg-muted border border-border rounded-xl overflow-hidden flex-shrink-0"
         onClick={e => e.stopPropagation()}>
         <button onClick={() => onSetStatus("present")}
           className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold transition-all
             ${localStatus === "present" ? "bg-emerald-100 text-emerald-700"
-              : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"}`}>
+              : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600"}`}>
           <Check className="w-3 h-3" />
           <span className="hidden sm:inline">P</span>
         </button>
-        <div className="w-px bg-slate-200" />
+        <div className="w-px bg-muted" />
         <button onClick={() => onSetStatus("absent")}
           className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold transition-all
             ${localStatus === "absent" ? "bg-red-100 text-red-600"
-              : "text-slate-400 hover:bg-red-50 hover:text-red-500"}`}>
+              : "text-muted-foreground hover:bg-red-50 hover:text-red-500"}`}>
           <X className="w-3 h-3" />
           <span className="hidden sm:inline">F</span>
         </button>
@@ -261,7 +261,7 @@ function StatusBadge({ status }: { status: "present" | "absent" | "confirmed" | 
   if (status === "confirmed")
     return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200">
       <UserCheck className="w-3 h-3" /> App ✓</span>;
-  return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-400 border border-slate-200">
+  return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-muted text-muted-foreground border border-border">
     — Pendente</span>;
 }
 
@@ -542,12 +542,12 @@ export default function AttendancePage() {
       <div className="flex flex-1 overflow-hidden gap-4">
 
         {/* ═══ LEFT: Calendar + Class List ═══ */}
-        <aside className={`bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col
+        <aside className={`bg-card rounded-2xl border border-border shadow-sm flex flex-col
           overflow-hidden flex-shrink-0 lg:w-72 w-full
           ${!mobileSidebarOpen ? "hidden lg:flex" : "flex"}`}>
 
           <div className="px-4 pt-4 pb-1 flex items-center justify-between lg:hidden">
-            <h1 className="text-base font-bold text-slate-800">Controle de Presenças</h1>
+            <h1 className="text-base font-bold text-foreground">Controle de Presenças</h1>
             {selectedClassId && (
               <button onClick={() => setMobileSidebarOpen(false)}
                 className="text-xs text-indigo-600 font-semibold">
@@ -564,11 +564,11 @@ export default function AttendancePage() {
             onChangeMonth={setViewDate}
           />
 
-          <div className="border-t border-slate-100 mx-3" />
+          <div className="border-t border-border mx-3" />
 
           <div className="flex-1 overflow-y-auto px-3 py-3">
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aulas do dia</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Aulas do dia</span>
               {classesForDay.length > 0 && (
                 <span className="text-[10px] font-bold text-indigo-500">
                   {classesForDay.length} aula{classesForDay.length > 1 ? "s" : ""}
@@ -578,10 +578,10 @@ export default function AttendancePage() {
 
             {classesLoading ? (
               <div className="space-y-2">
-                {[1, 2].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />)}
+                {[1, 2].map(i => <div key={i} className="h-16 bg-muted rounded-xl animate-pulse" />)}
               </div>
             ) : classesForDay.length === 0 ? (
-              <p className="text-center text-xs text-slate-400 py-6">
+              <p className="text-center text-xs text-muted-foreground py-6">
                 {selectedDate ? "Nenhuma aula neste dia" : "← Selecione uma data"}
               </p>
             ) : (
@@ -595,10 +595,10 @@ export default function AttendancePage() {
                     <button key={cls.id}
                       onClick={() => { setSelectedClassId(cls.id); setMobileSidebarOpen(false); }}
                       className={`w-full text-left rounded-xl p-3 pl-4 border transition-all relative overflow-hidden
-                        ${isActive ? "bg-indigo-50 border-indigo-300" : "bg-slate-50 border-slate-100 hover:bg-slate-100 hover:border-slate-200"}`}>
-                      <span className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-l-full ${isActive ? "bg-indigo-600" : "bg-slate-300"}`} />
-                      <p className={`text-sm font-semibold ${isActive ? "text-indigo-700" : "text-slate-700"}`}>{cls.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
+                        ${isActive ? "bg-indigo-50 border-indigo-300" : "bg-background border-border hover:bg-muted hover:border-border"}`}>
+                      <span className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-l-full ${isActive ? "bg-indigo-600" : "bg-muted"}`} />
+                      <p className={`text-sm font-semibold ${isActive ? "text-indigo-700" : "text-secondary-foreground"}`}>{cls.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
                         <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{cls.startTime}</span>
                         <span>·</span>
                         <span>{cls.duration}min</span>
@@ -621,17 +621,17 @@ export default function AttendancePage() {
               className="flex items-center gap-1.5 text-sm text-indigo-600 font-semibold">
               <ChevronLeft className="w-4 h-4" /> Calendário
             </button>
-            {selectedClass && <span className="text-slate-400 text-sm">/ {selectedClass.name}</span>}
+            {selectedClass && <span className="text-muted-foreground text-sm">/ {selectedClass.name}</span>}
           </div>
 
           {!selectedClassId ? (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex-1 flex flex-col
+            <div className="bg-card rounded-2xl border border-border shadow-sm flex-1 flex flex-col
               items-center justify-center text-center px-8 gap-3">
               <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-2">
                 <LayoutList className="w-8 h-8 text-indigo-400" />
               </div>
-              <p className="text-lg font-bold text-slate-700">Selecione uma aula</p>
-              <p className="text-sm text-slate-400 max-w-xs">
+              <p className="text-lg font-bold text-secondary-foreground">Selecione uma aula</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
                 Clique em uma data no calendário e escolha a aula para registrar as presenças.
               </p>
             </div>
@@ -653,7 +653,7 @@ export default function AttendancePage() {
                   <button
                     onClick={() => cancelSessionMutation.mutate({ cancel: false })}
                     disabled={cancelSessionMutation.isPending}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 transition flex-shrink-0"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-card border border-red-200 text-red-600 hover:bg-red-50 transition flex-shrink-0"
                   >
                     {cancelSessionMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
                     Restaurar Aula
@@ -676,7 +676,7 @@ export default function AttendancePage() {
                     placeholder="Motivo (opcional)"
                     value={cancelReason}
                     onChange={e => setCancelReason(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-amber-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full px-3 py-2 text-sm border border-amber-200 rounded-xl bg-card focus:outline-none focus:ring-2 focus:ring-amber-400"
                   />
                   <div className="flex gap-2">
                     <button
@@ -698,11 +698,11 @@ export default function AttendancePage() {
               )}
 
               {/* Class header + stats */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4
+              <div className="bg-card rounded-2xl border border-border shadow-sm px-5 py-4
                 flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className={`text-lg font-bold ${isSessionCancelled ? "text-slate-400 line-through" : "text-slate-800"}`}>{selectedClass?.name}</h2>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
+                  <h2 className={`text-lg font-bold ${isSessionCancelled ? "text-muted-foreground line-through" : "text-foreground"}`}>{selectedClass?.name}</h2>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1 capitalize"><Calendar className="w-3 h-3" />{selectedDateLabel}</span>
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{selectedClass?.startTime} · {selectedClass?.duration}min</span>
                   </div>
@@ -719,15 +719,15 @@ export default function AttendancePage() {
                   )}
                   <div className="flex gap-2 flex-wrap">
                     {[
-                      { label: "Total", value: students.length, color: "text-slate-700", bg: "bg-slate-50" },
+                      { label: "Total", value: students.length, color: "text-secondary-foreground", bg: "bg-background" },
                       { label: "Presentes", value: presentCount, color: "text-emerald-600", bg: "bg-emerald-50" },
                       { label: "Faltas", value: absentCount, color: "text-red-500", bg: "bg-red-50" },
                       { label: "App ✓", value: confirmedCount, color: "text-indigo-600", bg: "bg-indigo-50" },
-                      { label: "Pendentes", value: pendingCount, color: "text-slate-400", bg: "bg-slate-50" },
+                      { label: "Pendentes", value: pendingCount, color: "text-muted-foreground", bg: "bg-background" },
                     ].map(({ label, value, color, bg }) => (
                       <div key={label} className={`${bg} rounded-xl px-3 py-2 text-center min-w-[56px]`}>
                         <p className={`text-xl font-extrabold ${color}`}>{value}</p>
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wide">{label}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
                       </div>
                     ))}
                   </div>
@@ -735,17 +735,17 @@ export default function AttendancePage() {
               </div>
 
               {/* Toolbar */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3
+              <div className="bg-card rounded-2xl border border-border shadow-sm px-4 py-3
                 flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[160px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   <input type="text" placeholder="Buscar aluno..." value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50
+                    className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded-xl bg-background
                       focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition" />
                 </div>
 
-                <div className="flex bg-slate-100 rounded-xl overflow-hidden border border-slate-200 text-xs font-semibold">
+                <div className="flex bg-muted rounded-xl overflow-hidden border border-border text-xs font-semibold">
                   {([
                     ["all", `Todos (${students.length})`],
                     ["present", `✓ (${presentCount})`],
@@ -754,7 +754,7 @@ export default function AttendancePage() {
                   ] as [FilterTab, string][]).map(([tab, label]) => (
                     <button key={tab} onClick={() => setFilterTab(tab)}
                       className={`px-3 py-2 transition-colors whitespace-nowrap
-                        ${filterTab === tab ? "bg-white text-slate-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                        ${filterTab === tab ? "bg-card text-secondary-foreground shadow-sm" : "text-muted-foreground hover:text-secondary-foreground"}`}>
                       {label}
                     </button>
                   ))}
@@ -763,7 +763,7 @@ export default function AttendancePage() {
                 <div className="flex items-center gap-2 ml-auto">
                   {selected.size > 0 ? (
                     <>
-                      <span className="text-xs text-slate-500">{selected.size} sel.</span>
+                      <span className="text-xs text-muted-foreground">{selected.size} sel.</span>
                       <button onClick={() => bulkSet("present")}
                         className="flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition">
                         <Check className="w-3 h-3" /> Presença
@@ -773,7 +773,7 @@ export default function AttendancePage() {
                         <X className="w-3 h-3" /> Falta
                       </button>
                       <button onClick={clearSelection}
-                        className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition">
+                        className="px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-secondary-foreground rounded-xl hover:bg-muted transition">
                         Limpar
                       </button>
                     </>
@@ -786,7 +786,7 @@ export default function AttendancePage() {
                         </button>
                       )}
                       <button onClick={selectAll}
-                        className="px-3 py-2 text-xs font-semibold text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-100 transition">
+                        className="px-3 py-2 text-xs font-semibold text-muted-foreground border border-border rounded-xl hover:bg-muted transition">
                         Selecionar todos
                       </button>
                     </>
@@ -795,39 +795,39 @@ export default function AttendancePage() {
               </div>
 
               {/* Student list */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex-1 overflow-y-auto min-h-0">
+              <div className="bg-card rounded-2xl border border-border shadow-sm flex-1 overflow-y-auto min-h-0">
                 {rosterLoading ? (
-                  <div className="divide-y divide-slate-50">
+                  <div className="divide-y divide-border">
                     {[...Array(6)].map((_, i) => (
                       <div key={i} className="flex items-center gap-3 px-5 py-3.5 animate-pulse">
-                        <div className="w-4 h-4 bg-slate-100 rounded flex-shrink-0" />
-                        <div className="w-9 h-9 bg-slate-100 rounded-full flex-shrink-0" />
+                        <div className="w-4 h-4 bg-muted rounded flex-shrink-0" />
+                        <div className="w-9 h-9 bg-muted rounded-full flex-shrink-0" />
                         <div className="flex-1 space-y-1.5">
-                          <div className="h-3.5 w-36 bg-slate-100 rounded" />
-                          <div className="h-3 w-20 bg-slate-100 rounded" />
+                          <div className="h-3.5 w-36 bg-muted rounded" />
+                          <div className="h-3 w-20 bg-muted rounded" />
                         </div>
-                        <div className="h-8 w-20 bg-slate-100 rounded-xl" />
+                        <div className="h-8 w-20 bg-muted rounded-xl" />
                       </div>
                     ))}
                   </div>
                 ) : students.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                  <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                     <Users className="w-14 h-14 mb-3" />
-                    <p className="text-sm font-semibold text-slate-400">Nenhum aluno nesta aula</p>
-                    <p className="text-xs text-slate-300 mt-1">Nenhum matriculado ou com check-in para este dia</p>
+                    <p className="text-sm font-semibold text-muted-foreground">Nenhum aluno nesta aula</p>
+                    <p className="text-xs text-muted-foreground mt-1">Nenhum matriculado ou com check-in para este dia</p>
                   </div>
                 ) : filteredStudents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-slate-300">
+                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                     <Search className="w-10 h-10 mb-2" />
-                    <p className="text-sm text-slate-400 font-medium">Nenhum aluno encontrado</p>
+                    <p className="text-sm text-muted-foreground font-medium">Nenhum aluno encontrado</p>
                   </div>
                 ) : (
                   <>
                     {/* Group: with self-confirmation */}
                     {withSelfConfirm.length > 0 && (
                       <>
-                        <div className="px-5 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider
-                          bg-indigo-50/50 border-b border-slate-100 flex items-center gap-1.5">
+                        <div className="px-5 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider
+                          bg-indigo-50/50 border-b border-border flex items-center gap-1.5">
                           <UserCheck className="w-3 h-3 text-indigo-500" />
                           Confirmaram pelo app ({withSelfConfirm.length})
                         </div>
@@ -844,10 +844,10 @@ export default function AttendancePage() {
                     {/* Group: without self-confirmation */}
                     {withoutSelfConfirm.length > 0 && (
                       <>
-                        <div className={`px-5 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider
-                          bg-slate-50/80 flex items-center gap-1.5
-                          ${withSelfConfirm.length > 0 ? "border-t border-slate-100 border-b border-slate-100" : "border-b border-slate-100"}`}>
-                          <Users className="w-3 h-3 text-slate-400" />
+                        <div className={`px-5 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider
+                          bg-background/80 flex items-center gap-1.5
+                          ${withSelfConfirm.length > 0 ? "border-t border-border border-b border-border" : "border-b border-border"}`}>
+                          <Users className="w-3 h-3 text-muted-foreground" />
                           Sem check-in ({withoutSelfConfirm.length})
                         </div>
                         {withoutSelfConfirm.map(s => (
@@ -870,8 +870,8 @@ export default function AttendancePage() {
       {/* ═══ Floating Save Banner ═══ */}
       <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300
         ${hasChanges ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"}`}>
-        <div className="bg-slate-900 text-white rounded-2xl shadow-2xl px-5 py-3.5
-          flex items-center gap-4 border border-slate-700 whitespace-nowrap">
+        <div className="bg-background text-white rounded-2xl shadow-2xl px-5 py-3.5
+          flex items-center gap-4 border border-border whitespace-nowrap">
           <div className="text-sm font-semibold">
             <span className="text-indigo-400 font-bold">{presentCount + absentCount}</span> alterações a salvar
           </div>
@@ -882,7 +882,7 @@ export default function AttendancePage() {
               Salvar presenças
             </Button>
             <button onClick={discardChanges}
-              className="px-3 h-8 text-xs font-semibold text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition">
+              className="px-3 h-8 text-xs font-semibold text-muted-foreground hover:text-white rounded-xl hover:bg-secondary transition">
               Descartar
             </button>
           </div>

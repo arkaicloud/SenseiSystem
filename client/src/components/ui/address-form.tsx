@@ -56,16 +56,16 @@ export default function AddressForm({ form, fieldPrefix = "", dark = false }: Ad
 
   // Styling tokens
   const inputCls = dark
-    ? "h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50"
+    ? "h-12 bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50"
     : "";
-  const labelCls = dark ? "text-slate-300 text-sm font-medium" : "";
+  const labelCls = dark ? "text-muted-foreground text-sm font-medium" : "";
   const errorCls = dark ? "text-red-400 text-xs" : "";
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
-        <MapPin className={`w-4 h-4 ${dark ? "text-[#2B54FF]" : "text-primary"}`} />
+        <MapPin className={`w-4 h-4 ${dark ? "text-primary" : "text-primary"}`} />
         <h4 className={`font-medium ${dark ? "text-white" : ""}`}>Endereço Residencial</h4>
       </div>
 
@@ -89,7 +89,7 @@ export default function AddressForm({ form, fieldPrefix = "", dark = false }: Ad
                     className={inputCls}
                   />
                   {isLoadingCep && (
-                    <Loader2 className={`absolute right-3 top-3.5 w-4 h-4 animate-spin ${dark ? "text-slate-400" : "text-muted-foreground"}`} />
+                    <Loader2 className={`absolute right-3 top-3.5 w-4 h-4 animate-spin ${dark ? "text-muted-foreground" : "text-muted-foreground"}`} />
                   )}
                 </div>
               </FormControl>

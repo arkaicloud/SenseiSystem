@@ -4,23 +4,23 @@ export function DashboardSkeleton() {
       {/* Header skeleton */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-2">
-          <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-          <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-6 w-48 bg-muted dark:bg-muted rounded animate-pulse" />
+          <div className="h-4 w-32 bg-muted dark:bg-muted rounded animate-pulse" />
         </div>
-        <div className="h-9 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+        <div className="h-9 w-24 bg-muted dark:bg-muted rounded animate-pulse" />
       </div>
 
       {/* Stats cards skeleton */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div key={i} className="rounded-lg p-4 bg-card dark:bg-background border border-border dark:border-border shadow-sm">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-                <div className="h-4 w-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                <div className="h-4 w-24 bg-muted dark:bg-muted rounded animate-pulse" />
+                <div className="h-4 w-4 bg-muted dark:bg-muted rounded animate-pulse" />
               </div>
-              <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-              <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-8 w-20 bg-muted dark:bg-muted rounded animate-pulse" />
+              <div className="h-3 w-32 bg-muted dark:bg-muted rounded animate-pulse" />
             </div>
           </div>
         ))}
@@ -31,14 +31,14 @@ export function DashboardSkeleton() {
         {/* Left column */}
         <div className="space-y-6">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="rounded-lg p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div key={i} className="rounded-lg p-6 bg-card dark:bg-background border border-border dark:border-border shadow-sm">
               <div className="space-y-4">
-                <div className="h-5 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                <div className="h-5 w-32 bg-muted dark:bg-muted rounded animate-pulse" />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, j) => (
                     <div key={j} className="flex items-center justify-between">
-                      <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-                      <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                      <div className="h-4 w-24 bg-muted dark:bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-16 bg-muted dark:bg-muted rounded animate-pulse" />
                     </div>
                   ))}
                 </div>
@@ -50,12 +50,12 @@ export function DashboardSkeleton() {
         {/* Right column */}
         <div className="space-y-6">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="rounded-lg p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div key={i} className="rounded-lg p-6 bg-card dark:bg-background border border-border dark:border-border shadow-sm">
               <div className="space-y-4">
-                <div className="h-5 w-40 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                <div className="h-5 w-40 bg-muted dark:bg-muted rounded animate-pulse" />
                 <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, j) => (
-                    <div key={j} className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    <div key={j} className="h-4 w-full bg-muted dark:bg-muted rounded animate-pulse" />
                   ))}
                 </div>
               </div>

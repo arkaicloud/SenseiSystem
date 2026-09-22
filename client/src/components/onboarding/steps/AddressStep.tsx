@@ -25,8 +25,8 @@ interface AddressStepProps {
   defaultValues?: Partial<AddressType>;
 }
 
-const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
-const labelCls = "text-slate-300 text-sm font-medium";
+const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-muted-foreground text-sm font-medium";
 
 export default function AddressStep({ onNext, onBack, defaultValues }: AddressStepProps) {
   const [isLoadingCep, setIsLoadingCep] = useState(false);
@@ -65,11 +65,11 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onNext)} className="flex flex-col pb-6">
         <div className="px-6 pt-8 pb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
-            <MapPin className="w-6 h-6 text-[#2B54FF]" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+            <MapPin className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-2xl font-bold text-white">Endereço</h2>
-          <p className="text-sm text-slate-400 mt-1">Onde você mora? Precisamos do seu endereço completo</p>
+          <p className="text-sm text-muted-foreground mt-1">Onde você mora? Precisamos do seu endereço completo</p>
         </div>
 
         <div className="px-6 space-y-5">
@@ -89,10 +89,10 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
                       className={`${inputCls} pr-10`}
                       inputMode="numeric"
                     />
-                    {isLoadingCep && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-5 text-slate-400" />}
+                    {isLoadingCep && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-5 text-muted-foreground" />}
                   </div>
                 </FormControl>
-                <p className="text-xs text-slate-500 mt-1">Digite o CEP para preencher o endereço automaticamente</p>
+                <p className="text-xs text-muted-foreground mt-1">Digite o CEP para preencher o endereço automaticamente</p>
                 <FormMessage className="text-red-400" />
               </FormItem>
             )}
@@ -191,10 +191,10 @@ export default function AddressStep({ onNext, onBack, defaultValues }: AddressSt
           </div>
 
           <div className="pt-2 space-y-3">
-            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base">
               Continuar <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm">
+            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm">
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
           </div>

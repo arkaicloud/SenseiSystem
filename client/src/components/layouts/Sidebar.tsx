@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const filteredMenuItems = getFilteredMenuItems(menuItems);
 
   const isActive = (path: string) =>
-    location === path || (path !== '/' && location.startsWith(path));
+    location === path || (path === '/' && location === '/dashboard') || (path !== '/' && location.startsWith(path));
 
   const hasActiveChild = (children?: MenuItem[]): boolean =>
     !children ? false : children.some(c => (c.path && isActive(c.path)) || hasActiveChild(c.children));
@@ -118,12 +118,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
       <aside
         id="sidebar"
-        className="bg-white border-r border-slate-200/80 w-16 min-w-16 h-screen flex flex-col fixed top-0 left-0 z-40"
+        className="bg-sidebar border-r border-border/80 w-16 min-w-16 h-screen flex flex-col fixed top-0 left-0 z-40"
       >
         {/* Logo icon */}
         <div className="flex items-center justify-center py-5 flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-[#2B54FF] flex items-center justify-center shadow-sm shadow-[#2B54FF]/20">
-            <span className="text-white text-sm font-bold">{schoolLetter}</span>
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/20">
+            <span className="text-primary-foreground text-sm font-bold">{schoolLetter}</span>
           </div>
         </div>
 
@@ -142,17 +142,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className={cn(
                   "w-10 h-10 mx-auto rounded-xl flex items-center justify-center transition-all duration-150 relative cursor-pointer",
                   isItemActive
-                    ? "bg-[#2B54FF] text-white shadow-sm shadow-[#2B54FF]/20"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                    : "text-muted-foreground hover:bg-background hover:text-secondary-foreground"
                 )}>
                   <item.icon style={{ width: 18, height: 18 }} />
                   {item.id === "aprovacoes-pendentes" && pendingCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-danger/100 text-white text-[9px] flex items-center justify-center font-bold">
                       {pendingCount}
                     </span>
                   )}
                   {item.children && item.children.some(c => c.id === "aprovacoes-pendentes") && pendingCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-danger/100 text-white text-[9px] flex items-center justify-center font-bold">
                       {pendingCount}
                     </span>
                   )}
@@ -163,10 +163,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Expand button */}
-        <div className="border-t border-slate-100 py-3 flex items-center justify-center flex-shrink-0">
+        <div className="border-t border-border py-3 flex items-center justify-center flex-shrink-0">
           <button
             onClick={onToggleCollapse}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-[#2B54FF] hover:bg-[#EEF2FF] transition-all duration-150"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-accent transition-all duration-150"
             title="Expandir menu"
           >
             <PanelLeftOpen style={{ width: 18, height: 18 }} />
@@ -174,12 +174,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User avatar */}
-        <div className="border-t border-slate-100 py-3 flex items-center justify-center flex-shrink-0">
+        <div className="border-t border-border py-3 flex items-center justify-center flex-shrink-0">
           <div
-            className="w-9 h-9 rounded-full bg-[#2B54FF] flex items-center justify-center cursor-pointer"
+            className="w-9 h-9 rounded-full bg-primary flex items-center justify-center cursor-pointer"
             title={`${user.firstName} ${user.lastName} · ${formatRole(user.role)}`}
           >
-            <span className="text-white text-xs font-bold">{userInitials}</span>
+            <span className="text-primary-foreground text-xs font-bold">{userInitials}</span>
           </div>
         </div>
       </aside>
@@ -197,23 +197,24 @@ const Sidebar: React.FC<SidebarProps> = ({
       return (
         <div key={item.id} className="mb-0.5">
           <button
+            aria-expanded={isMenuOpen}
             onClick={() => toggleMenu(item.id)}
             className={cn(
               "w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-xl transition-all duration-150",
               (isMenuOpen || hasActiveChildItem)
-                ? "bg-[#EEF2FF] text-[#2B54FF] font-semibold"
-                : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-medium"
+                ? "bg-accent text-primary font-semibold"
+                : "text-secondary-foreground hover:bg-background hover:text-foreground font-medium"
             )}
           >
             <div className="flex items-center gap-3">
               <item.icon className="flex-shrink-0" style={{ width: 18, height: 18 }} />
               <span>{item.label}</span>
             </div>
-            <ChevronDown className={cn("w-4 h-4 transition-transform duration-200 text-slate-400", isMenuOpen && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 transition-transform duration-200 text-muted-foreground", isMenuOpen && "rotate-180")} />
           </button>
 
-          <div className={cn("overflow-hidden transition-all duration-300 ease-in-out", isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
-            <div className="ml-3 mt-0.5 pl-4 border-l border-slate-100 space-y-0.5 py-1">
+          <div hidden={!isMenuOpen} className={cn("overflow-hidden transition-all duration-300 ease-in-out", isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
+            <div className="ml-3 mt-0.5 pl-4 border-l border-border space-y-0.5 py-1">
               {item.children?.map(child => renderMenuItem(child, level + 1))}
             </div>
           </div>
@@ -226,11 +227,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         "flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-150",
         level === 0
           ? isItemActive
-            ? "bg-[#2B54FF] text-white font-semibold shadow-sm shadow-[#2B54FF]/20"
-            : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-medium"
+            ? "bg-primary text-primary-foreground font-semibold shadow-sm shadow-primary/20"
+            : "text-secondary-foreground hover:bg-background hover:text-foreground font-medium"
           : isItemActive
-            ? "bg-[#EEF2FF] text-[#2B54FF] font-semibold"
-            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium"
+            ? "bg-accent text-primary font-semibold"
+            : "text-muted-foreground hover:bg-background hover:text-secondary-foreground font-medium"
       )}>
         <item.icon className="flex-shrink-0" style={{ width: level === 0 ? 18 : 16, height: level === 0 ? 18 : 16 }} />
         <span className="flex-1">{item.label}</span>
@@ -245,7 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
       <div key={item.id} className="mb-0.5">
         {item.path ? (
-          <Link href={item.path} onClick={isMobile ? onClose : undefined}>{ItemContent}</Link>
+          <Link href={item.path} aria-current={isItemActive ? "page" : undefined} onClick={isMobile ? onClose : undefined}>{ItemContent}</Link>
         ) : ItemContent}
       </div>
     );
@@ -257,8 +258,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       id="sidebar"
+      aria-hidden={isMobile && !isOpen}
       className={cn(
-        "bg-white border-r border-slate-200/80 w-64 min-w-64 h-screen flex flex-col",
+        "bg-sidebar border-r border-border/80 w-64 min-w-64 h-screen flex flex-col",
         isMobile
           ? `fixed top-0 left-0 z-50 ${isOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out shadow-2xl`
           : "fixed top-0 left-0 z-40"
@@ -267,17 +269,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Logo / School name */}
       <div className="px-4 py-5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#2B54FF] flex items-center justify-center shadow-sm shadow-[#2B54FF]/20 flex-shrink-0">
-            <span className="text-white text-sm font-bold">{schoolLetter}</span>
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/20 flex-shrink-0">
+            <span className="text-primary-foreground text-sm font-bold">{schoolLetter}</span>
           </div>
-          <span className="font-semibold text-slate-800 text-base truncate">{schoolName}</span>
+          <span className="font-semibold text-foreground text-base truncate">{schoolName}</span>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {/* Collapse button */}
           {!isMobile && onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#2B54FF] hover:bg-[#EEF2FF] transition-all duration-150"
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-accent transition-all duration-150"
               title="Recolher menu"
             >
               <PanelLeftClose style={{ width: 15, height: 15 }} />
@@ -286,7 +288,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* Mobile close */}
           {isMobile && (
             <Button variant="ghost" size="icon" onClick={onClose}
-              className="h-7 w-7 text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+              className="h-7 w-7 text-muted-foreground hover:text-secondary-foreground hover:bg-muted">
               <X className="h-4 w-4" />
             </Button>
           )}
@@ -300,8 +302,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {hasSocial && (
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2.5 px-3">Redes Sociais</p>
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5 px-3">Redes Sociais</p>
             <div className="flex items-center gap-2 flex-wrap px-3">
               {cfg?.instagram && (
                 <a href={cfg.instagram} target="_blank" rel="noopener noreferrer"
@@ -311,7 +313,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               )}
               {cfg?.facebook && (
                 <a href={cfg.facebook} target="_blank" rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white hover:scale-110 transition-transform" title="Facebook">
+                  className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white hover:scale-110 transition-transform" title="Facebook">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </a>
               )}
@@ -339,18 +341,18 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-slate-100 px-4 py-3 flex-shrink-0">
+      <div className="border-t border-border px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-[#2B54FF] flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs font-bold">{userInitials}</span>
+          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <span className="text-primary-foreground text-xs font-bold">{userInitials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{user.firstName} {user.lastName}</p>
-            <p className="text-xs text-slate-400 truncate">{formatRole(user.role)}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{user.firstName} {user.lastName}</p>
+            <p className="text-xs text-muted-foreground truncate">{formatRole(user.role)}</p>
           </div>
           <Button
             variant="ghost" size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 flex-shrink-0 transition-colors"
+            className="h-8 w-8 text-muted-foreground hover:text-danger hover:bg-danger/10 flex-shrink-0 transition-colors"
             onClick={async () => { try { await logout(); } catch (e) { console.error(e); } }}
             title="Sair"
           >

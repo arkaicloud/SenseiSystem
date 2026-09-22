@@ -480,7 +480,7 @@ export default function PendingApprovalsBatch() {
             {filteredUsers.length} de {pendingUsers?.users?.length || 0} aluno{filteredUsers.length !== 1 ? 's' : ''}
           </p>
           {selectedUsers.size > 0 && (
-            <p className="text-sm text-blue-600 font-medium">
+            <p className="text-sm text-accent-foreground font-medium">
               {selectedUsers.size} aluno{selectedUsers.size !== 1 ? 's' : ''} selecionado{selectedUsers.size !== 1 ? 's' : ''} para aprovação
             </p>
           )}
@@ -593,7 +593,7 @@ export default function PendingApprovalsBatch() {
                 key={user.id} 
                 className={`border-l-4 transition-all ${
                   validation.isValid ? 'border-l-green-500' : 'border-l-yellow-500'
-                } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                } ${isSelected ? 'ring-2 ring-primary' : ''}`}
               >
                 <CardContent className="p-4 md:p-6">
                   {/* Top row: checkbox + name + badge + actions */}
@@ -645,7 +645,7 @@ export default function PendingApprovalsBatch() {
                               variant="outline"
                               size="sm"
                               onClick={() => setEditingStudent(user.student!.id)}
-                              className="gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50"
+                              className="gap-1.5 text-accent-foreground border-primary hover:bg-accent"
                             >
                               <Edit className="h-4 w-4" />
                               <span className="hidden sm:inline">Corrigir</span>
@@ -722,12 +722,12 @@ export default function PendingApprovalsBatch() {
                           </div>
                         </div>
 
-                        <div className={`rounded-lg border p-3 ${isScholarship ? "border-blue-200 bg-blue-50/60" : "border-emerald-200 bg-emerald-50/60"}`}>
+                        <div className={`rounded-lg border p-3 ${isScholarship ? "border-primary bg-accent/60" : "border-emerald-200 bg-emerald-50/60"}`}>
                           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Plano selecionado</p>
                           {isScholarship ? (
                             <div className="mt-2">
-                              <p className="font-semibold text-blue-800">Bolsista</p>
-                              <p className="mt-1 text-sm text-blue-700">
+                              <p className="font-semibold text-accent-foreground">Bolsista</p>
+                              <p className="mt-1 text-sm text-accent-foreground">
                                 {user.student?.couponCode ? `Cupom: ${user.student.couponCode}` : "Isento de cobrança"}
                               </p>
                             </div>
@@ -810,7 +810,7 @@ export default function PendingApprovalsBatch() {
 
                       {/* Expanded Details */}
                       {isExpanded && user.student && (
-                          <div className="mt-5 rounded-xl border bg-slate-50/70 p-4 dark:bg-slate-900/40">
+                          <div className="mt-5 rounded-xl border bg-background/70 p-4 dark:bg-background/40">
                             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                               <div>
                                 <h4 className="font-semibold">Detalhes para conferência</h4>

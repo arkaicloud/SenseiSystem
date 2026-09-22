@@ -87,7 +87,7 @@ export default function StudentViewDialog({
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
         <DialogHeader className="border-b px-6 py-5">
           <DialogTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5 text-blue-600" />
+            <Eye className="h-5 w-5 text-accent-foreground" />
             Visualizar como aluno
           </DialogTitle>
           <DialogDescription>
@@ -130,10 +130,10 @@ export default function StudentViewDialog({
             {filteredStudents.map(student => (
               <div
                 key={student.id}
-                className="flex flex-col gap-3 rounded-xl border p-4 transition-colors hover:border-blue-300 hover:bg-blue-50/40 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border p-4 transition-colors hover:border-primary hover:bg-accent/40 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                     <GraduationCap className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">

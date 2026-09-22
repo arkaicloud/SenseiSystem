@@ -123,10 +123,10 @@ interface CancelDialog {
 type StatusKey = "PENDING" | "OVERDUE" | "RECEIVED" | "CONFIRMED";
 
 const STATUS_OPTIONS: { key: StatusKey; label: string; color: string }[] = [
-  { key: "PENDING",   label: "Aguardando pagamento", color: "text-orange-600" },
-  { key: "OVERDUE",   label: "Vencida",              color: "text-red-600"    },
-  { key: "RECEIVED",  label: "Recebida",             color: "text-green-600"  },
-  { key: "CONFIRMED", label: "Confirmada",           color: "text-blue-600"   },
+  { key: "PENDING",   label: "Aguardando pagamento", color: "text-warning" },
+  { key: "OVERDUE",   label: "Vencida",              color: "text-danger"    },
+  { key: "RECEIVED",  label: "Recebida",             color: "text-success"  },
+  { key: "CONFIRMED", label: "Confirmada",           color: "text-accent-foreground"   },
 ];
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -254,11 +254,11 @@ export default function FinancialDashboard() {
 
   const getStatusBadge = (status: Payment["status"]) => {
     const cfg: Record<string, { label: string; className: string }> = {
-      RECEIVED:  { label: "Recebido",   className: "bg-green-100 text-green-800 hover:bg-green-100" },
-      CONFIRMED: { label: "Confirmado", className: "bg-blue-100 text-blue-800 hover:bg-blue-100"   },
-      PENDING:   { label: "Pendente",   className: "bg-orange-100 text-orange-800 hover:bg-orange-100" },
-      OVERDUE:   { label: "Vencida",    className: "bg-red-100 text-red-800 hover:bg-red-100"     },
-      CANCELLED: { label: "Cancelado",  className: "bg-gray-100 text-gray-800 hover:bg-gray-100"  },
+      RECEIVED:  { label: "Recebido",   className: "bg-success/10 text-success hover:bg-success/10" },
+      CONFIRMED: { label: "Confirmado", className: "bg-accent text-accent-foreground hover:bg-accent"   },
+      PENDING:   { label: "Pendente",   className: "bg-warning/10 text-warning hover:bg-warning/10" },
+      OVERDUE:   { label: "Vencida",    className: "bg-danger/10 text-danger hover:bg-danger/10"     },
+      CANCELLED: { label: "Cancelado",  className: "bg-muted text-foreground hover:bg-muted"  },
     };
     const c = cfg[status] || cfg.PENDING;
     return <Badge className={c.className}>{c.label}</Badge>;
@@ -403,7 +403,7 @@ export default function FinancialDashboard() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <AlertTriangle className="h-12 w-12 text-danger mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Erro ao carregar dados financeiros</h2>
           <p className="text-muted-foreground mb-4">
             {(error as Error).message || "Não foi possível conectar com o sistema financeiro ASAAS"}
@@ -438,7 +438,7 @@ export default function FinancialDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setShowManualReceipt(true)} className="bg-green-600 hover:bg-green-700 text-white">
+          <Button onClick={() => setShowManualReceipt(true)} className="bg-primary hover:bg-primary-light text-primary-foreground">
             <Plus className="h-4 w-4 mr-2" />Lançar Recebimento
           </Button>
           <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending} variant="outline" data-testid="button-sync-asaas">
@@ -453,30 +453,30 @@ export default function FinancialDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-            <CreditCard className="h-4 w-4 text-blue-600" />
+            <CreditCard className="h-4 w-4 text-accent-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(derivedMetrics.averageTicket)}</div>
+            <div className="text-2xl font-bold text-accent-foreground">{formatCurrency(derivedMetrics.averageTicket)}</div>
             <p className="text-xs text-muted-foreground">Valor médio por aluno</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cobranças Vencidas</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-4 w-4 text-danger" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{derivedMetrics.overdueCount}</div>
+            <div className="text-2xl font-bold text-danger">{derivedMetrics.overdueCount}</div>
             <p className="text-xs text-muted-foreground">Cobranças vencidas</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos em Atraso</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
+            <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{derivedMetrics.latePaymentsCount}</div>
+            <div className="text-2xl font-bold text-warning">{derivedMetrics.latePaymentsCount}</div>
             <p className="text-xs text-muted-foreground">
               Pagos após vencimento ({formatCurrency(derivedMetrics.latePaymentsValue)})
             </p>
@@ -485,30 +485,30 @@ export default function FinancialDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Taxa de Inadimplência</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <TrendingDown className="h-4 w-4 text-danger" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{derivedMetrics.defaultRate.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-danger">{derivedMetrics.defaultRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">Percentual de atraso</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cobranças no Mês</CardTitle>
-            <FileText className="h-4 w-4 text-blue-600" />
+            <FileText className="h-4 w-4 text-accent-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{derivedMetrics.totalPaymentsThisMonth}</div>
+            <div className="text-2xl font-bold text-accent-foreground">{derivedMetrics.totalPaymentsThisMonth}</div>
             <p className="text-xs text-muted-foreground">Total de cobranças</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Próximo Vencimento</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-600" />
+            <Calendar className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-primary">
               {derivedMetrics.nextDueDate ? formatDate(derivedMetrics.nextDueDate) : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground">Próxima data de vencimento</p>
@@ -518,31 +518,31 @@ export default function FinancialDashboard() {
 
       {/* Totals */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+        <Card className="bg-success/10 border-success/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Total Recebido</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-success">Total Recebido</CardTitle>
+            <TrendingUp className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatCurrency(derivedMetrics.totalReceived)}</div>
+            <div className="text-2xl font-bold text-success">{formatCurrency(derivedMetrics.totalReceived)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+        <Card className="bg-warning/10 border-warning/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">Total Pendente</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-sm font-medium text-warning">Total Pendente</CardTitle>
+            <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-700">{formatCurrency(derivedMetrics.totalPending)}</div>
+            <div className="text-2xl font-bold text-warning">{formatCurrency(derivedMetrics.totalPending)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
+        <Card className="bg-danger/10 border-danger/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-700">Total em Atraso</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-danger">Total em Atraso</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-danger" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatCurrency(derivedMetrics.totalOverdue)}</div>
+            <div className="text-2xl font-bold text-danger">{formatCurrency(derivedMetrics.totalOverdue)}</div>
           </CardContent>
         </Card>
       </div>
@@ -594,7 +594,7 @@ export default function FinancialDashboard() {
             {/* Month nav — spans 2 cols on large */}
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
               <label className="text-sm font-medium">Período</label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline" size="icon"
                   onClick={() => { setSelectedMonth(subMonths(selectedMonth, 1)); setShowAllMonths(false); setCurrentPage(1); }}
@@ -752,7 +752,7 @@ export default function FinancialDashboard() {
                         <div className="text-sm">
                           {formatDate(payment.dueDate)}
                           {payment.status === "OVERDUE" && (
-                            <div className="text-xs text-red-500">
+                            <div className="text-xs text-danger">
                               {Math.max(0, Math.round(
                                 (parseCalendarDateAsLocal(todayKey).getTime() -
                                   parseCalendarDateAsLocal(payment.dueDate).getTime()) / 86400000
@@ -767,9 +767,9 @@ export default function FinancialDashboard() {
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {payment.status === "RECEIVED" || payment.status === "CONFIRMED" ? (
-                            <Badge variant="outline" className="text-green-600">Pago</Badge>
+                            <Badge variant="outline" className="text-success">Pago</Badge>
                           ) : payment.status === "CANCELLED" ? (
-                            <Badge variant="outline" className="text-gray-500">Cancelado</Badge>
+                            <Badge variant="outline" className="text-muted-foreground">Cancelado</Badge>
                           ) : (
                             <>
                               {payment.invoiceUrl && (
@@ -788,7 +788,7 @@ export default function FinancialDashboard() {
                               {canCancel(payment.status) && (
                                 <Button
                                   size="sm" variant="ghost"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  className="text-danger hover:text-danger hover:bg-danger/10"
                                   onClick={() => setCancelDialog({ open: true, payment })}
                                   data-testid={`btn-cancel-payment-${payment.id}`}
                                 >
@@ -883,7 +883,7 @@ export default function FinancialDashboard() {
       <Dialog open={cancelDialog.open} onOpenChange={(open) => !open && setCancelDialog({ open: false, payment: null })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+            <DialogTitle className="flex items-center gap-2 text-danger">
               <Trash2 className="h-5 w-5" />Cancelar fatura
             </DialogTitle>
             <DialogDescription>
@@ -900,17 +900,17 @@ export default function FinancialDashboard() {
           <div className="space-y-3 py-2">
             <p className="text-sm text-muted-foreground">Selecione o que deseja cancelar:</p>
             <button
-              className="w-full text-left px-4 py-3 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-colors"
+              className="w-full text-left px-4 py-3 rounded-lg border border-warning/20 bg-warning/10 hover:bg-warning/10 transition-colors"
               onClick={() => cancelDialog.payment && cancelPaymentMutation.mutate({
                 paymentId: cancelDialog.payment.id,
                 installmentId: cancelDialog.payment.installment,
               })}
               disabled={cancelPaymentMutation.isPending || cancelAllPaymentsMutation.isPending}
             >
-              <div className="font-medium text-orange-800">
+              <div className="font-medium text-warning">
                 {cancelDialog.payment?.installment ? "Cancelar faturas pendentes deste parcelamento" : "Cancelar apenas esta fatura"}
               </div>
-              <div className="text-xs text-orange-600 mt-0.5">
+              <div className="text-xs text-warning mt-0.5">
                 {cancelDialog.payment?.installment
                   ? `Cancela todas as parcelas pendentes/vencidas do parcelamento no ASAAS.`
                   : "Cancela somente esta cobrança no ASAAS."}
@@ -918,12 +918,12 @@ export default function FinancialDashboard() {
             </button>
 
             <button
-              className="w-full text-left px-4 py-3 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+              className="w-full text-left px-4 py-3 rounded-lg border border-danger/20 bg-danger/10 hover:bg-danger/10 transition-colors"
               onClick={() => cancelDialog.payment && cancelAllPaymentsMutation.mutate(cancelDialog.payment.customer)}
               disabled={cancelPaymentMutation.isPending || cancelAllPaymentsMutation.isPending}
             >
-              <div className="font-medium text-red-800">Cancelar todas as faturas pendentes</div>
-              <div className="text-xs text-red-600 mt-0.5">
+              <div className="font-medium text-danger">Cancelar todas as faturas pendentes</div>
+              <div className="text-xs text-danger mt-0.5">
                 Cancela todas as cobranças pendentes e vencidas deste aluno no ASAAS.
               </div>
             </button>

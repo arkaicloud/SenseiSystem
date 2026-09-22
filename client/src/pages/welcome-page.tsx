@@ -34,7 +34,7 @@ const WelcomePage: React.FC = () => {
       <div className="max-w-2xl w-full">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-8 leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-8 leading-tight">
             Bem-vindo ao<br />
             Senseisystem
           </h1>
@@ -51,7 +51,7 @@ const WelcomePage: React.FC = () => {
                 <h3 className="text-xl font-semibold mb-1">
                   {feature.title}
                 </h3>
-                <p className="text-blue-100 text-lg">
+                <p className="text-accent-foreground text-lg">
                   {feature.description}
                 </p>
               </div>
@@ -64,7 +64,7 @@ const WelcomePage: React.FC = () => {
           <Button 
             onClick={() => setLocation("/dashboard")}
             size="lg"
-            className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-12 py-4 text-xl rounded-full shadow-lg"
+            className="bg-card text-accent-foreground hover:bg-accent font-semibold px-12 py-4 text-xl rounded-full shadow-lg"
           >
             Começar
           </Button>

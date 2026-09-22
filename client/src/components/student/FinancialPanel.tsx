@@ -67,7 +67,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center p-4 text-gray-500">
+          <div className="text-center p-4 text-muted-foreground">
             <AlertCircle className="h-8 w-8 mx-auto mb-2" />
             <p>Você não é responsável financeiro por este aluno.</p>
             <p className="text-sm mt-1">Entre em contato com a administração para mais informações.</p>
@@ -96,7 +96,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
       case 'vencido':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -122,7 +122,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
             <CreditCard className="h-5 w-5" />
             Painel Financeiro
           </CardTitle>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-secondary-foreground">
             CPF: {financialData.student?.financialResponsibleCpf}
           </p>
         </CardHeader>
@@ -146,12 +146,12 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
                       <Badge className={getStatusColor(invoice.status)}>
                         {getStatusText(invoice.status)}
                       </Badge>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                          Vence em: {format(parseCalendarDateAsLocal(invoice.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
                     </div>
                     <p className="font-semibold">{formatCurrency(invoice.value)}</p>
-                    <p className="text-sm text-gray-600">{invoice.description || 'Mensalidade'}</p>
+                    <p className="text-sm text-secondary-foreground">{invoice.description || 'Mensalidade'}</p>
                   </div>
                   
                   {invoice.status === 'pending' && invoice.invoiceUrl && (
@@ -189,7 +189,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
                       <Badge className={getStatusColor(payment.status)}>
                         {getStatusText(payment.status)}
                       </Badge>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                          Vencimento: {format(parseCalendarDateAsLocal(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
                     </div>
@@ -200,7 +200,7 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
                       </p>
                     )}
                     {payment.notes && (
-                      <p className="text-sm text-gray-600">{payment.notes}</p>
+                      <p className="text-sm text-secondary-foreground">{payment.notes}</p>
                     )}
                   </div>
                   
@@ -229,9 +229,9 @@ const FinancialPanel: React.FC<FinancialPanelProps> = ({ studentId }) => {
        (!financialData.localPayments || financialData.localPayments.length === 0) && (
         <Card>
           <CardContent className="text-center p-8">
-            <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <Receipt className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma fatura encontrada</h3>
-            <p className="text-gray-600">
+            <p className="text-secondary-foreground">
               Não há faturas ou mensalidades registradas no momento.
             </p>
           </CardContent>

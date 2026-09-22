@@ -65,8 +65,8 @@ export function DashboardLayout() {
       icon: Users,
       value: metrics?.activeStudents || 0,
       label: "Alunos ativos",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
+      color: "text-accent-foreground",
+      bgColor: "bg-accent"
     },
     {
       title: "Aulas",
@@ -107,8 +107,8 @@ export function DashboardLayout() {
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader className="space-y-0 pb-2">
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-                <div className="h-8 bg-gray-200 rounded w-32"></div>
+                <div className="h-4 bg-muted rounded w-24"></div>
+                <div className="h-8 bg-muted rounded w-32"></div>
               </CardHeader>
             </Card>
           ))}
@@ -242,7 +242,7 @@ export function DashboardLayout() {
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-accent-foreground">
                 {metrics?.pendingApprovals || 0}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -293,7 +293,7 @@ export function DashboardLayout() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-blue-600" />
+                <GraduationCap className="h-5 w-5 text-accent-foreground" />
                 Faixas Adulto
               </CardTitle>
             </CardHeader>

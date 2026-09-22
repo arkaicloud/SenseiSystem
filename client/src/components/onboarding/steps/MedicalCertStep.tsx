@@ -73,7 +73,7 @@ export default function MedicalCertStep({
           <FileText className="w-6 h-6 text-orange-400" />
         </div>
         <h2 className="text-2xl font-bold text-white">Atestado Médico</h2>
-        <p className="text-sm text-slate-400 mt-1">Necessário para sua matrícula</p>
+        <p className="text-sm text-muted-foreground mt-1">Necessário para sua matrícula</p>
       </div>
 
       <div className="px-6 space-y-4">
@@ -84,7 +84,7 @@ export default function MedicalCertStep({
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Atestado médico necessário</p>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Com base nas suas respostas de saúde, você precisa apresentar um{" "}
                 <strong className="text-white">atestado médico para atividades físicas</strong>.
               </p>
@@ -99,7 +99,7 @@ export default function MedicalCertStep({
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Leve até a escola</p>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Traga o atestado <strong className="text-white">pessoalmente</strong> à escola. Nossa equipe irá registrar e liberar sua matrícula.
               </p>
             </div>
@@ -113,7 +113,7 @@ export default function MedicalCertStep({
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Matrícula pendente</p>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Sua matrícula ficará marcada como <strong className="text-amber-400">pendente de atestado</strong> até a entrega na escola.
               </p>
             </div>
@@ -123,14 +123,14 @@ export default function MedicalCertStep({
         <div className="pt-2 space-y-3">
           <Button
             onClick={handleContinue}
-            className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base"
           >
             Entendido, finalizar matrícula <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
           <Button
             type="button"
             onClick={onBack}
-            className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm"
+            className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm"
           >
             <ArrowLeft className="mr-2 w-4 h-4" /> Voltar
           </Button>

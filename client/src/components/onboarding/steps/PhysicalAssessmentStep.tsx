@@ -39,8 +39,8 @@ const QUESTIONS = [
   { name: "doctorRecommendation", label: "Algum médico já recomendou que você evite exercícios físicos?" },
 ] as const;
 
-const labelCls = "text-slate-300 text-sm font-medium leading-relaxed";
-const inputCls = "bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-muted-foreground text-sm font-medium leading-relaxed";
+const inputCls = "bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
 
 function YesNoToggle({ value, onChange, id }: { value?: string; onChange: (v: "yes" | "no") => void; id: string }) {
   return (
@@ -51,8 +51,8 @@ function YesNoToggle({ value, onChange, id }: { value?: string; onChange: (v: "y
         onClick={() => onChange("no")}
         className={`flex-1 h-11 rounded-xl border text-sm font-medium transition-all ${
           value === "no"
-            ? "bg-[#2B54FF] border-[#2B54FF] text-white"
-            : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
+            ? "bg-primary border-[#2B54FF] text-white"
+            : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20"
         }`}
       >
         Não
@@ -64,7 +64,7 @@ function YesNoToggle({ value, onChange, id }: { value?: string; onChange: (v: "y
         className={`flex-1 h-11 rounded-xl border text-sm font-medium transition-all ${
           value === "yes"
             ? "bg-orange-500 border-orange-500 text-white"
-            : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
+            : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20"
         }`}
       >
         Sim
@@ -94,7 +94,7 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
             <Heart className="w-6 h-6 text-red-400" />
           </div>
           <h2 className="text-2xl font-bold text-white">Questionário de Saúde</h2>
-          <p className="text-sm text-slate-400 mt-1">Para sua segurança, responda todas as perguntas abaixo</p>
+          <p className="text-sm text-muted-foreground mt-1">Para sua segurança, responda todas as perguntas abaixo</p>
         </div>
 
         <div className="px-6 space-y-5">
@@ -112,7 +112,7 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
                     : "bg-white/5 border-white/20"
                 }`}>
                   <FormLabel className={labelCls}>
-                    <span className="text-[#2B54FF] font-bold mr-1">{i + 1}.</span> {q.label}
+                    <span className="text-primary font-bold mr-1">{i + 1}.</span> {q.label}
                   </FormLabel>
                   <FormControl>
                     <YesNoToggle
@@ -155,10 +155,10 @@ export default function PhysicalAssessmentStep({ onNext, onBack, defaultValues }
           />
 
           <div className="pt-2 space-y-3">
-            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base">
               Continuar <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm">
+            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm">
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
           </div>

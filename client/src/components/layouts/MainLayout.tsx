@@ -122,7 +122,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   
   if (isAuthPage || isPublicRoute || !user) {
     return (
-      <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">
+      <div className="w-full h-full min-h-screen m-0 p-0 bg-background">
         {children}
       </div>
     );
@@ -134,7 +134,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const userInitials = user ? getInitials(user.firstName, user.lastName) : "??";
 
   return (
-    <div className="flex w-full h-full min-h-screen bg-slate-50 dark:bg-gray-900 relative m-0 p-0">
+    <div className="flex w-full h-full min-h-screen bg-background dark:bg-background relative m-0 p-0">
       {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div 
@@ -165,14 +165,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       } ${(user?.role === 'student' || user?.role === 'guardian') ? "lg:ml-64" : ""} transition-all duration-300 ease-in-out relative min-h-screen overflow-x-hidden w-0`}>
         {/* Desktop header */}
         {!isMobile && user && (
-          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 hidden lg:flex items-center justify-between px-6 py-3 sticky top-0 z-40">
+          <div className="bg-background/95 backdrop-blur-xl border-b border-border dark:border-border hidden lg:flex items-center justify-between px-8 py-5 sticky top-0 z-40">
             <div className="flex items-center">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <h2 className="text-lg font-semibold text-foreground dark:text-foreground">
                 Bem-vindo, {user.firstName}!
               </h2>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               {/* Student Switcher for guardians */}
               <StudentSwitcher />
 
@@ -187,7 +187,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
+                className="text-secondary-foreground dark:text-secondary-foreground hover:text-foreground dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
                 title={theme === 'light' ? 'Alternar para tema escuro' : 'Alternar para tema claro'}
               >
                 {theme === 'light' ? (
@@ -200,7 +200,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {/* Admin & User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 h-8">
+                  <Button variant="ghost" className="flex items-center gap-2 h-8">
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
                       <span className="font-bold text-white text-xs">{userInitials}</span>
                     </div>
@@ -214,25 +214,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       {isSuperAdmin && (
                         <DropdownMenuItem
                           onSelect={() => setStudentViewDialogOpen(true)}
-                          className="flex items-center space-x-2"
+                          className="flex items-center gap-2"
                         >
                           <Eye className="w-4 h-4" />
                           <span>Visualizar como aluno</span>
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/pending-approvals" className="flex items-center space-x-2 w-full">
+                        <Link href="/admin/pending-approvals" className="flex items-center gap-2 w-full">
                           <UserCheck className="w-4 h-4" />
                           <span>Pedidos Pendentes</span>
                           {pendingCount > 0 && (
-                            <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                            <span className="ml-auto bg-danger/100 text-white text-xs rounded-full px-2 py-1">
                               {pendingCount}
                             </span>
                           )}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/school-config" className="flex items-center space-x-2 w-full">
+                        <Link href="/school-config" className="flex items-center gap-2 w-full">
                           <Building2 className="w-4 h-4" />
                           <span>Configurações da Escola</span>
                         </Link>
@@ -243,7 +243,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   
                   {/* User Options */}
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center space-x-2 w-full">
+                    <Link href="/settings" className="flex items-center gap-2 w-full">
                       <User className="w-4 h-4" />
                       <span>Meu Perfil</span>
                     </Link>
@@ -260,7 +260,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         console.error('Logout error:', error);
                       }
                     }}
-                    className="flex items-center space-x-2 text-red-600 focus:text-red-600"
+                    className="flex items-center gap-2 text-red-600 focus:text-red-600"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sair</span>
@@ -276,10 +276,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div className="lg:hidden" />
         )}
         {isMobile && user && user?.role !== 'student' && user?.role !== 'guardian' && (
-          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 lg:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
+          <div className="bg-background/95 backdrop-blur-xl border-b border-border dark:border-border lg:hidden flex items-center justify-between px-4 py-3 fixed top-0 left-0 right-0 z-50">
             <button
               id="menu-toggle"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-gray-100 dark:active:bg-gray-700 transition-colors duration-200"
+              className="text-secondary-foreground dark:text-secondary-foreground hover:text-foreground dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 active:bg-muted dark:active:bg-muted transition-colors duration-200"
               onClick={(e) => toggleSidebar(e)}
               onTouchStart={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.1)'}
               onTouchEnd={(e) => e.currentTarget.style.backgroundColor = ''}
@@ -291,15 +291,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </svg>
             </button>
             <div className="flex items-center flex-1">
-              <h1 className="font-montserrat font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
+              <h1 className="font-montserrat font-bold text-base sm:text-lg text-foreground dark:text-foreground">
                 {schoolConfig?.schoolName || 'SenseiSystem'}
               </h1>
-              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">
+              <span className="ml-3 text-sm text-secondary-foreground dark:text-muted-foreground hidden sm:inline">
                 {user?.firstName} {user?.lastName}
               </span>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               {/* Student Switcher for guardians - mobile */}
               <StudentSwitcher />
 
@@ -309,7 +309,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
+                className="text-secondary-foreground dark:text-secondary-foreground hover:text-foreground dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
                 title={theme === 'light' ? 'Alternar para tema escuro' : 'Alternar para tema claro'}
               >
                 {theme === 'light' ? (
@@ -321,7 +321,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 h-8">
+                  <Button variant="ghost" className="flex items-center gap-2 h-8">
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
                       <span className="font-bold text-white text-xs">{userInitials}</span>
                     </div>
@@ -334,25 +334,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       {isSuperAdmin && (
                         <DropdownMenuItem
                           onSelect={() => setStudentViewDialogOpen(true)}
-                          className="flex items-center space-x-2"
+                          className="flex items-center gap-2"
                         >
                           <Eye className="w-4 h-4" />
                           <span>Visualizar como aluno</span>
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/pending-approvals" className="flex items-center space-x-2 w-full">
+                        <Link href="/admin/pending-approvals" className="flex items-center gap-2 w-full">
                           <UserCheck className="w-4 h-4" />
                           <span>Pedidos Pendentes</span>
                           {pendingCount > 0 && (
-                            <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                            <span className="ml-auto bg-danger/100 text-white text-xs rounded-full px-2 py-1">
                               {pendingCount}
                             </span>
                           )}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/school-config" className="flex items-center space-x-2 w-full">
+                        <Link href="/school-config" className="flex items-center gap-2 w-full">
                           <Building2 className="w-4 h-4" />
                           <span>Configurações da Escola</span>
                         </Link>
@@ -362,7 +362,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   )}
                   
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center space-x-2 w-full">
+                    <Link href="/settings" className="flex items-center gap-2 w-full">
                       <User className="w-4 h-4" />
                       <span>Meu Perfil</span>
                     </Link>
@@ -378,7 +378,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         console.error('Logout error:', error);
                       }
                     }}
-                    className="flex items-center space-x-2 text-red-600 focus:text-red-600"
+                    className="flex items-center gap-2 text-red-600 focus:text-red-600"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sair</span>
@@ -391,12 +391,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {/* Page content */}
         <div 
-          className={`px-3 py-3 lg:px-6 lg:py-6 min-h-screen overflow-x-auto ${isMobile && user && user?.role !== 'student' && user?.role !== 'guardian' ? "pt-16" : ""} ${isMobile && (user?.role === 'student' || user?.role === 'guardian') ? "pt-0" : ""} ${!isMobile && user ? "pt-0" : ""} ${(user?.role === 'student' || user?.role === 'guardian') ? "lg:pb-6" : ""}`}
+          className={`px-3 py-3 lg:px-8 lg:py-8 min-h-screen overflow-x-auto ${isMobile && user && user?.role !== 'student' && user?.role !== 'guardian' ? "pt-20" : ""} ${isMobile && (user?.role === 'student' || user?.role === 'guardian') ? "pt-0" : ""} ${!isMobile && user ? "pt-0" : ""} ${(user?.role === 'student' || user?.role === 'guardian') ? "lg:pb-6" : ""}`}
           style={(user?.role === 'student' || user?.role === 'guardian') ? {
             paddingBottom: isMobile 
               ? 'calc(80px + env(safe-area-inset-bottom, 0px))' 
               : '1.5rem',
-            ...(isMobile ? { backgroundColor: '#FFFFFF' } : {})
+            ...(isMobile ? { backgroundColor: 'hsl(var(--background))' } : {})
           } : undefined}
         >
           <div className="max-w-full min-w-0">

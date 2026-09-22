@@ -160,23 +160,23 @@ export default function LoginPage() {
   const MobileForm = (
     <form onSubmit={handleLogin} className="space-y-3 w-full">
       {error && (
-        <div className="bg-red-500/20 border border-red-400/30 rounded-2xl px-4 py-3">
+        <div className="bg-danger/100/20 border border-red-400/30 rounded-2xl px-4 py-3">
           <p className="text-red-300 text-sm text-center">{error}</p>
         </div>
       )}
       <div className="relative">
         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none" />
-        <input type="email" autoComplete="email" value={loginData.username}
+        <input aria-label="E-mail" type="email" autoComplete="email" value={loginData.username}
           onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
           placeholder="Seu e-mail"
-          className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/70 focus:border-transparent transition-all" />
+          className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-ring/70 focus:border-transparent transition-all" />
       </div>
       <div className="relative">
         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none" />
-        <input type={showPassword ? "text" : "password"} autoComplete="current-password" value={loginData.password}
+        <input aria-label="Senha" type={showPassword ? "text" : "password"} autoComplete="current-password" value={loginData.password}
           onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
           placeholder="Sua senha"
-          className="w-full h-14 pl-12 pr-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/70 focus:border-transparent transition-all" />
+          className="w-full h-14 pl-12 pr-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-ring/70 focus:border-transparent transition-all" />
         <button type="button" onClick={() => setShowPassword(!showPassword)}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors">
           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -184,18 +184,18 @@ export default function LoginPage() {
       </div>
       <div className="text-right">
         <button type="button" onClick={() => setLocation("/auth/forgot-password")}
-          className="text-[13px] text-[#2B54FF] font-semibold hover:underline">
+          className="text-[13px] text-primary font-semibold hover:underline">
           Esqueceu sua senha?
         </button>
       </div>
       <button type="submit" disabled={loginMutation.isPending}
-        className="w-full h-14 rounded-2xl bg-[#2B54FF] hover:bg-[#1E3FCC] active:scale-[0.97] text-white font-bold text-base shadow-lg shadow-[#2B54FF]/40 transition-all flex items-center justify-center gap-2 disabled:opacity-70">
+        className="w-full h-14 rounded-full bg-primary hover:bg-primary-light active:scale-[0.97] text-white font-bold text-base shadow-lg shadow-primary/40 transition-all flex items-center justify-center gap-2 disabled:opacity-70">
         {loginMutation.isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Entrando...</> : "Entrar"}
       </button>
       <div className="pt-1 text-center">
         <span className="text-white/50 text-[13px]">Novo por aqui? </span>
         <button type="button" onClick={() => setLocation("/onboarding")}
-          className="text-[13px] text-white font-bold hover:text-[#2B54FF] transition-colors">
+          className="text-[13px] text-white font-bold hover:text-primary transition-colors">
           Matricule-se agora
         </button>
       </div>
@@ -203,7 +203,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen w-full font-['Inter',sans-serif]">
+    <div className="dark min-h-screen w-full font-['Inter',sans-serif]">
 
       {/* ══════════════════════════════════════════════
           MOBILE  (< lg) — estilo VYTA
@@ -269,7 +269,7 @@ export default function LoginPage() {
                 <img src={logoUrl} alt={schoolName} className="h-10 w-auto object-contain drop-shadow-lg"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }} />
               ) : (
-                <p className="text-sm font-semibold tracking-widest uppercase text-[#2B54FF]">{schoolName}</p>
+                <p className="text-sm font-semibold tracking-widest uppercase text-primary">{schoolName}</p>
               )}
             </div>
 
@@ -288,8 +288,8 @@ export default function LoginPage() {
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: "rgba(43,84,255,0.18)" }}>
-                      <Icon className="h-5 w-5" style={{ color: "#2B54FF" }} />
+                      style={{ backgroundColor: "var(--fn-color-accent-subtle)" }}>
+                      <Icon className="h-5 w-5" style={{ color: "var(--fn-color-accent)" }} />
                     </div>
                     <span className="text-sm text-white/75">{label}</span>
                   </div>
@@ -310,7 +310,7 @@ export default function LoginPage() {
         </div>
 
         {/* ── Right: solid dark form panel (45%) ── */}
-        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: "#0d1117" }}>
+        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: "var(--fn-color-canvas)" }}>
           <div className="w-full max-w-sm px-10">
 
             {/* Form heading */}
@@ -320,7 +320,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3">
+              <div className="mb-4 rounded-xl bg-danger/100/10 border border-red-500/20 px-4 py-3">
                 <p className="text-sm text-red-400 text-center">{error}</p>
               </div>
             )}
@@ -333,8 +333,8 @@ export default function LoginPage() {
                 value={loginData.username}
                 onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                 placeholder="Seu e-mail"
-                className="w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-white/35 outline-none transition focus:ring-2 focus:ring-[#2B54FF]"
-                style={{ backgroundColor: "#1c2030", border: "1px solid #2d3348" }}
+                className="w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-white/35 outline-none transition focus:ring-2 focus:ring-ring"
+                style={{ backgroundColor: "var(--fn-color-surface)", border: "1px solid var(--fn-color-control-border)" }}
               />
 
               {/* Password */}
@@ -345,8 +345,8 @@ export default function LoginPage() {
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                   placeholder="Sua senha"
-                  className="w-full rounded-xl px-4 py-3.5 pr-12 text-sm text-white placeholder:text-white/35 outline-none transition focus:ring-2 focus:ring-[#2B54FF]"
-                  style={{ backgroundColor: "#1c2030", border: "1px solid #2d3348" }}
+                  className="w-full rounded-xl px-4 py-3.5 pr-12 text-sm text-white placeholder:text-white/35 outline-none transition focus:ring-2 focus:ring-ring"
+                  style={{ backgroundColor: "var(--fn-color-surface)", border: "1px solid var(--fn-color-control-border)" }}
                 />
                 <button type="button" onClick={() => setShowPasswordDesktop(!showPasswordDesktop)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
@@ -357,7 +357,7 @@ export default function LoginPage() {
               {/* Forgot password */}
               <div className="text-right">
                 <button type="button" onClick={() => setLocation("/auth/forgot-password")}
-                  className="text-sm text-[#2B54FF] hover:underline font-medium">
+                  className="text-sm text-primary hover:underline font-medium">
                   Esqueceu sua senha?
                 </button>
               </div>
@@ -366,8 +366,8 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loginMutation.isPending}
-                className="w-full rounded-xl py-3.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #2B54FF 0%, #4B7BFF 100%)" }}
+                className="w-full rounded-full py-3.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
+                style={{ background: "var(--fn-color-accent)", color: "var(--fn-color-on-accent)" }}
               >
                 {loginMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</>
@@ -378,7 +378,7 @@ export default function LoginPage() {
               <p className="text-center text-sm text-white/40 pt-1">
                 Novo por aqui?{" "}
                 <button type="button" onClick={() => setLocation("/onboarding")}
-                  className="text-white font-bold hover:text-[#2B54FF] transition-colors">
+                  className="text-white font-bold hover:text-primary transition-colors">
                   Matricule-se agora
                 </button>
               </p>

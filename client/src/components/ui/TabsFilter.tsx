@@ -25,7 +25,7 @@ export function TabsFilter({ value, onChange, items }: TabsFilterProps) {
         >
           {item.label}
           {typeof item.badge === "number" && (
-            <span className="ml-2 text-xs bg-slate-200 dark:bg-slate-700 rounded px-1">
+            <span className="ml-2 text-xs bg-muted dark:bg-muted rounded px-1">
               {item.badge}
             </span>
           )}

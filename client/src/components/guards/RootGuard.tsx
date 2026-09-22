@@ -51,7 +51,7 @@ export function RootGuard({ children }: RootGuardProps) {
   // For public routes, render without layout or guards
   if (isPublicRoute) {
     return withStudentViewBanner(
-      <div className="w-full h-full min-h-screen m-0 p-0 bg-slate-950">{children}</div>
+      <div className="w-full h-full min-h-screen m-0 p-0 bg-background">{children}</div>
     );
   }
 
@@ -78,5 +78,5 @@ export function RootGuard({ children }: RootGuardProps) {
   }
 
   // Fallback: render nothing while redirect happens
-  return <div className="w-full h-full min-h-screen bg-slate-950" />;
+  return <div className="w-full h-full min-h-screen bg-background" />;
 }

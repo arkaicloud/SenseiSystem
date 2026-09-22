@@ -89,7 +89,7 @@ export default function PaymentPanel() {
         );
       case 'CANCELLED':
         return (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+          <Badge variant="outline" className="bg-muted text-foreground">
             <XCircle className="h-3 w-3 mr-1" />
             Cancelado
           </Badge>
@@ -169,8 +169,8 @@ export default function PaymentPanel() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <CreditCard className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">
+            <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
               {paymentsData?.isFinancialResponsible
                 ? "Nenhum pagamento encontrado"
                 : "As cobranças são exibidas no perfil do responsável financeiro"}
@@ -247,9 +247,9 @@ export default function PaymentPanel() {
                   </div>
                   
                   {payment.pixCopyAndPaste && (
-                    <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="bg-background p-3 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Código PIX (copiar e colar):</span>
+                        <span className="text-sm text-secondary-foreground">Código PIX (copiar e colar):</span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -259,7 +259,7 @@ export default function PaymentPanel() {
                           Copiar
                         </Button>
                       </div>
-                      <code className="text-xs text-gray-800 bg-white p-2 rounded mt-2 block break-all">
+                      <code className="text-xs text-foreground bg-card p-2 rounded mt-2 block break-all">
                         {payment.pixCopyAndPaste}
                       </code>
                     </div>
@@ -270,10 +270,10 @@ export default function PaymentPanel() {
               {/* Datas importantes */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Criado em</p>
-                    <p className="text-gray-600">
+                    <p className="text-secondary-foreground">
                       {format(new Date(payment.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
                     </p>
                   </div>
@@ -284,7 +284,7 @@ export default function PaymentPanel() {
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <div>
                       <p className="font-medium">Confirmado em</p>
-                      <p className="text-gray-600">
+                      <p className="text-secondary-foreground">
                         {format(new Date(payment.confirmedDate), 'dd/MM/yyyy', { locale: ptBR })}
                       </p>
                     </div>
@@ -296,7 +296,7 @@ export default function PaymentPanel() {
                     <AlertTriangle className="h-4 w-4 text-red-500" />
                     <div>
                       <p className="font-medium">Vencido em</p>
-                      <p className="text-gray-600">
+                      <p className="text-secondary-foreground">
                         {format(new Date(payment.overdueDate), 'dd/MM/yyyy', { locale: ptBR })}
                       </p>
                     </div>

@@ -71,11 +71,11 @@ export default function ChangePasswordPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#2B54FF]/20 border border-[#2B54FF]/40 mb-4">
-            <ShieldCheck className="w-8 h-8 text-[#2B54FF]" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 border border-[#2B54FF]/40 mb-4">
+            <ShieldCheck className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Primeira acesso</h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Por segurança, você precisa criar uma nova senha antes de continuar.
           </p>
         </div>
@@ -83,10 +83,10 @@ export default function ChangePasswordPage() {
         <Card className="bg-white/5 border-white/10 backdrop-blur-md">
           <CardHeader className="pb-4">
             <CardTitle className="text-white text-lg flex items-center gap-2">
-              <Lock className="w-5 h-5 text-[#2B54FF]" />
+              <Lock className="w-5 h-5 text-primary" />
               Criar nova senha
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription className="text-muted-foreground">
               A senha temporária foi enviada para o seu e-mail. Use ela no campo abaixo.
             </CardDescription>
           </CardHeader>
@@ -98,19 +98,19 @@ export default function ChangePasswordPage() {
                   name="currentPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300">Senha temporária (recebida por e-mail)</FormLabel>
+                      <FormLabel className="text-muted-foreground">Senha temporária (recebida por e-mail)</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showCurrent ? "text" : "password"}
                             placeholder="Cole a senha do e-mail aqui"
-                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 pr-10"
+                            className="bg-white/10 border-white/20 text-white placeholder:text-muted-foreground pr-10"
                             {...field}
                           />
                           <button
                             type="button"
                             onClick={() => setShowCurrent(!showCurrent)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
                           >
                             {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -126,19 +126,19 @@ export default function ChangePasswordPage() {
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300">Nova senha</FormLabel>
+                      <FormLabel className="text-muted-foreground">Nova senha</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showNew ? "text" : "password"}
                             placeholder="Mínimo 8 caracteres"
-                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 pr-10"
+                            className="bg-white/10 border-white/20 text-white placeholder:text-muted-foreground pr-10"
                             {...field}
                           />
                           <button
                             type="button"
                             onClick={() => setShowNew(!showNew)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
                           >
                             {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -154,19 +154,19 @@ export default function ChangePasswordPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300">Confirmar nova senha</FormLabel>
+                      <FormLabel className="text-muted-foreground">Confirmar nova senha</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showConfirm ? "text" : "password"}
                             placeholder="Repita a nova senha"
-                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 pr-10"
+                            className="bg-white/10 border-white/20 text-white placeholder:text-muted-foreground pr-10"
                             {...field}
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirm(!showConfirm)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
                           >
                             {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -180,7 +180,7 @@ export default function ChangePasswordPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold h-11 mt-2"
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-semibold h-11 mt-2"
                 >
                   {isLoading ? "Salvando..." : "Criar minha senha"}
                 </Button>
@@ -190,7 +190,7 @@ export default function ChangePasswordPage() {
             <div className="mt-4 pt-4 border-t border-white/10 text-center">
               <button
                 onClick={() => logout()}
-                className="text-slate-400 hover:text-white text-sm transition-colors"
+                className="text-muted-foreground hover:text-white text-sm transition-colors"
               >
                 Sair e entrar com outra conta
               </button>
@@ -198,7 +198,7 @@ export default function ChangePasswordPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-slate-500 text-xs mt-6">
+        <p className="text-center text-muted-foreground text-xs mt-6">
           Sua senha é criptografada e nunca compartilhada.
         </p>
       </div>

@@ -157,7 +157,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ src, alt, className, o
         {/* Overlay com ícone de zoom */}
         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
           <div className="bg-white/90 rounded-full p-2">
-            <ZoomIn className="h-6 w-6 text-gray-800" />
+            <ZoomIn className="h-6 w-6 text-foreground" />
           </div>
         </div>
       </div>

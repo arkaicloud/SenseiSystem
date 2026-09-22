@@ -18,7 +18,7 @@ const AVATAR_STYLES = [
 
 // Cores de avatar disponíveis
 const AVATAR_COLORS = [
-  { id: "slate", name: "Cinza", bg: "bg-slate-500", text: "text-white" },
+  { id: "slate", name: "Cinza", bg: "bg-secondary", text: "text-white" },
   { id: "red", name: "Vermelho", bg: "bg-red-500", text: "text-white" },
   { id: "orange", name: "Laranja", bg: "bg-orange-500", text: "text-white" },
   { id: "amber", name: "Âmbar", bg: "bg-amber-500", text: "text-white" },
@@ -29,7 +29,7 @@ const AVATAR_COLORS = [
   { id: "teal", name: "Turquesa", bg: "bg-teal-500", text: "text-white" },
   { id: "cyan", name: "Ciano", bg: "bg-cyan-500", text: "text-white" },
   { id: "sky", name: "Céu", bg: "bg-sky-500", text: "text-white" },
-  { id: "blue", name: "Azul", bg: "bg-blue-500", text: "text-white" },
+  { id: "blue", name: "Azul", bg: "bg-primary", text: "text-white" },
   { id: "indigo", name: "Índigo", bg: "bg-indigo-500", text: "text-white" },
   { id: "violet", name: "Violeta", bg: "bg-violet-500", text: "text-white" },
   { id: "purple", name: "Roxo", bg: "bg-purple-500", text: "text-white" },
@@ -133,7 +133,7 @@ export default function CustomAvatar({
 
     // Fallback para iniciais
     return (
-      <Avatar className={cn(sizeClasses[size], "bg-slate-500")}>
+      <Avatar className={cn(sizeClasses[size], "bg-secondary")}>
         <AvatarFallback className="text-white">{initials}</AvatarFallback>
       </Avatar>
     );
@@ -236,7 +236,7 @@ export default function CustomAvatar({
                     <Avatar className="h-16 w-16 text-xl">
                       <AvatarFallback className={
                         cn(
-                          AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-slate-500",
+                          AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
                           AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
                         )
                       }>
@@ -247,7 +247,7 @@ export default function CustomAvatar({
                   {form.watch("avatarStyle") === "circle" && (
                     <div className={cn(
                       "h-16 w-16 text-xl rounded-full flex items-center justify-center",
-                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-slate-500",
+                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
                       AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
                     )}>
                       {initials}
@@ -256,7 +256,7 @@ export default function CustomAvatar({
                   {form.watch("avatarStyle") === "square" && (
                     <div className={cn(
                       "h-16 w-16 text-xl rounded-md flex items-center justify-center",
-                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-slate-500",
+                      AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
                       AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
                     )}>
                       {initials}

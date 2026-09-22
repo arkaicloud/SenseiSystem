@@ -33,26 +33,26 @@ export const SchoolNotices = ({ notices, primaryColor, isLoading }: SchoolNotice
   const getNoticeColor = (type: string) => {
     switch (type) {
       case "event":
-        return "bg-blue-50 border-blue-200";
+        return "bg-accent border-primary";
       case "promotion":
         return "bg-yellow-50 border-yellow-200";
       case "class":
         return "bg-green-50 border-green-200";
       default:
-        return "bg-blue-50 border-blue-200";
+        return "bg-accent border-primary";
     }
   };
 
   const getBadgeColor = (type: string) => {
     switch (type) {
       case "event":
-        return "bg-blue-600 text-white";
+        return "bg-primary text-primary-foreground";
       case "promotion":
         return "bg-yellow-600 text-white";
       case "class":
         return "bg-green-600 text-white";
       default:
-        return "bg-blue-600 text-white";
+        return "bg-primary text-primary-foreground";
     }
   };
 
@@ -116,9 +116,9 @@ export const SchoolNotices = ({ notices, primaryColor, isLoading }: SchoolNotice
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   {getNoticeIcon(notice.type)}
-                  <h4 className="font-medium text-gray-900">{notice.title}</h4>
+                  <h4 className="font-medium text-foreground">{notice.title}</h4>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-secondary-foreground mb-3">
                   {notice.description}
                 </p>
               </div>

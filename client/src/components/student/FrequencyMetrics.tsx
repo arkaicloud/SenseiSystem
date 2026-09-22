@@ -59,9 +59,9 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#3B82F6" }: Freque
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <div className="h-4 bg-muted dark:bg-muted rounded animate-pulse" />
+            <div className="h-20 bg-muted dark:bg-muted rounded animate-pulse" />
+            <div className="h-16 bg-muted dark:bg-muted rounded animate-pulse" />
           </div>
         </CardContent>
       </Card>
@@ -87,7 +87,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#3B82F6" }: Freque
   // Determinar nível de engajamento
   const getEngagementLevel = (percentage: number) => {
     if (percentage >= 80) return { label: "Excelente", color: "bg-green-500", variant: "default" as const };
-    if (percentage >= 60) return { label: "Bom", color: "bg-blue-500", variant: "secondary" as const };
+    if (percentage >= 60) return { label: "Bom", color: "bg-primary", variant: "secondary" as const };
     if (percentage >= 40) return { label: "Regular", color: "bg-yellow-500", variant: "outline" as const };
     return { label: "Baixo", color: "bg-red-500", variant: "destructive" as const };
   };
@@ -132,7 +132,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#3B82F6" }: Freque
         </div>
 
         {/* Informações da faixa atual */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-background dark:bg-card rounded-lg p-4">
           <div className="flex items-center gap-3 mb-2">
             <div 
               className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
@@ -177,7 +177,7 @@ export const FrequencyMetrics = ({ studentId, primaryColor = "#3B82F6" }: Freque
           </div>
 
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+            <div className="text-2xl font-bold text-secondary-foreground dark:text-muted-foreground">
               {Math.max(0, totalClasses - attendedClasses)}
             </div>
             <div className="text-xs text-muted-foreground">

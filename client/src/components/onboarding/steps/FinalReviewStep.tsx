@@ -26,7 +26,7 @@ function ReviewSection({ icon: Icon, title, children }: { icon: any; title: stri
   return (
     <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
-        <Icon className="w-4 h-4 text-[#2B54FF]" />
+        <Icon className="w-4 h-4 text-primary" />
         <span className="text-sm font-semibold text-white">{title}</span>
       </div>
       <div className="px-4 py-3 space-y-2">{children}</div>
@@ -38,8 +38,8 @@ function Row({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="flex justify-between items-start gap-3">
-      <span className="text-xs text-slate-500 shrink-0">{label}</span>
-      <span className="text-xs text-slate-200 text-right font-medium">{value}</span>
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className="text-xs text-muted-foreground text-right font-medium">{value}</span>
     </div>
   );
 }
@@ -76,7 +76,7 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
           <CheckCircle className="w-6 h-6 text-green-400" />
         </div>
         <h2 className="text-2xl font-bold text-white">Revisão Final</h2>
-        <p className="text-sm text-slate-400 mt-1">Confira se todas as informações estão corretas</p>
+        <p className="text-sm text-muted-foreground mt-1">Confira se todas as informações estão corretas</p>
       </div>
 
       <div className="px-6 space-y-3">
@@ -89,8 +89,8 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
           <Row label="E-mail" value={formData.email} />
           {beltLabel && (
             <div className="flex justify-between items-center gap-3">
-              <span className="text-xs text-slate-500 shrink-0">Faixa</span>
-              <span className="text-xs text-slate-200 font-medium flex items-center gap-1">
+              <span className="text-xs text-muted-foreground shrink-0">Faixa</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                 <Award className="w-3 h-3" />{beltStr}
               </span>
             </div>
@@ -114,12 +114,12 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
         </ReviewSection>
 
         {/* Confirmation note */}
-        <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/30 rounded-2xl p-4">
+        <div className="bg-primary/10 border border-[#2B54FF]/30 rounded-2xl p-4">
           <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-[#2B54FF] mt-0.5 shrink-0" />
+            <CheckCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-white mb-0.5">Quase lá!</p>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Ao avançar, você irá assinar eletronicamente e finalizar o cadastro. Você receberá um e-mail quando for aprovado.
               </p>
             </div>
@@ -130,7 +130,7 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...</>
@@ -142,7 +142,7 @@ export default function FinalReviewStep({ onNext, onSubmit, onBack, formData, is
             type="button"
             onClick={onBack}
             disabled={loading}
-            className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm"
+            className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
           </Button>

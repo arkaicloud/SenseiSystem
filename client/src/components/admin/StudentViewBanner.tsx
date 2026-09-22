@@ -43,7 +43,7 @@ export default function StudentViewBanner() {
       <Button
         size="sm"
         variant="outline"
-        className="shrink-0 gap-2 border-amber-400 bg-white text-amber-950 hover:bg-amber-100"
+        className="shrink-0 gap-2 border-amber-400 bg-card text-amber-950 hover:bg-amber-100"
         onClick={stopStudentView}
         disabled={isRestoring}
       >

@@ -52,7 +52,7 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
       )}
       <div className="relative">
-        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <input
           type="email"
           autoComplete="email"
@@ -60,11 +60,11 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Seu e-mail"
           data-testid="input-checkin-email"
-          className="w-full h-12 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+          className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
         />
       </div>
       <div className="relative">
-        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <input
           type={showPassword ? "text" : "password"}
           autoComplete="current-password"
@@ -72,12 +72,12 @@ function InlineLoginForm({ onSuccess }: { onSuccess: () => void }) {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Sua senha"
           data-testid="input-checkin-password"
-          className="w-full h-12 pl-10 pr-12 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+          className="w-full h-12 pl-10 pr-12 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-secondary-foreground transition-colors"
         >
           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
@@ -129,21 +129,21 @@ function ClassCard({ cls, onCheckin, isPending }: {
   return (
     <div
       data-testid={`card-class-${cls.id}`}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex items-center justify-between gap-4"
+      className="rounded-2xl border border-border bg-card p-5 shadow-sm flex items-center justify-between gap-4"
     >
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-slate-800 text-base leading-tight">{cls.name}</p>
+        <p className="font-semibold text-foreground text-base leading-tight">{cls.name}</p>
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-          <span className="flex items-center gap-1.5 text-sm text-slate-500">
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Clock className="w-3.5 h-3.5" />
             {cls.startTime} – {cls.endTime}
           </span>
-          <span className="flex items-center gap-1.5 text-sm text-slate-500">
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <User className="w-3.5 h-3.5" />
             {cls.instructorName}
           </span>
           {cls.location && (
-            <span className="flex items-center gap-1.5 text-sm text-slate-500">
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="w-3.5 h-3.5" />
               {cls.location}
             </span>
@@ -173,12 +173,12 @@ function SuccessScreen({ className, checkInTime, onDone }: { className: string; 
         <CheckCircle2 className="w-14 h-14 text-green-500" />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Check-in realizado!</h2>
-        <p className="text-slate-500 mt-1">
-          Sua presença em <span className="font-semibold text-slate-700">{className}</span> foi registrada.
+        <h2 className="text-2xl font-bold text-foreground">Check-in realizado!</h2>
+        <p className="text-muted-foreground mt-1">
+          Sua presença em <span className="font-semibold text-secondary-foreground">{className}</span> foi registrada.
         </p>
         {timeLabel && (
-          <p className="text-slate-400 text-sm mt-1 flex items-center justify-center gap-1.5">
+          <p className="text-muted-foreground text-sm mt-1 flex items-center justify-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
             Registrado às {timeLabel}
           </p>
@@ -255,22 +255,22 @@ export default function CheckinPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-4 py-4 flex items-center gap-3">
+      <div className="bg-card border-b border-border px-4 py-4 flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
           <QrCode className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="font-bold text-slate-800 text-lg leading-tight">Check-in por QR Code</h1>
-          <p className="text-xs text-slate-500">Confirme sua presença</p>
+          <h1 className="font-bold text-foreground text-lg leading-tight">Check-in por QR Code</h1>
+          <p className="text-xs text-muted-foreground">Confirme sua presença</p>
         </div>
       </div>
 
@@ -281,8 +281,8 @@ export default function CheckinPage() {
         {!user && (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-xl font-bold text-slate-800">Entre na sua conta</h2>
-              <p className="text-slate-500 text-sm mt-1">Faça login para confirmar sua presença na aula</p>
+              <h2 className="text-xl font-bold text-foreground">Entre na sua conta</h2>
+              <p className="text-muted-foreground text-sm mt-1">Faça login para confirmar sua presença na aula</p>
             </div>
             <InlineLoginForm onSuccess={handleLoginSuccess} />
           </div>
@@ -294,8 +294,8 @@ export default function CheckinPage() {
             <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center">
               <AlertCircle className="w-8 h-8 text-amber-500" />
             </div>
-            <h2 className="text-lg font-semibold text-slate-800">Acesso reservado a alunos</h2>
-            <p className="text-slate-500 text-sm max-w-xs">
+            <h2 className="text-lg font-semibold text-foreground">Acesso reservado a alunos</h2>
+            <p className="text-muted-foreground text-sm max-w-xs">
               O check-in por QR code é exclusivo para alunos. Para gerar ou imprimir o QR code, acesse o painel administrativo.
             </p>
           </div>
@@ -315,22 +315,22 @@ export default function CheckinPage() {
           <div className="space-y-4">
             {/* Current time */}
             {data?.currentTime && (
-              <p className="text-sm text-slate-500 text-center">
-                Horário atual: <span className="font-semibold text-slate-700">{data.currentTime}</span>
+              <p className="text-sm text-muted-foreground text-center">
+                Horário atual: <span className="font-semibold text-secondary-foreground">{data.currentTime}</span>
               </p>
             )}
 
             {classesLoading && (
               <div className="flex flex-col items-center gap-3 py-12">
                 <Loader2 className="w-7 h-7 animate-spin text-indigo-500" />
-                <p className="text-sm text-slate-500">Buscando aulas disponíveis...</p>
+                <p className="text-sm text-muted-foreground">Buscando aulas disponíveis...</p>
               </div>
             )}
 
             {classesError && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <AlertCircle className="w-8 h-8 text-red-400" />
-                <p className="text-slate-700 font-medium">
+                <p className="text-secondary-foreground font-medium">
                   {(classesError as Error).message || "Erro ao carregar aulas"}
                 </p>
                 {(classesError as Error).message?.includes("parcelas") && (
@@ -344,7 +344,7 @@ export default function CheckinPage() {
                 <button
                   onClick={() => refetch()}
                   data-testid="button-checkin-retry"
-                  className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors"
+                  className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-secondary-foreground text-sm font-medium transition-colors"
                 >
                   Tentar novamente
                 </button>
@@ -353,11 +353,11 @@ export default function CheckinPage() {
 
             {!classesLoading && !classesError && data && data.classes.length === 0 && (
               <div className="flex flex-col items-center gap-3 py-12 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
-                  <Clock className="w-8 h-8 text-slate-400" />
+                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-semibold text-slate-700">Nenhuma aula em andamento</h2>
-                <p className="text-slate-500 text-sm max-w-xs">
+                <h2 className="text-lg font-semibold text-secondary-foreground">Nenhuma aula em andamento</h2>
+                <p className="text-muted-foreground text-sm max-w-xs">
                   No momento não há aulas disponíveis para check-in. Volte quando sua aula estiver prestes a começar.
                 </p>
               </div>
@@ -365,7 +365,7 @@ export default function CheckinPage() {
 
             {!classesLoading && !classesError && data && data.classes.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Aulas disponíveis agora</h2>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Aulas disponíveis agora</h2>
                 {checkinMutation.isError && (
                   <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                     <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />

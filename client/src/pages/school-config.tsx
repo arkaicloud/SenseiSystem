@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, School, Upload, Save, Award, CreditCard, Mail, TestTube, AlertCircle } from "lucide-react";
+import { Loader2, School, Upload, Save, Award, CreditCard, Mail, TestTube, AlertCircle, Palette, MessageCircle, Users, ShieldCheck } from "lucide-react";
 import type { SchoolConfig } from "@shared/schema";
 
 // Schema para validação do formulário
@@ -125,6 +125,15 @@ export default function SchoolConfigPage() {
 
   // Mutation para salvar configurações
   const [testEmailAddress, setTestEmailAddress] = React.useState("");
+  type ConfigTopic = "company" | "appearance" | "social" | "billing" | "email";
+  const [activeTopic, setActiveTopic] = React.useState<ConfigTopic>("company");
+  const topicMeta: Record<ConfigTopic, { title: string; description: string }> = {
+    company: { title: "Empresa", description: "Informações gerais e dados de contato da escola." },
+    appearance: { title: "Aparência", description: "Logos e identidade visual exibidos no sistema." },
+    social: { title: "Redes sociais", description: "Canais oficiais para os alunos encontrarem a escola." },
+    billing: { title: "Integrações", description: "Conexões com serviços externos, como o Asaas." },
+    email: { title: "E-mail (SMTP)", description: "Configure o envio de e-mails transacionais da escola." },
+  };
 
   const testSmtpMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -178,32 +187,50 @@ export default function SchoolConfigPage() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       {/* Cabeçalho */}
-      <div className="mb-4">
-        <div className="flex items-center gap-3 mb-2">
-          <School className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-gray-900">Configurações da Escola</h1>
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+        <div className="mb-2 flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-accent text-accent-foreground"><School className="size-6" /></div>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Configurações da Escola</h1>
         </div>
-        <p className="text-gray-600">
+        <p className="max-w-2xl text-sm text-muted-foreground">
           Gerencie as informações básicas da sua academia que aparecerão na tela de login e dashboard.
         </p>
+        </div>
+        <div className="rounded-xl bg-accent px-4 py-3 text-xs text-accent-foreground">As alterações ficam disponíveis após salvar.</div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <aside className="lg:col-span-1">
+          <nav className="flex gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-2 lg:sticky lg:top-24 lg:flex-col">
+            {[
+              ["company", "Empresa", School],
+              ["appearance", "Aparência", Palette],
+              ["social", "Redes sociais", MessageCircle],
+              ["billing", "Integrações", CreditCard],
+              ["email", "E-mail (SMTP)", Mail],
+            ].map(([id, label, Icon]) => (
+              <button key={id as string} type="button" onClick={() => setActiveTopic(id as ConfigTopic)} aria-current={activeTopic === id ? "page" : undefined} className={`flex min-w-max items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${activeTopic === id ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
+                {React.createElement(Icon as React.ElementType, { className: "size-4" })}
+                {label as string}
+              </button>
+            ))}
+          </nav>
+        </aside>
         {/* Formulário */}
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="border-border shadow-sm">
             <CardHeader>
-              <CardTitle>Informações da Escola</CardTitle>
-              <CardDescription>
-                Configure os dados básicos da sua academia de Jiu-Jitsu.
-              </CardDescription>
+              <CardTitle>{topicMeta[activeTopic].title}</CardTitle>
+              <CardDescription>{topicMeta[activeTopic].description}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                   {/* Nome da Escola */}
+                  <div hidden={activeTopic !== "company"}>
                   <FormField
                     control={form.control}
                     name="schoolName"
@@ -217,7 +244,9 @@ export default function SchoolConfigPage() {
                       </FormItem>
                     )}
                   />
+                  </div>
 
+                  <div className={activeTopic === "appearance" ? "flex flex-col gap-6" : "hidden"}>
                   {/* Logo da Escola */}
                   <FormField
                     control={form.control}
@@ -230,15 +259,15 @@ export default function SchoolConfigPage() {
                             {/* Preview da imagem atual */}
                             {field.value && (
                               <div className="space-y-2">
-                                <p className="text-sm font-medium text-gray-700">Preview do Logo:</p>
-                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                <p className="text-sm font-medium text-secondary-foreground">Preview do Logo:</p>
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-border dark:border-border rounded-lg bg-background dark:bg-muted">
                                   <img 
                                     src={field.value} 
                                     alt="Logo preview" 
                                     className="max-w-full max-h-full object-contain rounded-lg"
                                   />
                                 </div>
-                                <p className="text-xs text-gray-500 text-center">
+                                <p className="text-xs text-muted-foreground text-center">
                                   Visualização em tamanho real (128x128px)
                                 </p>
                               </div>
@@ -246,7 +275,7 @@ export default function SchoolConfigPage() {
                             
                             {/* Upload de arquivo */}
                             <div className="space-y-4">
-                              <div className="text-sm font-medium text-gray-700">Opções de Logo:</div>
+                              <div className="text-sm font-medium text-secondary-foreground">Opções de Logo:</div>
                               
                               {/* Logo Padrão */}
                               <label className="flex items-center space-x-2 cursor-pointer">
@@ -256,9 +285,9 @@ export default function SchoolConfigPage() {
                                   value="default"
                                   checked={!field.value || field.value === 'default'}
                                   onChange={() => field.onChange('default')}
-                                  className="text-blue-600"
+                                  className="text-accent-foreground"
                                 />
-                                <span className="text-sm text-gray-600">Usar Logo Padrão SenseiSystem</span>
+                                <span className="text-sm text-secondary-foreground">Usar Logo Padrão SenseiSystem</span>
                               </label>
                               
                               {/* Upload de Logo Personalizado */}
@@ -270,9 +299,9 @@ export default function SchoolConfigPage() {
                                     value="custom"
                                     checked={Boolean(field.value && field.value !== 'default' && field.value.startsWith('data:'))}
                                     onChange={() => {}}
-                                    className="text-blue-600"
+                                    className="text-accent-foreground"
                                   />
-                                  <span className="text-sm text-gray-600">Upload Logo Personalizado</span>
+                                  <span className="text-sm text-secondary-foreground">Upload Logo Personalizado</span>
                                 </label>
                                 
                                 <input
@@ -301,14 +330,14 @@ export default function SchoolConfigPage() {
                                       reader.readAsDataURL(file);
                                     }
                                   }}
-                                  className="ml-6 text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                  className="ml-6 text-sm text-muted-foreground file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-accent-foreground hover:file:bg-accent"
                                 />
                               </div>
                             </div>
                           </div>
                         </FormControl>
                         <FormMessage />
-                        <div className="text-sm text-gray-500 space-y-1">
+                        <div className="text-sm text-muted-foreground space-y-1">
                           <p>• <strong>Logo Padrão:</strong> Usa o nome da escola em destaque no login</p>
                           <p>• <strong>Tema Claro:</strong> Faça upload de um logo otimizado para fundos claros</p>
                           <p>• <strong>Tema Escuro:</strong> Faça upload de um logo otimizado para fundos escuros</p>
@@ -331,8 +360,8 @@ export default function SchoolConfigPage() {
                             {/* Preview do logo claro */}
                             {field.value && (
                               <div className="space-y-2">
-                                <p className="text-sm font-medium text-gray-700">Preview Logo Claro:</p>
-                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                                <p className="text-sm font-medium text-secondary-foreground">Preview Logo Claro:</p>
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-border rounded-lg bg-card">
                                   <img 
                                     src={field.value} 
                                     alt="Logo claro preview" 
@@ -368,12 +397,12 @@ export default function SchoolConfigPage() {
                                   reader.readAsDataURL(file);
                                 }
                               }}
-                              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                              className="text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-accent-foreground hover:file:bg-accent"
                             />
                           </div>
                         </FormControl>
                         <FormMessage />
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           Logo otimizado para fundos claros (tema claro)
                         </div>
                       </FormItem>
@@ -392,8 +421,8 @@ export default function SchoolConfigPage() {
                             {/* Preview do logo escuro */}
                             {field.value && (
                               <div className="space-y-2">
-                                <p className="text-sm font-medium text-gray-700">Preview Logo Escuro:</p>
-                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg bg-slate-900">
+                                <p className="text-sm font-medium text-secondary-foreground">Preview Logo Escuro:</p>
+                                <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-border rounded-lg bg-background">
                                   <img 
                                     src={field.value} 
                                     alt="Logo escuro preview" 
@@ -429,18 +458,21 @@ export default function SchoolConfigPage() {
                                   reader.readAsDataURL(file);
                                 }
                               }}
-                              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                              className="text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-accent-foreground hover:file:bg-accent"
                             />
                           </div>
                         </FormControl>
                         <FormMessage />
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           Logo otimizado para fundos escuros (tema escuro)
                         </div>
                       </FormItem>
                     )}
                   />
 
+                  </div>
+
+                  <div className={activeTopic === "company" ? "flex flex-col gap-6" : "hidden"}>
                   {/* Endereço */}
                   <FormField
                     control={form.control}
@@ -521,17 +553,19 @@ export default function SchoolConfigPage() {
                           />
                         </FormControl>
                         <FormMessage />
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Mensagem que aparecerá quando um aluno for graduado
                         </p>
                       </FormItem>
                     )}
                   />
 
+                  </div>
+
                   {/* Seção Redes Sociais */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Redes Sociais</h3>
-                    <p className="text-sm text-gray-600 mb-6">Configure as redes sociais da academia. Os ícones aparecerão no menu da aplicação.</p>
+                  <div hidden={activeTopic !== "social"} className="pt-2">
+                    <h3 className="text-lg font-medium text-foreground mb-4">Redes Sociais</h3>
+                    <p className="text-sm text-secondary-foreground mb-6">Configure as redes sociais da academia. Os ícones aparecerão no menu da aplicação.</p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Instagram */}
@@ -563,7 +597,7 @@ export default function SchoolConfigPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
-                              <div className="w-5 h-5 bg-blue-600 rounded-lg flex items-center justify-center">
+                              <div className="w-5 h-5 bg-primary rounded-lg flex items-center justify-center">
                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                                 </svg>
@@ -596,7 +630,7 @@ export default function SchoolConfigPage() {
                               <Input placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
                             <FormMessage />
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               Apenas números com código do país (ex: 5511999999999)
                             </div>
                           </FormItem>
@@ -650,12 +684,12 @@ export default function SchoolConfigPage() {
                   </div>
 
                   {/* Seção ASAAS */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <div hidden={activeTopic !== "billing"} className="pt-2">
+                    <h3 className="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
                       <CreditCard className="h-5 w-5" />
                       Integração ASAAS
                     </h3>
-                    <p className="text-sm text-gray-600 mb-6">
+                    <p className="text-sm text-secondary-foreground mb-6">
                       Configure a integração com ASAAS para automação de cobranças e gestão financeira.
                       A API Key é necessária para criar clientes e cobranças automaticamente quando aprovar alunos.
                     </p>
@@ -674,7 +708,7 @@ export default function SchoolConfigPage() {
                             />
                           </FormControl>
                           <FormMessage />
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             Encontre sua API Key no painel ASAAS em: Configurações → API Keys
                           </div>
                         </FormItem>
@@ -683,12 +717,12 @@ export default function SchoolConfigPage() {
                   </div>
 
                   {/* Seção SMTP Email */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <div hidden={activeTopic !== "email"} className="pt-2">
+                    <h3 className="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
                       <Mail className="h-5 w-5" />
                       Configurações de Email (SMTP)
                     </h3>
-                    <p className="text-sm text-gray-600 mb-6">
+                    <p className="text-sm text-secondary-foreground mb-6">
                       Configure o servidor SMTP para envio automático de emails como confirmações de matrícula, recuperação de senha e comunicados.
                     </p>
                     
@@ -701,7 +735,7 @@ export default function SchoolConfigPage() {
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">Habilitar SMTP</FormLabel>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-muted-foreground">
                                 Ativar envio automático de emails via SMTP personalizado
                               </div>
                             </div>
@@ -709,7 +743,7 @@ export default function SchoolConfigPage() {
                               <input
                                 type="checkbox"
                                 data-testid="checkbox-smtp-enabled"
-                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="h-4 w-4 text-accent-foreground border-border rounded focus:ring-primary"
                                 checked={field.value}
                                 onChange={field.onChange}
                               />
@@ -754,7 +788,7 @@ export default function SchoolConfigPage() {
                                   />
                                 </FormControl>
                                 <FormMessage />
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-muted-foreground">
                                   587 (TLS), 465 (SSL), 25 (não criptografado)
                                 </div>
                               </FormItem>
@@ -789,7 +823,7 @@ export default function SchoolConfigPage() {
                                   <Input type="password" placeholder="••••••••" {...field} />
                                 </FormControl>
                                 <FormMessage />
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-muted-foreground">
                                   Para Gmail, use "Senha de App" ao invés da senha normal
                                 </div>
                               </FormItem>
@@ -837,7 +871,7 @@ export default function SchoolConfigPage() {
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                               <div className="space-y-0.5">
                                 <FormLabel className="text-base">Usar SSL (porta 465)</FormLabel>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-muted-foreground">
                                   Ativar se usar porta 465. Desativar para portas 587 e 25
                                 </div>
                               </div>
@@ -845,7 +879,7 @@ export default function SchoolConfigPage() {
                                 <input
                                   type="checkbox"
                                   data-testid="checkbox-smtp-secure"
-                                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="h-4 w-4 text-accent-foreground border-border rounded focus:ring-primary"
                                   checked={field.value}
                                   onChange={field.onChange}
                                 />
@@ -854,10 +888,10 @@ export default function SchoolConfigPage() {
                           )}
                         />
 
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div className="bg-accent p-4 rounded-lg border border-primary">
                           <div className="flex items-start gap-2">
-                            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                            <div className="text-sm text-blue-800">
+                            <AlertCircle className="h-5 w-5 text-accent-foreground mt-0.5" />
+                            <div className="text-sm text-accent-foreground">
                               <p className="font-medium mb-2">Provedores Comuns:</p>
                               <ul className="text-xs space-y-1">
                                 <li><strong>Gmail:</strong> smtp.gmail.com, porta 587, usar "Senha de App"</li>
@@ -870,8 +904,8 @@ export default function SchoolConfigPage() {
                         </div>
 
                         {/* Testar conexão SMTP */}
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                        <div className="bg-background dark:bg-muted p-4 rounded-lg border border-border dark:border-border">
+                          <p className="text-sm font-medium text-foreground dark:text-foreground mb-3 flex items-center gap-2">
                             <TestTube className="h-4 w-4" />
                             Testar Conexão SMTP
                           </p>
@@ -896,7 +930,7 @@ export default function SchoolConfigPage() {
                               )}
                             </Button>
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-xs text-muted-foreground mt-2">
                             Salve as configurações antes de testar. Um e-mail de boas-vindas será enviado para o endereço acima.
                           </p>
                         </div>
@@ -930,14 +964,14 @@ export default function SchoolConfigPage() {
 
         {/* Preview */}
         <div className="lg:col-span-1">
-          <Card>
+          <Card className="border-border shadow-sm lg:sticky lg:top-24 lg:self-start">
             <CardHeader>
               <CardTitle>Pré-visualização</CardTitle>
               <CardDescription>
                 Como as informações aparecerão na aplicação
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-col gap-4">
               {/* Preview do Logo */}
               {form.watch("logoUrl") && (
                 <div className="text-center">
@@ -962,22 +996,22 @@ export default function SchoolConfigPage() {
               {/* Preview das Informações */}
               <div className="space-y-2 text-sm">
                 {form.watch("address") && (
-                  <p className="text-gray-600">📍 {form.watch("address")}</p>
+                  <p className="text-secondary-foreground">📍 {form.watch("address")}</p>
                 )}
                 {form.watch("phone") && (
-                  <p className="text-gray-600">📞 {form.watch("phone")}</p>
+                  <p className="text-secondary-foreground">📞 {form.watch("phone")}</p>
                 )}
                 {form.watch("email") && (
-                  <p className="text-gray-600">📧 {form.watch("email")}</p>
+                  <p className="text-secondary-foreground">📧 {form.watch("email")}</p>
                 )}
                 {form.watch("website") && (
-                  <p className="text-gray-600">🌐 {form.watch("website")}</p>
+                  <p className="text-secondary-foreground">🌐 {form.watch("website")}</p>
                 )}
               </div>
 
               {form.watch("congratsMessage") && (
                 <div className="pt-2 border-t">
-                  <p className="text-sm text-gray-600">{form.watch("congratsMessage")}</p>
+                  <p className="text-sm text-secondary-foreground">{form.watch("congratsMessage")}</p>
                 </div>
               )}
             </CardContent>

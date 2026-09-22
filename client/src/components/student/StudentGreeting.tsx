@@ -15,13 +15,13 @@ interface StudentGreetingProps {
 export const StudentGreeting = ({ studentName, currentBelt, primaryColor }: StudentGreetingProps) => {
   const getBeltColor = (color: string) => {
     const colors: Record<string, string> = {
-      white: "bg-slate-100 text-slate-800 border-slate-300",
-      blue: "bg-blue-100 text-blue-800 border-blue-300",
+      white: "bg-muted text-foreground border-border",
+      blue: "bg-accent text-accent-foreground border-primary",
       purple: "bg-purple-100 text-purple-800 border-purple-300",
       brown: "bg-amber-700 text-white border-amber-700",
       black: "bg-black text-white border-black",
     };
-    return colors[color.toLowerCase()] || "bg-gray-100 text-gray-800 border-gray-300";
+    return colors[color.toLowerCase()] || "bg-muted text-foreground border-border";
   };
 
   return (

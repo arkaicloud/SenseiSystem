@@ -24,7 +24,7 @@ export const Layout = ({ children, title }: LayoutProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900">
+      <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-white text-xl">{t('common.loading')}</div>
       </div>
     );
@@ -35,7 +35,7 @@ export const Layout = ({ children, title }: LayoutProps) => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-background">
       <div className="hidden md:flex md:flex-shrink-0">
         <Sidebar />
       </div>

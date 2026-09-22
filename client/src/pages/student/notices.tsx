@@ -106,9 +106,9 @@ export default function StudentNoticesPage() {
       case 'MEDIUM':
         return <MessageCircle className="h-4 w-4 text-yellow-500" />;
       case 'LOW':
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <Info className="h-4 w-4 text-accent-foreground" />;
       default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -119,9 +119,9 @@ export default function StudentNoticesPage() {
       case 'MEDIUM':
         return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950';
       case 'LOW':
-        return 'border-l-blue-500 bg-blue-50 dark:bg-blue-950';
+        return 'border-l-blue-500 bg-accent dark:bg-accent';
       default:
-        return 'border-l-gray-500 bg-gray-50 dark:bg-gray-950';
+        return 'border-l-gray-500 bg-background dark:bg-background';
     }
   };
 
@@ -169,9 +169,9 @@ export default function StudentNoticesPage() {
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
                 <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="h-3 bg-muted rounded w-full"></div>
                 </div>
               </CardContent>
             </Card>
@@ -194,7 +194,7 @@ export default function StudentNoticesPage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Pesquisar avisos..."
                 value={searchTerm}
@@ -224,11 +224,11 @@ export default function StudentNoticesPage() {
           {filteredNotices.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <Bell className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
                   {searchTerm || levelFilter !== "all" ? "Nenhum aviso encontrado" : "Nenhum aviso disponível"}
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-muted-foreground dark:text-muted-foreground">
                   {searchTerm || levelFilter !== "all" 
                     ? "Tente ajustar os filtros de pesquisa." 
                     : "Você será notificado quando houver novos comunicados da escola."
@@ -241,7 +241,7 @@ export default function StudentNoticesPage() {
               <Card 
                 key={notice.id} 
                 className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${getLevelColor(notice.level)} ${
-                  !notice.readAt ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'
+                  !notice.readAt ? 'bg-card dark:bg-card' : 'bg-background dark:bg-background'
                 }`}
                 onClick={() => handleNoticeClick(notice)}
               >
@@ -250,24 +250,24 @@ export default function StudentNoticesPage() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         {getLevelIcon(notice.level)}
-                        <h3 className={`font-semibold text-lg ${!notice.readAt ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <h3 className={`font-semibold text-lg ${!notice.readAt ? 'text-foreground dark:text-foreground' : 'text-secondary-foreground dark:text-secondary-foreground'}`}>
                           {notice.title}
                         </h3>
                         <Badge variant={notice.level === 'HIGH' ? 'destructive' : notice.level === 'MEDIUM' ? 'default' : 'secondary'}>
                           {getLevelText(notice.level)}
                         </Badge>
                         {!notice.readAt && (
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          <Badge variant="secondary" className="bg-accent text-accent-foreground dark:bg-accent dark:text-accent-foreground">
                             Novo
                           </Badge>
                         )}
                       </div>
 
-                      <p className="text-gray-600 dark:text-gray-400 line-clamp-2">
+                      <p className="text-secondary-foreground dark:text-muted-foreground line-clamp-2">
                         {createPreviewText(notice.content, 150)}
                       </p>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
                           <span>
@@ -331,16 +331,16 @@ export default function StudentNoticesPage() {
             <div className="space-y-4 overflow-y-auto flex-1 max-h-[50vh] custom-scrollbar px-1">
               <RichContent 
                 content={selectedNotice?.content || ''}
-                className="text-gray-700 dark:text-gray-300"
+                className="text-secondary-foreground dark:text-secondary-foreground"
               />
 
               {selectedNotice?.eventAt && (
-                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <div className="bg-accent dark:bg-accent p-4 rounded-lg">
+                  <div className="flex items-center gap-2 text-accent-foreground dark:text-accent-foreground">
                     <Calendar className="h-4 w-4" />
                     <span className="font-medium">Data do Evento:</span>
                   </div>
-                  <p className="mt-1 text-blue-600 dark:text-blue-400">
+                  <p className="mt-1 text-accent-foreground dark:text-accent-foreground">
                     {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
                       weekday: 'long',
                       year: 'numeric',

@@ -49,7 +49,7 @@ export default function IosSwitch({
         aria-hidden="true"
         className={[
           // bolinha proporcional: 20x20 para h-[24px]
-          "h-[27px] w-[27px] rounded-full bg-white",
+          "h-[27px] w-[27px] rounded-full bg-card",
           // sombras parecidas com iOS
           "shadow-[0_1px_2px_rgba(0,0,0,0.35),_0_0_0_0.5px_rgba(0,0,0,0.04)]",
           "transform transition-transform duration-200 will-change-transform",

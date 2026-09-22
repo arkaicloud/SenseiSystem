@@ -203,7 +203,7 @@ const PaymentPlanForm: React.FC<PaymentPlanFormProps> = ({
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                      className={`inline-block h-4 w-4 rounded-full bg-card shadow transform transition-transform ${
                         field.value ? "translate-x-6" : "translate-x-1"
                       }`}
                     />

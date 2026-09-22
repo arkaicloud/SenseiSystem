@@ -174,13 +174,13 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
                     className={`cursor-pointer transition-all ${
                       formData.layout === layout.value 
                         ? 'ring-2 ring-primary bg-primary/5' 
-                        : 'hover:bg-gray-50'
+                        : 'hover:bg-background'
                     }`}
                     onClick={() => setFormData({ ...formData, layout: layout.value as any })}
                   >
                     <CardContent className="p-4">
                       <div className="font-medium">{layout.name}</div>
-                      <div className="text-sm text-gray-600 mt-1">{layout.desc}</div>
+                      <div className="text-sm text-secondary-foreground mt-1">{layout.desc}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -231,8 +231,8 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
                     key={color}
                     className={`w-12 h-12 rounded-lg border-2 transition-all ${
                       formData.accentColor === color 
-                        ? 'border-gray-800 scale-110' 
-                        : 'border-gray-300 hover:scale-105'
+                        ? 'border-border scale-110'
+                        : 'border-border hover:scale-105'
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() => setFormData({ ...formData, accentColor: color })}
@@ -255,7 +255,7 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
                     className={`cursor-pointer transition-all ${
                       formData.backgroundColor === bg.color 
                         ? 'ring-2 ring-primary' 
-                        : 'hover:bg-gray-50'
+                        : 'hover:bg-background'
                     }`}
                     onClick={() => setFormData({ ...formData, backgroundColor: bg.color })}
                   >
@@ -310,7 +310,7 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
                   <div key={widget.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <div className="font-medium">{widget.name}</div>
-                      <div className="text-sm text-gray-600">{widget.desc}</div>
+                      <div className="text-sm text-secondary-foreground">{widget.desc}</div>
                     </div>
                     <Switch
                       checked={!formData.hiddenWidgets?.includes(widget.id)}
@@ -342,7 +342,7 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
             <div className="text-center">
               <Sparkles className="h-16 w-16 text-primary mx-auto mb-4" />
               <h3 className="text-lg font-semibold">Configuração Quase Pronta!</h3>
-              <p className="text-gray-600 mt-2">
+              <p className="text-secondary-foreground mt-2">
                 Revise suas configurações e clique em salvar para aplicar as mudanças.
               </p>
             </div>
@@ -354,27 +354,27 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Layout:</span>
+                    <span className="text-secondary-foreground">Layout:</span>
                     <Badge variant="secondary">
                       {formData.layout === 'default' ? 'Padrão' : 
                        formData.layout === 'compact' ? 'Compacto' : 'Minimalista'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Tema:</span>
+                    <span className="text-secondary-foreground">Tema:</span>
                     <Badge variant="secondary">
                       {formData.theme === 'light' ? 'Claro' : 
                        formData.theme === 'dark' ? 'Escuro' : 'Automático'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Modo Compacto:</span>
+                    <span className="text-secondary-foreground">Modo Compacto:</span>
                     <Badge variant={formData.compactMode ? "default" : "secondary"}>
                       {formData.compactMode ? 'Ativado' : 'Desativado'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Widgets Visíveis:</span>
+                    <span className="text-secondary-foreground">Widgets Visíveis:</span>
                     <Badge variant="secondary">
                       {4 - (formData.hiddenWidgets?.length || 0)} de 4
                     </Badge>
@@ -439,14 +439,14 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
                 <div
                   key={index}
                   className={`flex flex-col items-center space-y-2 ${
-                    index <= currentStep ? 'text-primary' : 'text-gray-400'
+                    index <= currentStep ? 'text-primary' : 'text-muted-foreground'
                   }`}
                 >
                   <div
                     className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
                       index <= currentStep
-                        ? 'border-primary bg-primary text-white'
-                        : 'border-gray-300'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border'
                     }`}
                   >
                     {step.icon}
@@ -464,7 +464,7 @@ const DashboardCustomizationWizard: React.FC<DashboardCustomizationWizardProps> 
             <div className="mb-8">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">{steps[currentStep].title}</h3>
-                <p className="text-gray-600">{steps[currentStep].description}</p>
+                <p className="text-secondary-foreground">{steps[currentStep].description}</p>
               </div>
               {renderStepContent()}
             </div>

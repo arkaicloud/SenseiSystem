@@ -182,8 +182,8 @@ function BirthdayList({ birthdays, onContact }: BirthdayListProps) {
       })}
       
       {birthdays.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <Cake className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+        <div className="text-center py-8 text-muted-foreground">
+          <Cake className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
           <p>Nenhum aniversariante hoje</p>
         </div>
       )}

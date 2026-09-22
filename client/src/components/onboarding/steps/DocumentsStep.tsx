@@ -54,11 +54,11 @@ export default function DocumentsStep({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="w-14 h-14 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mx-auto">
-          <FileText className="w-7 h-7 text-[#2B54FF]" />
+        <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mx-auto">
+          <FileText className="w-7 h-7 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-white">Documentos e Assinatura</h2>
-        <p className="text-slate-400 text-sm">Confirme sua matrícula com assinatura eletrônica</p>
+        <p className="text-muted-foreground text-sm">Confirme sua matrícula com assinatura eletrônica</p>
       </div>
 
       {/* Progress bar */}
@@ -66,19 +66,19 @@ export default function DocumentsStep({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-medium text-sm">Progresso</p>
-            <p className="text-slate-400 text-xs mt-0.5">{completedCount} de 2 etapas obrigatórias concluídas</p>
+            <p className="text-muted-foreground text-xs mt-0.5">{completedCount} de 2 etapas obrigatórias concluídas</p>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
             canFinish
               ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-              : 'bg-white/10 text-slate-400 border border-white/10'
+              : 'bg-white/10 text-muted-foreground border border-white/10'
           }`}>
             {canFinish ? "✓ Pronto para finalizar" : "Pendente"}
           </span>
         </div>
         <div className="mt-3 w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#2B54FF] rounded-full transition-all duration-500"
+            className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${(completedCount / 2) * 100}%` }}
           />
         </div>
@@ -93,7 +93,7 @@ export default function DocumentsStep({
             </div>
             <div>
               <p className="text-white font-medium text-sm">Questionário de Saúde</p>
-              <p className="text-slate-400 text-xs">Enviado em {new Date().toLocaleDateString("pt-BR")}</p>
+              <p className="text-muted-foreground text-xs">Enviado em {new Date().toLocaleDateString("pt-BR")}</p>
             </div>
           </div>
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
@@ -112,13 +112,13 @@ export default function DocumentsStep({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              signatureData ? 'bg-green-500/20' : 'bg-[#2B54FF]/20'
+              signatureData ? 'bg-green-500/20' : 'bg-primary/20'
             }`}>
-              <FileText className={`w-5 h-5 ${signatureData ? 'text-green-400' : 'text-[#2B54FF]'}`} />
+              <FileText className={`w-5 h-5 ${signatureData ? 'text-green-400' : 'text-primary'}`} />
             </div>
             <div>
               <p className="text-white font-medium text-sm">Assinatura Eletrônica</p>
-              <span className="text-xs text-slate-500 bg-white/10 border border-white/10 px-2 py-0.5 rounded-full">Obrigatório</span>
+              <span className="text-xs text-muted-foreground bg-white/10 border border-white/10 px-2 py-0.5 rounded-full">Obrigatório</span>
             </div>
           </div>
           {signatureData ? (
@@ -127,40 +127,40 @@ export default function DocumentsStep({
               Assinado
             </span>
           ) : (
-            <span className="px-3 py-1 rounded-full text-xs bg-white/10 text-slate-400 border border-white/10">Pendente</span>
+            <span className="px-3 py-1 rounded-full text-xs bg-white/10 text-muted-foreground border border-white/10">Pendente</span>
           )}
         </div>
 
         {signatureData ? (
           <div className="space-y-3">
-            <div className="border border-white/10 rounded-xl overflow-hidden bg-white">
+            <div className="border border-white/10 rounded-xl overflow-hidden bg-card">
               <img
                 src={signatureData.signatureData}
                 alt="Assinatura"
                 className="w-full max-h-24 object-contain p-2"
               />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Tipo: {signatureData.signatureType === "drawn" ? "Desenhada" : "Digitada"} •{" "}
               {new Date(signatureData.signatureTimestamp).toLocaleString("pt-BR")}
             </p>
             <button
               type="button"
               onClick={() => setShowSignaturePad(true)}
-              className="text-xs px-3 py-1.5 rounded-lg border border-white/20 text-slate-300 hover:bg-white/10 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg border border-white/20 text-muted-foreground hover:bg-white/10 transition-colors"
             >
               Refazer assinatura
             </button>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Assine digitalmente para confirmar os termos de matrícula. Você pode desenhar com o mouse ou digitar seu nome.
             </p>
             <button
               type="button"
               onClick={() => setShowSignaturePad(true)}
-              className="h-11 px-6 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] text-white font-semibold transition-colors text-sm"
+              className="h-11 px-6 rounded-xl bg-primary hover:bg-[#2348db] text-white font-semibold transition-colors text-sm"
             >
               Assinar agora
             </button>
@@ -182,7 +182,7 @@ export default function DocumentsStep({
               </span>
             </div>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Suas respostas de saúde indicam necessidade de atestado médico para atividades físicas.{" "}
             <strong className="text-white">Leve o documento pessoalmente até a escola</strong> — a equipe irá registrar e liberar sua matrícula.
           </p>
@@ -220,7 +220,7 @@ export default function DocumentsStep({
           type="button"
           onClick={handleNext}
           disabled={!canFinish || isSubmitting}
-          className="h-12 px-8 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center gap-2 min-w-[180px] justify-center"
+          className="h-12 px-8 rounded-xl bg-primary hover:bg-[#2348db] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center gap-2 min-w-[180px] justify-center"
         >
           {isSubmitting ? "Finalizando..." : "Finalizar Matrícula →"}
         </button>

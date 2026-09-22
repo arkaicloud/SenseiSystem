@@ -350,7 +350,7 @@ export default function Settings() {
 
       <section
         id="profile-summary"
-        className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3.5 shadow-sm"
+        className="flex flex-col items-center rounded-2xl border border-border/70 bg-card px-4 py-5 text-center shadow-sm"
       >
         {user?.role === "student" && profileStudent?.id ? (
           <CustomAvatar
@@ -360,26 +360,25 @@ export default function Settings() {
             avatarStyle={profileStudent.avatarStyle || "initials"}
             avatarColor={profileStudent.avatarColor || "blue"}
             avatarImage={profileStudent.avatarImage || ""}
-            size="md"
+            size="lg"
             onSave={(data) => updateAvatarMutation.mutate(data)}
             editable
-            showActionLabel={false}
+            showActionLabel
           />
         ) : (
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
+          <div className="flex size-20 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
             {user?.firstName?.charAt(0)}
             {user?.lastName?.charAt(0)}
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[15px] font-bold text-foreground">
+        <div className="mt-3 min-w-0">
+          <h2 className="truncate text-lg font-bold text-foreground">
             {user?.firstName} {user?.lastName}
           </h2>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {roleLabel}
           </p>
         </div>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
       </section>
 
       <section>

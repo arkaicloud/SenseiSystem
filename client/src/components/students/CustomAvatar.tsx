@@ -264,22 +264,34 @@ export default function CustomAvatar({
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Personalize seu avatar</DialogTitle>
+        <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] overflow-y-auto rounded-[28px] p-0 sm:max-w-lg">
+          <DialogHeader className="border-b border-border/70 px-5 pb-4 pt-5 text-left">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10">
+                <Camera className="size-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold tracking-tight">Foto e avatar</DialogTitle>
+                <p className="mt-0.5 text-sm text-muted-foreground">Escolha como seu perfil será exibido.</p>
+              </div>
+            </div>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="space-y-6 px-5 py-5">
               {studentId && (
                 <div className="space-y-3">
-                  <FormLabel>Foto do perfil</FormLabel>
-                  <div className="flex flex-col gap-4 rounded-2xl border border-border bg-muted/30 p-4 sm:flex-row sm:items-center">
-                    <Avatar className="h-20 w-20 shrink-0">
+                  <div>
+                    <FormLabel className="text-sm font-semibold">Foto do perfil</FormLabel>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Use uma foto nítida ou mantenha seu avatar personalizado.</p>
+                  </div>
+                  <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+                    <Avatar className="size-20 shrink-0 border-4 border-background shadow-md">
                       <AvatarImage src={photoPreview || undefined} alt={`${firstName} ${lastName}`} className="object-cover" />
                       <AvatarFallback className={cn(selectedColor.bg, selectedColor.text, "text-xl")}>{initials}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-1 flex-wrap gap-2">
-                      <Button type="button" variant="outline" className="relative" disabled={isUploadingPhoto || isRemovingPhoto}>
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <Button type="button" variant="outline" className="relative w-full justify-center rounded-xl" disabled={isUploadingPhoto || isRemovingPhoto}>
                         {isUploadingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
                         {photoPreview ? "Trocar foto" : "Adicionar foto"}
                         <input
@@ -293,12 +305,12 @@ export default function CustomAvatar({
                         />
                       </Button>
                       {photoPreview && (
-                        <Button type="button" variant="ghost" onClick={handlePhotoRemoval} disabled={isUploadingPhoto || isRemovingPhoto}>
+                        <Button type="button" variant="ghost" size="sm" className="w-full rounded-xl text-muted-foreground" onClick={handlePhotoRemoval} disabled={isUploadingPhoto || isRemovingPhoto}>
                           {isRemovingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageOff className="mr-2 h-4 w-4" />}
-                          Remover
+                          Remover foto
                         </Button>
                       )}
-                      <p className="w-full text-xs text-muted-foreground">JPEG, PNG ou WebP, com até 5 MB.</p>
+                      <p className="text-center text-[11px] leading-4 text-muted-foreground">JPEG, PNG ou WebP · até 5 MB</p>
                     </div>
                   </div>
                 </div>
@@ -310,21 +322,39 @@ export default function CustomAvatar({
                 name="avatarStyle"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Estilo</FormLabel>
+                      <div>
+                        <FormLabel className="text-sm font-semibold">Formato do avatar</FormLabel>
+                        <p className="mt-0.5 text-xs text-muted-foreground">Escolha um formato para quando não houver foto.</p>
+                      </div>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-wrap gap-4"
+                          value={field.value}
+                          className="grid grid-cols-3 gap-2"
                       >
                         {AVATAR_STYLES.map((style) => (
-                          <FormItem key={style.id} className="flex items-center space-x-3 space-y-0">
+                            <FormItem key={style.id} className="space-y-0">
                             <FormControl>
-                              <RadioGroupItem value={style.id} />
+                                <RadioGroupItem value={style.id} id={`style-${style.id}`} className="sr-only" />
                             </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              {style.name}
-                            </FormLabel>
+                              <label
+                                htmlFor={`style-${style.id}`}
+                                className={cn(
+                                  "flex cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2 py-3 text-center transition-all",
+                                  field.value === style.id
+                                    ? "border-primary bg-primary/5 text-primary shadow-sm ring-1 ring-primary/20"
+                                    : "border-border/70 bg-card text-muted-foreground hover:border-primary/30 hover:bg-muted/40",
+                                )}
+                              >
+                                <span className={cn(
+                                  "flex size-9 items-center justify-center border-2 border-current text-xs font-bold",
+                                  style.id === "square" ? "rounded-lg" : "rounded-full",
+                                  style.id === "initials" && "bg-primary text-primary-foreground border-primary",
+                                )}>
+                                  {style.id === "circle" ? "" : initials}
+                                </span>
+                                <span className="text-xs font-semibold">{style.name}</span>
+                              </label>
                           </FormItem>
                         ))}
                       </RadioGroup>
@@ -339,15 +369,23 @@ export default function CustomAvatar({
                 name="avatarColor"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Cor</FormLabel>
+                      <div className="flex items-end justify-between gap-3">
+                        <div>
+                          <FormLabel className="text-sm font-semibold">Cor do avatar</FormLabel>
+                          <p className="mt-0.5 text-xs text-muted-foreground">Toque em uma cor para visualizar.</p>
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {AVATAR_COLORS.find(color => color.id === field.value)?.name}
+                        </span>
+                      </div>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="grid grid-cols-6 gap-4"
+                          value={field.value}
+                          className="grid grid-cols-6 gap-2 rounded-2xl border border-border/70 bg-muted/20 p-3"
                       >
                         {AVATAR_COLORS.map((color) => (
-                          <FormItem key={color.id} className="flex flex-col items-center space-y-2">
+                            <FormItem key={color.id} className="flex items-center justify-center space-y-0">
                             <FormControl>
                               <RadioGroupItem 
                                 value={color.id} 
@@ -357,10 +395,12 @@ export default function CustomAvatar({
                             </FormControl>
                             <label
                               htmlFor={`color-${color.id}`}
+                              aria-label={color.name}
+                              title={color.name}
                               className={cn(
-                                "h-8 w-8 rounded-full cursor-pointer ring-offset-background transition-all",
+                                "size-9 cursor-pointer rounded-full border-2 border-background shadow-sm ring-offset-background transition-all hover:scale-110",
                                 color.bg,
-                                field.value === color.id && "ring-2 ring-ring ring-offset-2"
+                                field.value === color.id && "scale-110 ring-2 ring-primary ring-offset-2"
                               )}
                             />
                           </FormItem>
@@ -372,11 +412,10 @@ export default function CustomAvatar({
               />
 
               {/* Prévia do Avatar */}
-              <div className="flex flex-col items-center justify-center space-y-2 py-4">
-                <p className="text-sm text-muted-foreground">Prévia:</p>
-                <div className="p-4 bg-muted rounded-lg">
+              <div className="flex items-center gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                <div className="shrink-0 rounded-2xl bg-background p-2 shadow-sm">
                   {form.watch("avatarStyle") === "initials" && (
-                    <Avatar className="h-16 w-16 text-xl">
+                    <Avatar className="size-16 text-xl">
                       <AvatarFallback className={
                         cn(
                           AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
@@ -389,7 +428,7 @@ export default function CustomAvatar({
                   )}
                   {form.watch("avatarStyle") === "circle" && (
                     <div className={cn(
-                      "h-16 w-16 text-xl rounded-full flex items-center justify-center",
+                      "size-16 text-xl rounded-full flex items-center justify-center",
                       AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
                       AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
                     )}>
@@ -398,7 +437,7 @@ export default function CustomAvatar({
                   )}
                   {form.watch("avatarStyle") === "square" && (
                     <div className={cn(
-                      "h-16 w-16 text-xl rounded-md flex items-center justify-center",
+                      "size-16 text-xl rounded-xl flex items-center justify-center",
                       AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.bg || "bg-secondary",
                       AVATAR_COLORS.find(color => color.id === form.watch("avatarColor"))?.text || "text-white"
                     )}>
@@ -406,13 +445,19 @@ export default function CustomAvatar({
                     </div>
                   )}
                 </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">Prévia</p>
+                  <p className="mt-1 font-semibold text-foreground">{firstName} {lastName}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Assim seu avatar aparecerá no aplicativo.</p>
+                </div>
+              </div>
               </div>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter className="sticky bottom-0 flex-row gap-2 border-t border-border/70 bg-background/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">Salvar</Button>
+                <Button type="submit" className="flex-1 rounded-xl shadow-md shadow-primary/20">Salvar alterações</Button>
               </DialogFooter>
             </form>
           </Form>

@@ -234,17 +234,32 @@ export default function CustomAvatar({
   };
 
   return (
-    <div className="relative inline-block">
-      {renderAvatarContent()}
-      
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative inline-block">
+        {renderAvatarContent()}
+        {editable && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-background shadow"
+            onClick={() => setIsDialogOpen(true)}
+            aria-label="Editar foto e avatar"
+          >
+            <Edit className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+
       {editable && (
         <Button
-          variant="outline"
-          size="icon"
-          className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-background shadow"
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 text-primary hover:text-primary"
           onClick={() => setIsDialogOpen(true)}
         >
-          <Edit className="h-3 w-3" />
+          <Camera className="mr-2 h-4 w-4" />
+          {photoPreview ? "Alterar foto" : "Adicionar foto"}
         </Button>
       )}
 

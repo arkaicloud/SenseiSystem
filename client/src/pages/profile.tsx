@@ -40,11 +40,13 @@ const Profile: React.FC = () => {
     enabled: !!user?.id && user?.role === 'student',
     refetchInterval: false,
   });
+  const profileUser = (userData as any)?.user || userData || user;
+  const profileStudent = (studentData as any)?.student || (userData as any)?.student;
 
   // Update avatar mutation
   const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useMutation({
     mutationFn: async (data: AvatarData) => {
-      const res = await apiRequest('PUT', `/api/students/${studentData?.student?.id}/avatar`, data);
+      const res = await apiRequest('PUT', `/api/students/${profileStudent?.id}/avatar`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -64,7 +66,7 @@ const Profile: React.FC = () => {
   });
 
   const handleAvatarUpdate = (data: AvatarData) => {
-    if (studentData?.student?.id) {
+    if (profileStudent?.id) {
       updateAvatar(data);
     } else {
       toast({
@@ -100,19 +102,19 @@ const Profile: React.FC = () => {
 
   // Populate form data when user data is loaded
   React.useEffect(() => {
-    if (userData?.user) {
+    if (profileUser) {
       setFormData({
-        firstName: userData.user.firstName,
-        lastName: userData.user.lastName,
-        email: userData.user.email,
-        phone: userData.user.phone || "",
-        emergencyContact: userData.user.emergencyContact || "",
+        firstName: profileUser.firstName || "",
+        lastName: profileUser.lastName || "",
+        email: profileUser.email || "",
+        phone: profileUser.phone || "",
+        emergencyContact: profileUser.emergencyContact || "",
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
     }
-  }, [userData]);
+  }, [profileUser?.id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -149,7 +151,7 @@ const Profile: React.FC = () => {
     updateUser(updateData);
   };
 
-  const isStudent = userData?.user?.role === 'student';
+  const isStudent = user?.role === 'student' || profileUser?.role === 'student';
 
   return (
     <>
@@ -182,12 +184,12 @@ const Profile: React.FC = () => {
                   {isStudent ? (
                     <div className="mb-4">
                       <CustomAvatar
-                        studentId={studentData?.student?.id}
-                        firstName={userData?.user?.firstName || ""}
-                        lastName={userData?.user?.lastName || ""}
-                        avatarStyle={studentData?.student?.avatarStyle || "initials"}
-                        avatarColor={studentData?.student?.avatarColor || "blue"}
-                        avatarImage={studentData?.student?.avatarImage || ""}
+                        studentId={profileStudent?.id}
+                        firstName={profileUser?.firstName || ""}
+                        lastName={profileUser?.lastName || ""}
+                        avatarStyle={profileStudent?.avatarStyle || "initials"}
+                        avatarColor={profileStudent?.avatarColor || "blue"}
+                        avatarImage={profileStudent?.avatarImage || ""}
                         size="lg"
                         onSave={handleAvatarUpdate}
                         editable={true}
@@ -196,17 +198,17 @@ const Profile: React.FC = () => {
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white mb-4">
                       <span className="font-bold text-2xl">
-                        {userData?.user?.firstName?.charAt(0) || ""}
-                        {userData?.user?.lastName?.charAt(0) || ""}
+                        {profileUser?.firstName?.charAt(0) || ""}
+                        {profileUser?.lastName?.charAt(0) || ""}
                       </span>
                     </div>
                   )}
                   <h2 className="text-xl font-bold">
-                    {userData?.user?.firstName} {userData?.user?.lastName}
+                    {profileUser?.firstName} {profileUser?.lastName}
                   </h2>
-                  <p className="text-muted-foreground">{userData?.user?.email}</p>
+                  <p className="text-muted-foreground">{profileUser?.email}</p>
                   <div className="mt-2 bg-primary-light text-white text-sm px-3 py-1 rounded-full">
-                    {userData?.user?.role ? userData.user.role.charAt(0).toUpperCase() + userData.user.role.slice(1) : ""}
+                    {profileUser?.role ? profileUser.role.charAt(0).toUpperCase() + profileUser.role.slice(1) : ""}
                   </div>
 
                   {isStudent && (
@@ -255,15 +257,15 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            {isStudent && studentData?.student?.id &&
+            {isStudent && profileStudent?.id &&
               (
-                studentData.student.requiresMedicalCertificate === true ||
-                ["PENDING", "UPLOADED", "RECEIVED"].includes(studentData.student.medicalCertificateStatus)
+                profileStudent.requiresMedicalCertificate === true ||
+                ["PENDING", "UPLOADED", "RECEIVED"].includes(profileStudent.medicalCertificateStatus)
               ) && (
               <MedicalCertificateUpload
-                studentId={studentData.student.id}
-                required={studentData.student.requiresMedicalCertificate}
-                status={studentData.student.medicalCertificateStatus}
+                studentId={profileStudent.id}
+                required={profileStudent.requiresMedicalCertificate}
+                status={profileStudent.medicalCertificateStatus}
               />
             )}
             <Card>

@@ -149,15 +149,6 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
     return endTime <= currentHour * 60 + currentMinute;
   };
 
-  const getInstructorInitials = (name?: string) =>
-    (name || "Professor")
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase();
-
   const selectedClasses = selectedDay?.classes || [];
   const sortedSelectedClasses = useMemo(
     () => [...selectedClasses].sort((a, b) => getTimeInMinutes(a.startTime) - getTimeInMinutes(b.startTime)),
@@ -251,20 +242,11 @@ export const WeekAgenda = ({ weekData, studentId, isLoading }: WeekAgendaProps) 
                 {classSession.endTime && ` — ${formatTime(classSession.endTime)}`}
               </span>
             </div>
-            <div className="mt-1.5 flex min-w-0 items-center gap-2">
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[8px] font-bold text-primary">
-                {getInstructorInitials(classSession.instructorName)}
+            {classSession.location && (
+              <div className="mt-1.5 truncate text-[11px] text-muted-foreground">
+                {classSession.location}
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[11px]">
-                <span className="truncate font-semibold text-foreground">
-                  {classSession.instructorName || "Professor não informado"}
-                </span>
-                <span className="text-muted-foreground">·</span>
-                <span className="truncate text-muted-foreground">
-                  {classSession.location || "Local não informado"}
-                </span>
-              </div>
-            </div>
+            )}
             {classSession.isCancelled && (
               <p className="mt-1 text-[10px] font-semibold text-red-500">
                 Esta aula foi cancelada pela academia.

@@ -10,8 +10,8 @@ import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
 import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import { Link } from "wouter";
-import heroImg from "@assets/Gemini_Generated_Image_p01ttdp01ttdp01t_1773260928824.png";
-import beltImg from "@assets/Gemini_Generated_Image_5i9ge55i9ge55i9g_1773260928823.png";
+const heroImg = "/dashboard-assets/student-hero.webp";
+const beltImg = "/dashboard-assets/training-card.webp";
 
 export default function StudentDashboard() {
   const { t } = useTranslations();
@@ -100,6 +100,8 @@ export default function StudentDashboard() {
         <img
           src={heroImg}
           alt="BJJ Training"
+          loading="eager"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: 'center 20%' }}
         />
@@ -159,7 +161,14 @@ export default function StudentDashboard() {
           )}
 
         <div className="vyta-card-hero">
-          <img src={beltImg} alt="Treino" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 30%' }} />
+          <img
+            src={beltImg}
+            alt="Treino"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: 'center 30%' }}
+          />
           <div className="vyta-card-hero-gradient" />
           <div className="vyta-card-hero-content">
             <span className="vyta-pill mb-2">

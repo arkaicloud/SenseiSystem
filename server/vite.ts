@@ -26,6 +26,15 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
+  // Dashboard artwork is immutable during a session. Serve it directly with
+  // a short browser cache so route changes do not download it repeatedly.
+  app.use(
+    "/dashboard-assets",
+    express.static(path.resolve(process.cwd(), "client/public/dashboard-assets"), {
+      maxAge: "1d",
+    }),
+  );
+
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -76,7 +85,7 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, { maxAge: "1d" }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {

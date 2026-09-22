@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useGuardian } from '@/contexts/guardian-context';
 import { useQuery } from '@tanstack/react-query';
 import type { SchoolConfig } from '@shared/schema';
-import bannerImg from '@assets/Gemini_Generated_Image_niscg6niscg6nisc_1773260928823.png';
+const bannerImg = '/dashboard-assets/week-agenda.webp';
 
 interface StudentProfile {
   id: number;

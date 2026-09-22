@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db, pool } from "./db";
-import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber, notices, studentNotifications, userNotificationPreferences } from "@shared/schema";
+import { users, students, beltLevels, attendance, classes, classEnrollments, studentPayments, contasReceber, notices, studentNotifications, userNotificationPreferences, studentDocuments } from "@shared/schema";
 import { eq, and, or, sql, gte, lte, isNull, desc, count } from "drizzle-orm";
 import { z } from "zod";
 import { 
@@ -46,6 +46,9 @@ import {
   shouldGuardDatabaseMutation,
   startDatabaseCopy,
 } from "./services/databaseCopyService";
+import { upload } from "./middleware/uploadMiddleware.js";
+import { saveStudentDocument } from "./services/uploadService.js";
+import fs from "fs";
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -6260,13 +6263,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { status } = req.body;
 
-      const allowed = ["RECEIVED", "PENDING", "WAIVED"];
+      const allowed = ["RECEIVED", "UPLOADED", "PENDING", "WAIVED"];
       if (!status || !allowed.includes(status)) {
-        return res.status(400).json({ message: "Status inválido. Use RECEIVED, PENDING ou WAIVED." });
+        return res.status(400).json({ message: "Status inválido. Use RECEIVED, UPLOADED, PENDING ou WAIVED." });
       }
 
+      // RECEIVED is kept as a backwards-compatible UI alias. The database
+      // enum uses UPLOADED for a certificate that has been submitted.
+      const normalizedStatus = status === "RECEIVED" ? "UPLOADED" : status;
       const updated = await storage.updateStudent(Number(id), {
-        medicalCertificateStatus: status,
+        medicalCertificateStatus: normalizedStatus as "UPLOADED" | "PENDING" | "WAIVED",
       });
 
       if (!updated) {
@@ -6277,7 +6283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user) {
         await storage.createActivityLog({
           userId: user.id,
-          activity: `${user.firstName} ${user.lastName} ${status === 'RECEIVED' ? 'confirmou recebimento do atestado médico' : 'atualizou status do atestado médico'} do aluno`,
+           activity: `${user.firstName} ${user.lastName} ${status === 'RECEIVED' ? 'confirmou recebimento do atestado médico' : 'atualizou status do atestado médico'} do aluno`,
           entityType: 'student',
           entityId: Number(id),
           timestamp: new Date()
@@ -6288,6 +6294,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao atualizar status do atestado:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Medical certificate metadata for the student panel and staff cadastro.
+  app.get("/api/students/:id/medical-certificate", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = Number(req.params.id);
+      const requestUser = (req as any).user;
+      const student = await getAuthorizedStudent(requestUser, studentId);
+      if (!student) return res.status(403).json({ message: "Sem permissão para acessar este documento" });
+
+      const latest = await db
+        .select({
+          id: studentDocuments.id,
+          name: studentDocuments.name,
+          mime: studentDocuments.mime,
+          size: studentDocuments.size,
+          uploadedAt: studentDocuments.uploadedAt,
+        })
+        .from(studentDocuments)
+        .where(and(
+          eq(studentDocuments.studentId, studentId),
+          eq(studentDocuments.type, "medical_certificate"),
+        ))
+        .orderBy(desc(studentDocuments.uploadedAt))
+        .limit(1);
+
+      res.json({
+        required: student.requiresMedicalCertificate === true,
+        status: student.medicalCertificateStatus,
+        document: latest[0]
+          ? { ...latest[0], downloadUrl: `/api/students/${studentId}/medical-certificate/file` }
+          : null,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar atestado médico:", error);
+      res.status(500).json({ message: "Não foi possível buscar o atestado médico" });
+    }
+  });
+
+  // Student or authorized staff can submit a medical certificate. The
+  // multipart field is intentionally named "file" for camera/file inputs.
+  app.post(
+    "/api/students/:id/medical-certificate",
+    isAuthenticated,
+    upload.single("file"),
+    async (req, res) => {
+      try {
+        const studentId = Number(req.params.id);
+        const requestUser = (req as any).user;
+        const student = await getAuthorizedStudent(requestUser, studentId);
+        if (!student) {
+          if (req.file?.path) fs.rmSync(req.file.path, { force: true });
+          return res.status(403).json({ message: "Sem permissão para enviar este documento" });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({
+            message: "Selecione um arquivo PDF ou uma foto do atestado médico.",
+          });
+        }
+
+        const document = await saveStudentDocument(
+          studentId,
+          req.file,
+          "medical_certificate",
+          "Atestado médico enviado pelo portal",
+        );
+
+        await storage.updateStudent(studentId, {
+          medicalCertificateStatus: "UPLOADED",
+        });
+
+        await storage.createActivityLog({
+          userId: requestUser.id,
+          activity: `${requestUser.firstName} ${requestUser.lastName} enviou atestado médico`,
+          entityType: "student",
+          entityId: studentId,
+          timestamp: new Date(),
+        });
+
+        res.status(201).json({
+          document: {
+            id: document.id,
+            name: document.name,
+            mime: document.mime,
+            size: document.size,
+            uploadedAt: document.uploadedAt,
+            downloadUrl: `/api/students/${studentId}/medical-certificate/file`,
+          },
+          status: "UPLOADED",
+        });
+      } catch (error) {
+        if (req.file?.path) fs.rmSync(req.file.path, { force: true });
+        console.error("Erro ao enviar atestado médico:", error);
+        res.status(500).json({ message: "Não foi possível enviar o atestado médico" });
+      }
+    },
+  );
+
+  app.get("/api/students/:id/medical-certificate/file", isAuthenticated, async (req, res) => {
+    try {
+      const studentId = Number(req.params.id);
+      const requestUser = (req as any).user;
+      const student = await getAuthorizedStudent(requestUser, studentId);
+      if (!student) return res.status(403).json({ message: "Sem permissão para acessar este documento" });
+
+      const latest = await db
+        .select({ path: studentDocuments.path, name: studentDocuments.name, mime: studentDocuments.mime })
+        .from(studentDocuments)
+        .where(and(
+          eq(studentDocuments.studentId, studentId),
+          eq(studentDocuments.type, "medical_certificate"),
+        ))
+        .orderBy(desc(studentDocuments.uploadedAt))
+        .limit(1);
+
+      if (!latest[0] || !fs.existsSync(latest[0].path)) {
+        return res.status(404).json({ message: "Atestado médico não encontrado" });
+      }
+
+      res.type(latest[0].mime);
+      res.sendFile(latest[0].path);
+    } catch (error) {
+      console.error("Erro ao abrir atestado médico:", error);
+      res.status(500).json({ message: "Não foi possível abrir o atestado médico" });
     }
   });
 

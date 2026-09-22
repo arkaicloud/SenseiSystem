@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 
 const Profile: React.FC = () => {
   const { toast } = useToast();
@@ -252,7 +253,18 @@ const Profile: React.FC = () => {
             </Card>
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {isStudent && studentData?.student?.id &&
+              (
+                studentData.student.requiresMedicalCertificate === true ||
+                ["PENDING", "UPLOADED", "RECEIVED"].includes(studentData.student.medicalCertificateStatus)
+              ) && (
+              <MedicalCertificateUpload
+                studentId={studentData.student.id}
+                required={studentData.student.requiresMedicalCertificate}
+                status={studentData.student.medicalCertificateStatus}
+              />
+            )}
             <Card>
               <CardHeader>
                 <CardTitle>Detalhes do Perfil</CardTitle>

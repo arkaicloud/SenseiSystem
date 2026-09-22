@@ -1,5 +1,8 @@
 import path from "path";
 import fs from "fs";
+import { and, desc, eq } from "drizzle-orm";
+import { db } from "../db";
+import { studentDocuments } from "@shared/schema";
 
 const STORAGE_ROOT = process.env.STORAGE_ROOT || path.join(process.cwd(), "storage");
 
@@ -19,32 +22,58 @@ export async function saveStudentDocument(
   documentType: string,
   description?: string
 ) {
-  // Implementação simplificada - pode ser expandida depois
-  return {
-    id: Date.now(), // ID temporário
-    studentId,
-    type: documentType,
-    name: file.originalname,
-    filename: file.filename,
-    mime: file.mimetype,
-    size: file.size,
-    path: file.path,
-    description: description || `Upload de ${documentType}`,
-    uploadedAt: new Date(),
-  };
+  const [document] = await db
+    .insert(studentDocuments)
+    .values({
+      studentId,
+      type: documentType as "health_form" | "graduation_certificate" | "medical_certificate" | "identification" | "contract" | "other",
+      name: file.originalname,
+      filename: file.filename,
+      mime: file.mimetype,
+      size: file.size,
+      path: file.path,
+      description: description || `Upload de ${documentType}`,
+    })
+    .returning();
+
+  return document;
 }
 
 export async function getStudentDocuments(studentId: number) {
-  // Implementação simplificada - retorna array vazio por enquanto
-  return [];
+  return db
+    .select()
+    .from(studentDocuments)
+    .where(eq(studentDocuments.studentId, studentId))
+    .orderBy(desc(studentDocuments.uploadedAt));
 }
 
 export async function getDocumentById(documentId: number) {
-  // Implementação simplificada - retorna null por enquanto
-  return null;
+  const [document] = await db
+    .select()
+    .from(studentDocuments)
+    .where(eq(studentDocuments.id, documentId))
+    .limit(1);
+  return document || null;
 }
 
 export async function deleteDocument(documentId: number, studentId: number) {
-  // Implementação simplificada
+  const [document] = await db
+    .select({ path: studentDocuments.path })
+    .from(studentDocuments)
+    .where(and(
+      eq(studentDocuments.id, documentId),
+      eq(studentDocuments.studentId, studentId),
+    ))
+    .limit(1);
+
+  if (!document) return false;
+
+  await db
+    .delete(studentDocuments)
+    .where(and(
+      eq(studentDocuments.id, documentId),
+      eq(studentDocuments.studentId, studentId),
+    ));
+  fs.rmSync(document.path, { force: true });
   return true;
 }

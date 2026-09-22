@@ -8,6 +8,7 @@ import { Calendar, CreditCard, ChevronRight } from "lucide-react";
 import { TodayClasses } from "@/components/student/TodayClasses";
 import { NoticesBlock } from "@/components/student/NoticesBlock";
 import { GuardianMobileSwitcher } from "@/components/guardian/GuardianMobileSwitcher";
+import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import { Link } from "wouter";
 import heroImg from "@assets/Gemini_Generated_Image_p01ttdp01ttdp01t_1773260928824.png";
 import beltImg from "@assets/Gemini_Generated_Image_5i9ge55i9ge55i9g_1773260928823.png";
@@ -145,6 +146,18 @@ export default function StudentDashboard() {
       </div>
 
       <div className="px-5 pt-6 pb-24 space-y-6">
+        {(studentData as any)?.id &&
+          (
+            (studentData as any)?.requiresMedicalCertificate === true ||
+            ["PENDING", "UPLOADED", "RECEIVED"].includes((studentData as any)?.medicalCertificateStatus)
+          ) && (
+            <MedicalCertificateUpload
+              studentId={(studentData as any).id}
+              required={(studentData as any).requiresMedicalCertificate}
+              status={(studentData as any).medicalCertificateStatus}
+            />
+          )}
+
         <div className="vyta-card-hero">
           <img src={beltImg} alt="Treino" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 30%' }} />
           <div className="vyta-card-hero-gradient" />

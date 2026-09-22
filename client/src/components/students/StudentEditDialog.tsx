@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, ChevronsUpDown, Ticket, X } from "lucide-react";
+import MedicalCertificateUpload from "@/components/students/MedicalCertificateUpload";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -716,6 +717,12 @@ export default function StudentEditDialog({
                           )}
                         </div>
                       )}
+                      <MedicalCertificateUpload
+                        studentId={studentData.id}
+                        required={studentData.requiresMedicalCertificate}
+                        status={studentData.medicalCertificateStatus}
+                        readOnly={readOnly}
+                      />
                     </>
                   )}
 

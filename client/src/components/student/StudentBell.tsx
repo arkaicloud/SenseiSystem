@@ -94,9 +94,9 @@ export const StudentBell = ({ studentId }: StudentBellProps) => {
       case 'MEDIUM':
         return 'bg-yellow-500';
       case 'LOW':
-        return 'bg-blue-500';
+        return 'bg-primary';
       default:
-        return 'bg-gray-500';
+        return 'bg-secondary';
     }
   };
 
@@ -157,7 +157,7 @@ export const StudentBell = ({ studentId }: StudentBellProps) => {
                     {notification.title}
                   </span>
                   {!notification.readAt && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                    <div className="w-2 h-2 bg-primary rounded-full" />
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground">

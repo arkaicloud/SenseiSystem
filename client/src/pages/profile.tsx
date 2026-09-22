@@ -156,7 +156,7 @@ const Profile: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">Perfil</h1>
-          <p className="text-gray-600 dark:text-gray-300">Gerencie suas informações pessoais</p>
+          <p className="text-secondary-foreground dark:text-secondary-foreground">Gerencie suas informações pessoais</p>
         </div>
         {!isEditing && (
           <Button
@@ -170,9 +170,9 @@ const Profile: React.FC = () => {
       </div>
 
       {userLoading ? (
-        <div className="text-center py-8 text-gray-600 dark:text-gray-300">Carregando perfil...</div>
+        <div className="text-center py-8 text-secondary-foreground dark:text-secondary-foreground">Carregando perfil...</div>
       ) : !user ? (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Usuário não encontrado</div>
+        <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground">Usuário não encontrado</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
@@ -203,7 +203,7 @@ const Profile: React.FC = () => {
                   <h2 className="text-xl font-bold">
                     {userData?.user?.firstName} {userData?.user?.lastName}
                   </h2>
-                  <p className="text-gray-500">{userData?.user?.email}</p>
+                  <p className="text-muted-foreground">{userData?.user?.email}</p>
                   <div className="mt-2 bg-primary-light text-white text-sm px-3 py-1 rounded-full">
                     {userData?.user?.role ? userData.user.role.charAt(0).toUpperCase() + userData.user.role.slice(1) : ""}
                   </div>
@@ -211,14 +211,14 @@ const Profile: React.FC = () => {
                   {isStudent && (
                     <div className="mt-4 w-full">
                       <div className="border-t pt-4 text-center">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Graduação</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-2">Graduação</p>
                         <div className="flex justify-center">
                           <BeltWithLabel level="blue" size="lg" />
                         </div>
                         <p className="mt-2 text-sm font-medium">
                           Faixa Azul • 2 Graus
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                           Última Promoção: 3 meses atrás
                         </p>
                       </div>
@@ -227,20 +227,20 @@ const Profile: React.FC = () => {
 
                   <div className="mt-6 w-full">
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Informações da Conta</h3>
+                      <h3 className="text-sm font-medium text-secondary-foreground dark:text-secondary-foreground mb-2">Informações da Conta</h3>
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Usuário</span>
+                          <span className="text-sm text-muted-foreground dark:text-muted-foreground">Usuário</span>
                           <span className="text-sm font-medium">{user.username}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Data de Entrada</span>
+                          <span className="text-sm text-muted-foreground dark:text-muted-foreground">Data de Entrada</span>
                           <span className="text-sm font-medium">
                             {new Date(user.joinDate).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Status</span>
+                          <span className="text-sm text-muted-foreground dark:text-muted-foreground">Status</span>
                           <span className="text-sm font-medium text-status-success">
                             Ativo
                           </span>
@@ -282,7 +282,7 @@ const Profile: React.FC = () => {
                       <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-secondary-foreground mb-1">
                               First Name
                             </label>
                             <Input
@@ -293,7 +293,7 @@ const Profile: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-secondary-foreground mb-1">
                               Last Name
                             </label>
                             <Input
@@ -306,7 +306,7 @@ const Profile: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-secondary-foreground mb-1">
                             Email
                           </label>
                           <Input
@@ -319,7 +319,7 @@ const Profile: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-secondary-foreground mb-1">
                             Phone Number
                           </label>
                           <Input
@@ -331,7 +331,7 @@ const Profile: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-secondary-foreground mb-1">
                             Emergency Contact
                           </label>
                           <Input
@@ -363,27 +363,27 @@ const Profile: React.FC = () => {
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-gray-500">First Name</p>
+                            <p className="text-sm text-muted-foreground">First Name</p>
                             <p className="font-medium">{user.firstName}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">Last Name</p>
+                            <p className="text-sm text-muted-foreground">Last Name</p>
                             <p className="font-medium">{user.lastName}</p>
                           </div>
                         </div>
 
                         <div>
-                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="text-sm text-muted-foreground">Email</p>
                           <p className="font-medium">{user.email}</p>
                         </div>
 
                         <div>
-                          <p className="text-sm text-gray-500">Phone Number</p>
+                          <p className="text-sm text-muted-foreground">Phone Number</p>
                           <p className="font-medium">{user.phone || "Not provided"}</p>
                         </div>
 
                         <div>
-                          <p className="text-sm text-gray-500">Emergency Contact</p>
+                          <p className="text-sm text-muted-foreground">Emergency Contact</p>
                           <p className="font-medium">{user.emergencyContact || "Not provided"}</p>
                         </div>
                       </div>
@@ -393,7 +393,7 @@ const Profile: React.FC = () => {
                   <TabsContent value="security">
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-foreground mb-1">
                           Current Password
                         </label>
                         <Input
@@ -406,7 +406,7 @@ const Profile: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-foreground mb-1">
                           New Password
                         </label>
                         <Input
@@ -419,7 +419,7 @@ const Profile: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-foreground mb-1">
                           Confirm New Password
                         </label>
                         <Input
@@ -454,10 +454,10 @@ const Profile: React.FC = () => {
                             </span>
                           </div>
                           <p className="text-2xl font-bold">Standard Membership</p>
-                          <p className="text-sm text-gray-600">Unlimited classes</p>
+                          <p className="text-sm text-secondary-foreground">Unlimited classes</p>
                           <div className="mt-4 flex justify-between items-center">
                             <p className="font-medium">$129/month</p>
-                            <p className="text-sm text-gray-500">Next payment: Oct 15, 2023</p>
+                            <p className="text-sm text-muted-foreground">Next payment: Oct 15, 2023</p>
                           </div>
                         </div>
 
@@ -467,7 +467,7 @@ const Profile: React.FC = () => {
                             <div className="p-3 flex justify-between items-center">
                               <div>
                                 <p className="font-medium">Standard Membership</p>
-                                <p className="text-sm text-gray-500">Sep 15, 2023</p>
+                                <p className="text-sm text-muted-foreground">Sep 15, 2023</p>
                               </div>
                               <div className="text-right">
                                 <p className="font-medium">$129.00</p>
@@ -477,7 +477,7 @@ const Profile: React.FC = () => {
                             <div className="p-3 flex justify-between items-center">
                               <div>
                                 <p className="font-medium">Standard Membership</p>
-                                <p className="text-sm text-gray-500">Aug 15, 2023</p>
+                                <p className="text-sm text-muted-foreground">Aug 15, 2023</p>
                               </div>
                               <div className="text-right">
                                 <p className="font-medium">$129.00</p>
@@ -487,7 +487,7 @@ const Profile: React.FC = () => {
                             <div className="p-3 flex justify-between items-center">
                               <div>
                                 <p className="font-medium">Standard Membership</p>
-                                <p className="text-sm text-gray-500">Jul 15, 2023</p>
+                                <p className="text-sm text-muted-foreground">Jul 15, 2023</p>
                               </div>
                               <div className="text-right">
                                 <p className="font-medium">$129.00</p>

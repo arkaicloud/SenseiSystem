@@ -34,19 +34,19 @@ export default function AwaitingApprovalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="absolute top-4 right-4">
         <Button 
           variant="ghost" 
           onClick={handleLogout}
-          className="text-gray-600 hover:text-gray-800"
+          className="text-secondary-foreground hover:text-foreground"
         >
           <LogOut className="w-4 h-4 mr-2" />
           Sair
         </Button>
       </div>
 
-      <Card className="w-full max-w-2xl bg-white shadow-lg">
+      <Card className="w-full max-w-2xl bg-card shadow-lg">
         <CardHeader className="text-center pb-6">
           {/* School Logo */}
           <div className="flex justify-center mb-6">
@@ -64,13 +64,13 @@ export default function AwaitingApprovalPage() {
           </div>
 
           {/* Welcome Message */}
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Olá, {user?.firstName || user?.email?.split('@')[0]}!
           </h1>
           
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-secondary-foreground">
             Seu cadastro foi recebido com sucesso pela{" "}
-            <strong className="text-blue-600">
+            <strong className="text-accent-foreground">
               {schoolConfig?.schoolName || "nossa academia"}
             </strong>.
           </p>
@@ -78,19 +78,19 @@ export default function AwaitingApprovalPage() {
 
         <CardContent className="space-y-6">
           {/* Status Information */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-accent border border-primary rounded-lg p-6">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
-                <Clock className="w-8 h-8 text-blue-600" />
+                <Clock className="w-8 h-8 text-accent-foreground" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                <h3 className="text-lg font-semibold text-accent-foreground mb-2">
                   Análise em Andamento
                 </h3>
-                <p className="text-blue-800 mb-3">
+                <p className="text-accent-foreground mb-3">
                   Estamos analisando suas informações e em breve seu acesso será liberado.
                 </p>
-                <p className="text-blue-700 text-sm">
+                <p className="text-accent-foreground text-sm">
                   Assim que a escola vincular seu plano de pagamento, você será notificado por e-mail ou WhatsApp.
                 </p>
               </div>
@@ -101,15 +101,15 @@ export default function AwaitingApprovalPage() {
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <CheckCircle className="w-5 h-5 text-green-500" />
-              <span className="text-gray-700">Cadastro realizado</span>
+              <span className="text-secondary-foreground">Cadastro realizado</span>
             </div>
             <div className="flex items-center space-x-3">
               <Clock className="w-5 h-5 text-yellow-500" />
-              <span className="text-gray-700">Plano será vinculado em breve</span>
+              <span className="text-secondary-foreground">Plano será vinculado em breve</span>
             </div>
             <div className="flex items-center space-x-3">
-              <Lock className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-500">Acesso será liberado após aprovação</span>
+              <Lock className="w-5 h-5 text-muted-foreground" />
+              <span className="text-muted-foreground">Acesso será liberado após aprovação</span>
             </div>
           </div>
 
@@ -128,8 +128,8 @@ export default function AwaitingApprovalPage() {
           )}
 
           {/* Additional Information */}
-          <div className="bg-gray-50 rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-600">
+          <div className="bg-background rounded-lg p-4 text-center">
+            <p className="text-sm text-secondary-foreground">
               <strong>Precisa de ajuda?</strong><br />
               Entre em contato conosco pelos canais oficiais da escola.
             </p>

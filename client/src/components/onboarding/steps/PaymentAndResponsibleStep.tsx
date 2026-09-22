@@ -82,8 +82,8 @@ interface Props {
   defaultValues?: Partial<PaymentAndResponsibleType>;
 }
 
-const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
-const labelCls = "text-slate-300 text-sm font-medium";
+const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-muted-foreground text-sm font-medium";
 
 export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValues }: Props) {
   const form = useForm<PaymentAndResponsibleType>({
@@ -168,11 +168,11 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col pb-6">
         <div className="px-6 pt-8 pb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
-            <CreditCard className="w-6 h-6 text-[#2B54FF]" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+            <CreditCard className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-2xl font-bold text-white">Pagamento</h2>
-          <p className="text-sm text-slate-400 mt-1">Escolha seu plano e informe o responsável financeiro</p>
+          <p className="text-sm text-muted-foreground mt-1">Escolha seu plano e informe o responsável financeiro</p>
         </div>
 
         <div className="px-6 space-y-5">
@@ -191,7 +191,7 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                     {couponStatus.description && <p className="text-xs text-green-300/70 mt-0.5">{couponStatus.description}</p>}
                   </div>
                 </div>
-                <button type="button" onClick={removeCoupon} className="text-xs text-slate-400 hover:text-red-400 underline ml-2">Remover</button>
+                <button type="button" onClick={removeCoupon} className="text-xs text-muted-foreground hover:text-red-400 underline ml-2">Remover</button>
               </div>
             ) : (
               <div className="flex gap-2">
@@ -228,7 +228,7 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                     <FormLabel className={labelCls}>Plano de Mensalidade *</FormLabel>
                     <div className="space-y-2">
                       {plans.length === 0 ? (
-                        <p className="text-slate-500 text-sm">Carregando planos...</p>
+                        <p className="text-muted-foreground text-sm">Carregando planos...</p>
                       ) : (
                         plans.map((plan) => (
                           <button
@@ -237,30 +237,30 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                             onClick={() => field.onChange(plan.id.toString())}
                             className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all ${
                               field.value === plan.id.toString()
-                                ? "bg-[#2B54FF]/15 border-[#2B54FF]/50"
+                                ? "bg-primary/15 border-[#2B54FF]/50"
                                 : "bg-white/5 border-white/10 hover:border-white/20"
                             }`}
                           >
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className={`text-sm font-semibold ${field.value === plan.id.toString() ? "text-white" : "text-slate-300"}`}>{plan.name}</p>
+                                <p className={`text-sm font-semibold ${field.value === plan.id.toString() ? "text-white" : "text-muted-foreground"}`}>{plan.name}</p>
                                 {plan.isFamily && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2B54FF]/20 text-[#7B9FFF]">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/20 text-[#7B9FFF]">
                                     <Home className="w-2.5 h-2.5" />
                                     Até {plan.maxStudents || 2} alunos
                                   </span>
                                 )}
                               </div>
-                              {plan.description && <p className="text-xs text-slate-500 mt-0.5">{plan.description}</p>}
+                              {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
                               {plan.isFamily && field.value === plan.id.toString() && (
                                 <p className="text-xs text-[#7B9FFF] mt-1">Você poderá adicionar até {plan.maxStudents || 2} alunos neste plano</p>
                               )}
                             </div>
                             <div className="text-right ml-3 shrink-0">
-                              <p className={`text-base font-bold ${field.value === plan.id.toString() ? "text-[#2B54FF]" : "text-slate-300"}`}>
+                              <p className={`text-base font-bold ${field.value === plan.id.toString() ? "text-primary" : "text-muted-foreground"}`}>
                                 {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(plan.amount / 100)}
                               </p>
-                              <p className="text-xs text-slate-500">/ mês</p>
+                              <p className="text-xs text-muted-foreground">/ mês</p>
                             </div>
                           </button>
                         ))
@@ -277,12 +277,12 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className={labelCls}>Data de Vencimento *</FormLabel>
-                    <p className="text-xs text-slate-500 -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
+                    <p className="text-xs text-muted-foreground -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
                     <FormControl>
                       <select
                         value={field.value}
                         onChange={(event) => field.onChange(event.target.value)}
-                        className="h-12 w-full appearance-none rounded-xl border border-white/10 bg-slate-900 px-3 text-sm text-white focus:border-[#2B54FF]/50 focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 [color-scheme:dark]"
+                        className="h-12 w-full appearance-none rounded-xl border border-white/10 bg-background px-3 text-sm text-white focus:border-[#2B54FF]/50 focus:outline-none focus:ring-2 focus:ring-ring/50 [color-scheme:dark]"
                       >
                         {DUE_DATE_OPTIONS.map((day) => (
                           <option key={day} value={String(day)}>Dia {day}</option>
@@ -307,33 +307,33 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
                   onClick={() => form.setValue("financialResponsibleRelationship", "self")}
                   className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border transition-all ${
                     relationship === "self"
-                      ? "bg-[#2B54FF]/15 border-[#2B54FF]/50"
+                      ? "bg-primary/15 border-[#2B54FF]/50"
                       : "bg-white/5 border-white/10 hover:border-white/20"
                   }`}
                 >
-                  <User className={`w-5 h-5 ${relationship === "self" ? "text-[#2B54FF]" : "text-slate-400"}`} />
-                  <span className={`text-sm font-medium ${relationship === "self" ? "text-white" : "text-slate-400"}`}>Eu mesmo</span>
-                  <span className={`text-xs ${relationship === "self" ? "text-slate-300" : "text-slate-500"}`}>Sou o responsável</span>
+                  <User className={`w-5 h-5 ${relationship === "self" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-medium ${relationship === "self" ? "text-white" : "text-muted-foreground"}`}>Eu mesmo</span>
+                  <span className={`text-xs ${relationship === "self" ? "text-muted-foreground" : "text-muted-foreground"}`}>Sou o responsável</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => form.setValue("financialResponsibleRelationship", "other")}
                   className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border transition-all ${
                     relationship === "other"
-                      ? "bg-[#2B54FF]/15 border-[#2B54FF]/50"
+                      ? "bg-primary/15 border-[#2B54FF]/50"
                       : "bg-white/5 border-white/10 hover:border-white/20"
                   }`}
                 >
-                  <Users className={`w-5 h-5 ${relationship === "other" ? "text-[#2B54FF]" : "text-slate-400"}`} />
-                  <span className={`text-sm font-medium ${relationship === "other" ? "text-white" : "text-slate-400"}`}>Outra pessoa</span>
-                  <span className={`text-xs ${relationship === "other" ? "text-slate-300" : "text-slate-500"}`}>Pais / tutor</span>
+                  <Users className={`w-5 h-5 ${relationship === "other" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-medium ${relationship === "other" ? "text-white" : "text-muted-foreground"}`}>Outra pessoa</span>
+                  <span className={`text-xs ${relationship === "other" ? "text-muted-foreground" : "text-muted-foreground"}`}>Pais / tutor</span>
                 </button>
               </div>
 
               {relationship === "other" && (
                 <div className="space-y-4 pt-1">
                   <div className="h-px bg-white/10" />
-                  <p className="text-xs text-slate-400">Preencha os dados de quem é o responsável financeiro:</p>
+                  <p className="text-xs text-muted-foreground">Preencha os dados de quem é o responsável financeiro:</p>
 
                   <FormField control={form.control} name="financialResponsibleName"
                     render={({ field }) => (
@@ -414,10 +414,10 @@ export default function PaymentAndResponsibleStep({ onNext, onBack, defaultValue
           )}
 
           <div className="pt-2 space-y-3">
-            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base">
               Continuar <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm">
+            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm">
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
           </div>

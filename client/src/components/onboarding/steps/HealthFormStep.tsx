@@ -33,7 +33,7 @@ const HEALTH_QUESTIONS: Omit<HealthAnswer, "value">[] = [
   { key: "doctorRecommendation", question: "Algum médico já recomendou que você evite atividades físicas intensas?" },
 ];
 
-const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 [color-scheme:dark]";
+const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-ring/50 [color-scheme:dark]";
 
 export default function HealthFormStep({ onNext, onBack, defaultValues }: HealthFormStepProps) {
   const [answers, setAnswers] = useState<HealthAnswer[]>(
@@ -97,11 +97,11 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           <Heart className="w-7 h-7 text-red-400" />
         </div>
         <h2 className="text-2xl font-bold text-white">Saúde e Graduação</h2>
-        <p className="text-slate-400 text-sm">Questionário de saúde PAR-Q+ e sua graduação atual</p>
+        <p className="text-muted-foreground text-sm">Questionário de saúde PAR-Q+ e sua graduação atual</p>
       </div>
 
       {/* Info banner */}
-      <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-4 flex items-start gap-3">
+      <div className="bg-primary/10 border border-[#2B54FF]/20 rounded-xl p-4 flex items-start gap-3">
         <Activity className="w-5 h-5 text-[#7B9FFF] mt-0.5 shrink-0" />
         <p className="text-sm text-[#7B9FFF] leading-relaxed">
           <strong className="text-white">Importante:</strong> Responda com sinceridade. Estas informações são fundamentais para garantir sua segurança durante as atividades físicas. Dados protegidos pela LGPD.
@@ -112,12 +112,12 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-white font-semibold">Questionário de Saúde</h3>
-          <span className="text-xs text-slate-500">{answeredCount}/{answers.length} respondidas</span>
+          <span className="text-xs text-muted-foreground">{answeredCount}/{answers.length} respondidas</span>
         </div>
 
         {answers.map((answer, index) => (
           <div key={answer.key} className="space-y-2.5 pb-4 border-b border-white/5 last:border-0 last:pb-0">
-            <p className="text-slate-200 text-sm font-medium leading-relaxed">
+            <p className="text-muted-foreground text-sm font-medium leading-relaxed">
               {index + 1}. {answer.question}
             </p>
             <div className="flex gap-3 ml-2">
@@ -129,7 +129,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
                       ? opt === "yes"
                         ? "bg-red-500/20 border-red-500/50 text-red-400"
                         : "bg-green-500/20 border-green-500/50 text-green-400"
-                      : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                      : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10"
                   }`}
                 >
                   <input
@@ -152,11 +152,11 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
         <div className="pt-2">
           <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#2B54FF] rounded-full transition-all duration-300"
+              className="h-full bg-primary rounded-full transition-all duration-300"
               style={{ width: `${(answeredCount / answers.length) * 100}%` }}
             />
           </div>
-          <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
             <FileText className="w-3.5 h-3.5" />
             {answeredCount} de {answers.length} perguntas respondidas
             {allAnswered && <CheckCircle className="w-3.5 h-3.5 text-green-400 ml-1" />}
@@ -177,18 +177,18 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
       {/* Belt section */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center">
-            <Award className="w-5 h-5 text-[#2B54FF]" />
+          <div className="w-10 h-10 rounded-xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center">
+            <Award className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className="text-white font-semibold">Graduação Atual</h3>
-            <p className="text-slate-400 text-xs">Informe sua faixa e grau no Jiu-Jitsu</p>
+            <p className="text-muted-foreground text-xs">Informe sua faixa e grau no Jiu-Jitsu</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-slate-300 text-sm font-medium">Faixa Atual *</label>
+            <label className="text-muted-foreground text-sm font-medium">Faixa Atual *</label>
             <Select
               value={loadingBelts ? undefined : selectedBeltLevel}
               onValueChange={setSelectedBeltLevel}
@@ -197,7 +197,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
               <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white rounded-xl">
                 <SelectValue placeholder={loadingBelts ? "Carregando faixas..." : "Selecione sua faixa"} />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-white/10 text-white">
+              <SelectContent className="bg-secondary border-white/10 text-white">
                 {loadingBelts ? null : beltOptions.length > 0 ? (
                   beltOptions.map((belt) => (
                     <SelectItem key={belt.value} value={belt.value} className="text-white focus:bg-white/10 focus:text-white">
@@ -221,7 +221,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-slate-300 text-sm font-medium">Grau (Listras)</label>
+            <label className="text-muted-foreground text-sm font-medium">Grau (Listras)</label>
             <select
               value={selectedStripes.toString()}
               onChange={(e) => setSelectedStripes(Number(e.target.value))}
@@ -236,7 +236,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           </div>
         </div>
 
-        <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-3 flex items-start gap-2 text-xs text-[#7B9FFF]">
+        <div className="bg-primary/10 border border-[#2B54FF]/20 rounded-xl p-3 flex items-start gap-2 text-xs text-[#7B9FFF]">
           <Activity className="w-4 h-4 mt-0.5 shrink-0" />
           <span><strong className="text-white">Iniciante?</strong> Se nunca praticou Jiu-Jitsu, mantenha "Faixa Branca" com "0 listras".</span>
         </div>
@@ -248,7 +248,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           <div
             onClick={() => setAgreedToTerms(!agreedToTerms)}
             className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
-              agreedToTerms ? 'bg-[#2B54FF] border-[#2B54FF]' : 'bg-white/5 border-white/20 group-hover:border-[#2B54FF]/50'
+              agreedToTerms ? 'bg-primary border-[#2B54FF]' : 'bg-white/5 border-white/20 group-hover:border-[#2B54FF]/50'
             }`}
             data-testid="checkbox-agree-terms"
           >
@@ -256,7 +256,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           </div>
           <div>
             <p className="text-white font-medium text-sm">Declaração e Concordância</p>
-            <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+            <p className="text-muted-foreground text-xs mt-1 leading-relaxed">
               Eu declaro que as informações fornecidas são verdadeiras e completas. Estou ciente de que a omissão ou falsidade de informações pode comprometer minha segurança durante a prática de atividades físicas. Concordo com o processamento destes dados conforme a LGPD, sendo utilizados exclusivamente para fins de segurança e saúde na prática esportiva.
             </p>
           </div>
@@ -278,7 +278,7 @@ export default function HealthFormStep({ onNext, onBack, defaultValues }: Health
           type="button"
           onClick={handleSubmit}
           disabled={!allAnswered || !agreedToTerms || isSubmitting}
-          className="h-12 px-8 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors"
+          className="h-12 px-8 rounded-xl bg-primary hover:bg-[#2348db] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-colors"
           data-testid="button-submit-health"
         >
           {isSubmitting ? "Salvando..." : "Salvar e Continuar →"}

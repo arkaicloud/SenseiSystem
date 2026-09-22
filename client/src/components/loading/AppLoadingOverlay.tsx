@@ -44,7 +44,7 @@ export function AppLoadingOverlay({ visible, progress = 0, quote }: AppLoadingOv
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100 px-4 sm:px-6"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-slate-950 to-slate-900 text-muted-foreground px-4 sm:px-6"
           role="status" 
           aria-live="polite"
         >
@@ -55,7 +55,7 @@ export function AppLoadingOverlay({ visible, progress = 0, quote }: AppLoadingOv
             transition={{ duration: 0.4 }}
             className="mb-6 sm:mb-8 flex items-center gap-3"
           >
-            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-slate-800/70 backdrop-blur flex items-center justify-center text-xl sm:text-2xl">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-secondary/70 backdrop-blur flex items-center justify-center text-xl sm:text-2xl">
               🥋
             </div>
             <div className="text-xl sm:text-2xl font-semibold tracking-tight">SenseiSystem</div>
@@ -68,14 +68,14 @@ export function AppLoadingOverlay({ visible, progress = 0, quote }: AppLoadingOv
             transition={{ duration: 0.35 }}
             className="relative h-12 w-12 sm:h-16 sm:w-16 mb-4 sm:mb-6"
           >
-            <div className="absolute inset-0 rounded-full border-4 border-slate-700 border-t-slate-200 animate-spin" />
-            <div className="absolute inset-2 rounded-full border-2 border-slate-800 border-b-slate-400 animate-spin animate-reverse" 
+            <div className="absolute inset-0 rounded-full border-4 border-border border-t-slate-200 animate-spin" />
+            <div className="absolute inset-2 rounded-full border-2 border-border border-b-slate-400 animate-spin animate-reverse"
                  style={{ animationDuration: '1.5s' }} />
           </motion.div>
 
           {/* Barra de progresso */}
           <div className="w-full max-w-sm sm:max-w-md mb-4 sm:mb-6 px-2 sm:px-0">
-            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
                 initial={{ width: 0 }}
@@ -83,7 +83,7 @@ export function AppLoadingOverlay({ visible, progress = 0, quote }: AppLoadingOv
                 transition={{ duration: 0.3, ease: "easeOut" }}
               />
             </div>
-            <div className="mt-3 flex justify-between items-center text-sm text-slate-300">
+            <div className="mt-3 flex justify-between items-center text-sm text-muted-foreground">
               <span>Carregando...</span>
               <span className="font-medium">{Math.round(progress)}%</span>
             </div>
@@ -98,7 +98,7 @@ export function AppLoadingOverlay({ visible, progress = 0, quote }: AppLoadingOv
             transition={{ duration: 0.35 }}
             className="max-w-sm sm:max-w-xl text-center min-h-[2rem] sm:min-h-[3rem] flex items-center justify-center px-2 sm:px-0"
           >
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed italic">
+            <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed italic">
               {currentQuote}
             </p>
           </motion.div>
@@ -110,7 +110,7 @@ export function AppLoadingOverlay({ visible, progress = 0, quote }: AppLoadingOv
               animate={{ opacity: 1, y: 0 }}
               className="mt-4 text-center"
             >
-              <p className="text-slate-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Quase lá... Preparando seu ambiente de treino
               </p>
             </motion.div>

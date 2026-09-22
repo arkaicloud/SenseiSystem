@@ -94,13 +94,13 @@ const StudentAttendanceSummary: React.FC<StudentAttendanceSummaryProps> = ({
       <CardContent className="space-y-6">
         {/* Estatísticas gerais */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{totalAttendances}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">{t('aulas_realizadas')}</div>
+          <div className="bg-background dark:bg-muted rounded-lg p-4 text-center">
+            <div className="text-3xl font-bold text-foreground dark:text-foreground">{totalAttendances}</div>
+            <div className="text-sm text-secondary-foreground dark:text-muted-foreground">{t('aulas_realizadas')}</div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{attendanceRate}%</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">{t('taxa_presenca')}</div>
+          <div className="bg-background dark:bg-muted rounded-lg p-4 text-center">
+            <div className="text-3xl font-bold text-foreground dark:text-foreground">{attendanceRate}%</div>
+            <div className="text-sm text-secondary-foreground dark:text-muted-foreground">{t('taxa_presenca')}</div>
           </div>
         </div>
         
@@ -143,7 +143,7 @@ const StudentAttendanceSummary: React.FC<StudentAttendanceSummaryProps> = ({
               {recentAttendances.map((attendance) => (
                 <div 
                   key={attendance.id} 
-                  className="flex items-center justify-between p-2 rounded-md border border-gray-200"
+                  className="flex items-center justify-between p-2 rounded-md border border-border"
                 >
                   <div className="flex items-center">
                     <CheckCircle2 className="w-4 h-4 text-green-500 mr-2" />

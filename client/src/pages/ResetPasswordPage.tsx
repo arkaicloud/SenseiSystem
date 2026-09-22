@@ -143,11 +143,11 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
+          <Card className="w-full max-w-md bg-card dark:bg-card shadow-2xl border border-border dark:border-border">
             <CardContent className="flex items-center justify-center py-12">
               <div className="text-center space-y-4">
-                <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-600" />
-                <p className="text-slate-600 dark:text-slate-400">
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-accent-foreground" />
+                <p className="text-secondary-foreground dark:text-muted-foreground">
                   Validando token de redefinição...
                 </p>
               </div>
@@ -163,16 +163,16 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
+          <Card className="w-full max-w-md bg-card dark:bg-card shadow-2xl border border-border dark:border-border">
             <CardHeader className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-foreground dark:text-white">
                   Senha Atualizada!
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                <p className="text-secondary-foreground dark:text-muted-foreground text-sm mt-2">
                   Sua nova senha foi definida com sucesso
                 </p>
               </div>
@@ -187,7 +187,7 @@ export default function ResetPasswordPage() {
 
               <Button 
                 onClick={handleBackToLogin}
-                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                className="w-full bg-primary hover:bg-primary-light dark:bg-accent dark:hover:bg-accent"
               >
                 Ir para Login
               </Button>
@@ -203,16 +203,16 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
+          <Card className="w-full max-w-md bg-card dark:bg-card shadow-2xl border border-border dark:border-border">
             <CardHeader className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
                 <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-foreground dark:text-white">
                   Token Inválido
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                <p className="text-secondary-foreground dark:text-muted-foreground text-sm mt-2">
                   Não foi possível validar o token de redefinição
                 </p>
               </div>
@@ -223,7 +223,7 @@ export default function ResetPasswordPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
 
-              <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+              <div className="text-sm text-secondary-foreground dark:text-muted-foreground space-y-2">
                 <p><strong>Possíveis causas:</strong></p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Token expirado (válido por apenas 1 hora)</li>
@@ -235,7 +235,7 @@ export default function ResetPasswordPage() {
               <div className="space-y-3">
                 <Button 
                   onClick={() => setLocation("/auth/forgot-password")}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                  className="w-full bg-primary hover:bg-primary-light dark:bg-accent dark:hover:bg-accent"
                 >
                   Solicitar Novo Link
                 </Button>
@@ -260,17 +260,17 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
+        <Card className="w-full max-w-md bg-card dark:bg-card shadow-2xl border border-border dark:border-border">
           <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-              <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="mx-auto w-16 h-16 bg-accent dark:bg-accent/20 rounded-full flex items-center justify-center">
+              <Lock className="w-8 h-8 text-accent-foreground dark:text-accent-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-foreground dark:text-white">
                 Nova Senha
               </h1>
               {userInfo && (
-                <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                <p className="text-secondary-foreground dark:text-muted-foreground text-sm mt-2">
                   Olá, <strong>{userInfo.userName}</strong>! <br />
                   Defina sua nova senha para <span className="font-mono text-xs">{userInfo.userEmail}</span>
                 </p>
@@ -287,7 +287,7 @@ export default function ResetPasswordPage() {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Label htmlFor="newPassword" className="text-sm font-medium text-secondary-foreground dark:text-secondary-foreground">
                   Nova senha
                 </Label>
                 <div className="relative">
@@ -304,7 +304,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-secondary-foreground dark:hover:text-secondary-foreground"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -324,13 +324,13 @@ export default function ResetPasswordPage() {
                                 : passwordStrength.strength <= 3
                                 ? 'bg-yellow-400'
                                 : 'bg-green-400'
-                              : 'bg-slate-200 dark:bg-slate-700'
+                              : 'bg-muted dark:bg-muted'
                           }`}
                         />
                       ))}
                     </div>
                     {passwordStrength.feedback.length > 0 && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                         Adicione: {passwordStrength.feedback.join(", ")}
                       </p>
                     )}
@@ -339,7 +339,7 @@ export default function ResetPasswordPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-secondary-foreground dark:text-secondary-foreground">
                   Confirmar nova senha
                 </Label>
                 <div className="relative">
@@ -356,7 +356,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-secondary-foreground dark:hover:text-secondary-foreground"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -379,7 +379,7 @@ export default function ResetPasswordPage() {
               
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                className="w-full bg-primary hover:bg-primary-light dark:bg-accent dark:hover:bg-accent"
                 disabled={isLoading || passwordStrength.strength < 3 || formData.newPassword !== formData.confirmPassword}
               >
                 {isLoading ? (
@@ -395,7 +395,7 @@ export default function ResetPasswordPage() {
                 )}
               </Button>
 
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
+              <div className="pt-4 border-t border-border dark:border-border">
                 <Button 
                   type="button"
                   onClick={handleBackToLogin}

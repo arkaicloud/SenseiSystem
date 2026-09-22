@@ -84,10 +84,10 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6">
+    <div className="bg-card dark:bg-card rounded-lg shadow p-4 md:p-6">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl font-bold mb-1 md:mb-2">{classInfo.name}</h2>
-        <p className="text-gray-600 text-sm md:text-base">
+        <p className="text-secondary-foreground text-sm md:text-base">
           {classInfo.date.toLocaleDateString()} at {classInfo.startTime} • Instructor: {classInfo.instructor}
         </p>
       </div>
@@ -97,11 +97,11 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
           <input
             type="text"
             placeholder={placeholder}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
-          <div className="absolute left-3 top-2.5 text-gray-400">
+          <div className="absolute left-3 top-2.5 text-muted-foreground">
             <span className="material-icons text-sm">search</span>
           </div>
         </div>
@@ -110,7 +110,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
       <div className="mb-3 md:mb-4">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center space-x-3">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {filteredStudents.length} alunos confirmaram presença
             </p>
             {filteredStudents.length > 0 && (
@@ -131,17 +131,17 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
           </div>
         </div>
         {filteredStudents.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             <div className="mb-2">📋</div>
             <p className="text-sm">Nenhum aluno confirmou presença para esta aula</p>
-            <p className="text-xs text-gray-400 mt-1">Os alunos que confirmaram presença aparecerão aqui</p>
+            <p className="text-xs text-muted-foreground mt-1">Os alunos que confirmaram presença aparecerão aqui</p>
           </div>
         )}
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 md:space-y-4">
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-border">
             {filteredStudents.map((student, index) => (
               <FormField
                 key={student.id}
@@ -156,20 +156,20 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                       />
                     </FormControl>
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-full bg-gray-200 flex items-center justify-center mr-2 md:mr-3">
+                      <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-full bg-muted flex items-center justify-center mr-2 md:mr-3">
                         <span className="font-medium text-xs md:text-sm">{student.initials}</span>
                       </div>
                       <div className="flex-1">
                         <FormLabel className={cn(
-                          "text-sm md:text-base font-medium text-gray-900 cursor-pointer",
-                          field.value && "line-through text-gray-400"
+                          "text-sm md:text-base font-medium text-foreground cursor-pointer",
+                          field.value && "line-through text-muted-foreground"
                         )}>
                           {student.name}
                         </FormLabel>
                         <div className="flex items-center space-x-2 mt-1">
                           <BeltWithLabel level={student.beltLevel} size="sm" />
                           {(student as any).confirmationTime && (
-                            <div className="flex items-center space-x-1 text-xs text-blue-600">
+                            <div className="flex items-center space-x-1 text-xs text-accent-foreground">
                               <span>•</span>
                               <span>Confirmou às {new Date((student as any).confirmationTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>

@@ -58,7 +58,7 @@ export default function NotificationBell() {
         <Button
           variant="ghost"
           size="sm"
-          className="relative text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
+          className="relative text-secondary-foreground dark:text-secondary-foreground hover:text-foreground dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary rounded p-2 transition-colors duration-200"
         >
           <Bell className="w-5 h-5" />
           {totalNotifications > 0 && (
@@ -89,7 +89,7 @@ export default function NotificationBell() {
             {pendingCount > 0 && (
               <>
                 <DropdownMenuItem asChild>
-                  <Link href="/admin/pending-approvals" className="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  <Link href="/admin/pending-approvals" className="flex items-center p-2 hover:bg-background dark:hover:bg-muted cursor-pointer">
                     <UserCheck className="h-4 w-4 mr-3 text-orange-500" />
                     <div className="flex-1">
                       <div className="font-medium">Aprovações Pendentes</div>

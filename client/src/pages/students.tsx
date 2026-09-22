@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BELT_HEX } from "@/components/ui/belt";
 import { usePaginated } from "@/hooks/usePaginated";
-import { Pagination } from "@/components/ui/Pagination";
+import { Pagination } from "@/components/ui/StudentPagination";
 import { PageSizeSelect } from "@/components/ui/PageSizeSelect";
 import { ResultsInfo } from "@/components/ui/ResultsInfo";
 import StudentEditDialog from "@/components/students/StudentEditDialog";
@@ -81,7 +81,7 @@ function AvatarInitials({ name, beltLevel }: { name: string; beltLevel: string }
 function StatusBadge({ active, status }: { active: boolean; status: string }) {
   if (status === "pending") {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
         Pendente
       </span>
@@ -89,14 +89,14 @@ function StatusBadge({ active, status }: { active: boolean; status: string }) {
   }
   if (active) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
         Ativo
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger border border-danger/20">
       <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
       Bloqueado
     </span>
@@ -114,10 +114,10 @@ function BeltDisplay({ beltLevel, stripes }: { beltLevel: string; stripes: numbe
   return (
     <div className="flex items-center gap-2">
       <div
-        className="w-4 h-4 rounded-sm border border-gray-200 flex-shrink-0"
+        className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
         style={{ backgroundColor: hex || "#e2e8f0" }}
       />
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-secondary-foreground">
         {label}{stripes > 0 ? ` · ${stripes}G` : ""}
       </span>
     </div>
@@ -201,8 +201,7 @@ const Students: React.FC = () => {
   };
 
   const openEdit = (student: Student) => {
-    setStudentToEdit(student);
-    setIsEditStudentOpen(true);
+    setLocation(`/students/${student.id}/edit`);
   };
 
   return (
@@ -210,19 +209,19 @@ const Students: React.FC = () => {
       <div className="space-y-5">
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Alunos</h1>
+          <h1 className="text-2xl font-bold text-foreground dark:text-foreground">Alunos</h1>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-gray-600 border-gray-300 hover:bg-gray-50"
+              className="gap-1.5 text-secondary-foreground border-border hover:bg-background"
             >
               <Download className="h-4 w-4" />
               Exportar
             </Button>
             <Button
               size="sm"
-              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1.5 bg-primary hover:bg-primary-light text-primary-foreground"
               onClick={() => setLocation("/onboarding")}
               data-testid="button-new-student"
             >
@@ -233,7 +232,7 @@ const Students: React.FC = () => {
         </div>
 
         {/* ── Tab filters ────────────────────────────────────────── */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-border dark:border-border">
           <nav className="-mb-px flex gap-0">
             {STATUS_TABS.map((tab) => {
               const active = status === tab.value;
@@ -243,13 +242,13 @@ const Students: React.FC = () => {
                   onClick={() => setParam("status", tab.value)}
                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     active
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-primary text-accent-foreground"
+                      : "border-transparent text-muted-foreground hover:text-secondary-foreground hover:border-border"
                   }`}
                 >
                   {tab.label}
                   {active && data?.total != null && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">
+                    <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs bg-accent text-accent-foreground">
                       {data.total}
                     </span>
                   )}
@@ -260,13 +259,13 @@ const Students: React.FC = () => {
         </div>
 
         {/* ── Table card ─────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="bg-card dark:bg-card rounded-xl border border-border dark:border-border shadow-sm overflow-hidden">
           {/* Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border dark:border-border">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                className="pl-9 w-64 h-9 text-sm border-gray-200 bg-gray-50 dark:bg-gray-900 dark:border-gray-700 focus-visible:ring-blue-500"
+                className="pl-9 w-64 h-9 text-sm border-border bg-background dark:bg-background dark:border-border focus-visible:ring-primary"
                 placeholder="Buscar aluno..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -279,44 +278,44 @@ const Students: React.FC = () => {
 
           {/* Table */}
           {isFetching && (
-            <div className="text-center py-12 text-gray-400 text-sm">Carregando alunos...</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">Carregando alunos...</div>
           )}
 
           {!isFetching && (!data?.items || data.items.length === 0) && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Users className="h-10 w-10 text-gray-300 mb-3" />
-              <p className="text-sm font-medium text-gray-500">Nenhum aluno encontrado</p>
-              <p className="text-xs text-gray-400 mt-1">Tente ajustar os filtros ou busca</p>
+              <Users className="h-10 w-10 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum aluno encontrado</p>
+              <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros ou busca</p>
             </div>
           )}
 
           {!isFetching && data?.items && data.items.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm [&_td]:whitespace-nowrap">
                 <thead>
-                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <tr className="border-b border-border dark:border-border bg-background dark:bg-background">
                     <th className="w-10 px-4 py-3">
-                      <input type="checkbox" className="rounded border-gray-300" />
+                      <input type="checkbox" className="rounded border-border" />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Nome do Aluno
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">
                       Faixa
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
                       Telefone
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
                       Matrícula
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-4 py-3 w-10" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                <tbody className="divide-y divide-border dark:divide-border">
                   {data.items.map((student) => {
                     const fullName = `${student.user.firstName} ${student.user.lastName}`;
                     const dateStr = student.user.joinDate || student.user.createdAt;
@@ -327,12 +326,12 @@ const Students: React.FC = () => {
                     return (
                       <tr
                         key={student.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                        className="hover:bg-background dark:hover:bg-muted/50 transition-colors group"
                         data-testid={`row-student-${student.id}`}
                       >
                         {/* Checkbox */}
                         <td className="px-4 py-3">
-                          <input type="checkbox" className="rounded border-gray-300" />
+                          <input type="checkbox" className="rounded border-border" />
                         </td>
 
                         {/* Nome */}
@@ -341,16 +340,16 @@ const Students: React.FC = () => {
                             <AvatarInitials name={fullName} beltLevel={student.beltLevel} />
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-medium text-gray-900 dark:text-gray-100 leading-tight">
+                                <p className="font-medium text-foreground dark:text-foreground leading-tight">
                                   {fullName}
                                 </p>
                                 {student.isScholarship && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 text-[10px] font-semibold text-success dark:text-emerald-300 border border-success/20 dark:border-emerald-800">
                                     🎓 Bolsista
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-400 mt-0.5">{student.user.email}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{student.user.email}</p>
                             </div>
                           </div>
                         </td>
@@ -361,12 +360,12 @@ const Students: React.FC = () => {
                         </td>
 
                         {/* Telefone */}
-                        <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">
+                        <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                           {student.user.phone || "—"}
                         </td>
 
                         {/* Data */}
-                        <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">
+                        <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                           {displayDate}
                         </td>
 
@@ -385,16 +384,16 @@ const Students: React.FC = () => {
                                 className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                 data-testid={`button-actions-${student.id}`}
                               >
-                                <MoreVertical className="h-4 w-4 text-gray-400" />
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onClick={() => openEdit(student)}>
-                                <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                                <Eye className="mr-2 h-4 w-4 text-accent-foreground" />
                                 Ver perfil
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openEdit(student)}>
-                                <Edit2 className="mr-2 h-4 w-4 text-gray-500" />
+                                <Edit2 className="mr-2 h-4 w-4 text-muted-foreground" />
                                 Editar dados
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -409,7 +408,7 @@ const Students: React.FC = () => {
                               >
                                 {student.user.active ? (
                                   <>
-                                    <Ban className="mr-2 h-4 w-4 text-red-500" />
+                                    <Ban className="mr-2 h-4 w-4 text-danger" />
                                     Bloquear aluno
                                   </>
                                 ) : (
@@ -421,13 +420,13 @@ const Students: React.FC = () => {
                               </DropdownMenuItem>
                               {student.user.active && (
                                 <DropdownMenuItem onClick={() => revertApprovalMutation(student.user.id)}>
-                                  <Undo className="mr-2 h-4 w-4 text-gray-500" />
+                                  <Undo className="mr-2 h-4 w-4 text-muted-foreground" />
                                   Reverter para pendente
                                 </DropdownMenuItem>
                               )}
                               {currentUser?.role === "admin" && (
                                 <DropdownMenuItem
-                                  className="text-red-600 focus:text-red-700"
+                                  className="text-red-600 focus:text-danger"
                                   onClick={() => setStudentToDelete(student)}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
@@ -447,7 +446,7 @@ const Students: React.FC = () => {
 
           {/* Pagination inside card */}
           {data && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border dark:border-border bg-background dark:bg-background">
               <ResultsInfo page={data.page} pageSize={data.pageSize} total={data.total} />
               <Pagination
                 page={data.page}

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard/index";
 import Students from "@/pages/students";
+import StudentEditPage from "@/pages/student-edit";
 import PendingUsers from "@/pages/pending-users";
 import StudentsAtRisk from "@/pages/students-at-risk";
 import AsaasPayments from "@/pages/asaas-payments";
@@ -58,6 +59,11 @@ function Router() {
       <ProtectedRoute
         path="/students"
         component={() => <Students />}
+        allowedRoles={["admin", "instructor"]}
+      />
+      <ProtectedRoute
+        path="/students/:id/edit"
+        component={() => <StudentEditPage />}
         allowedRoles={["admin", "instructor"]}
       />
       <ProtectedRoute

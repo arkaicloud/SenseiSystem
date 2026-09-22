@@ -55,7 +55,7 @@ const ClassAttendanceCounter: React.FC<ClassAttendanceCounterProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div className="flex items-center gap-4 text-sm text-secondary-foreground">
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
             <span>{time}</span>
@@ -67,7 +67,7 @@ const ClassAttendanceCounter: React.FC<ClassAttendanceCounterProps> = ({
         </div>
 
         {/* Barra de progresso da capacidade */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-muted rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all duration-300 ${
               capacityPercentage >= 90
@@ -81,7 +81,7 @@ const ClassAttendanceCounter: React.FC<ClassAttendanceCounterProps> = ({
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">
+          <span className="text-secondary-foreground">
             {currentCount === 0 
               ? "Nenhum aluno confirmado"
               : `${currentCount} aluno${currentCount !== 1 ? 's' : ''} confirmado${currentCount !== 1 ? 's' : ''}`
@@ -110,7 +110,7 @@ const ClassAttendanceCounter: React.FC<ClassAttendanceCounterProps> = ({
         )}
 
         {classData.description && (
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm text-secondary-foreground mt-2">
             {classData.description}
           </p>
         )}

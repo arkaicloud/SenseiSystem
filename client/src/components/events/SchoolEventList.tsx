@@ -66,7 +66,7 @@ export default function SchoolEventList({ limit, showTitle = true }: SchoolEvent
     return (
       <div>
         {showTitle && <h2 className="text-2xl font-bold mb-4">Eventos da Escola</h2>}
-        <Card className="bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/50">
+        <Card className="bg-accent dark:bg-accent/10 border-primary dark:border-primary/50">
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
               Não há eventos programados no momento.

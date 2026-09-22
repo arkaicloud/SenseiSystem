@@ -99,9 +99,9 @@ interface PersonalInfoStepProps {
 }
 
 // VYTA dark design tokens
-const inputCls = "h-12 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
-const labelCls = "text-slate-300 text-sm font-medium";
-const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-slate-900 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark] appearance-none";
+const inputCls = "h-12 text-base bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-muted-foreground text-sm font-medium";
+const selectCls = "h-12 w-full rounded-xl border border-white/10 bg-background px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-[#2B54FF]/50 [color-scheme:dark] appearance-none";
 
 function DarkSelectField({ label, value, onChange, children, error }: {
   label: string; value: string; onChange: (v: string) => void;
@@ -316,12 +316,12 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
   function renderStep2() {
     return (
       <div className="space-y-5">
-        <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-3 text-xs text-[#7B9FFF] leading-relaxed">
+        <div className="bg-primary/10 border border-[#2B54FF]/20 rounded-xl p-3 text-xs text-[#7B9FFF] leading-relaxed">
           <span className="font-semibold">Para menores de idade:</span> o e-mail pode ser deixado em branco. O acesso ao portal será feito pelo e-mail do responsável financeiro.
         </div>
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem>
-            <FormLabel className={labelCls}>E-mail <span className="text-slate-500 font-normal">(opcional para menores)</span></FormLabel>
+            <FormLabel className={labelCls}>E-mail <span className="text-muted-foreground font-normal">(opcional para menores)</span></FormLabel>
             <FormControl>
               <Input placeholder="seu@email.com" type="email" {...field} className={inputCls} />
             </FormControl>
@@ -474,9 +474,9 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
         )}
 
         {financialRelationship === "self" && (
-          <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-4 text-sm text-[#7B9FFF]">
+          <div className="bg-primary/10 border border-[#2B54FF]/20 rounded-xl p-4 text-sm text-[#7B9FFF]">
             <p className="font-medium">✓ Responsável financeiro definido</p>
-            <p className="text-slate-400 mt-0.5 text-xs">Os dados do responsável serão os mesmos dados pessoais preenchidos acima.</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">Os dados do responsável serão os mesmos dados pessoais preenchidos acima.</p>
           </div>
         )}
 
@@ -501,7 +501,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
           <FormField control={form.control} name="dueDate" render={({ field }) => (
             <FormItem>
               <FormLabel className={labelCls}>Data de Vencimento Preferida *</FormLabel>
-              <p className="text-xs text-slate-500 -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
+              <p className="text-xs text-muted-foreground -mt-1">Dia do mês para vencimento do boleto/Pix:</p>
               <FormControl>
                 <select value={field.value} onChange={(event) => field.onChange(event.target.value)} className={selectCls}>
                   {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
@@ -572,8 +572,8 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Step header */}
       <div className="text-center space-y-3">
-        <div className="w-14 h-14 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mx-auto">
-          <StepIcon className="w-7 h-7 text-[#2B54FF]" />
+        <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mx-auto">
+          <StepIcon className="w-7 h-7 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-white">{stepTitles[currentStep - 1]}</h2>
 
@@ -587,21 +587,21 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
               <div key={n} className="flex items-center">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${
                   isDone
-                    ? 'bg-[#2B54FF] border-[#2B54FF] text-white'
+                    ? 'bg-primary border-[#2B54FF] text-white'
                     : isActive
-                      ? 'bg-[#2B54FF]/20 border-[#2B54FF] text-[#2B54FF]'
-                      : 'bg-white/5 border-white/10 text-slate-500'
+                      ? 'bg-primary/20 border-[#2B54FF] text-primary'
+                      : 'bg-white/5 border-white/10 text-muted-foreground'
                 }`}>
                   {isDone ? '✓' : n}
                 </div>
                 {n < totalSteps && (
-                  <div className={`w-6 h-px mx-1 ${n < currentStep ? 'bg-[#2B54FF]' : 'bg-white/10'}`} />
+                  <div className={`w-6 h-px mx-1 ${n < currentStep ? 'bg-primary' : 'bg-white/10'}`} />
                 )}
               </div>
             );
           })}
         </div>
-        <p className="text-slate-400 text-sm">Etapa {currentStep} de {totalSteps}: {stepTitles[currentStep - 1]}</p>
+        <p className="text-muted-foreground text-sm">Etapa {currentStep} de {totalSteps}: {stepTitles[currentStep - 1]}</p>
       </div>
 
       {/* Form card */}
@@ -629,7 +629,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
               {currentStep === totalSteps ? (
                 <button
                   type="submit"
-                  className="h-12 px-8 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] text-white font-semibold transition-colors flex items-center gap-2"
+                  className="h-12 px-8 rounded-xl bg-primary hover:bg-[#2348db] text-white font-semibold transition-colors flex items-center gap-2"
                 >
                   Finalizar
                   <ArrowRight className="w-4 h-4" />
@@ -638,7 +638,7 @@ export default function PersonalInfoStep({ onNext, defaultValues }: PersonalInfo
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="h-12 px-8 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] text-white font-semibold transition-colors flex items-center gap-2"
+                  className="h-12 px-8 rounded-xl bg-primary hover:bg-[#2348db] text-white font-semibold transition-colors flex items-center gap-2"
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4" />

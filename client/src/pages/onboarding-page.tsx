@@ -187,7 +187,7 @@ export default function OnboardingPage() {
             <CheckCircle className="w-12 h-12 text-green-400" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">Cadastro Enviado!</h2>
-          <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+          <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
             Sua solicitação foi enviada para aprovação. Você receberá um e-mail quando for aprovado.
           </p>
           <div className="flex flex-col gap-3">
@@ -200,7 +200,7 @@ export default function OnboardingPage() {
             </button>
             <button
               onClick={() => { window.location.href = "/"; }}
-              className="w-full h-12 rounded-xl bg-[#2B54FF] hover:bg-[#2348db] text-white transition-colors flex items-center justify-center gap-2 font-medium"
+              className="w-full h-12 rounded-xl bg-primary hover:bg-[#2348db] text-white transition-colors flex items-center justify-center gap-2 font-medium"
             >
               <Home className="w-4 h-4" />
               Voltar ao menu
@@ -237,15 +237,15 @@ export default function OnboardingPage() {
             <div>
               <h1 className="text-lg font-bold text-white">
                 Matrícula{" "}
-                <span className="text-[#2B54FF]">
+                <span className="text-primary">
                   {schoolConfig?.config?.schoolName || "SenseiSystem"}
                 </span>
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">Complete sua inscrição em apenas 3 etapas</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Complete sua inscrição em apenas 3 etapas</p>
             </div>
             <button
               onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
+              className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Voltar ao Login</span>
@@ -258,13 +258,13 @@ export default function OnboardingPage() {
       <div className="bg-[#0F1729] border-b border-white/10 flex-shrink-0">
         <div className="max-w-4xl mx-auto px-6 py-4">
           {/* Bar */}
-          <div className="flex justify-between text-xs text-slate-500 mb-2">
+          <div className="flex justify-between text-xs text-muted-foreground mb-2">
             <span>Etapa {currentStep} de 3</span>
             <span>{Math.round(progressPercentage)}% concluído</span>
           </div>
           <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-4">
             <div
-              className="h-full bg-[#2B54FF] rounded-full transition-all duration-500"
+              className="h-full bg-primary rounded-full transition-all duration-500"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -280,22 +280,22 @@ export default function OnboardingPage() {
                   <div className="flex flex-col items-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
                       isCompleted
-                        ? 'bg-[#2B54FF] border-[#2B54FF]'
+                        ? 'bg-primary border-[#2B54FF]'
                         : isActive
-                          ? 'bg-[#2B54FF]/20 border-[#2B54FF]'
+                          ? 'bg-primary/20 border-[#2B54FF]'
                           : 'bg-white/5 border-white/10'
                     }`}>
                       {isCompleted
                         ? <CheckCircle className="w-5 h-5 text-white" />
-                        : <StepIcon className={`w-5 h-5 ${isActive ? 'text-[#2B54FF]' : 'text-slate-500'}`} />
+                        : <StepIcon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                       }
                     </div>
-                    <span className={`text-xs mt-1 font-medium ${isActive ? 'text-[#2B54FF]' : 'text-slate-500'}`}>
+                    <span className={`text-xs mt-1 font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                       {step.title}
                     </span>
                   </div>
                   {idx < steps.length - 1 && (
-                    <div className={`w-16 sm:w-24 h-px mx-2 mb-4 ${currentStep > step.number ? 'bg-[#2B54FF]' : 'bg-white/10'}`} />
+                    <div className={`w-16 sm:w-24 h-px mx-2 mb-4 ${currentStep > step.number ? 'bg-primary' : 'bg-white/10'}`} />
                   )}
                 </div>
               );
@@ -357,7 +357,7 @@ export default function OnboardingPage() {
 
       {/* Footer */}
       <footer className="bg-[#0F1729] border-t border-white/10 flex-shrink-0 py-3">
-        <p className="text-center text-xs text-slate-600">
+        <p className="text-center text-xs text-secondary-foreground">
           Dúvidas? Entre em contato conosco através do sistema principal.
         </p>
       </footer>

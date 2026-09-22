@@ -424,7 +424,7 @@ export default function PendingApprovals() {
                     <Button
                       onClick={() => approveScholarshipMutation.mutate(user.id)}
                       disabled={isPendingApprove}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-primary hover:bg-primary-light"
                     >
                       {approveScholarshipMutation.isPending ? (
                         <>

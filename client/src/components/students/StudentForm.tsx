@@ -392,14 +392,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
 
 
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="bg-accent p-4 rounded-lg border border-primary">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
-                    <span className="material-icons text-blue-600 text-sm">info</span>
+                    <span className="material-icons text-accent-foreground text-sm">info</span>
                   </div>
                   <div className="ml-2">
-                    <h4 className="font-medium text-sm text-blue-800">Nota Importante</h4>
-                    <p className="text-sm text-blue-600 mt-1">
+                    <h4 className="font-medium text-sm text-accent-foreground">Nota Importante</h4>
+                    <p className="text-sm text-accent-foreground mt-1">
                       O plano pode ser alterado a qualquer momento. Mudanças entram em vigor no próximo ciclo de cobrança.
                     </p>
                   </div>

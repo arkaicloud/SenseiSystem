@@ -26,8 +26,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
   duration,
   attendees,
   onTakeAttendance,
-  bgColor = "bg-blue-100",
-  textColor = "text-blue-800",
+  bgColor = "bg-accent",
+  textColor = "text-accent-foreground",
 }) => {
   return (
     <div className="p-4 flex flex-col md:flex-row md:items-center md:justify-between">
@@ -40,7 +40,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
         </div>
         <div>
           <h4 className="font-medium">{name}</h4>
-          <p className="text-gray-500 text-sm">
+          <p className="text-muted-foreground text-sm">
             {instructor} • {duration} min
           </p>
         </div>
@@ -51,7 +51,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
           {attendees.slice(0, 3).map((attendee, index) => (
             <div
               key={index}
-              className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center"
+              className="w-8 h-8 rounded-full bg-muted border-2 border-white flex items-center justify-center"
               title={attendee.name}
             >
               <span className="text-xs font-medium">{attendee.initials}</span>

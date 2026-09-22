@@ -171,7 +171,7 @@ const PaymentPlans: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-foreground">{plan.name}</span>
                           {plan.isFamily && (
-                            <Badge className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-0 gap-1">
+                            <Badge className="text-xs bg-accent text-accent-foreground dark:bg-accent/40 dark:text-accent-foreground border-0 gap-1">
                               <Users className="w-3 h-3" />
                               Família · {plan.maxStudents || 2} alunos
                             </Badge>

@@ -24,19 +24,19 @@ export const Header = ({ title }: HeaderProps) => {
 
   return (
     <>
-      <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 flex items-center justify-between border-b border-gray-700 h-16 bg-gray-800">
+      <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 flex items-center justify-between border-b border-border h-16 bg-secondary">
         <div className="flex items-center space-x-3">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-gray-300 focus:outline-none"
+                className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-muted-foreground focus:outline-none"
               >
                 <span className="sr-only">Open sidebar</span>
                 <i className="fas fa-bars text-xl"></i>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-[250px] bg-gray-800 border-r border-gray-700">
+            <SheetContent side="left" className="p-0 w-[250px] bg-secondary border-r border-border">
               <Sidebar />
             </SheetContent>
           </Sheet>

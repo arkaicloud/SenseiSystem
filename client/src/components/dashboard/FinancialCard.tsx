@@ -45,15 +45,15 @@ export function FinancialCard() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Visão Financeira</span>
-            <div className="animate-pulse bg-gray-200 rounded w-16 h-4"></div>
+            <div className="animate-pulse bg-muted rounded w-16 h-4"></div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded w-32"></div>
+                <div className="h-4 bg-muted rounded w-24 mb-2"></div>
+                <div className="h-6 bg-muted rounded w-32"></div>
               </div>
             ))}
           </div>

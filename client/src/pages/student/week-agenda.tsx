@@ -79,8 +79,8 @@ export default function WeekAgendaPage() {
       <div className="space-y-6 p-4 md:p-6">
         <div className="text-center py-8">
           <div className="animate-pulse flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#2B54FF]/20"></div>
-            <div className="h-4 w-48 bg-gray-200 rounded"></div>
+            <div className="w-12 h-12 rounded-full bg-primary/20"></div>
+            <div className="h-4 w-48 bg-muted rounded"></div>
           </div>
         </div>
       </div>

@@ -101,21 +101,21 @@ export default function MedicalCertificateUpload({
 
   if (isLoading && !data) {
     return (
-      <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
+      <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
         Carregando informações do atestado...
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+    <div className="rounded-xl border border-border bg-card p-4 dark:border-border dark:bg-background">
       <div className="flex items-start gap-3">
         <div className={`mt-0.5 rounded-lg p-2 ${isPending ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"}`}>
           {isPending ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-gray-100">
+            <h4 className="text-sm font-semibold text-foreground dark:text-foreground">
               Atestado médico
             </h4>
             {isPending ? (
@@ -128,7 +128,7 @@ export default function MedicalCertificateUpload({
               </span>
             )}
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-muted-foreground dark:text-muted-foreground">
             {isPending
               ? "Envie uma foto legível ou um PDF para resolver esta pendência."
               : "O documento foi enviado e poderá ser conferido pela escola."}
@@ -139,11 +139,11 @@ export default function MedicalCertificateUpload({
               href={currentDocument.downloadUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-3 inline-flex max-w-full items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700 hover:bg-slate-100 dark:bg-gray-800 dark:text-gray-200"
+              className="mt-3 inline-flex max-w-full items-center gap-2 rounded-lg bg-background px-3 py-2 text-xs text-secondary-foreground hover:bg-muted dark:bg-card dark:text-foreground"
             >
               <FileText className="h-4 w-4 flex-shrink-0 text-indigo-500" />
               <span className="truncate">{currentDocument.name}</span>
-              <span className="flex-shrink-0 text-slate-400">({formatFileSize(currentDocument.size)})</span>
+              <span className="flex-shrink-0 text-muted-foreground">({formatFileSize(currentDocument.size)})</span>
               <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
             </a>
           )}
@@ -161,7 +161,7 @@ export default function MedicalCertificateUpload({
                   onChange={handleFile}
                 />
               </label>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-background has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60 dark:border-border dark:text-foreground dark:hover:bg-card">
                 <Camera className="h-4 w-4" />
                 Tirar foto
                 <input
@@ -178,11 +178,11 @@ export default function MedicalCertificateUpload({
           )}
 
           {isCameraOpen && (
-            <p className="mt-2 text-[11px] text-slate-400">
+            <p className="mt-2 text-[11px] text-muted-foreground">
               Se o dispositivo não abrir a câmera, escolha uma imagem da galeria.
             </p>
           )}
-          <p className="mt-2 text-[11px] text-slate-400">PDF, PNG ou JPEG até 10 MB.</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">PDF, PNG ou JPEG até 10 MB.</p>
         </div>
       </div>
     </div>

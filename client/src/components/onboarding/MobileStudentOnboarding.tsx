@@ -258,33 +258,33 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
               <CheckCircle className="w-10 h-10 text-green-400" />
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Cadastro Enviado!</h3>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
               O cadastro de <span className="text-white font-medium">{lastSubmittedName}</span> foi enviado para aprovação. Um e-mail será enviado quando aprovado.
             </p>
           </div>
 
           {canAddMore && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5 mb-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#2B54FF]/20 border border-[#2B54FF]/30 flex items-center justify-center shrink-0">
-                  <Users className="w-5 h-5 text-[#2B54FF]" />
+                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-[#2B54FF]/30 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">Plano Família</p>
-                  <p className="text-slate-400 text-xs">
+                  <p className="text-muted-foreground text-xs">
                     {registeredCount} de {maxStudents} alunos cadastrados
                   </p>
                 </div>
               </div>
               <div className="w-full bg-white/10 rounded-full h-1.5 mb-4">
                 <div
-                  className="bg-[#2B54FF] h-1.5 rounded-full transition-all"
+                  className="bg-primary h-1.5 rounded-full transition-all"
                   style={{ width: `${(registeredCount / maxStudents) * 100}%` }}
                 />
               </div>
               <button
                 onClick={startNextFamilyStudent}
-                className="w-full h-12 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Adicionar outro aluno
@@ -295,7 +295,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
           {/* Nova matrícula (always visible, secondary) */}
           <button
             onClick={() => { setSuccess(false); setFamilyPrefill(null); setFormData({}); setHealthData(null); setSignatureData(null); setSubmitError(null); setCurrentStep(1); }}
-            className="w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 mb-3"
+            className="w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10 mb-3"
           >
             <Plus className="w-4 h-4" />
             Nova matrícula
@@ -303,7 +303,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
 
           <button
             onClick={handleDone}
-            className="w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10"
+            className="w-full h-12 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar ao menu
@@ -327,10 +327,10 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col">
       {/* Sticky header */}
-      <div className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-white/10 px-4 pt-safe-top pt-3 pb-3">
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-white/10 px-4 pt-safe-top pt-3 pb-3">
         {familyPrefill && (
-          <div className="flex items-center gap-2 mb-2 bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-lg px-3 py-1.5">
-            <Users className="w-3.5 h-3.5 text-[#2B54FF] shrink-0" />
+          <div className="flex items-center gap-2 mb-2 bg-primary/10 border border-[#2B54FF]/20 rounded-lg px-3 py-1.5">
+            <Users className="w-3.5 h-3.5 text-primary shrink-0" />
             <p className="text-xs text-[#7B9FFF]">
               Plano Família — aluno {familyPrefill.registeredCount + 1} de {familyPrefill.maxStudents}
             </p>
@@ -339,18 +339,18 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
         <div className="flex items-center justify-between mb-2.5">
           <button
             onClick={currentStep === 1 ? onBack : goBack}
-            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:bg-white/10 transition-colors"
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="text-center">
-            <p className="text-xs text-slate-400 font-medium">{stepTitles[currentStep - 1]}</p>
+            <p className="text-xs text-muted-foreground font-medium">{stepTitles[currentStep - 1]}</p>
           </div>
-          <div className="text-xs text-slate-500 font-medium w-9 text-right">
+          <div className="text-xs text-muted-foreground font-medium w-9 text-right">
             {currentStep}/{totalSteps}
           </div>
         </div>
-        <Progress value={progressPercentage} className="h-1 bg-white/10 [&>div]:bg-[#2B54FF]" />
+        <Progress value={progressPercentage} className="h-1 bg-white/10 [&>div]:bg-primary" />
       </div>
 
       {/* Error */}
@@ -418,7 +418,7 @@ export default function MobileStudentOnboarding({ onBack, onSuccess }: MobileStu
 
       {/* Loading overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center">
             <div className="w-12 h-12 border-2 border-[#2B54FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-white text-sm font-medium">Finalizando cadastro...</p>

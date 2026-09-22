@@ -141,7 +141,7 @@ export default function InstructorDashboard() {
                     <Badge variant="outline" className="text-xs">
                       <Users className="h-3 w-3 mr-1" /> {cls.maxStudents ?? '—'} vagas
                     </Badge>
-                    <Badge className="text-xs bg-blue-100 text-blue-800">
+                    <Badge className="text-xs bg-accent text-accent-foreground">
                       {cls.classType === 'infantil' ? 'Infantil'
                         : cls.classType === 'feminino' ? 'Feminino'
                         : cls.classType === 'masculino' ? 'Masculino'

@@ -26,7 +26,7 @@ export function RosterRow({ student: s, onStatusChange, readOnly = false }: Rost
       className={`px-3 py-1 rounded-md border text-xs font-medium transition-colors ${
         s.status === value 
           ? color 
-          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+          : 'bg-card dark:bg-card text-secondary-foreground dark:text-secondary-foreground border-border dark:border-border hover:bg-background dark:hover:bg-muted'
       } ${readOnly ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
       data-testid={`status-button-${value}-${s.student_id}`}
     >
@@ -35,20 +35,20 @@ export function RosterRow({ student: s, onStatusChange, readOnly = false }: Rost
   );
 
   return (
-    <tr className="border-t dark:border-slate-700">
+    <tr className="border-t dark:border-border">
       <td className="py-3 px-2">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium">
+          <div className="w-8 h-8 rounded-full bg-muted dark:bg-muted flex items-center justify-center text-xs font-medium">
             {s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
           </div>
           
           {/* Name and belt */}
           <div>
-            <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+            <div className="font-medium text-sm text-foreground dark:text-foreground">
               {s.name}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <div className="text-xs text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
               <span>Faixa {s.belt_level}</span>
               {s.confirmed && (
                 <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
@@ -72,7 +72,7 @@ export function RosterRow({ student: s, onStatusChange, readOnly = false }: Rost
           {s.status && !readOnly && (
             <button
               onClick={() => onStatusChange(null)}
-              className="px-3 py-1 rounded-md border text-xs font-medium bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200 transition-colors"
+              className="px-3 py-1 rounded-md border text-xs font-medium bg-muted text-secondary-foreground border-border hover:bg-muted transition-colors"
               data-testid={`status-button-clear-${s.student_id}`}
             >
               Limpar

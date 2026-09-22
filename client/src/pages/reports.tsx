@@ -95,7 +95,7 @@ const Reports: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">{t('reports')}</h1>
-          <p className="text-gray-600">Analytics and activity tracking</p>
+          <p className="text-secondary-foreground">Analytics and activity tracking</p>
         </div>
         <div className="mt-4 md:mt-0 flex">
           <Button
@@ -138,7 +138,7 @@ const Reports: React.FC = () => {
               {activityLogsLoading ? (
                 <div className="text-center py-8">Loading activity logs...</div>
               ) : activityLogs.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No activity logs found</div>
+                <div className="text-center py-8 text-muted-foreground">No activity logs found</div>
               ) : (
                 <div className="space-y-4">
                   {activityLogs.map((log: any) => {
@@ -148,18 +148,18 @@ const Reports: React.FC = () => {
                       <div key={log.id} className="border-b pb-4 last:border-0">
                         <div className="flex items-start">
                           <div className="flex-none">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <span className="material-icons text-blue-600">info</span>
+                            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
+                              <span className="material-icons text-accent-foreground">info</span>
                             </div>
                           </div>
                           <div className="ml-4">
-                            <p className="text-gray-800" dangerouslySetInnerHTML={{ __html: sanitizeHTML(log.activity) }} />
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-foreground" dangerouslySetInnerHTML={{ __html: sanitizeHTML(log.activity) }} />
+                            <p className="text-sm text-muted-foreground mt-1">
                               {formatDate(date)} at {date.toLocaleTimeString()}
                             </p>
                             {log.entityType && (
                               <div className="mt-2">
-                                <span className="inline-block bg-gray-100 rounded-full px-3 py-1 text-xs text-gray-600">
+                                <span className="inline-block bg-muted rounded-full px-3 py-1 text-xs text-secondary-foreground">
                                   {log.entityType}
                                 </span>
                               </div>
@@ -185,7 +185,7 @@ const Reports: React.FC = () => {
                     <AlertTriangle className="h-5 w-5 text-red-500" />
                     Erros técnicos
                   </CardTitle>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Exceções e respostas HTTP 500 registradas automaticamente.
                   </p>
                 </div>
@@ -211,7 +211,7 @@ const Reports: React.FC = () => {
               {systemLogsLoading ? (
                 <div className="py-8 text-center">Carregando logs...</div>
               ) : systemLogs.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">
+                <div className="py-8 text-center text-muted-foreground">
                   Nenhum erro registrado neste período.
                 </div>
               ) : (
@@ -222,13 +222,13 @@ const Reports: React.FC = () => {
                         <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-semibold uppercase text-red-700 dark:bg-red-900 dark:text-red-200">
                           {entry.level}
                         </span>
-                        <span className="font-mono text-xs text-gray-500">{entry.requestId || `log-${entry.id}`}</span>
-                        <span className="ml-auto text-xs text-gray-500">
+                        <span className="font-mono text-xs text-muted-foreground">{entry.requestId || `log-${entry.id}`}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">
                           {new Date(entry.createdAt).toLocaleString("pt-BR")}
                         </span>
                       </div>
-                      <p className="mt-3 font-medium text-gray-900 dark:text-gray-100">{entry.message}</p>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <p className="mt-3 font-medium text-foreground dark:text-foreground">{entry.message}</p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-secondary-foreground dark:text-muted-foreground">
                         {entry.method && <span>{entry.method} {entry.path}</span>}
                         {entry.statusCode && <span>Status: {entry.statusCode}</span>}
                         {entry.durationMs !== null && <span>Duração: {entry.durationMs} ms</span>}
@@ -237,10 +237,10 @@ const Reports: React.FC = () => {
                       </div>
                       {entry.stack && (
                         <details className="mt-3">
-                          <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <summary className="cursor-pointer text-sm font-medium text-secondary-foreground dark:text-secondary-foreground">
                             Ver detalhes técnicos
                           </summary>
-                          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-gray-950 p-3 text-xs text-gray-100">
+                          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-background p-3 text-xs text-muted-foreground">
                             {entry.stack}
                           </pre>
                         </details>
@@ -266,22 +266,22 @@ const Reports: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <div className="text-sm font-medium text-gray-500">Period:</div>
+                      <div className="text-sm font-medium text-muted-foreground">Period:</div>
                       <div className="flex border rounded-md overflow-hidden">
                         <button 
-                          className={`px-3 py-1 text-sm ${periodFilter === 'week' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                          className={`px-3 py-1 text-sm ${periodFilter === 'week' ? 'bg-primary text-primary-foreground' : 'bg-card dark:bg-muted text-secondary-foreground dark:text-secondary-foreground'}`}
                           onClick={() => setPeriodFilter('week')}
                         >
                           Week
                         </button>
                         <button 
-                          className={`px-3 py-1 text-sm ${periodFilter === 'month' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                          className={`px-3 py-1 text-sm ${periodFilter === 'month' ? 'bg-primary text-primary-foreground' : 'bg-card dark:bg-muted text-secondary-foreground dark:text-secondary-foreground'}`}
                           onClick={() => setPeriodFilter('month')}
                         >
                           Month
                         </button>
                         <button 
-                          className={`px-3 py-1 text-sm ${periodFilter === 'year' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                          className={`px-3 py-1 text-sm ${periodFilter === 'year' ? 'bg-primary text-primary-foreground' : 'bg-card dark:bg-muted text-secondary-foreground dark:text-secondary-foreground'}`}
                           onClick={() => setPeriodFilter('year')}
                         >
                           Year
@@ -290,30 +290,30 @@ const Reports: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-50 p-4 rounded-lg text-center">
-                        <div className="text-3xl font-bold text-blue-600">
+                      <div className="bg-accent p-4 rounded-lg text-center">
+                        <div className="text-3xl font-bold text-accent-foreground">
                           {attendanceRecords.length}
                         </div>
-                        <div className="text-sm text-gray-600">Total Check-ins</div>
+                        <div className="text-sm text-secondary-foreground">Total Check-ins</div>
                       </div>
                       <div className="bg-green-50 p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold text-green-600">76%</div>
-                        <div className="text-sm text-gray-600">Avg. Attendance Rate</div>
+                        <div className="text-sm text-secondary-foreground">Avg. Attendance Rate</div>
                       </div>
                     </div>
 
                     <div className="mt-4">
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">Attendance by Belt Level</h3>
+                      <h3 className="text-sm font-medium text-secondary-foreground mb-2">Attendance by Belt Level</h3>
                       <div className="space-y-2">
                         {beltStats.map((stat: any) => (
                           <div key={stat.belt} className="flex items-center">
                             <BeltWithLabel level={stat.belt as any} size="sm" className="min-w-16" />
                             <div className="ml-2 w-full">
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="w-full bg-muted rounded-full h-2">
                                 <div 
                                   className={`${
-                                    stat.belt === 'white' ? 'bg-gray-400' :
-                                    stat.belt === 'blue' ? 'bg-blue-500' :
+                                    stat.belt === 'white' ? 'bg-secondary' :
+                                    stat.belt === 'blue' ? 'bg-primary' :
                                     stat.belt === 'purple' ? 'bg-purple-600' :
                                     stat.belt === 'brown' ? 'bg-yellow-800' :
                                     'bg-black'
@@ -322,7 +322,7 @@ const Reports: React.FC = () => {
                                 ></div>
                               </div>
                             </div>
-                            <div className="ml-2 text-sm text-gray-600 min-w-10 text-right">
+                            <div className="ml-2 text-sm text-secondary-foreground min-w-10 text-right">
                               {stat.percentage}%
                             </div>
                           </div>
@@ -339,7 +339,7 @@ const Reports: React.FC = () => {
                 <CardTitle>Attendance Trends</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-20 text-gray-500">
+                <div className="text-center py-20 text-muted-foreground">
                   Attendance trend charts coming soon
                 </div>
               </CardContent>
@@ -355,45 +355,45 @@ const Reports: React.FC = () => {
                 <div className="text-center py-8">Loading student data...</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-background">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Student
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Belt Level
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Attendance Rate
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Last Class
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Contact
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card dark:bg-card divide-y divide-border dark:divide-border">
                       {students
                         .filter((student: any) => (student.attendanceRate || 0) < 50)
                         .slice(0, 5)
                         .map((student: any) => (
-                          <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <tr key={student.id} className="hover:bg-background dark:hover:bg-muted">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                  <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
+                                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted dark:bg-muted flex items-center justify-center">
+                                  <span className="font-medium text-sm text-secondary-foreground dark:text-foreground">
                                     {student.user.firstName.charAt(0)}
                                     {student.user.lastName.charAt(0)}
                                   </span>
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  <div className="text-sm font-medium text-foreground dark:text-foreground">
                                     {student.user.firstName} {student.user.lastName}
                                   </div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  <div className="text-sm text-muted-foreground dark:text-muted-foreground">
                                     {student.user.email}
                                   </div>
                                 </div>
@@ -404,7 +404,7 @@ const Reports: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
+                                <div className="w-24 bg-muted dark:bg-muted rounded-full h-2 mr-2">
                                   <div 
                                     className="bg-status-danger h-2 rounded-full" 
                                     style={{ width: `${student.attendanceRate || 30}%` }}
@@ -413,7 +413,7 @@ const Reports: React.FC = () => {
                                 <span className="text-sm">{student.attendanceRate || 30}%</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
                               2 weeks ago
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -446,7 +446,7 @@ const Reports: React.FC = () => {
                 <div className="text-3xl font-bold text-primary">
                   {formatCurrency(totalRevenue)}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">All time paid payments</p>
+                <p className="text-sm text-muted-foreground mt-1">All time paid payments</p>
               </CardContent>
             </Card>
 
@@ -458,7 +458,7 @@ const Reports: React.FC = () => {
                 <div className="text-3xl font-bold text-status-warning">
                   {formatCurrency(pendingRevenue)}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Awaiting payment</p>
+                <p className="text-sm text-muted-foreground mt-1">Awaiting payment</p>
               </CardContent>
             </Card>
 
@@ -470,7 +470,7 @@ const Reports: React.FC = () => {
                 <div className="text-3xl font-bold text-status-danger">
                   {formatCurrency(overdueRevenue)}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Past due date</p>
+                <p className="text-sm text-muted-foreground mt-1">Past due date</p>
               </CardContent>
             </Card>
           </div>
@@ -480,7 +480,7 @@ const Reports: React.FC = () => {
               <CardTitle>Payment Plan Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-20 text-gray-500">
+              <div className="text-center py-20 text-muted-foreground">
                 Payment plan distribution charts coming soon
               </div>
             </CardContent>
@@ -495,39 +495,39 @@ const Reports: React.FC = () => {
                 <div className="text-center py-8">Loading payment data...</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
+                  <table className="min-w-full divide-y divide-border dark:divide-border">
+                    <thead className="bg-background dark:bg-muted">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Student
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Plan
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Amount
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Date
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card dark:bg-card divide-y divide-border dark:divide-border">
                       {payments.slice(0, 10).map((payment: any) => (
-                        <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <tr key={payment.id} className="hover:bg-background dark:hover:bg-muted">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <div className="text-sm font-medium text-foreground dark:text-foreground">
                               {payment.student.user.firstName} {payment.student.user.lastName}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 dark:text-gray-100">{payment.plan.name}</div>
+                            <div className="text-sm text-foreground dark:text-foreground">{payment.plan.name}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <div className="text-sm font-medium text-foreground dark:text-foreground">
                               {formatCurrency(payment.amount)}
                             </div>
                           </td>
@@ -540,7 +540,7 @@ const Reports: React.FC = () => {
                               {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
                             {payment.status === 'paid' && payment.paidDate 
                               ? formatDateShort(new Date(payment.paidDate))
                                : formatDateShort(parseCalendarDateAsLocal(payment.dueDate))}
@@ -562,7 +562,7 @@ const Reports: React.FC = () => {
                 <CardTitle>Student Demographics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-20 text-gray-500">
+                <div className="text-center py-20 text-muted-foreground">
                   Student demographic charts coming soon
                 </div>
               </CardContent>
@@ -574,7 +574,7 @@ const Reports: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Belt Distribution</h3>
+                  <h3 className="text-sm font-medium text-secondary-foreground mb-2">Belt Distribution</h3>
                   <div className="space-y-4">
                     {beltStats.map((stat: any) => (
                       <div key={stat.belt} className="space-y-2">
@@ -584,14 +584,14 @@ const Reports: React.FC = () => {
                           </div>
                           <div className="flex items-center">
                             <span className="font-medium">{stat.count}</span>
-                            <span className="ml-2 text-sm text-gray-500">({stat.percentage}%)</span>
+                            <span className="ml-2 text-sm text-muted-foreground">({stat.percentage}%)</span>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-2">
                           <div 
                             className={`${
-                              stat.belt === 'white' ? 'bg-gray-400' :
-                              stat.belt === 'blue' ? 'bg-blue-500' :
+                              stat.belt === 'white' ? 'bg-secondary' :
+                              stat.belt === 'blue' ? 'bg-primary' :
                               stat.belt === 'purple' ? 'bg-purple-600' :
                               stat.belt === 'brown' ? 'bg-yellow-800' :
                               'bg-black'
@@ -604,7 +604,7 @@ const Reports: React.FC = () => {
                   </div>
 
                   <div className="mt-8">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Upcoming Belt Tests</h3>
+                    <h3 className="text-sm font-medium text-secondary-foreground mb-2">Upcoming Belt Tests</h3>
                     <div className="space-y-2">
                       <div className="p-3 border rounded-lg flex justify-between items-center">
                         <div>
@@ -613,7 +613,7 @@ const Reports: React.FC = () => {
                             <span className="mx-2">→</span>
                             <BeltWithLabel level="blue" size="sm" />
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">5 students eligible</p>
+                          <p className="text-xs text-muted-foreground mt-1">5 students eligible</p>
                         </div>
                         <div className="text-sm font-medium">Nov 15, 2023</div>
                       </div>
@@ -625,7 +625,7 @@ const Reports: React.FC = () => {
                             <span className="mx-2">→</span>
                             <BeltWithLabel level="purple" size="sm" />
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">3 students eligible</p>
+                          <p className="text-xs text-muted-foreground mt-1">3 students eligible</p>
                         </div>
                         <div className="text-sm font-medium">Dec 05, 2023</div>
                       </div>
@@ -637,7 +637,7 @@ const Reports: React.FC = () => {
                             <span className="mx-2">→</span>
                             <BeltWithLabel level="brown" size="sm" />
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">2 students eligible</p>
+                          <p className="text-xs text-muted-foreground mt-1">2 students eligible</p>
                         </div>
                         <div className="text-sm font-medium">Jan 10, 2024</div>
                       </div>

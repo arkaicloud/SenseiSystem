@@ -126,11 +126,11 @@ export default function GuardianManagementPage() {
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Users className="w-6 h-6 text-[#2B54FF]" />
+          <h1 className="text-2xl font-bold text-foreground dark:text-foreground flex items-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
             Planos Família
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Vincule alunos a responsáveis para gerenciamento de planos família.
           </p>
         </div>
@@ -150,27 +150,27 @@ export default function GuardianManagementPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-gray-500 mb-1">Total de alunos</p>
-            <p className="text-2xl font-bold text-gray-900">{students.length}</p>
+            <p className="text-xs text-muted-foreground mb-1">Total de alunos</p>
+            <p className="text-2xl font-bold text-foreground">{students.length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-gray-500 mb-1">Com responsável</p>
-            <p className="text-2xl font-bold text-[#2B54FF]">{students.filter(s => s.guardianId).length}</p>
+            <p className="text-xs text-muted-foreground mb-1">Com responsável</p>
+            <p className="text-2xl font-bold text-primary">{students.filter(s => s.guardianId).length}</p>
           </CardContent>
         </Card>
         <Card className="col-span-2 md:col-span-1">
           <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-gray-500 mb-1">Sem responsável</p>
-            <p className="text-2xl font-bold text-gray-400">{students.filter(s => !s.guardianId).length}</p>
+            <p className="text-xs text-muted-foreground mb-1">Sem responsável</p>
+            <p className="text-2xl font-bold text-muted-foreground">{students.filter(s => !s.guardianId).length}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por aluno ou responsável..."
           value={search}
@@ -182,14 +182,14 @@ export default function GuardianManagementPage() {
 
       {isLoadingStudents ? (
         <div className="space-y-2">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-muted rounded-xl animate-pulse" />)}
         </div>
       ) : (
         <>
           {/* With guardian */}
           {withGuardian.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
                 <UserCheck className="w-4 h-4" />
                 Vinculados ({withGuardian.length})
               </h2>
@@ -198,11 +198,11 @@ export default function GuardianManagementPage() {
                   <Card key={s.id} className="border-l-4" style={{ borderLeftColor: "#2B54FF" }}>
                     <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                        <p className="font-semibold text-sm text-foreground dark:text-foreground truncate">
                           {s.firstName} {s.lastName}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                          <Link2 className="w-3 h-3 text-[#2B54FF]" />
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Link2 className="w-3 h-3 text-primary" />
                           {s.guardianName} · {s.guardianEmail}
                         </p>
                       </div>
@@ -236,7 +236,7 @@ export default function GuardianManagementPage() {
           {/* Without guardian */}
           {withoutGuardian.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 mt-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 mt-4">
                 Sem responsável ({withoutGuardian.length})
               </h2>
               <div className="space-y-2">
@@ -244,17 +244,17 @@ export default function GuardianManagementPage() {
                   <Card key={s.id} className="border-l-4 border-l-gray-200 dark:border-l-gray-600">
                     <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                        <p className="font-semibold text-sm text-foreground dark:text-foreground truncate">
                           {s.firstName} {s.lastName}
                         </p>
-                        <Badge variant="outline" className="text-xs mt-0.5 text-gray-400">
+                        <Badge variant="outline" className="text-xs mt-0.5 text-muted-foreground">
                           Individual
                         </Badge>
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="ml-3 flex items-center gap-1 text-[#2B54FF] border-[#2B54FF]"
+                        className="ml-3 flex items-center gap-1 text-primary border-[#2B54FF]"
                         onClick={() => openLinkDialog(s)}
                         data-testid={`button-link-${s.id}`}
                       >
@@ -270,8 +270,8 @@ export default function GuardianManagementPage() {
 
           {filtered.length === 0 && (
             <div className="text-center py-12">
-              <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400">Nenhum aluno encontrado.</p>
+              <Users className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">Nenhum aluno encontrado.</p>
             </div>
           )}
         </>
@@ -289,7 +289,7 @@ export default function GuardianManagementPage() {
           </DialogHeader>
 
           <div className="py-2">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Responsável</label>
+            <label className="text-sm font-medium text-secondary-foreground mb-2 block">Responsável</label>
             <Select value={selectedGuardianId} onValueChange={setSelectedGuardianId}>
               <SelectTrigger data-testid="select-guardian">
                 <SelectValue placeholder="Selecione o responsável..." />
@@ -299,7 +299,7 @@ export default function GuardianManagementPage() {
                   <SelectItem key={g.id} value={String(g.id)}>
                     {g.firstName} {g.lastName}
                     {g.role === "guardian" && (
-                      <span className="ml-2 text-xs text-[#2B54FF]">(Responsável)</span>
+                      <span className="ml-2 text-xs text-primary">(Responsável)</span>
                     )}
                   </SelectItem>
                 ))}

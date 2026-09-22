@@ -94,8 +94,8 @@ const StreakTracker = () => {
     if (streak >= 30) return "text-orange-500";
     if (streak >= 14) return "text-red-500";
     if (streak >= 7) return "text-yellow-500";
-    if (streak >= 3) return "text-blue-500";
-    return "text-gray-500";
+    if (streak >= 3) return "text-accent-foreground";
+    return "text-muted-foreground";
   };
 
   const getStreakEmoji = (streak: number) => {

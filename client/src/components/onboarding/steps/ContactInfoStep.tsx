@@ -19,8 +19,8 @@ interface ContactInfoStepProps {
   defaultValues?: Partial<ContactInfoType>;
 }
 
-const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
-const labelCls = "text-slate-300 text-sm font-medium";
+const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-muted-foreground text-sm font-medium";
 
 export default function ContactInfoStep({ onNext, onBack, defaultValues }: ContactInfoStepProps) {
   const form = useForm<ContactInfoType>({
@@ -39,15 +39,15 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onNext)} className="flex flex-col pb-6">
         <div className="px-6 pt-8 pb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
-            <Phone className="w-6 h-6 text-[#2B54FF]" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+            <Phone className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-2xl font-bold text-white">Contato</h2>
-          <p className="text-sm text-slate-400 mt-1">Como podemos entrar em contato com você?</p>
+          <p className="text-sm text-muted-foreground mt-1">Como podemos entrar em contato com você?</p>
         </div>
 
         <div className="px-6 space-y-5">
-          <div className="bg-[#2B54FF]/10 border border-[#2B54FF]/20 rounded-xl p-3 text-xs text-[#7B9FFF] leading-relaxed">
+          <div className="bg-primary/10 border border-[#2B54FF]/20 rounded-xl p-3 text-xs text-[#7B9FFF] leading-relaxed">
             <span className="font-semibold">Para menores de idade:</span> o e-mail pode ser deixado em branco. O acesso será feito pelo e-mail do responsável financeiro.
           </div>
           <FormField
@@ -55,7 +55,7 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className={labelCls}>E-mail <span className="text-slate-500 font-normal">(opcional para menores)</span></FormLabel>
+                <FormLabel className={labelCls}>E-mail <span className="text-muted-foreground font-normal">(opcional para menores)</span></FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="seu@email.com" {...field} className={inputCls} />
                 </FormControl>
@@ -85,10 +85,10 @@ export default function ContactInfoStep({ onNext, onBack, defaultValues }: Conta
           />
 
           <div className="pt-2 space-y-3">
-            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base">
               Continuar <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 rounded-2xl text-sm">
+            <Button type="button" onClick={onBack} className="w-full h-12 bg-transparent border border-white/15 text-muted-foreground hover:bg-white/5 rounded-2xl text-sm">
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
           </div>

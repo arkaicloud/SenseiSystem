@@ -24,7 +24,7 @@ export const StatsCard = ({
   const getChangeColor = () => {
     if (changeDirection === 'up') return 'text-green-500';
     if (changeDirection === 'down') return 'text-red-500';
-    return 'text-gray-400';
+    return 'text-muted-foreground';
   };
   
   const getChangeIcon = () => {
@@ -34,13 +34,13 @@ export const StatsCard = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-md p-6">
+    <div className="bg-secondary rounded-xl shadow-md p-6">
       <div className="flex items-center">
         <div className={`flex-shrink-0 p-3 rounded-md ${iconBgColor}`}>
           <i className={`${icon} ${iconColor}`}></i>
         </div>
         <div className="ml-4">
-          <h2 className="text-sm font-medium text-gray-400">{title}</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
           <p className="text-2xl font-semibold text-white">{value}</p>
         </div>
       </div>
@@ -53,7 +53,7 @@ export const StatsCard = ({
                 {changeValue}
               </span>
             )}
-            {changeText && <span className="text-gray-400 ml-2">{changeText}</span>}
+            {changeText && <span className="text-muted-foreground ml-2">{changeText}</span>}
           </div>
         </div>
       )}

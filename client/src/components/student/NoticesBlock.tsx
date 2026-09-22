@@ -63,9 +63,9 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
       case 'MEDIUM':
         return <MessageCircle className="w-4 h-4 text-yellow-500" />;
       case 'LOW':
-        return <Info className="w-4 h-4 text-blue-500" />;
+        return <Info className="w-4 h-4 text-accent-foreground" />;
       default:
-        return <Bell className="w-4 h-4 text-gray-500" />;
+        return <Bell className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -76,9 +76,9 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
       case 'MEDIUM':
         return "bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800";
       case 'LOW':
-        return "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800";
+        return "bg-accent border-primary dark:bg-accent dark:border-primary";
       default:
-        return "bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800";
+        return "bg-background border-border dark:bg-background dark:border-border";
     }
   };
 
@@ -126,8 +126,8 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-full"></div>
               </div>
             ))}
           </div>
@@ -147,8 +147,8 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
-            <Bell className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">
+            <Bell className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground dark:text-muted-foreground">
               Nenhum aviso recente disponível.
             </p>
           </div>
@@ -190,13 +190,13 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
               </Badge>
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 max-h-16 overflow-y-auto custom-scrollbar-sm">
+            <div className="text-sm text-secondary-foreground dark:text-secondary-foreground mb-3 max-h-16 overflow-y-auto custom-scrollbar-sm">
               <p className="leading-relaxed">
                 {createPreviewText(notice.content, 200)}
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted-foreground dark:text-muted-foreground">
               <span className="truncate">{formatDate(notice.publishAt)}</span>
               {notice.eventAt && (
                 <div className="flex items-center gap-1 shrink-0">
@@ -214,12 +214,12 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
 
             {!notice.readAt && (
               <div className="mt-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full inline-block mr-2"></div>
-                <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Novo</span>
+                <div className="w-2 h-2 bg-primary rounded-full inline-block mr-2"></div>
+                <span className="text-xs text-accent-foreground dark:text-accent-foreground font-medium">Novo</span>
               </div>
             )}
 
-            <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+            <div className="mt-2 text-xs text-muted-foreground dark:text-muted-foreground">
               Clique para ver detalhes
             </div>
           </div>
@@ -241,7 +241,7 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
                 </Badge>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground dark:text-muted-foreground">
               <span className="break-words">Publicado {selectedNotice && formatDate(selectedNotice.publishAt)}</span>
               {selectedNotice?.eventAt && (
                 <div className="flex items-center gap-1">
@@ -261,16 +261,16 @@ export const NoticesBlock = ({ studentId, primaryColor = "#3b82f6", limit = 3 }:
             <div className="mt-4 px-1 overflow-y-auto flex-1 max-h-[60vh] custom-scrollbar">
               <RichContent 
                 content={selectedNotice?.content || ''}
-                className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed break-words"
+                className="text-sm sm:text-base text-secondary-foreground dark:text-secondary-foreground leading-relaxed break-words"
               />
 
               {selectedNotice?.eventAt && (
-                <div className="mt-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="mt-6 p-3 sm:p-4 bg-accent dark:bg-accent rounded-lg border border-primary dark:border-primary">
                   <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
-                    <h4 className="font-medium text-sm sm:text-base text-blue-900 dark:text-blue-100">Informações do Evento</h4>
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-accent-foreground dark:text-accent-foreground" />
+                    <h4 className="font-medium text-sm sm:text-base text-accent-foreground dark:text-accent-foreground">Informações do Evento</h4>
                   </div>
-                  <p className="text-sm sm:text-base text-blue-800 dark:text-blue-200 break-words">
+                  <p className="text-sm sm:text-base text-accent-foreground dark:text-accent-foreground break-words">
                     <strong>Data:</strong> {new Date(selectedNotice.eventAt).toLocaleDateString('pt-BR', {
                       weekday: 'long',
                       year: 'numeric',

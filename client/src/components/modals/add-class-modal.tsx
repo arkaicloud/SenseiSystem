@@ -70,10 +70,10 @@ export const AddClassModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px] bg-gray-800 text-white border-gray-700">
+      <DialogContent className="sm:max-w-[525px] bg-secondary text-white border-border">
         <DialogHeader>
           <DialogTitle>{t('class.addClass')}</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             {t('class.classInfo')}
           </DialogDescription>
         </DialogHeader>
@@ -90,7 +90,7 @@ export const AddClassModal = ({
                     <Input 
                       placeholder={t('class.fundamentals')} 
                       {...field} 
-                      className="bg-gray-900 border-gray-700 text-white"
+                      className="bg-background border-border text-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -109,7 +109,7 @@ export const AddClassModal = ({
                       <Input 
                         type="date" 
                         {...field} 
-                        className="bg-gray-900 border-gray-700 text-white"
+                        className="bg-background border-border text-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -128,11 +128,11 @@ export const AddClassModal = ({
                       value={field.value || 'all'}
                     >
                       <FormControl>
-                        <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                        <SelectTrigger className="bg-background border-border text-white">
                           <SelectValue placeholder={t('class.allLevels')} />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-gray-900 border-gray-700 text-white">
+                      <SelectContent className="bg-background border-border text-white">
                         <SelectItem value="all">{t('class.allLevels')}</SelectItem>
                         <SelectItem value="white+">{t('student.whiteBelt')}+</SelectItem>
                         <SelectItem value="blue+">{t('student.blueBelt')}+</SelectItem>
@@ -156,7 +156,7 @@ export const AddClassModal = ({
                       <Input 
                         type="time" 
                         {...field} 
-                        className="bg-gray-900 border-gray-700 text-white"
+                        className="bg-background border-border text-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -174,7 +174,7 @@ export const AddClassModal = ({
                       <Input 
                         type="time" 
                         {...field} 
-                        className="bg-gray-900 border-gray-700 text-white"
+                        className="bg-background border-border text-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -193,7 +193,7 @@ export const AddClassModal = ({
                         type="number" 
                         min="1"
                         {...field} 
-                        className="bg-gray-900 border-gray-700 text-white"
+                        className="bg-background border-border text-white"
                       />
                     </FormControl>
                     <FormMessage />

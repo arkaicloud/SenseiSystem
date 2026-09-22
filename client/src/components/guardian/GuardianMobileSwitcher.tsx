@@ -93,12 +93,12 @@ export function GuardianMobileSwitcher() {
         {activeStudent ? (
           <Avatar student={activeStudent} size={38} />
         ) : (
-          <div className="w-[38px] h-[38px] rounded-full bg-[#2B54FF] flex items-center justify-center text-xs font-bold text-white">
+          <div className="w-[38px] h-[38px] rounded-full bg-primary flex items-center justify-center text-xs font-bold text-white">
             {ownInitials || <UserRound className="w-4 h-4" />}
           </div>
         )}
-        <span className="absolute -right-0.5 -bottom-0.5 w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100">
-          <ArrowLeftRight className="w-3 h-3 text-[#2B54FF]" strokeWidth={2.5} />
+        <span className="absolute -right-0.5 -bottom-0.5 w-5 h-5 rounded-full bg-card flex items-center justify-center shadow-sm border border-border">
+          <ArrowLeftRight className="w-3 h-3 text-primary" strokeWidth={2.5} />
         </span>
       </button>
 
@@ -116,7 +116,7 @@ export function GuardianMobileSwitcher() {
         role="dialog"
         aria-modal="true"
         aria-label="Trocar perfil de aluno"
-        className="fixed bottom-0 left-0 right-0 rounded-t-3xl bg-white"
+        className="fixed bottom-0 left-0 right-0 rounded-t-3xl bg-card"
         style={{
           zIndex: 201,
           transform: open ? "translateY(0)" : "translateY(100%)",
@@ -127,23 +127,23 @@ export function GuardianMobileSwitcher() {
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
+          <div className="w-10 h-1 rounded-full bg-muted" />
         </div>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-3 pb-4">
           <div>
-            <h2 className="text-base font-bold text-gray-900 font-inter">Trocar perfil</h2>
-            <p className="text-xs text-gray-400 mt-0.5 font-inter">
+            <h2 className="text-base font-bold text-foreground font-inter">Trocar perfil</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 font-inter">
               Selecione quem vai visualizar e confirmar as aulas
             </p>
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
             aria-label="Fechar"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
@@ -160,17 +160,17 @@ export function GuardianMobileSwitcher() {
                 border: !activeStudent ? "1.5px solid #2B54FF" : "1.5px solid #EAEDF5",
               }}
             >
-              <div className="w-11 h-11 rounded-full bg-[#2B54FF] flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+              <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
                 {ownInitials || <UserRound className="w-5 h-5" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`font-semibold text-sm font-inter truncate ${!activeStudent ? "text-[#2B54FF]" : "text-[#1A1A2E]"}`}>
+                <p className={`font-semibold text-sm font-inter truncate ${!activeStudent ? "text-primary" : "text-[#1A1A2E]"}`}>
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-xs text-gray-400 font-inter mt-1">Meu perfil</p>
+                <p className="text-xs text-muted-foreground font-inter mt-1">Meu perfil</p>
               </div>
               {!activeStudent && (
-                <div className="w-6 h-6 rounded-full bg-[#2B54FF] flex items-center justify-center flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                   <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
                 </div>
               )}
@@ -212,7 +212,7 @@ export function GuardianMobileSwitcher() {
                         border: isLightBelt ? "1px solid #D0D5E8" : "none",
                       }}
                     />
-                    <span className="text-xs text-gray-400 font-inter">
+                    <span className="text-xs text-muted-foreground font-inter">
                       Faixa {beltName}
                       {s.stripes > 0 && ` · ${s.stripes} ${s.stripes === 1 ? "grau" : "graus"}`}
                     </span>

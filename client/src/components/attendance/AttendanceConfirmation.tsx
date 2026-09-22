@@ -134,8 +134,8 @@ const AttendanceConfirmation: React.FC = () => {
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
-              <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-1/2"></div>
             </CardContent>
           </Card>
         ))}
@@ -147,11 +147,11 @@ const AttendanceConfirmation: React.FC = () => {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <div className="text-gray-500 mb-2">
+          <div className="text-muted-foreground mb-2">
             <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
           </div>
           <h3 className="text-lg font-semibold mb-2">Nenhuma aula hoje</h3>
-          <p className="text-gray-600">
+          <p className="text-secondary-foreground">
             Não há aulas programadas para hoje. Volte amanhã para conferir a programação!
           </p>
         </CardContent>
@@ -203,12 +203,12 @@ const AttendanceConfirmation: React.FC = () => {
           <CardContent className="pt-0">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <div className="flex items-center text-sm text-gray-600">
+                <div className="flex items-center text-sm text-secondary-foreground">
                   <Clock className="w-4 h-4 mr-2" />
                   {classItem.startTime} - {classItem.duration} minutos
                 </div>
                 {classItem.instructorName && (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-secondary-foreground">
                     Professor: {classItem.instructorName}
                   </div>
                 )}
@@ -220,7 +220,7 @@ const AttendanceConfirmation: React.FC = () => {
                     <Button
                       onClick={() => handleConfirmAttendance(classItem.id)}
                       disabled={confirmingClassId === classItem.id || confirmAttendanceMutation.isPending}
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      className="bg-primary hover:bg-primary-light text-primary-foreground"
                     >
                       {confirmingClassId === classItem.id ? (
                         "Confirmando..."

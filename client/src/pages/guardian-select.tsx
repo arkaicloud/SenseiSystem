@@ -46,21 +46,21 @@ function StudentCard({ student, onSelect }: { student: ManagedStudent; onSelect:
         {initials}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900 truncate text-base">
+        <p className="font-semibold text-foreground truncate text-base">
           {student.firstName} {student.lastName}
         </p>
         <div className="flex items-center gap-2 mt-1">
           <div
-            className="w-4 h-4 rounded-sm border border-gray-300 flex-shrink-0"
+            className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
             style={{ backgroundColor: beltColor }}
           />
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {beltName}
             {student.stripes > 0 && ` · ${student.stripes} ${student.stripes === 1 ? "grau" : "graus"}`}
           </span>
         </div>
       </div>
-      <ChevronRight className="w-5 h-5 text-[#2B54FF] flex-shrink-0" />
+      <ChevronRight className="w-5 h-5 text-primary flex-shrink-0" />
     </button>
   );
 }
@@ -147,7 +147,7 @@ export default function GuardianSelectPage() {
           {isLoadingDependents ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
+                <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : managedStudents.length === 0 ? (
@@ -156,10 +156,10 @@ export default function GuardianSelectPage() {
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ backgroundColor: "#EEF1FF" }}
               >
-                <Users className="w-8 h-8 text-[#2B54FF]" />
+                <Users className="w-8 h-8 text-primary" />
               </div>
-              <p className="text-gray-700 font-semibold text-base">Nenhum aluno vinculado</p>
-              <p className="text-gray-400 text-sm mt-1 leading-relaxed">
+              <p className="text-secondary-foreground font-semibold text-base">Nenhum aluno vinculado</p>
+              <p className="text-muted-foreground text-sm mt-1 leading-relaxed">
                 Peça ao administrador para vincular<br />alunos à sua conta.
               </p>
             </div>
@@ -177,7 +177,7 @@ export default function GuardianSelectPage() {
           className="px-5 pb-8 pt-3 text-center flex-shrink-0"
           style={{ backgroundColor: "#F8F9FF" }}
         >
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Você pode trocar de aluno a qualquer momento durante a sessão
           </p>
         </div>

@@ -67,8 +67,8 @@ export default function StudentDashboard() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#2B54FF]/20"></div>
-          <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="w-12 h-12 rounded-full bg-primary/20"></div>
+          <div className="h-4 w-32 bg-muted dark:bg-muted rounded"></div>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export default function StudentDashboard() {
                   {stripes > 0 && (
                     <div className="absolute inset-0 flex justify-end items-center pr-1 space-x-0.5">
                       {Array.from({ length: stripes }, (_, i) => (
-                        <div key={i} className="w-0.5 h-3 rounded-full bg-white" />
+                        <div key={i} className="w-0.5 h-3 rounded-full bg-card" />
                       ))}
                     </div>
                   )}
@@ -197,7 +197,7 @@ export default function StudentDashboard() {
             <div className="vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#EEF1FF] flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-[#2B54FF]" />
+                  <Calendar className="w-5 h-5 text-primary" />
                 </div>
                 <span className="font-semibold text-sm font-inter">Agenda</span>
               </div>
@@ -208,7 +208,7 @@ export default function StudentDashboard() {
             <div className="vyta-card p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#EEF1FF] flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-[#2B54FF]" />
+                  <CreditCard className="w-5 h-5 text-primary" />
                 </div>
                 <span className="font-semibold text-sm font-inter">Presenças</span>
               </div>
@@ -225,7 +225,7 @@ export default function StudentDashboard() {
                     financialSummary.hasOverdue ? "bg-amber-100" : "bg-[#EEF1FF]"
                   }`}>
                     <CreditCard className={`w-5 h-5 ${
-                      financialSummary.hasOverdue ? "text-amber-600" : "text-[#2B54FF]"
+                      financialSummary.hasOverdue ? "text-amber-600" : "text-primary"
                     }`} />
                   </div>
                   <div>

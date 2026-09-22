@@ -130,13 +130,13 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
           <div key={dayData.date} className="space-y-3">
             <div className="flex items-center gap-2">
               <h3
-                className={`font-semibold text-lg font-inter ${isToday(dayData.date) ? 'text-[#2B54FF]' : 'text-foreground'}`}
+                className={`font-semibold text-lg font-inter ${isToday(dayData.date) ? 'text-primary' : 'text-foreground'}`}
                 data-testid={`text-day-header-${dayData.date}`}
               >
                 {formatDayHeader(dayData.date, dayData.dayName)}
               </h3>
               {isToday(dayData.date) && (
-                <Badge variant="default" className="text-xs bg-[#EEF1FF] text-[#2B54FF]">
+                <Badge variant="default" className="text-xs bg-[#EEF1FF] text-primary">
                   Hoje
                 </Badge>
               )}
@@ -157,7 +157,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4
-                          className={`font-medium ${classSession.isCancelled ? "line-through text-slate-400" : ""}`}
+                          className={`font-medium ${classSession.isCancelled ? "line-through text-muted-foreground" : ""}`}
                           data-testid={`text-class-name-${dayData.date}-${classSession.id}`}
                         >
                           {classSession.name}
@@ -221,7 +221,7 @@ export const WeekAgenda = ({ weekData, studentId, primaryColor, isLoading }: Wee
                           size="sm"
                           onClick={() => handleConfirm(classSession, dayData.date)}
                           disabled={isMutating}
-                          className="w-full sm:w-auto text-white font-medium bg-[#2B54FF] hover:bg-[#1A3FCC] rounded-2xl font-inter"
+                          className="w-full sm:w-auto text-white font-medium bg-primary hover:bg-[#1A3FCC] rounded-2xl font-inter"
                           data-testid={`button-confirm-${dayData.date}-${classSession.id}`}
                         >
                           {isMutating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}

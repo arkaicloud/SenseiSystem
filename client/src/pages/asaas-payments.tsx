@@ -171,7 +171,7 @@ export default function AsaasPayments() {
       case 'overdue':
         return <Badge className="bg-red-100 text-red-800"><AlertTriangle className="w-3 h-3 mr-1" />Vencido</Badge>;
       case 'cancelled':
-        return <Badge className="bg-gray-100 text-gray-800"><XCircle className="w-3 h-3 mr-1" />Cancelado</Badge>;
+        return <Badge className="bg-muted text-foreground"><XCircle className="w-3 h-3 mr-1" />Cancelado</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -283,7 +283,7 @@ export default function AsaasPayments() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="bg-gray-100 p-3 rounded-md">
+          <div className="bg-muted p-3 rounded-md">
             <code className="text-sm">{window.location.origin}/webhooks/asaas</code>
           </div>
           <p className="text-sm text-muted-foreground mt-2">

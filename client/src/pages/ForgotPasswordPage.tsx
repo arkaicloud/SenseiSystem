@@ -63,16 +63,16 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
+          <Card className="w-full max-w-md bg-card dark:bg-card shadow-2xl border border-border dark:border-border">
             <CardHeader className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-foreground dark:text-white">
                   E-mail Enviado!
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+                <p className="text-secondary-foreground dark:text-muted-foreground text-sm mt-2">
                   Verifique sua caixa de entrada
                 </p>
               </div>
@@ -85,9 +85,9 @@ export default function ForgotPasswordPage() {
                 </AlertDescription>
               </Alert>
 
-              <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400">
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg space-y-2">
-                  <h3 className="font-medium text-slate-900 dark:text-white">Próximos passos:</h3>
+              <div className="space-y-4 text-sm text-secondary-foreground dark:text-muted-foreground">
+                <div className="bg-background dark:bg-card/50 p-4 rounded-lg space-y-2">
+                  <h3 className="font-medium text-foreground dark:text-white">Próximos passos:</h3>
                   <ul className="space-y-1 list-disc list-inside">
                     <li>Verifique sua caixa de entrada</li>
                     <li>Se não encontrar, verifique o spam</li>
@@ -128,16 +128,16 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
+        <Card className="w-full max-w-md bg-card dark:bg-card shadow-2xl border border-border dark:border-border">
           <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-              <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="mx-auto w-16 h-16 bg-accent dark:bg-accent/20 rounded-full flex items-center justify-center">
+              <Mail className="w-8 h-8 text-accent-foreground dark:text-accent-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-foreground dark:text-white">
                 Esqueceu sua senha?
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+              <p className="text-secondary-foreground dark:text-muted-foreground text-sm mt-2">
                 Não se preocupe, vamos te ajudar a recuperá-la
               </p>
             </div>
@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Label htmlFor="email" className="text-sm font-medium text-secondary-foreground dark:text-secondary-foreground">
                   E-mail cadastrado
                 </Label>
                 <Input
@@ -165,14 +165,14 @@ export default function ForgotPasswordPage() {
                   required
                   disabled={isLoading}
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Digite o e-mail usado no seu cadastro
                 </p>
               </div>
               
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                className="w-full bg-primary hover:bg-primary-light dark:bg-accent dark:hover:bg-accent"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -188,7 +188,7 @@ export default function ForgotPasswordPage() {
                 )}
               </Button>
 
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
+              <div className="pt-4 border-t border-border dark:border-border">
                 <Button 
                   type="button"
                   onClick={handleBackToLogin}

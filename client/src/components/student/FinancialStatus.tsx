@@ -41,7 +41,7 @@ export const FinancialStatus = ({
       case "overdue":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -145,16 +145,16 @@ export const FinancialStatus = ({
 
         <div className="space-y-3">
           {displayInvoices.map((invoice) => (
-            <div key={invoice.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={invoice.id} className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900">{invoice.description}</span>
+                <span className="font-medium text-foreground">{invoice.description}</span>
                 <Badge className={`text-xs font-medium ${getStatusBadge(invoice.status)}`}>
                   {getStatusText(invoice.status)}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+              <div className="flex items-center justify-between text-sm text-secondary-foreground mb-3">
                 <span>Vencimento: {invoice.dueDate}</span>
-                <span className="font-bold text-gray-900">{formatCurrency(invoice.amount)}</span>
+                <span className="font-bold text-foreground">{formatCurrency(invoice.amount)}</span>
               </div>
               <Button 
                 className="w-full text-white font-medium"
@@ -167,7 +167,7 @@ export const FinancialStatus = ({
           ))}
         </div>
 
-        <div className="text-center pt-2 border-t border-gray-200">
+        <div className="text-center pt-2 border-t border-border">
           <p className="text-xs text-muted-foreground">
             Dúvidas? Entre em contato com a secretaria da escola
           </p>

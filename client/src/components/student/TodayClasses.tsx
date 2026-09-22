@@ -89,9 +89,9 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="border rounded-lg p-4 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-24"></div>
+                <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-8 bg-muted rounded w-24"></div>
               </div>
             ))}
           </div>
@@ -143,7 +143,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className={`font-medium ${classSession.isCancelled ? 'line-through text-slate-400' : ''}`}>
+                  <h4 className={`font-medium ${classSession.isCancelled ? 'line-through text-muted-foreground' : ''}`}>
                     {classSession.name}
                   </h4>
                   {classSession.isCancelled ? (
@@ -214,7 +214,7 @@ export const TodayClasses = ({ classes, studentId, primaryColor, isLoading }: To
                     size="sm"
                     onClick={() => handleConfirm(classSession)}
                     disabled={isMutating}
-                    className="w-full sm:w-auto text-white font-medium bg-[#2B54FF] hover:bg-[#1A3FCC] rounded-2xl font-inter"
+                    className="w-full sm:w-auto text-white font-medium bg-primary hover:bg-[#1A3FCC] rounded-2xl font-inter"
                   >
                     {isMutating ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />

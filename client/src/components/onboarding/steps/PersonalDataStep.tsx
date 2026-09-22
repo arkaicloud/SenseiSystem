@@ -67,11 +67,11 @@ interface PersonalDataStepProps {
   defaultValues?: Partial<PersonalDataType>;
 }
 
-const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
-const labelCls = "text-slate-300 text-sm font-medium";
-const selectContent = "bg-slate-800 border-white/10 text-white";
+const inputCls = "h-14 text-base bg-white/5 border-white/10 text-white placeholder:text-muted-foreground rounded-xl focus-visible:ring-[#2B54FF]/50 focus-visible:border-[#2B54FF]/50";
+const labelCls = "text-muted-foreground text-sm font-medium";
+const selectContent = "bg-secondary border-white/10 text-white";
 const selectItem = "text-white focus:bg-white/10 focus:text-white cursor-pointer";
-const nativeSel = "h-14 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2B54FF]/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
+const nativeSel = "h-14 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-[#2B54FF]/50 [color-scheme:dark]";
 
 function BirthDatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const initParts = value ? value.split("-") : ["", "", ""];
@@ -171,11 +171,11 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
       <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col pb-6">
         {/* Step header */}
         <div className="px-6 pt-8 pb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#2B54FF]/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
-            <User className="w-6 h-6 text-[#2B54FF]" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-[#2B54FF]/40 flex items-center justify-center mb-4">
+            <User className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-2xl font-bold text-white">Dados Pessoais</h2>
-          <p className="text-sm text-slate-400 mt-1">Vamos começar com suas informações básicas</p>
+          <p className="text-sm text-muted-foreground mt-1">Vamos começar com suas informações básicas</p>
         </div>
 
         <div className="px-6 space-y-5">
@@ -353,14 +353,14 @@ export default function PersonalDataStep({ onNext, defaultValues }: PersonalData
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-slate-500 mt-1">Iniciante? Mantenha "Sem grau" com Faixa Branca.</p>
+                <p className="text-xs text-muted-foreground mt-1">Iniciante? Mantenha "Sem grau" com Faixa Branca.</p>
                 <FormMessage className="text-red-400 text-xs" />
               </FormItem>
             )}
           />
 
           <div className="pt-2 pb-2">
-            <Button type="submit" className="w-full h-14 bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white font-semibold rounded-2xl text-base">
+            <Button type="submit" className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl text-base">
               Continuar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

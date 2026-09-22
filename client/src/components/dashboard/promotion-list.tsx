@@ -44,20 +44,20 @@ export const PromotionList = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-700">
+    <div className="bg-secondary rounded-xl shadow-md overflow-hidden">
+      <div className="px-6 py-5 border-b border-border">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-medium text-white">{title}</h2>
           {showViewAll && (
             <Link href={viewAllLink}>
-              <a className="text-sm font-medium text-primary hover:text-blue-400">
+              <a className="text-sm font-medium text-primary hover:text-accent-foreground">
                 {t('dashboard.viewAll')}
               </a>
             </Link>
           )}
         </div>
       </div>
-      <ul className="divide-y divide-gray-700">
+      <ul className="divide-y divide-border">
         {promotions.map((student) => (
           <li key={student.id} className="px-6 py-4 flex items-center">
             <Avatar>
@@ -70,15 +70,15 @@ export const PromotionList = ({
                 <p className="text-sm font-medium text-white">{student.name}</p>
                 <div className="flex items-center">
                   <BeltIcon belt={student.currentBelt} className="mr-1" />
-                  <i className="fas fa-arrow-right text-xs text-gray-400 mx-1"></i>
+                  <i className="fas fa-arrow-right text-xs text-muted-foreground mx-1"></i>
                   <BeltIcon belt={student.nextBelt} className="mr-1" />
                 </div>
               </div>
               <div className="flex justify-between mt-1">
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {getPromotionText(student.currentBelt, student.nextBelt)}
                 </p>
-                <p className="text-sm text-blue-500">
+                <p className="text-sm text-accent-foreground">
                   {formatDate(student.promotionDate)}
                 </p>
               </div>
@@ -86,7 +86,7 @@ export const PromotionList = ({
           </li>
         ))}
         {promotions.length === 0 && (
-          <li className="px-6 py-4 text-center text-gray-400">
+          <li className="px-6 py-4 text-center text-muted-foreground">
             No promotions found
           </li>
         )}

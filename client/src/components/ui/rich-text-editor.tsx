@@ -354,7 +354,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
                 {textColors.map((color) => (
                   <SelectItem key={color} value={color}>
                     <div
-                      className="w-6 h-6 rounded border-2 border-gray-300"
+                      className="w-6 h-6 rounded border-2 border-border"
                       style={{ backgroundColor: color }}
                     />
                   </SelectItem>
@@ -373,7 +373,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
                 {backgroundColors.map((color) => (
                   <SelectItem key={color} value={color}>
                     <div
-                      className="w-6 h-6 rounded border-2 border-gray-300"
+                      className="w-6 h-6 rounded border-2 border-border"
                       style={{ backgroundColor: color === 'transparent' ? '#ffffff' : color }}
                     />
                   </SelectItem>

@@ -90,7 +90,7 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
       case 'high': return 'bg-red-100 text-red-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -132,7 +132,7 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-500 text-center py-4">
+          <p className="text-muted-foreground text-center py-4">
             Nenhum comunicado disponível no momento.
           </p>
         </CardContent>
@@ -161,24 +161,24 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 <span>{formatDate(comm.publishDate)}</span>
               </div>
             </div>
 
-            <div className="text-sm text-gray-700 mb-2">
+            <div className="text-sm text-secondary-foreground mb-2">
               {createPreviewText(comm.content, 100)}
             </div>
 
             {comm.eventDate && (
-              <div className="flex items-center gap-1 text-xs text-blue-600">
+              <div className="flex items-center gap-1 text-xs text-accent-foreground">
                 <Calendar className="w-3 h-3" />
                 <span>Evento: {formatDateTime(comm.eventDate)}</span>
               </div>
             )}
 
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Por: {comm.createdBy}
             </div>
           </div>
@@ -186,7 +186,7 @@ const CommunicationsList: React.FC<CommunicationsListProps> = ({
 
         {filteredCommunications.length >= limit && (
           <div className="text-center pt-2">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {filteredCommunications.length >= limit && '+ mais comunicados disponíveis'}
             </p>
           </div>

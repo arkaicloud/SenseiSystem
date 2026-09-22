@@ -9,7 +9,7 @@ export function ResultsInfo({ page, pageSize, total }: ResultsInfoProps) {
   const end = Math.min(page * pageSize, total);
   
   return (
-    <div className="text-sm text-slate-600">
+    <div className="text-sm text-secondary-foreground">
       Mostrando {start}–{end} de {total} resultados
     </div>
   );

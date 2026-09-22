@@ -123,7 +123,7 @@ export default function StudentOnboarding({ onBack, onSuccess }: StudentOnboardi
                   isCompleted 
                     ? 'bg-green-500 text-white' 
                     : isActive 
-                      ? 'bg-primary text-white' 
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                 }`}>
                   {isCompleted ? <CheckCircle className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}

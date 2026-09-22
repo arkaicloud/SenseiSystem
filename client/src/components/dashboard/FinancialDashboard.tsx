@@ -66,8 +66,8 @@ export function FinancialDashboard() {
       changeType: 'positive',
       description: "Estimativa mensal",
       icon: RefreshCw,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
+      color: "text-accent-foreground",
+      bgColor: "bg-accent",
     },
   ];
 
@@ -77,12 +77,12 @@ export function FinancialDashboard() {
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 bg-gray-200 rounded w-24"></div>
-              <div className="h-4 w-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-muted rounded w-24"></div>
+              <div className="h-4 w-4 bg-muted rounded"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-32 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-20"></div>
+              <div className="h-8 bg-muted rounded w-32 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-20"></div>
             </CardContent>
           </Card>
         ))}
@@ -116,7 +116,7 @@ export function FinancialDashboard() {
                   )}
                   <span className={`truncate ${
                     metric.changeType === 'positive' ? 'text-green-600' :
-                    metric.changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
+                    metric.changeType === 'negative' ? 'text-red-600' : 'text-secondary-foreground'
                   }`}>
                     {metric.change}
                   </span>

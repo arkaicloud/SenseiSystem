@@ -18,20 +18,20 @@ const StatCard: React.FC<StatCardProps> = ({
   value,
   icon,
   trend,
-  iconBgColor = "bg-blue-100 dark:bg-blue-900",
-  iconColor = "text-blue-600 dark:text-blue-300",
+  iconBgColor = "bg-accent dark:bg-accent",
+  iconColor = "text-accent-foreground dark:text-accent-foreground",
   subtitle,
 }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-all duration-200 hover:shadow-md min-h-[120px] flex flex-col justify-between">
+    <div className="bg-card dark:bg-card rounded-lg shadow-sm border border-border dark:border-border p-4 transition-all duration-200 hover:shadow-md min-h-[120px] flex flex-col justify-between">
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-gray-700 dark:text-gray-300 text-sm font-medium leading-tight pr-2 flex-1">{title}</h3>
+        <h3 className="text-secondary-foreground dark:text-secondary-foreground text-sm font-medium leading-tight pr-2 flex-1">{title}</h3>
         <div className={`w-8 h-8 rounded-full ${iconBgColor} flex items-center justify-center flex-shrink-0`}>
           <span className={`material-icons text-lg ${iconColor}`}>{icon}</span>
         </div>
       </div>
       <div className="flex items-end justify-between mb-2">
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">{value}</span>
+        <span className="text-2xl font-bold text-foreground dark:text-white">{value}</span>
         {trend && (
           <span
             className={`${
@@ -45,7 +45,7 @@ const StatCard: React.FC<StatCardProps> = ({
           </span>
         )}
       </div>
-      <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">{subtitle || "comparado ao mês anterior"}</p>
+      <p className="text-secondary-foreground dark:text-muted-foreground text-xs leading-relaxed">{subtitle || "comparado ao mês anterior"}</p>
     </div>
   );
 };

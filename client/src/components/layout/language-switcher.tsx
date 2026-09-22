@@ -12,13 +12,13 @@ export const LanguageSwitcher = () => {
   const { locale, setLocale } = useTranslations();
   
   return (
-    <div className="flex items-center bg-gray-800 rounded-lg p-1">
+    <div className="flex items-center bg-secondary rounded-lg p-1">
       {localeOptions.map((option) => (
         <Button
           key={option.value}
           variant={locale === option.value ? 'default' : 'ghost'}
           size="sm"
-          className={`px-3 py-1 ${locale === option.value ? 'bg-primary text-white' : 'text-gray-300'}`}
+          className={`px-3 py-1 ${locale === option.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
           onClick={() => setLocale(option.value)}
         >
           {option.label}

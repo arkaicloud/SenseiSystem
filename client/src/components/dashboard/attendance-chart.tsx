@@ -30,7 +30,7 @@ export const AttendanceChart = ({
   const { t } = useTranslations();
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-md p-6 xl:col-span-2">
+    <div className="bg-secondary rounded-xl shadow-md p-6 xl:col-span-2">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium text-white">{t('dashboard.attendanceTrends')}</h2>
         <div className="flex space-x-2">

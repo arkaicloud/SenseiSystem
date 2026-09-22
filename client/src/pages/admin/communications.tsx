@@ -259,9 +259,9 @@ export default function CommunicationsPage() {
       case 'MEDIUM':
         return <MessageCircle className="h-4 w-4 text-yellow-500" />;
       case 'LOW':
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <Info className="h-4 w-4 text-accent-foreground" />;
       default:
-        return <MessageSquare className="h-4 w-4 text-gray-500" />;
+        return <MessageSquare className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -287,8 +287,8 @@ export default function CommunicationsPage() {
     switch (level) {
       case 'HIGH': return 'border-red-500';
       case 'MEDIUM': return 'border-yellow-500';
-      case 'LOW': return 'border-blue-500';
-      default: return 'border-gray-500';
+      case 'LOW': return 'border-primary';
+      default: return 'border-border';
     }
   };
 
@@ -312,9 +312,9 @@ export default function CommunicationsPage() {
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
                 <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="h-3 bg-muted rounded w-full"></div>
                 </div>
               </CardContent>
             </Card>
@@ -515,11 +515,11 @@ export default function CommunicationsPage() {
         {!notices || notices.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
                 Nenhum comunicado enviado
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-muted-foreground dark:text-muted-foreground mb-4">
                 Comece criando seu primeiro comunicado para os alunos.
               </p>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -547,7 +547,7 @@ export default function CommunicationsPage() {
                             {getAudienceText(notice.audience)}
                           </Badge>
                           {!notice.isActive && (
-                            <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                            <Badge variant="secondary" className="bg-muted text-secondary-foreground">
                               Inativo
                             </Badge>
                           )}
@@ -555,14 +555,14 @@ export default function CommunicationsPage() {
                       </div>
                     </div>
 
-                    <div className="text-gray-600 dark:text-gray-300 mb-4 max-h-24 overflow-y-auto custom-scrollbar-sm">
+                    <div className="text-secondary-foreground dark:text-secondary-foreground mb-4 max-h-24 overflow-y-auto custom-scrollbar-sm">
                       <RichContent 
                         content={createPreviewText(notice.content, 200)} 
                         className="text-sm leading-relaxed"
                       />
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-muted-foreground flex-wrap">
                       <span>
                         Criado {formatDistanceToNow(new Date(notice.createdAt), {
                           addSuffix: true,

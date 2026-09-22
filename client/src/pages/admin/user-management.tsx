@@ -70,7 +70,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 const ROLE_COLOR: Record<string, string> = {
   admin: 'bg-purple-100 text-purple-800',
-  instructor: 'bg-blue-100 text-blue-800',
+  instructor: 'bg-accent text-accent-foreground',
 };
 
 const PERMISSION_LABELS: { key: keyof StaffPermissions; label: string; description: string; icon: React.ComponentType<any> }[] = [
@@ -290,7 +290,7 @@ export default function UserManagement() {
                             className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${
                               perms[key]
                                 ? 'bg-green-50 border-green-200 text-green-700'
-                                : 'bg-gray-50 border-gray-200 text-gray-400'
+                                : 'bg-background border-border text-muted-foreground'
                             }`}
                           >
                             {perms[key] ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}

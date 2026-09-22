@@ -296,10 +296,10 @@ export default function Settings() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground dark:text-white">
             Configurações
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">
+          <p className="text-secondary-foreground dark:text-secondary-foreground mt-1">
             Gerencie suas preferências e configurações do sistema
           </p>
         </div>
@@ -323,7 +323,7 @@ export default function Settings() {
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5 min-w-0">
                 <Label className="text-base">Notificações de presença</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
                   Receber notificações sobre confirmação de presença
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function Settings() {
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5 min-w-0">
                 <Label className="text-base">Notificações de pagamento</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
                   Receber notificações sobre pagamentos e vencimentos
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function Settings() {
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5 min-w-0">
                 <Label className="text-base">Notificações de eventos</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
                   Receber notificações sobre eventos da escola
                 </div>
               </div>
@@ -439,7 +439,7 @@ export default function Settings() {
             </div>
 
             <div className="pt-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Para alterar suas informações pessoais, entre em contato com o
                 administrador.
               </p>
@@ -463,7 +463,7 @@ export default function Settings() {
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <Label className="text-base">Alterar senha</Label>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-secondary-foreground dark:text-muted-foreground">
                   Atualize sua senha para manter sua conta segura
                 </div>
               </div>

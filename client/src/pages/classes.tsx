@@ -178,12 +178,12 @@ const Classes: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="font-montserrat font-bold text-2xl text-primary">Aulas</h1>
-          <p className="text-gray-600">Gerencie a programação das aulas</p>
+          <p className="text-secondary-foreground">Gerencie a programação das aulas</p>
         </div>
         <div className="mt-4 md:mt-0">
           <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
+              <Button className="bg-primary hover:bg-primary-light text-primary-foreground font-medium">
                 <span className="material-icons mr-1 text-sm">add</span>
                 Nova Aula
               </Button>
@@ -216,39 +216,39 @@ const Classes: React.FC = () => {
               {classesLoading ? (
                 <div className="text-center py-8">Loading classes...</div>
               ) : classes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No classes found</div>
+                <div className="text-center py-8 text-muted-foreground">No classes found</div>
               ) : (
                 <div className="space-y-6">
                   {/* Create a section for each day of the week */}
                   {[0, 1, 2, 3, 4, 5, 6].map(day => (
-                    <div key={day} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                      <div className="bg-gray-100 dark:bg-gray-700 p-3 font-medium text-gray-800 dark:text-gray-200">
+                    <div key={day} className="border border-border dark:border-border rounded-lg overflow-hidden">
+                      <div className="bg-muted dark:bg-muted p-3 font-medium text-foreground dark:text-foreground">
                         {getDayName(day)}
                       </div>
 
                       {!classesByDay[day] || classesByDay[day].length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                        <div className="p-4 text-center text-muted-foreground dark:text-muted-foreground">
                           Nenhuma aula agendada
                         </div>
                       ) : (
-                        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        <div className="divide-y divide-border dark:divide-border">
                           {classesByDay[day].map((classItem: any) => {
                             const { time, period } = formatTime(classItem.startTime);
                             return (
                               <div 
                                 key={classItem.id} 
-                                className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                className="p-4 hover:bg-background dark:hover:bg-muted/50 cursor-pointer"
                                 onClick={() => setSelectedClass(classItem)}
                               >
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                                   <div className="flex items-start">
-                                    <div className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 p-2 rounded-lg mr-3 flex flex-col items-center justify-center min-w-[60px] text-center">
+                                    <div className="bg-accent dark:bg-accent/40 text-accent-foreground dark:text-accent-foreground p-2 rounded-lg mr-3 flex flex-col items-center justify-center min-w-[60px] text-center">
                                       <span className="text-sm font-medium">{time}</span>
                                       <span className="text-xs">{period}</span>
                                     </div>
                                     <div>
-                                      <h3 className="font-medium text-gray-900 dark:text-gray-100">{classItem.name}</h3>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      <h3 className="font-medium text-foreground dark:text-foreground">{classItem.name}</h3>
+                                      <p className="text-sm text-secondary-foreground dark:text-muted-foreground">
                                         {classItem.instructor 
                                           ? `${classItem.instructor.firstName} Sensei` 
                                           : 'Nenhum instrutor atribuído'}
@@ -256,7 +256,7 @@ const Classes: React.FC = () => {
                                         {classItem.duration} min
                                       </p>
                                       {classItem.description && (
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                                           {classItem.description}
                                         </p>
                                       )}
@@ -264,7 +264,7 @@ const Classes: React.FC = () => {
                                   </div>
                                   <div className="mt-3 md:mt-0 flex items-center">
                                     {classItem.maxCapacity && (
-                                      <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-1 mr-3">
+                                      <span className="text-xs text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-muted rounded-full px-2 py-1 mr-3">
                                         Máx: {classItem.maxCapacity}
                                       </span>
                                     )}
@@ -296,54 +296,54 @@ const Classes: React.FC = () => {
               {classesLoading ? (
                 <div className="text-center py-8">Carregando aulas...</div>
               ) : classes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma aula encontrada</div>
+                <div className="text-center py-8 text-muted-foreground">Nenhuma aula encontrada</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
+                  <table className="min-w-full divide-y divide-border dark:divide-border">
+                    <thead className="bg-background dark:bg-muted">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Nome da Aula
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Dia
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Horário
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Duração
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Instrutor
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
                           Ações
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card dark:bg-card divide-y divide-border dark:divide-border">
                       {classes.map((classItem: any) => {
                         const { time, period } = formatTime(classItem.startTime);
                         return (
-                          <tr key={classItem.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <tr key={classItem.id} className="hover:bg-background dark:hover:bg-muted">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{classItem.name}</div>
+                              <div className="text-sm font-medium text-foreground dark:text-foreground">{classItem.name}</div>
                               {classItem.description && (
-                                <div className="text-sm text-gray-500 dark:text-gray-400">{classItem.description}</div>
+                                <div className="text-sm text-muted-foreground dark:text-muted-foreground">{classItem.description}</div>
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900 dark:text-gray-100">{getDayName(classItem.dayOfWeek)}</div>
+                              <div className="text-sm text-foreground dark:text-foreground">{getDayName(classItem.dayOfWeek)}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900 dark:text-gray-100">{time} {period}</div>
+                              <div className="text-sm text-foreground dark:text-foreground">{time} {period}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900 dark:text-gray-100">{classItem.duration} min</div>
+                              <div className="text-sm text-foreground dark:text-foreground">{classItem.duration} min</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900 dark:text-gray-100">
+                              <div className="text-sm text-foreground dark:text-foreground">
                                 {classItem.instructor 
                                   ? `${classItem.instructor.firstName} ${classItem.instructor.lastName}` 
                                   : 'Não atribuído'}
@@ -372,7 +372,7 @@ const Classes: React.FC = () => {
               {archivedClassesLoading ? (
                 <div className="text-center py-8">Carregando aulas arquivadas...</div>
               ) : archivedClasses.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma aula arquivada</div>
+                <div className="text-center py-8 text-muted-foreground">Nenhuma aula arquivada</div>
               ) : (
                 <div className="space-y-3">
                   {archivedClasses.map((classItem: any) => {
@@ -380,11 +380,11 @@ const Classes: React.FC = () => {
                     return (
                       <div
                         key={classItem.id}
-                        className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between"
+                        className="flex flex-col gap-3 rounded-lg border border-border p-4 dark:border-border sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{classItem.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="font-medium text-foreground dark:text-foreground">{classItem.name}</div>
+                          <div className="text-sm text-muted-foreground dark:text-muted-foreground">
                             {getDayName(classItem.dayOfWeek)} • {time} {period}
                           </div>
                         </div>

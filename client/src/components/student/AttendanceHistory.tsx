@@ -86,7 +86,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
       case 'late':
         return <Clock className="h-4 w-4 text-yellow-600" />;
       default:
-        return <XCircle className="h-4 w-4 text-gray-400" />;
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -112,7 +112,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
       case 'late':
         return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -188,7 +188,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
               <TrendingUp className="h-5 w-5" />
               Estatísticas
               {attendanceData.period && (
-                <span className="text-sm font-normal text-gray-500">
+                <span className="text-sm font-normal text-muted-foreground">
                   - {months[attendanceData.period.month - 1]?.label} {attendanceData.period.year}
                 </span>
               )}
@@ -196,11 +196,11 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
+              <div className="text-center p-4 bg-accent rounded-lg">
+                <div className="text-2xl font-bold text-accent-foreground">
                   {attendanceData.stats.totalClasses}
                 </div>
-                <div className="text-sm text-blue-600">Total de Aulas</div>
+                <div className="text-sm text-accent-foreground">Total de Aulas</div>
               </div>
               
               <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -253,7 +253,7 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
                       </div>
                       
                       {attendance.class && (
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-secondary-foreground">
                           <div className="flex items-center gap-1 mb-1">
                             <BookOpen className="h-3 w-3" />
                             {attendance.class.name}
@@ -278,8 +278,8 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
             </div>
             
             {attendanceData.stats.totalClasses > 0 && (
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg text-center">
-                <p className="text-blue-800 font-medium">
+              <div className="mt-6 p-4 bg-accent rounded-lg text-center">
+                <p className="text-accent-foreground font-medium">
                   {attendanceData.period 
                     ? `Você participou de ${attendanceData.stats.presentCount} aulas em ${months[attendanceData.period.month - 1]?.label}`
                     : `Você participou de ${attendanceData.stats.presentCount} aulas no total`
@@ -292,9 +292,9 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ studentId }) => {
       ) : (
         <Card>
           <CardContent className="text-center p-8">
-            <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma presença confirmada</h3>
-            <p className="text-gray-600">
+            <p className="text-secondary-foreground">
               Não há registros de presença confirmada para o período selecionado.
             </p>
           </CardContent>

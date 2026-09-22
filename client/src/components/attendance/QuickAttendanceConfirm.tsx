@@ -183,8 +183,8 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{classItem.name}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-sm font-medium text-foreground dark:text-foreground">{classItem.name}</div>
+            <div className="text-xs text-muted-foreground dark:text-muted-foreground">
               {time} • {classItem.duration} min
             </div>
           </div>
@@ -213,7 +213,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
               size="sm"
               disabled={confirmAttendanceMutation.isPending}
               onClick={() => confirmAttendanceMutation.mutate(classItem.id)}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
+              className="bg-primary hover:bg-primary-light text-primary-foreground"
             >
               {confirmAttendanceMutation.isPending ? (
                 <Loader2 className="mr-2 h-3 w-3 animate-spin" />
@@ -226,7 +226,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
         </div>
 
         {availableClasses.length > 1 && (
-          <div className="text-xs text-center text-primary dark:text-blue-400">
+          <div className="text-xs text-center text-primary dark:text-accent-foreground">
             <span
               className="cursor-pointer hover:underline"
               onClick={() => setSelectedClassId(null)}
@@ -324,7 +324,7 @@ const QuickAttendanceConfirm: React.FC<QuickAttendanceConfirmProps> = ({
 
             {!availableClasses.every(c => confirmedClasses.includes(c.id)) && (
               <Button
-                className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+                className="w-full mt-4 bg-primary hover:bg-primary-light text-primary-foreground"
                 disabled={!selectedClassId || confirmAttendanceMutation.isPending}
                 onClick={() => selectedClassId && confirmAttendanceMutation.mutate(selectedClassId)}
               >

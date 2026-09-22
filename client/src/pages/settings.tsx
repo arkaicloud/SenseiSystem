@@ -426,7 +426,7 @@ export default function Settings() {
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
+             className="flex min-h-16 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={() => setIsProfileDetailsOpen(true)}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
@@ -441,7 +441,7 @@ export default function Settings() {
 
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
+             className="flex min-h-16 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={() => setIsPasswordDialogOpen(true)}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
@@ -453,7 +453,7 @@ export default function Settings() {
 
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
+             className="flex min-h-16 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={() => setIsNotificationsExpanded((expanded) => !expanded)}
             aria-expanded={isNotificationsExpanded}
           >
@@ -500,7 +500,7 @@ export default function Settings() {
             </div>
           )}
 
-          <div className="flex min-h-14 items-center gap-3 border-t border-border/70 px-4">
+           <div className="flex min-h-16 items-center gap-3 border-t border-border/70 px-4">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
               <Moon className="size-4" />
             </span>
@@ -526,7 +526,7 @@ export default function Settings() {
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
+             className="flex min-h-16 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={() =>
               toast({
                 title: "Sobre o SenseiSystem",
@@ -543,7 +543,7 @@ export default function Settings() {
           </button>
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
+             className="flex min-h-16 w-full items-center gap-3 border-t border-border/70 px-4 text-left transition-colors hover:bg-muted/50"
             onClick={openSchoolWhatsApp}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
@@ -557,7 +557,7 @@ export default function Settings() {
           </button>
           <button
             type="button"
-            className="flex min-h-14 w-full items-center gap-3 border-t border-border/70 px-4 text-left text-red-600 transition-colors hover:bg-red-500/5 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200"
+             className="flex min-h-16 w-full items-center gap-3 border-t border-border/70 px-4 text-left text-red-600 transition-colors hover:bg-red-500/5 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200"
             onClick={() => logout()}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-600 dark:bg-red-500/15 dark:text-red-300">
